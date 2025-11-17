@@ -195,19 +195,17 @@ AI: The /populate command processes documents by:
 All Python dependencies are listed in `requirements.txt`. Key libraries include:
 
 ### Core Dependencies
-- **LangChain**: `langchain-openai`, `langchain-core`, `langchain-community`
-- **Vector Database**: `langchain-chroma`, `chromadb`
-- **Embeddings**: `langchain-ollama`
-- **Configuration**: `python-dotenv`, `pydantic`
-- **Document Processing**: `PyPDF2`, `python-docx`, `striprtf`, `ebooklib`, `openpyxl`
+- **LangChain**: `langchain-openai==1.0.3`, `langchain-core==1.0.5`, `langchain-community==0.4.1`
+- **Vector Database**: `langchain-chroma==1.0.0`, `chromadb==1.3.4`
+- **Embeddings**: `langchain-ollama==1.0.0`
+- **Configuration**: `python-dotenv==1.2.1`, `pydantic==2.12.4`
+- **Document Processing**: `PyPDF2==3.0.1`, `python-docx==1.2.0`, `striprtf==0.0.29`, `ebooklib==0.20`, `openpyxl==3.1.5`
 
 ### Development Dependencies (Optional)
-- **Linting**: `flake8`, `mypy`, `vulture`, `codespell`
-- **Type Stubs**: `types-Markdown`, `types-requests`
+- **Linting**: `flake8==7.3.0`, `mypy==1.18.2`, `vulture==2.14`, `codespell==2.4.1`
+- **Type Stubs**: `types-Markdown==3.10.0.20251106`, `types-requests==2.32.4.20250913`
 - **Shell Linting**: `shellcheck` (install with `brew install shellcheck`)
-- **HTTP**: `requests` (for direct API calls)
-
-Install all dependencies with: `pip install -r requirements.txt`
+- **HTTP**: `requests==2.32.5` (for direct API calls)
 
 ## 🧹 Code Quality & Linting
 
@@ -286,23 +284,32 @@ python test/lint/lint-python.py
    ```
 
 2. **Create Python 3.13 virtual environment**:
-   ```bash
-   python3.13 -m venv langchain_venv
-   source langchain_venv/bin/activate  # On Windows: langchain_venv\Scripts\activate
-   ```
 
-  3. **Install dependencies**:
+     **Using pip3:**
      ```bash
-     pip install -r requirements.txt
+     python3.13 -m venv venv
+     source venv/bin/activate  # On Windows: venv\Scripts\activate
      ```
 
-     Or install manually:
+     **Using uv:**
      ```bash
-     pip install langchain-openai langchain-core pydantic python-dotenv
-     pip install langchain-community langchain-chroma chromadb langchain-ollama
-     # For GUI (optional):
-     pip install PyQt6
+     uv venv venv --python 3.13
+     source venv/bin/activate  # On Windows: venv\Scripts\activate
      ```
+
+   3. **Install dependencies**:
+
+      **Using pip3:**
+      ```bash
+      pip3 install -r requirements.txt
+      ```
+
+      **Using uv:**
+      ```bash
+      uv pip install -r requirements.txt
+      ```
+
+   Optional: Install shellcheck for shell script linting (available on macOS via Homebrew, Linux via package managers, Windows via Chocolatey/Scoop). This enables comprehensive linting of shell scripts in the project, helping detect errors and improve code quality. Install with: `brew install shellcheck` (macOS), `sudo apt install shellcheck` (Ubuntu/Debian), or equivalent for your platform.
 
 4. **Configure environment (REQUIRED)**:
      ```bash

@@ -2,58 +2,57 @@
 # Python dependencies for the learning AI assistant
 
 # Core LangChain components
-langchain>=1.0.0                  # Main LangChain package
-langchain-openai>=1.0.0           # OpenAI-compatible LLM interface for LM Studio
-langchain-core>=1.0.0             # Core LangChain abstractions and messages
-langchain-community>=0.4.0        # Community integrations
-langchain-chroma>=1.0.0           # ChromaDB vector database integration
-langchain-ollama>=1.0.0           # Ollama embeddings integration
-langchain-text-splitters>=1.0.0   # Text splitting utilities
+langchain==1.0.7                  # Main LangChain package
+langchain-openai==1.0.3           # OpenAI-compatible LLM interface for LM Studio
+langchain-core==1.0.5             # Core LangChain abstractions and messages
+langchain-community==0.4.1        # Community integrations
+langchain-chroma==1.0.0           # ChromaDB vector database integration
+langchain-ollama==1.0.0           # Ollama embeddings integration
+langchain-text-splitters==1.0.0   # Text splitting utilities
 
 # Vector Database
-chromadb>=1.3.0                   # ChromaDB v2 server for vector storage
+chromadb==1.3.4                   # ChromaDB v2 server for vector storage
 
 # Configuration and Security
-python-dotenv>=1.2.0              # Environment variable management
-pydantic>=2.12.0                  # Data validation and settings management
-pydantic-settings>=2.12.0         # Settings management with pydantic
+python-dotenv==1.2.1              # Environment variable management
+pydantic==2.12.4                  # Data validation and settings management
+pydantic-settings==2.12.0         # Settings management with pydantic
 
 # HTTP Requests (for direct ChromaDB API calls)
-requests>=2.32.0                  # HTTP library for API interactions
-urllib3>=2.0.0                    # HTTP connection pooling and retries
+requests==2.32.5                  # HTTP library for API interactions
+urllib3==2.5.0                    # HTTP connection pooling and retries
 
 # GUI Framework
-PyQt6>=6.10.0                     # Qt6 Python bindings for GUI
+PyQt6==6.10.0                     # Qt6 Python bindings for GUI
 
 # Markdown Processing
-markdown>=3.5.0                   # Markdown to HTML converter
-markdown-it-py>=4.0.0             # Alternative markdown processor
+markdown==3.10                   # Markdown to HTML converter
+markdown-it-py==4.0.0             # Alternative markdown processor
 
 # Enhanced CLI Output (optional)
-rich>=13.7.0                      # Rich text and beautiful formatting for CLI
+rich==14.2.0                      # Rich text and beautiful formatting for CLI
 
 # Document Content Extraction (optional - for enhanced file type support)
-PyPDF2>=3.0.0                     # PDF text extraction
-python-docx>=1.1.0                # Microsoft Word document reading
-striprtf>=0.0.26                  # Rich Text Format parsing
-ebooklib>=0.18                    # EPUB e-book content extraction
-openpyxl>=3.1.0                   # Excel file reading
-chardet>=5.2.0                    # Character encoding detection
+PyPDF2==3.0.1                     # PDF text extraction
+python-docx==1.2.0                # Microsoft Word document reading
+striprtf==0.0.29                  # Rich Text Format parsing
+ebooklib==0.20                    # EPUB e-book content extraction
+openpyxl==3.1.5                   # Excel file reading
+chardet==5.2.0                    # Character encoding detection
 
 # Development and Linting (optional but recommended)
-flake8>=7.0.0                     # Code style and error checking
-mypy>=1.8.0                       # Type checking
-types-Markdown>=3.10.0            # Type stubs for Markdown library
-types-requests>=2.32.0            # Type stubs for requests library
-vulture>=2.10.0                   # Dead code detection
-codespell>=2.4.0                  # Spell checking
+flake8==7.3.0                     # Code style and error checking
+mypy==1.18.2                       # Type checking
+types-Markdown==3.10.0.20251106            # Type stubs for Markdown library
+types-requests==2.32.4.20250913            # Type stubs for requests library
+vulture==2.14                   # Dead code detection
+codespell==2.4.1                  # Spell checking
 # shellcheck>=0.9.0               # Shell script linting (install separately if needed)
 
 # Testing Framework
-pytest>=8.0.0                      # Testing framework
-pytest-cov>=4.1.0                  # Coverage reporting
-pytest-mock>=3.12.0                # Mocking utilities
+pytest==9.0.1                      # Testing framework
+pytest-cov==7.0.0                  # Coverage reporting
+pytest-mock==3.15.1                # Mocking utilities
 
 # Note: Standard library modules (os, json, sqlite3, hashlib, etc.) are included with Python
-# Note: python-dotenv is optional - app will work with system environment variables
-# Note: Versions are minimum tested versions - newer versions should work but may have breaking changes
+# Note: Versions are pinned to tested versions for reproducibility
