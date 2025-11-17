@@ -30,60 +30,13 @@ Command Line Options:
 - --run-gui-tests: Enable GUI tests (normally skipped to prevent crashes)
 
 Fixtures:
-- temp_dir: Temporary directory for file operations
-- mock_env: Mocked environment variables for configuration
 - mock_vectorstore: Mocked ChromaDB vector store
 - mock_llm: Mocked language model for AI interactions
 - mock_embeddings: Mocked text embeddings for vectorization
 """
 
-import os
-import tempfile
 import pytest
-from unittest.mock import MagicMock, patch
-
-
-@pytest.fixture  # vulture: noqa
-def temp_dir():  # noqa: F841 - for future use
-    """Create a temporary directory for testing.
-
-    Provides a clean temporary directory that is automatically
-    cleaned up after each test function completes.
-
-    Yields:
-        str: Path to temporary directory
-    """
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield tmpdir
-
-
-@pytest.fixture  # vulture: noqa
-def mock_env():  # noqa: F841 - for future use
-    """Mock environment variables for testing.
-
-    Sets up all required environment variables with test values
-    to avoid dependency on external configuration files.
-
-    Returns:
-        dict: Dictionary of mocked environment variables
-    """
-    env_vars = {
-        "LM_STUDIO_URL": "http://localhost:1234/v1",
-        "LM_STUDIO_KEY": "test-key",
-        "MODEL_NAME": "test-model",
-        "CHROMA_HOST": "localhost",
-        "CHROMA_PORT": "8000",
-        "OLLAMA_BASE_URL": "http://localhost:11434",
-        "EMBEDDING_MODEL": "test-embedding",
-        "DB_TYPE": "sqlite",
-        "DB_PATH": ":memory:",
-        "MAX_HISTORY_PAIRS": "10",
-        "TEMPERATURE": "0.7",
-        "MAX_INPUT_LENGTH": "1000",
-    }
-
-    with patch.dict(os.environ, env_vars):
-        yield env_vars
+from unittest.mock import MagicMock
 
 
 @pytest.fixture

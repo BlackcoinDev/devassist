@@ -22,8 +22,8 @@
 # SOFTWARE.
 # Test fixtures and sample data for AI Assistant tests
 
-# Sample conversation messages for testing (future use)  # noqa: F841 # vulture: noqa
-SAMPLE_MESSAGES = [
+# Sample conversation messages for testing (future use)
+SAMPLE_MESSAGES = [  # noqa: F841 # vulture: noqa
     {"type": "SystemMessage", "content": "You are a helpful AI assistant."},
     {"type": "HumanMessage", "content": "Hello, how are you?"},
     {
@@ -37,8 +37,8 @@ SAMPLE_MESSAGES = [
     },
 ]
 
-# Sample slash commands for testing (future use)  # noqa: F841
-SAMPLE_COMMANDS = [
+# Sample slash commands for testing (future use)
+SAMPLE_COMMANDS = [  # noqa: F841 # vulture: noqa
     "/help",
     "/memory",
     "/clear",
@@ -50,8 +50,8 @@ SAMPLE_COMMANDS = [
     "/export json",
 ]
 
-# Sample environment configuration for testing (future use)  # noqa: F841
-TEST_ENV_CONFIG = {
+# Sample environment configuration for testing (future use)
+TEST_ENV_CONFIG = {  # noqa: F841 # vulture: noqa
     "LM_STUDIO_URL": "http://localhost:1234/v1",
     "LM_STUDIO_KEY": "test-key-12345",
     "MODEL_NAME": "devstral-small-2507-mlx",
@@ -67,7 +67,7 @@ TEST_ENV_CONFIG = {
 }
 
 # Sample vector database content for testing (future use)
-SAMPLE_VECTOR_CONTENT = [
+SAMPLE_VECTOR_CONTENT = [  # noqa: F841 # vulture: noqa
     {
         "id": "doc_1",
         "content": "This is a sample document about Python programming.",
@@ -89,7 +89,7 @@ SAMPLE_VECTOR_CONTENT = [
 ]
 
 # Sample file system structure for testing (future use)
-SAMPLE_FILE_STRUCTURE = {
+SAMPLE_FILE_STRUCTURE = {  # noqa: F841 # vulture: noqa
     "src": {
         "main.py": "# Main application file",
         "gui.py": "# GUI application file",

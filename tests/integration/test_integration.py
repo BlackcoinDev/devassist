@@ -31,7 +31,7 @@ from unittest.mock import MagicMock, patch
 class TestApplicationIntegration:
     """Integration tests for the complete application."""
 
-    def test_full_initialization_flow(self, mock_env):
+    def test_full_initialization_flow(self):
         """Test complete application initialization flow."""
         from main import initialize_application
 
@@ -65,7 +65,7 @@ class TestApplicationIntegration:
             mock_chroma.assert_called_once()
             mock_sqlite.assert_called_once()
 
-    def test_memory_persistence_flow(self, temp_dir, mock_env):
+    def test_memory_persistence_flow(self):
         """Test memory save/load persistence flow."""
         from main import save_memory
 
@@ -97,7 +97,7 @@ class TestApplicationIntegration:
             assert mock_cursor.execute.call_count >= 2  # DELETE and INSERTs
             mock_conn.commit.assert_called_once()
 
-    def test_space_management_integration(self, mock_env):
+    def test_space_management_integration(self):
         """Test space management integration."""
         from main import get_space_collection_name, switch_space
 
@@ -115,7 +115,7 @@ class TestApplicationIntegration:
             # Note: In real implementation, CURRENT_SPACE would change
 
     @patch("main.vectorstore")
-    def test_context_retrieval_flow(self, mock_vectorstore, mock_env):
+    def test_context_retrieval_flow(self, mock_vectorstore):
         """Test context retrieval flow."""
         from main import get_relevant_context
 
@@ -149,7 +149,7 @@ class TestApplicationIntegration:
 class TestCommandIntegration:
     """Integration tests for command handling."""
 
-    def test_slash_command_integration(self, capsys, mock_env):
+    def test_slash_command_integration(self, capsys):
         """Test slash command integration."""
         from main import handle_slash_command
 
@@ -160,7 +160,7 @@ class TestCommandIntegration:
         captured = capsys.readouterr()
         assert "Available Commands" in captured.out
 
-    def test_memory_command_integration(self, capsys, mock_env):
+    def test_memory_command_integration(self, capsys):
         """Test memory command integration."""
         from main import handle_slash_command
 
@@ -174,7 +174,7 @@ class TestCommandIntegration:
 
     @patch("main.conversation_history", [])
     @patch("main.save_memory")
-    def test_clear_command_integration(self, mock_save, capsys, mock_env):
+    def test_clear_command_integration(self, capsys):
         """Test clear command integration."""
         from main import handle_clear_command
 
@@ -191,7 +191,7 @@ class TestLauncherIntegration:
 
     @patch("launcher.load_dotenv")
     @patch("os.path.exists", return_value=True)
-    def test_launcher_full_flow(self, mock_exists, mock_load_dotenv):
+    def test_launcher_full_flow(self, mock_exists):
         """Test complete launcher flow."""
         with patch("sys.argv", ["launcher.py", "--cli"]):
             with patch("launcher.launch_cli") as mock_launch_cli:
@@ -232,7 +232,7 @@ class TestEndToEnd:
             # GUI not available, which is acceptable
             pass
 
-    def test_configuration_loading(self, mock_env):
+    def test_configuration_loading(self):
         """Test configuration loading from environment."""
         # Test that configuration variables are accessible
         import main

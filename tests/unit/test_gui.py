@@ -93,7 +93,7 @@ class TestGUISupportFunctions:
 
     @patch("gui.MARKDOWN_AVAILABLE", True)
     @patch("gui.markdown")
-    def test_markdown_to_html_with_markdown(self, mock_markdown):
+    def test_markdown_to_html_with_markdown(self):
         """Test markdown to HTML conversion when markdown is available."""
         from gui import AIAssistantGUI
 
@@ -198,7 +198,7 @@ class TestGUIWorker:
 
     @patch("gui.BACKEND_AVAILABLE", False)
     @patch("gui.AIWorker.response_ready")
-    def test_ai_worker_no_backend(self, mock_signal):
+    def test_ai_worker_no_backend(self):
         """Test AI worker when backend is not available."""
         from gui import AIWorker
 

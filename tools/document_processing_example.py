@@ -249,7 +249,9 @@ Provide a detailed structural analysis that could be used for document processin
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def process_document(self, file_path: str, extract_type: str) -> Dict[str, Any]:
+    def process_document(
+        self, file_path: str, extract_type: str
+    ) -> Dict[str, Any]:  # vulture: noqa
         """
         Main document processing method that routes to appropriate extraction method.
 
@@ -278,7 +280,7 @@ Provide a detailed structural analysis that could be used for document processin
 
 # Example usage
 if __name__ == "__main__":
-    processor = QwenDocumentProcessor()
+    processor = QwenDocumentProcessor()  # noqa: F841 # vulture: noqa
 
     # Example: Process a document image
     # result = processor.process_document("document_page1.png", "text")

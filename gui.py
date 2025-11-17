@@ -144,12 +144,7 @@ except ImportError:
 BACKEND_AVAILABLE = False
 
 # Population availability (for document processing)
-try:
-    import os
-
-    POPULATION_AVAILABLE = True
-except ImportError:
-    POPULATION_AVAILABLE = False
+POPULATION_AVAILABLE = True
 
 # Functions from main.py will be imported locally where needed
 
@@ -218,9 +213,6 @@ class AIWorker(QThread):
             context = (
                 get_relevant_context(self.user_input) if current_vectorstore else ""
             )
-
-            # Prepare enhanced history
-            enhanced_history = conversation_history.copy()
 
             # Simple context integration (can be enhanced)
             if context and CONTEXT_MODE != "off":
@@ -361,7 +353,7 @@ class PopulateWorker(QThread):
 
                 try:
                     for i in range(0, total_chunks, batch_size):
-                        batch = all_docs[i : i + batch_size]
+                        batch = all_docs[i: i + batch_size]
                         batch_number = (i // batch_size) + 1
                         total_batches = (total_chunks + batch_size - 1) // batch_size
 
@@ -447,7 +439,7 @@ class AIAssistantGUI(QMainWindow):
         super().__init__()
 
         # Import functions from main.py
-        from main import load_current_space, list_spaces
+        from main import load_current_space
 
         self.worker = None
         self.dark_theme = True  # Default to dark theme
@@ -473,9 +465,6 @@ class AIAssistantGUI(QMainWindow):
 
     def init_ui(self):
         """Initialize the user interface."""
-        # Import functions needed for UI setup
-        from main import list_spaces
-
         self.setWindowTitle("AI Assistant v0.1 - Learning Edition")
         self.setGeometry(100, 100, 1000, 700)
 
@@ -1457,6 +1446,9 @@ class AIAssistantGUI(QMainWindow):
             get_vectorstore,
         )
 
+        # Declare globals for mode variables
+        global CONTEXT_MODE, LEARNING_MODE
+
         try:
             # /memory - Display current conversation history
             if command == "memory":
@@ -1907,7 +1899,7 @@ class AIAssistantGUI(QMainWindow):
                         )
                 else:
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current context mode: <b>{CONTEXT_MODE}</b><br>"  # type: ignore[possibly-unbound-variable]
+                        f"<b>AI Assistant:</b><br>Current context mode: <b>{CONTEXT_MODE}</b><br>"
                     )
                     self.chat_display.append("Usage: /context auto|on|off<br>")
                     self.chat_display.append(
@@ -1942,7 +1934,7 @@ class AIAssistantGUI(QMainWindow):
                         )
                 else:
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current learning mode: <b>{LEARNING_MODE}</b><br>"  # type: ignore[possibly-unbound-variable]
+                        f"<b>AI Assistant:</b><br>Current learning mode: <b>{LEARNING_MODE}</b><br>"
                     )
                     self.chat_display.append("Usage: /learning normal|strict|off<br>")
                     self.chat_display.append(
