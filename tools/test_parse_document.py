@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""
+Test the parse_document tool implementation
+"""
+
+import sys
+from main import execute_parse_document
+
+sys.path.append(".")
+
+
+def test_parse_document():
+    """Test the parse_document tool with different scenarios"""
+
+    print("Testing parse_document tool...")
+
+    # Test 1: Non-existent file
+    print("\n1. Testing non-existent file:")
+    result = execute_parse_document("nonexistent.pdf", "text")
+    print(f"Result: {result}")
+
+    # Test 2: Unsupported file type
+    print("\n2. Testing unsupported file type:")
+    result = execute_parse_document("main.py", "text")
+    print(f"Result: {result}")
+
+    # Test 3: Valid parameters (will show placeholder)
+    print("\n3. Testing valid parameters (placeholder):")
+    result = execute_parse_document("README.md", "text")
+    print(f"Result: {result}")
+
+    # Test 4: Different extract types
+    print("\n4. Testing different extract types:")
+    for extract_type in ["text", "tables", "forms", "layout"]:
+        result = execute_parse_document("README.md", extract_type)
+        print(f"  {extract_type}: {result.get('extract_type', 'error')}")
+
+
+if __name__ == "__main__":
+    test_parse_document()

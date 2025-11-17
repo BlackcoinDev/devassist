@@ -1,0 +1,110 @@
+"""
+Test configuration and shared fixtures for AI Assistant tests.
+
+This module provides shared test fixtures and configuration for the entire test suite.
+Fixtures are automatically available to all test functions without explicit imports.
+
+Command Line Options:
+- --run-gui-tests: Enable GUI tests (normally skipped to prevent crashes)
+
+Fixtures:
+- temp_dir: Temporary directory for file operations
+- mock_env: Mocked environment variables for configuration
+- mock_vectorstore: Mocked ChromaDB vector store
+- mock_llm: Mocked language model for AI interactions
+- mock_embeddings: Mocked text embeddings for vectorization
+"""
+
+import os
+import tempfile
+import pytest
+from unittest.mock import MagicMock, patch
+
+
+@pytest.fixture
+def temp_dir():  # noqa: F841 - for future use
+    """Create a temporary directory for testing.
+
+    Provides a clean temporary directory that is automatically
+    cleaned up after each test function completes.
+
+    Yields:
+        str: Path to temporary directory
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        yield tmpdir
+
+
+@pytest.fixture
+def mock_env():  # noqa: F841 - for future use
+    """Mock environment variables for testing.
+
+    Sets up all required environment variables with test values
+    to avoid dependency on external configuration files.
+
+    Returns:
+        dict: Dictionary of mocked environment variables
+    """
+    env_vars = {
+        "LM_STUDIO_URL": "http://localhost:1234/v1",
+        "LM_STUDIO_KEY": "test-key",
+        "MODEL_NAME": "test-model",
+        "CHROMA_HOST": "localhost",
+        "CHROMA_PORT": "8000",
+        "OLLAMA_BASE_URL": "http://localhost:11434",
+        "EMBEDDING_MODEL": "test-embedding",
+        "DB_TYPE": "sqlite",
+        "DB_PATH": ":memory:",
+        "MAX_HISTORY_PAIRS": "10",
+        "TEMPERATURE": "0.7",
+        "MAX_INPUT_LENGTH": "1000",
+    }
+
+    with patch.dict(os.environ, env_vars):
+        yield env_vars
+
+
+@pytest.fixture
+def mock_vectorstore():
+    """Mock vectorstore for testing.
+
+    Provides a mocked ChromaDB vector store with common methods
+    pre-configured to avoid actual database operations.
+
+    Returns:
+        MagicMock: Configured vectorstore mock
+    """
+    mock_vs = MagicMock()
+    mock_vs.add_documents = MagicMock()
+    return mock_vs
+
+
+@pytest.fixture
+def mock_llm():
+    """Mock LLM for testing.
+
+    Provides a mocked language model that simulates streaming responses
+    without requiring actual API calls to external services.
+
+    Returns:
+        MagicMock: Configured LLM mock with streaming capability
+    """
+    mock_llm = MagicMock()
+    mock_llm.stream = MagicMock(return_value=["Test response"])
+    return mock_llm
+
+
+@pytest.fixture
+def mock_embeddings():
+    """Mock embeddings for testing.
+
+    Provides mocked text embedding functionality to avoid
+    expensive vectorization operations during testing.
+
+    Returns:
+        MagicMock: Configured embeddings mock with query and document methods
+    """
+    mock_emb = MagicMock()
+    mock_emb.embed_query = MagicMock(return_value=[0.1, 0.2, 0.3])
+    mock_emb.embed_documents = MagicMock(return_value=[[0.1, 0.2, 0.3]])
+    return mock_emb
