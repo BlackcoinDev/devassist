@@ -124,46 +124,81 @@ logger = logging.getLogger(__name__)
 
 # Initialize variables (will be imported from main.py)
 conversation_history: List = []
-CONTEXT_MODE = "auto"
-LEARNING_MODE = "normal"
-MODEL_NAME = ""  # Will be set from environment
-CHROMA_HOST = ""  # Will be set from environment
-CHROMA_PORT = 0  # Will be set from environment
-MAX_HISTORY_PAIRS = 0  # Will be set from environment
+CONTEXT_MODE: str = "auto"
+LEARNING_MODE: str = "normal"
+MODEL_NAME: str = ""  # Will be set from environment
+CHROMA_HOST: str = ""  # Will be set from environment
+CHROMA_PORT: int = 0  # Will be set from environment
+MAX_HISTORY_PAIRS: int = 0  # Will be set from environment
 
+# Check for optional dependencies
 try:
-    # Import configuration and core functions
-    from main import (  # noqa: F401
-        load_memory,
-        save_memory,
-        get_relevant_context,
-        get_llm,
-        get_vectorstore,
-        trim_history,
-        CONTEXT_MODE,
-        LEARNING_MODE,
-        MODEL_NAME,  # type: ignore[assignment]
-        CURRENT_SPACE,
-        conversation_history,
-        CHROMA_HOST,  # type: ignore[assignment]
-        CHROMA_PORT,
-        MAX_HISTORY_PAIRS,
-        list_spaces,
-        switch_space,
-        delete_space,
-        get_space_collection_name,
-        load_current_space,
-        save_current_space,
-    )
+    import markdown
 
-    if not BACKEND_AVAILABLE:
-        logger.error("AIWorker: Backend not available")
-        self.response_ready.emit(
-            "❌ Backend not available. Please run main.py first to set up the environment."
-        )
-        return
+    MARKDOWN_AVAILABLE = True
+except ImportError:
+    MARKDOWN_AVAILABLE = False
+    markdown = None  # type: ignore[assignment]
 
-    current_llm = get_llm()  # type: ignore[possibly-unbound-variable]
+# Backend availability will be determined at runtime
+BACKEND_AVAILABLE = False
+
+# Population availability (for document processing)
+try:
+    import os
+
+    POPULATION_AVAILABLE = True
+except ImportError:
+    POPULATION_AVAILABLE = False
+
+# Functions from main.py will be imported locally where needed
+
+# Functions from main.py will be imported when needed
+
+
+class AIWorker(QThread):
+    response_ready = pyqtSignal(str)
+    error_occurred = pyqtSignal(str)
+    finished = pyqtSignal()
+
+    def __init__(self, user_input):
+        super().__init__()
+        self.user_input = user_input
+
+    def run(self):
+        try:
+            # Import configuration and core functions
+            from main import (  # noqa: F401
+                load_memory,
+                save_memory,
+                get_relevant_context,
+                get_llm,
+                get_vectorstore,
+                trim_history,
+                CONTEXT_MODE,
+                LEARNING_MODE,
+                MODEL_NAME,  # type: ignore[assignment]
+                CURRENT_SPACE,
+                conversation_history,
+                CHROMA_HOST,  # type: ignore[assignment]
+                CHROMA_PORT,
+                MAX_HISTORY_PAIRS,
+                list_spaces,
+                switch_space,
+                delete_space,
+                get_space_collection_name,
+                load_current_space,
+                save_current_space,
+            )
+
+            if not BACKEND_AVAILABLE:
+                logger.error("AIWorker: Backend not available")
+                self.response_ready.emit(
+                    "❌ Backend not available. Please run main.py first to set up the environment."
+                )
+                return
+
+            current_llm = get_llm()  # type: ignore[possibly-unbound-variable]
             if current_llm is None:
                 logger.error("AIWorker: LLM not available")
                 self.response_ready.emit(
@@ -178,7 +213,8 @@ try:
             conversation_history.append(HumanMessage(content=self.user_input))
 
             # Get context if available
-            current_vectorstore = get_vectorstore()  # type: ignore[possibly-unbound-variable]
+            # type: ignore[possibly-unbound-variable]
+            current_vectorstore = get_vectorstore()
             context = (
                 get_relevant_context(self.user_input) if current_vectorstore else ""
             )
@@ -188,23 +224,14 @@ try:
 
             # Simple context integration (can be enhanced)
             if context and CONTEXT_MODE != "off":
-                from langchain_core.messages import SystemMessage
-
-                context_msg = SystemMessage(content=f"Context: {context}")
-                enhanced_history.insert(0, context_msg)
+                # Add context to conversation
+                conversation_history.append(HumanMessage(content=f"Context: {context}"))
+                logger.info(f"Added context to conversation ({len(context)} chars)")
 
             # Generate response
-            response = ""
-            for chunk in current_llm.stream(enhanced_history):
-                content = chunk.content
-                if isinstance(content, list):
-                    content = "".join(str(c) for c in content)
-                response += content
-                # Emit partial response for streaming effect
-                self.response_ready.emit(content)
-
-            # Add AI response to history
-            conversation_history.append(AIMessage(content=response))
+            response = current_llm.invoke(conversation_history)
+            conversation_history.append(AIMessage(content=response.content))
+            self.response_ready.emit(response.content)
 
             # Trim conversation history to prevent memory bloat
             conversation_history[:] = trim_history(
@@ -215,7 +242,7 @@ try:
             save_memory(conversation_history)
 
             logger.info(
-                f"AIWorker: Successfully processed response ({len(response)} chars)"
+                f"AIWorker: Successfully processed response ({len(response.content)} chars)"
             )
 
         except Exception as e:
@@ -418,10 +445,14 @@ class AIAssistantGUI(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        # Import functions from main.py
+        from main import load_current_space, list_spaces
+
         self.worker = None
         self.dark_theme = True  # Default to dark theme
         self.markdown_converter = None
-        if MARKDOWN_AVAILABLE:
+        if MARKDOWN_AVAILABLE and markdown is not None:
             # Configure markdown with extensions for better formatting
             self.markdown_converter = markdown.Markdown(
                 extensions=["extra", "codehilite", "toc"],
@@ -432,6 +463,7 @@ class AIAssistantGUI(QMainWindow):
                     }
                 },
             )
+
         self.init_ui()
         self.load_conversation()
 
@@ -441,6 +473,9 @@ class AIAssistantGUI(QMainWindow):
 
     def init_ui(self):
         """Initialize the user interface."""
+        # Import functions needed for UI setup
+        from main import list_spaces
+
         self.setWindowTitle("AI Assistant v0.1 - Learning Edition")
         self.setGeometry(100, 100, 1000, 700)
 
@@ -572,7 +607,8 @@ class AIAssistantGUI(QMainWindow):
         space_layout = QHBoxLayout()
         space_layout.addWidget(QLabel("Space:"))
         self.space_combo = QComboBox()
-        self.space_combo.addItems(list_spaces())
+        # Will be populated when backend is available
+        self.space_combo.addItems(["default"])
         self.space_combo.setCurrentText(CURRENT_SPACE)
         self.space_combo.currentTextChanged.connect(self.change_space)
         space_layout.addWidget(self.space_combo)
@@ -999,6 +1035,8 @@ class AIAssistantGUI(QMainWindow):
 
     def load_conversation(self):
         """Load existing conversation history."""
+        from main import load_memory
+
         try:
             if BACKEND_AVAILABLE:
                 global conversation_history
@@ -1136,6 +1174,8 @@ class AIAssistantGUI(QMainWindow):
 
     def display_vector_database(self):
         """Display vector database contents (similar to CLI /vectordb)."""
+        from main import get_vectorstore
+
         try:
             import requests
 
@@ -1147,7 +1187,8 @@ class AIAssistantGUI(QMainWindow):
             collection_id = None
 
             # Try to get from vectorstore first
-            current_vectorstore = get_vectorstore()  # type: ignore[possibly-unbound-variable]
+            # type: ignore[possibly-unbound-variable]
+            current_vectorstore = get_vectorstore()
             if (
                 current_vectorstore
                 and hasattr(current_vectorstore, "_collection")
@@ -1326,6 +1367,8 @@ class AIAssistantGUI(QMainWindow):
 
     def change_space(self, space_name):
         """Change current workspace/space."""
+        from main import switch_space, list_spaces
+
         global CURRENT_SPACE
         if switch_space(space_name):
             CURRENT_SPACE = space_name
@@ -1378,6 +1421,8 @@ class AIAssistantGUI(QMainWindow):
 
     def handle_quit(self):
         """Handle quit commands."""
+        from main import save_memory
+
         formatted_response = self.markdown_to_html("Goodbye! Have a great day!")
         self.chat_display.append(f"<b>AI Assistant:</b><br>{formatted_response}<br>")
         self.status_label.setText("Goodbye!")
@@ -1402,6 +1447,15 @@ class AIAssistantGUI(QMainWindow):
                 "<b>AI Assistant:</b><br>❌ Backend not available for commands<br>"
             )
             return
+
+        from main import (
+            save_memory,
+            get_space_collection_name,
+            list_spaces,
+            switch_space,
+            delete_space,
+            get_vectorstore,
+        )
 
         try:
             # /memory - Display current conversation history
@@ -1718,7 +1772,8 @@ class AIAssistantGUI(QMainWindow):
                     )
                     return
 
-                current_vectorstore = get_vectorstore()  # type: ignore[possibly-unbound-variable]
+                # type: ignore[possibly-unbound-variable]
+                current_vectorstore = get_vectorstore()
                 if not current_vectorstore:
                     self.chat_display.append(
                         "<b>AI Assistant:</b><br>❌ Vector database not available.<br>"
@@ -1813,7 +1868,8 @@ class AIAssistantGUI(QMainWindow):
                     self.status_label.setText("Populating database...")
 
                     # Start population worker
-                    current_vectorstore = get_vectorstore()  # type: ignore[possibly-unbound-variable]
+                    # type: ignore[possibly-unbound-variable]
+                    current_vectorstore = get_vectorstore()
                     self.populate_worker = PopulateWorker(dir_path, current_vectorstore)
                     self.populate_worker.progress.connect(self.on_populate_progress)
                     self.populate_worker.finished.connect(self.on_populate_finished)
@@ -1851,7 +1907,7 @@ class AIAssistantGUI(QMainWindow):
                         )
                 else:
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current context mode: <b>{CONTEXT_MODE}</b><br>"  # type: ignore[reportUnboundVariable]
+                        f"<b>AI Assistant:</b><br>Current context mode: <b>{CONTEXT_MODE}</b><br>"  # type: ignore[possibly-unbound-variable]
                     )
                     self.chat_display.append("Usage: /context auto|on|off<br>")
                     self.chat_display.append(
@@ -1886,7 +1942,7 @@ class AIAssistantGUI(QMainWindow):
                         )
                 else:
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current learning mode: <b>{LEARNING_MODE}</b><br>"  # type: ignore[reportUnboundVariable]
+                        f"<b>AI Assistant:</b><br>Current learning mode: <b>{LEARNING_MODE}</b><br>"  # type: ignore[possibly-unbound-variable]
                     )
                     self.chat_display.append("Usage: /learning normal|strict|off<br>")
                     self.chat_display.append(
@@ -1943,6 +1999,8 @@ Use Ctrl+C for immediate interruption.<br>
 
     def closeEvent(self, a0):  # type: ignore[override]
         """Handle application close."""
+        from main import save_memory
+
         try:
             if BACKEND_AVAILABLE:
                 save_memory(conversation_history)

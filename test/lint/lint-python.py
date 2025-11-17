@@ -25,10 +25,8 @@
 Python Linting Script v0.1
 Runs comprehensive linting checks on Python files in the project.
 
-Dependencies: flake8, mypy, vulture, codespell
-Install with: pip install flake8 mypy vulture codespell
-
-Usage: python test/lint/lint-python.py
+Dependencies: autopep8, flake8, mypy, vulture, codespell
+Install with: pip install autopep8 flake8 mypy vulture codespell
 """
 
 import os
@@ -117,7 +115,27 @@ def main():
     ):
         all_passed = False
 
-    # 3. MyPy (type checking) - if available
+    # 3. Autopep8 (code formatting check) - if available
+    try:
+        import autopep8  # noqa: F401
+
+        result = subprocess.run(
+            "autopep8 --diff --max-line-length=150 "
+            + " ".join(f'"{f}"' for f in python_files),
+            shell=True,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0 and not result.stdout.strip():
+            print("✅ Autopep8 formatting check passed")
+        else:
+            print("❌ Autopep8 found formatting issues:")
+            print(result.stdout)
+            all_passed = False
+    except ImportError:
+        print("⚠️ Autopep8 not installed, skipping formatting check")
+
+    # 4. MyPy (type checking) - if available
     try:
         import mypy  # noqa: F401
 
@@ -129,7 +147,7 @@ def main():
     except ImportError:
         print("⚠️ MyPy not installed, skipping type checking")
 
-    # 4. Vulture (dead code detection) - if available
+    # 5. Vulture (dead code detection) - if available
     try:
         import vulture  # noqa: F401
 
@@ -161,7 +179,7 @@ def main():
     except ImportError:
         print("⚠️ Vulture not installed, skipping dead code check")
 
-    # 5. Codespell (spell checking) - if available
+    # 6. Codespell (spell checking) - if available
     try:
         import codespell_lib  # noqa: F401
 

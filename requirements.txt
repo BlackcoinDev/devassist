@@ -41,6 +41,7 @@ openpyxl==3.1.5                   # Excel file reading
 chardet==5.2.0                    # Character encoding detection
 
 # Development and Linting (optional but recommended)
+autopep8==2.3.2                   # Automatic PEP8 code formatting
 flake8==7.3.0                     # Code style and error checking
 mypy==1.18.2                       # Type checking
 types-Markdown==3.10.0.20251106            # Type stubs for Markdown library

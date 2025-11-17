@@ -25,10 +25,8 @@
 All Linting Script v0.1
 Runs comprehensive linting checks on all code types in the project.
 
-Dependencies: flake8, mypy, vulture, codespell, shellcheck
-Install with: pip install flake8 mypy vulture codespell && brew install shellcheck
-
-Usage: python test/lint/all-lint.py
+Dependencies: autopep8, flake8, mypy, vulture, codespell, shellcheck
+Install with: pip install autopep8 flake8 mypy vulture codespell && brew install shellcheck
 """
 
 import os

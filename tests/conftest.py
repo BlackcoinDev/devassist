@@ -43,7 +43,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 
-@pytest.fixture
+@pytest.fixture  # vulture: noqa
 def temp_dir():  # noqa: F841 - for future use
     """Create a temporary directory for testing.
 
@@ -57,7 +57,7 @@ def temp_dir():  # noqa: F841 - for future use
         yield tmpdir
 
 
-@pytest.fixture
+@pytest.fixture  # vulture: noqa
 def mock_env():  # noqa: F841 - for future use
     """Mock environment variables for testing.
 

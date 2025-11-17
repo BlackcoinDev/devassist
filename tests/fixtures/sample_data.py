@@ -22,7 +22,7 @@
 # SOFTWARE.
 # Test fixtures and sample data for AI Assistant tests
 
-# Sample conversation messages for testing (future use)  # noqa: F841
+# Sample conversation messages for testing (future use)  # noqa: F841 # vulture: noqa
 SAMPLE_MESSAGES = [
     {"type": "SystemMessage", "content": "You are a helpful AI assistant."},
     {"type": "HumanMessage", "content": "Hello, how are you?"},
