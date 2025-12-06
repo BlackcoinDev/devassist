@@ -20,7 +20,7 @@ pydantic-settings==2.12.0         # Settings management with pydantic
 
 # HTTP Requests (for direct ChromaDB API calls)
 requests==2.32.5                  # HTTP library for API interactions
-urllib3==2.5.0                    # HTTP connection pooling and retries
+urllib3==2.6.0                    # HTTP connection pooling and retries
 
 # GUI Framework
 PyQt6==6.10.0                     # Qt6 Python bindings for GUI
