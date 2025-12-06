@@ -4,7 +4,7 @@
 # Core LangChain components
 langchain==1.0.7                  # Main LangChain package
 langchain-openai==1.0.3           # OpenAI-compatible LLM interface for LM Studio
-langchain-core==1.0.5             # Core LangChain abstractions and messages
+langchain-core==1.0.7             # Core LangChain abstractions and messages
 langchain-community==0.4.1        # Community integrations
 langchain-chroma==1.0.0           # ChromaDB vector database integration
 langchain-ollama==1.0.0           # Ollama embeddings integration
