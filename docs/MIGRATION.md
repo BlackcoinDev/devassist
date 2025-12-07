@@ -96,8 +96,7 @@ LM_STUDIO_URL=http://192.168.0.203:1234/v1    # Your LM Studio endpoint
 LM_STUDIO_KEY=lm-studio                        # API key for authentication
 MODEL_NAME=devstral-small-2507-mlx                        # LLM model name
 
-# Vector Database Configuration
-USE_VECTOR_DB=false                            # Enable/disable vector features
+# Vector Database Configuration (REQUIRED - ChromaDB is mandatory)
 CHROMA_HOST=192.168.0.204                      # ChromaDB server host
 CHROMA_PORT=8000                               # ChromaDB server port
 
@@ -106,7 +105,7 @@ OLLAMA_BASE_URL=http://192.168.0.204:11434    # Ollama embeddings endpoint
 EMBEDDING_MODEL=qwen3-embedding:latest        # Embedding model name
 
 # Application Settings
-MAX_HISTORY_PAIRS=10                           # Conversation memory limit
+MAX_HISTORY_PAIRS=5                            # Conversation memory limit
 TEMPERATURE=0.7                               # LLM creativity (0.0-1.0)
 MAX_INPUT_LENGTH=10000                        # Maximum input length
 
@@ -414,5 +413,4 @@ def log_query_performance(query_name: str, start_time: float, result_count: int)
     # metrics_client.histogram('db_query_duration', duration, tags={'query': query_name})
 ```
 
-This guide provides a comprehensive foundation for implementing various database backends for conversation memory storage, with security, performance, and scalability considerations.</content>
-<parameter name="filePath">DATABASE.md
+This guide provides a comprehensive foundation for implementing various database backends for conversation memory storage, with security, performance, and scalability considerations.
