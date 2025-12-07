@@ -201,20 +201,20 @@ AI: The /populate command processes documents by:
 All Python dependencies are listed in `requirements.txt`. Key libraries include:
 
 ### Core Dependencies
-- **LangChain**: `langchain==1.0.7`, `langchain-openai==1.0.3`, `langchain-core==1.0.7`, `langchain-community==0.4.1`
-- **Vector Database**: `langchain-chroma==1.0.0`, `chromadb==1.3.4`
+- **LangChain**: `langchain==1.1.2`, `langchain-openai==1.1.0`, `langchain-core==1.1.1`, `langchain-community==0.4.1`
+- **Vector Database**: `langchain-chroma==1.0.0`, `chromadb==1.3.5`
 - **Embeddings**: `langchain-ollama==1.0.0`, `langchain-text-splitters==1.0.0`
-- **Configuration**: `python-dotenv==1.2.1`, `pydantic==2.12.4`, `pydantic-settings==2.12.0`
-- **GUI**: `PyQt6==6.10.0`, `markdown==3.10`
+- **Configuration**: `python-dotenv==1.2.1`, `pydantic==2.12.5`, `pydantic-settings==2.12.0`
+- **GUI**: `PyQt6==6.10.1`, `markdown==3.10`
 - **Document Processing**: `PyPDF2==3.0.1`, `python-docx==1.2.0`, `striprtf==0.0.29`, `ebooklib==0.20`, `openpyxl==3.1.5`
 - **CLI Enhancement**: `rich==14.2.0`
 
 ### Development Dependencies (Optional)
-- **Linting**: `flake8==7.3.0`, `mypy==1.18.2`, `vulture==2.14`, `codespell==2.4.1`, `autopep8==2.3.2`
+- **Linting**: `flake8==7.3.0`, `mypy==1.19.0`, `vulture==2.14`, `codespell==2.4.1`, `autopep8==2.3.2`
 - **Type Stubs**: `types-Markdown==3.10.0.20251106`, `types-requests==2.32.4.20250913`
-- **Testing**: `pytest==9.0.1`, `pytest-cov==7.0.0`, `pytest-mock==3.15.1`
+- **Testing**: `pytest==9.0.2`, `pytest-cov==7.0.0`, `pytest-mock==3.15.1`
 - **Shell Linting**: `shellcheck` (install with `brew install shellcheck`)
-- **HTTP**: `requests==2.32.5`, `urllib3==2.6.0`
+- **HTTP**: `requests==2.32.5`, `urllib3==2.3.0`
 
 ## 🧹 Code Quality & Linting
 
@@ -512,19 +512,32 @@ python3 launcher.py --gui  # Explicit GUI launch
 ### GUI vs CLI
 - **GUI**: User-friendly, modern interface, quick commands, settings panel
 - **CLI**: Full control, all features, terminal-based, faster for power users
+
+```
 ============================================================
-AI Assistant Chat Interface
+      AI Assistant Chat Interface v0.1.0
 ============================================================
+📍 Python: 3.13.11 | Model: qwen3-vl-30b
+🔗 LM Studio: http://192.168.0.203:1234/v1
+🗄️  ChromaDB: 192.168.0.204:8000
+🧠 Embeddings: qwen3-embedding:latest
+💾 Memory: SQLite (11 messages loaded)
+🌐 Space: default (collection: knowledge_base)
+
 Hello! I'm ready to help you.
 Commands: 'quit', 'exit', or 'q' to exit
-Slash commands: /memory, /clear, /help
 Type /help for all available commands
+
+✅ Connected to LLM: qwen3-vl-30b (with tool calling)
+✅ Connected to vector database (existing collection)
+✅ Connected to SQLite database for conversation memory
 
 You: Hello! How are you?
 AI Assistant: Hello! I'm doing well, thank you for asking. How can I help you today?
 
-You: What's machine learning?
-AI Assistant: Machine learning algorithms can be supervised, unsupervised, or reinforcement learning. Supervised learning uses labeled training data...
+You: quit
+
+👋 Goodbye! Your conversation has been saved.
 ```
 
 ### Slash Commands v0.1

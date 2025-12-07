@@ -127,6 +127,9 @@ from pydantic import SecretStr  # Secure handling of API keys
 # LOGGING AND ENVIRONMENT SETUP
 # =============================================================================
 
+# Application version
+APP_VERSION = "0.1.0"
+
 # Configure structured logging for the entire application
 # - Level INFO: Shows informational messages, warnings, and errors
 # - Format includes timestamp, log level, and message
@@ -136,6 +139,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Suppress verbose HTTP logging from external libraries
+# This reduces noise during startup while keeping important messages
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("chromadb").setLevel(logging.WARNING)
+logging.getLogger("chromadb.telemetry").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("openai").setLevel(logging.WARNING)
+
 # Load environment variables from .env file for configuration management
 # - Allows sensitive settings (API keys, URLs) to be stored securely
 # - Falls back to system environment variables if .env not available
@@ -144,12 +156,12 @@ try:
     from dotenv import load_dotenv
 
     load_dotenv()
-    logger.info("Loaded environment variables from .env file")
+    # Note: Don't log here - launcher.py already prints this
 
     # Set OpenMP workaround if configured
     if os.getenv("KMP_DUPLICATE_LIB_OK") == "TRUE":
         os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-        logger.info("Applied OpenMP library conflict workaround")
+        # Note: Don't log here - launcher.py already prints this
 
 except ImportError:
     logger.warning(
@@ -414,7 +426,7 @@ def load_embedding_cache():
         if os.path.exists(EMBEDDING_CACHE_FILE):
             with open(EMBEDDING_CACHE_FILE, "r") as f:
                 EMBEDDING_CACHE = json.load(f)
-            logger.info(f"Loaded {len(EMBEDDING_CACHE)} cached embeddings")
+            logger.debug(f"Loaded {len(EMBEDDING_CACHE)} cached embeddings")
     except Exception as e:
         logger.warning(f"Failed to load embedding cache: {e}")
         EMBEDDING_CACHE = {}
@@ -427,7 +439,7 @@ def load_query_cache():
         if os.path.exists(QUERY_CACHE_FILE):
             with open(QUERY_CACHE_FILE, "r") as f:
                 QUERY_CACHE = json.load(f)
-            logger.info(f"Loaded {len(QUERY_CACHE)} cached query results")
+            logger.debug(f"Loaded {len(QUERY_CACHE)} cached query results")
     except Exception as e:
         logger.warning(f"Failed to load query cache: {e}")
         QUERY_CACHE = {}
@@ -486,7 +498,7 @@ if DB_TYPE == "sqlite":
                 )
             """)
             db_conn.commit()
-        logger.info("SQLite database initialized for conversation memory")
+        # Note: Don't log here - initialize_application will print status
     except Exception as e:
         logger.error(f"Failed to initialize SQLite database: {e}")
         db_conn = None
@@ -531,7 +543,7 @@ def load_memory() -> List[BaseMessage]:
                 rows = cursor.fetchall()
 
             if not rows:
-                logger.info(
+                logger.debug(
                     "No conversation history found in database, starting fresh")
                 return [SystemMessage(content="Lets get some coding done..")]
 
@@ -548,7 +560,7 @@ def load_memory() -> List[BaseMessage]:
                     logger.warning(
                         f"Unknown message type: {msg_type}, skipping")
 
-            logger.info(f"Loaded {len(history)} messages from database")
+            logger.debug(f"Loaded {len(history)} messages from database")
             return history
 
         else:
@@ -613,7 +625,7 @@ def save_memory(history: List[BaseMessage]) -> None:
                     )
 
                 db_conn.commit()
-                logger.info("Conversation memory saved to database")
+                logger.debug("Conversation memory saved to database")
 
         else:
             # Database not available - this should not happen in normal operation
@@ -2066,22 +2078,35 @@ def show_welcome():
     current workspace (space) that was last used. Spaces provide isolated
     knowledge bases for different projects or contexts.
     """
-    # Display application branding and welcome message
-    print("=" * 60)
-    print("AI Assistant Chat Interface")
-    print("=" * 60)
-    print("Hello! I'm ready to help you.")
-    print("Commands: 'quit', 'exit', or 'q' to exit")
-    print("Slash commands: /memory, /clear, /help")
-    print("Type /help for all available commands\n")
-
-    # Load the workspace that was last active
-    # Workspaces (spaces) isolate knowledge bases for different projects
+    # Load the workspace that was last active first (needed for display)
     global CURRENT_SPACE
     CURRENT_SPACE = load_current_space()
-    print(
-        f"Current space: {CURRENT_SPACE} (collection: {get_space_collection_name(CURRENT_SPACE)})"
-    )
+
+    # Display clean startup banner
+    print("")
+    print("=" * 60)
+    print(f"      AI Assistant Chat Interface v{APP_VERSION}")
+    print("=" * 60)
+
+    # Show configuration summary
+    print(f"📍 Python: {sys.version.split()[0]} | Model: {MODEL_NAME}")
+    print(f"🔗 LM Studio: {LM_STUDIO_BASE_URL}")
+    print(f"🗄️  ChromaDB: {CHROMA_HOST}:{CHROMA_PORT}")
+    print(f"🧠 Embeddings: {EMBEDDING_MODEL}")
+
+    # Show memory status
+    msg_count = len(conversation_history)
+    print(f"💾 Memory: SQLite ({msg_count} messages loaded)")
+
+    # Show current space
+    print(f"🌐 Space: {CURRENT_SPACE} (collection: {get_space_collection_name(CURRENT_SPACE)})")
+    print("")
+
+    # Show usage hints
+    print("Hello! I'm ready to help you.")
+    print("Commands: 'quit', 'exit', or 'q' to exit")
+    print("Type /help for all available commands")
+    print("")
 
 
 def chunk_text(content: str) -> List[str]:
@@ -2997,16 +3022,16 @@ def main():
             # Handle quit commands - immediate exit with memory save
             # Multiple quit variations for user convenience
             if user_input.lower() in ["quit", "exit", "q"]:
-                print("\nAI Assistant: Goodbye! Have a great day!")
                 # Preserve conversation state
                 save_memory(conversation_history)
+                print("\n👋 Goodbye! Your conversation has been saved.")
                 break
 
             # Additional quit command check (belt and suspenders approach)
             # Handles edge cases where quit might be embedded in other text
             if any(quit_cmd in user_input.lower() for quit_cmd in ["quit", "exit"]):
-                print("\nAI Assistant: Goodbye! Have a great day!")
                 save_memory(conversation_history)
+                print("\n👋 Goodbye! Your conversation has been saved.")
                 break
 
             # Handle slash commands
@@ -3305,9 +3330,9 @@ Do not respond with text about not having access to files.
 
         except KeyboardInterrupt:
             # User pressed Ctrl+C - graceful shutdown preserving conversation state
-            print("\n\nAI Assistant: Interrupted. Goodbye!")
             save_memory(conversation_history)  # Preserve conversation state
-            logger.info("User interrupted the program")
+            print("\n\n👋 Goodbye! Your conversation has been saved.")
+            logger.debug("User interrupted the program")
             break
 
 
