@@ -22,6 +22,13 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 - **🛡️ Error Handling**: Robust error handling with graceful degradation
 - **✅ Type Safety**: Full MyPy type checking with comprehensive linting
 
+## 📖 Documentation
+
+- **[ROADMAP.md](docs/ROADMAP.md)**: Future development plans including security enhancements, Docling integration, Pydantic-AI, LangGraph, and more
+- **[MIGRATION.md](docs/MIGRATION.md)**: Migration guide and version upgrade notes
+- **[AGENTS.md](AGENTS.md)**: Agent guidelines and architecture documentation
+- **[TOOL_CALLING_GUIDE.md](tools/TOOL_CALLING_GUIDE.md)**: Guide for AI tool calling capabilities
+
 ## 🏗️ Architecture
 
 ```
@@ -279,8 +286,8 @@ python test/lint/lint-python.py
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
-   cd Langchain
+   git clone https://github.com/BlackcoinDev/devassist.git
+   cd devassist
    ```
 
 2. **Create Python 3.13 virtual environment**:
@@ -402,7 +409,7 @@ The application validates all required environment variables at startup:
 
 ```bash
 # Activate virtual environment
-source langchain_venv/bin/activate
+source venv/bin/activate
 
 # Ensure .env file is configured (REQUIRED)
 cp .env.example .env  # If not already done
@@ -677,36 +684,69 @@ This recursively scans directories and adds all code files to the ChromaDB vecto
 ### Project Structure
 
 ```
-Langchain/
-├── launcher.py            # Unified launcher for GUI/CLI versions
-├── gui.py                 # PyQt6 graphical user interface
-├── main.py                # CLI application with learning capabilities
+devassist/
+├── launcher.py                # Unified launcher for GUI/CLI versions
+├── gui.py                     # PyQt6 graphical user interface
+├── main.py                    # CLI application with learning capabilities
+├── run_tests.py               # Test runner script
+├── requirements.txt           # Python dependencies
+├── pytest.ini                 # Pytest configuration
+├── mypy.ini                   # MyPy type checking configuration
+├── docs/
+│   ├── MIGRATION.md           # Migration guide and documentation
+│   └── ROADMAP.md             # Future development roadmap
 ├── tools/
-│   ├── populate_codebase.py   # Codebase population script for bulk import
-├── populate_knowledge.py  # Knowledge population script
-├── migrate_memory.py      # Memory migration utility
-├── requirements.txt       # Python dependencies
-├── langchain_venv/        # Python 3.13 virtual environment
-├── conversation_memory.db # SQLite database for persistent chat history
-├── chroma_data/          # ChromaDB v2 server data directory
-├── .env                   # Configuration (copy from .env.example)
-├── .env.example          # Configuration template
-├── AGENTS.md             # Agent guidelines and architecture docs
-└── README.md             # This file
+│   ├── TOOL_CALLING_GUIDE.md          # Guide for AI tool calling
+│   ├── populate_codebase.py           # Codebase population script for bulk import
+│   ├── document_processing_example.py # Document processing examples
+│   ├── integrated_document_workflow.py# Integrated document workflow
+│   ├── enable_tools_example.py        # Tool enabling examples
+│   ├── tool_demo.py                   # Tool demonstration script
+│   ├── test_tools.py                  # Tool testing utilities
+│   ├── test_direct_tools.py           # Direct tool tests
+│   ├── test_fresh_conversation.py     # Fresh conversation tests
+│   ├── test_langchain_tools.py        # LangChain tool tests
+│   ├── test_main_tools.py             # Main tool tests
+│   └── test_parse_document.py         # Document parsing tests
+├── tests/
+│   ├── __init__.py            # Test package initialization
+│   ├── conftest.py            # Pytest fixtures and configuration
+│   ├── fixtures/              # Test fixtures directory
+│   ├── integration/           # Integration tests
+│   └── unit/                  # Unit tests
+├── test/
+│   └── lint/                  # Linting scripts
+│       ├── all-lint.py        # Comprehensive project linting
+│       └── lint-python.py     # Python-specific linting
+├── samples/
+│   ├── Blackcoin-POS-3.pdf                        # Sample PDF document
+│   ├── blackcoin-pos-protocol-v2-whitepaper.pdf   # Sample whitepaper
+│   └── blackcoin-pos-protocol-v3.1-whitepaper.pdf # Sample whitepaper v3.1
+├── venv/                      # Python 3.13 virtual environment
+├── conversation_memory.db     # SQLite database for persistent chat history
+├── .env                       # Configuration (copy from .env.example)
+├── .env.example               # Configuration template
+├── AGENTS.md                  # Agent guidelines and architecture docs
+├── LICENSE                    # MIT License
+└── README.md                  # This file
 ```
 
 ### Key Files Explanation
 
 - **`main.py`**: Core application with chat loop, ChromaDB integration, and rich commands
+- **`gui.py`**: PyQt6-based graphical user interface with full CLI parity
+- **`launcher.py`**: Unified entry point for starting GUI or CLI modes
 - **`tools/populate_codebase.py`**: Script to bulk-load codebases into ChromaDB vector database
+- **`docs/ROADMAP.md`**: Detailed future development plans and integrations
+- **`docs/MIGRATION.md`**: Guide for migrating between versions
+- **`tests/`**: Comprehensive test suite with unit and integration tests
 - **`conversation_memory.db`**: SQLite database for persistent chat history
-- **`chroma_data/`**: ChromaDB v2 server data directory
 
 ### Adding New Features
 
 1. **New Commands**: Add to the slash command handler in `main.py`
 2. **Configuration**: Add environment variables to `.env` and code
-3. **Knowledge**: Use `/learn` command or extend `populate_knowledge.py`
+3. **Knowledge**: Use `/learn` command or use the `/populate` command
 
 ## 🐛 Troubleshooting
 
@@ -735,9 +775,9 @@ Langchain/
 - Check `OLLAMA_BASE_URL` points to correct Ollama instance
 
 **"Import errors"**
-- Activate virtual environment: `source langchain_venv/bin/activate`
-- Install dependencies: `pip install -r requirements.txt` (if available)
-- Check Python version compatibility
+- Activate virtual environment: `source venv/bin/activate`
+- Install dependencies: `pip install -r requirements.txt`
+- Check Python version compatibility (requires Python 3.13.9)
 
 **"Memory not loading"**
 - Check `conversation_memory.db` exists and is readable
@@ -824,7 +864,7 @@ The application is now ready for user testing! Key areas for feedback:
 
 ### Providing Feedback
 
-Please report issues and suggestions at: [GitHub Issues](https://github.com/yourusername/ai-assistant-chat/issues)
+Please report issues and suggestions at: [GitHub Issues](https://github.com/BlackcoinDev/devassist/issues)
 
 When reporting bugs, please include:
 - Operating system and Python version
