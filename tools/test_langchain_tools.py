@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """
-Test LangChain tool binding with devstral-small-2507-mlx
+Test LangChain tool binding with qwen3-vl-30b
 """
 
 # os import removed as it's not used
@@ -33,7 +33,7 @@ from pydantic import SecretStr
 llm = ChatOpenAI(
     base_url="http://192.168.0.203:1234/v1",
     api_key=SecretStr("lm-studio"),
-    model="devstral-small-2507-mlx",
+    model="qwen3-vl-30b",
     temperature=0.0,
 )
 

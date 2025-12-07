@@ -54,7 +54,7 @@ SAMPLE_COMMANDS = [  # noqa: F841 # vulture: noqa
 TEST_ENV_CONFIG = {  # noqa: F841 # vulture: noqa
     "LM_STUDIO_URL": "http://localhost:1234/v1",
     "LM_STUDIO_KEY": "test-key-12345",
-    "MODEL_NAME": "devstral-small-2507-mlx",
+    "MODEL_NAME": "qwen3-vl-30b",
     "CHROMA_HOST": "localhost",
     "CHROMA_PORT": "8000",
     "OLLAMA_BASE_URL": "http://localhost:11434",

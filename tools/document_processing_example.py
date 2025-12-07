@@ -21,9 +21,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """
-Complete Document Processing Implementation for devstral-small-2507
+Complete Document Processing Implementation for qwen3-vl-30b
 
-This example shows how to fully implement document parsing using devstral-small-2507's
+This example shows how to fully implement document parsing using qwen3-vl-30b's
 multimodal capabilities for real document analysis.
 """
 
@@ -36,9 +36,9 @@ from pydantic import SecretStr
 
 class QwenDocumentProcessor:
     """
-    Document processor using devstral-small-2507's multimodal capabilities.
+    Document processor using qwen3-vl-30b's multimodal capabilities.
 
-    This class demonstrates how to use devstral-small-2507 for:
+    This class demonstrates how to use qwen3-vl-30b for:
     - OCR (text extraction from images/documents)
     - Table extraction
     - Form field recognition
@@ -46,22 +46,22 @@ class QwenDocumentProcessor:
     """
 
     def __init__(self):
-        """Initialize the devstral-small-2507 model for document processing."""
+        """Initialize the qwen3-vl-30b model for document processing."""
         self.llm = ChatOpenAI(
             base_url="http://192.168.0.203:1234/v1",
             api_key=SecretStr("lm-studio"),
-            model="devstral-small-2507-mlx",
+            model="qwen3-vl-30b",
             temperature=0.1,  # Low temperature for consistent extraction
         )
 
     def encode_image_to_base64(self, image_path: str) -> str:
-        """Convert image file to base64 string for devstral-small-2507."""
+        """Convert image file to base64 string for qwen3-vl-30b."""
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode("utf-8")
 
     def extract_text(self, document_path: str) -> Dict[str, Any]:
         """
-        Extract all readable text from a document using devstral-small-2507.
+        Extract all readable text from a document using qwen3-vl-30b.
 
         Args:
             document_path: Path to document file
@@ -116,7 +116,7 @@ class QwenDocumentProcessor:
 
     def extract_tables(self, document_path: str) -> Dict[str, Any]:
         """
-        Extract tables from a document using devstral-small-2507.
+        Extract tables from a document using qwen3-vl-30b.
 
         Args:
             document_path: Path to document file
@@ -193,7 +193,7 @@ Example format:
 
     def analyze_layout(self, document_path: str) -> Dict[str, Any]:
         """
-        Analyze document layout and structure using devstral-small-2507.
+        Analyze document layout and structure using qwen3-vl-30b.
 
         Args:
             document_path: Path to document file

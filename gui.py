@@ -45,7 +45,7 @@ CORE FEATURES:
 - Full access to 7 AI tools (read_file, write_file, parse_document, etc.)
 - Natural language processing with autonomous tool calling
 - Context-aware conversations using ChromaDB knowledge base
-- Document intelligence with devstral-small-2507 multimodal analysis
+- Document intelligence with qwen3-vl-30b multimodal analysis
 
 💾 DATA MANAGEMENT:
 - SQLite conversation persistence across sessions
@@ -57,7 +57,7 @@ ARCHITECTURAL INTEGRATION:
 =========================
 This GUI serves as a complete frontend for the main.py backend, providing:
 - Identical slash command support (/learn, /vectordb, /populate, etc.)
-- Same AI tool calling capabilities with devstral-small-2507-mlx
+- Same AI tool calling capabilities with qwen3-vl-30b
 - Consistent error handling and status reporting
 - Unified configuration via .env file requirements
 
@@ -72,7 +72,7 @@ TECHNICAL STACK:
 ===============
 - Frontend: PyQt6 for cross-platform GUI development
 - Backend: LangChain integration with main.py core logic
-- AI: devstral-small-2507-mlx via LM Studio for chat and tool calling
+- AI: qwen3-vl-30b via LM Studio for chat and tool calling
 - Embeddings: qwen3-embedding via Ollama for vectorization
 - Storage: ChromaDB v2 for knowledge, SQLite for conversations
 - Styling: QSS (Qt Style Sheets) for theme customization
@@ -407,7 +407,7 @@ class AIAssistantGUI(QMainWindow):
     - Full access to all 7 AI tools (read_file, write_file, parse_document, etc.)
     - Autonomous tool calling based on natural language understanding
     - Context-aware conversations using ChromaDB knowledge base
-    - Document processing with devstral-small-2507 multimodal analysis
+    - Document processing with qwen3-vl-30b multimodal analysis
 
     TECHNICAL FEATURES:
     ===================

@@ -26,7 +26,7 @@ AI Assistant Chat Application v0.1 - Learning Edition
 CORE SYSTEM OVERVIEW:
 ====================
 This application provides an intelligent conversational AI assistant with advanced learning
-and document processing capabilities. Built specifically for the devstral-small-2507-mlx + qwen3-embedding + ChromaDB stack.
+and document processing capabilities. Built specifically for the qwen3-vl-30b + qwen3-embedding + ChromaDB stack.
 
 ARCHITECTURAL PRINCIPLES:
 - Zero hardcoded defaults - all configuration via .env file
@@ -38,7 +38,7 @@ ARCHITECTURAL PRINCIPLES:
 VERSION 0.1 CAPABILITIES:
 ========================
 🤖 AI FEATURES:
-- Conversational AI with devstral-small-2507-mlx via LM Studio
+- Conversational AI with qwen3-vl-30b via LM Studio
 - 7 specialized tools for file operations and document processing
 - Autonomous tool calling with natural language triggers
 - Context-aware responses using learned knowledge
@@ -50,7 +50,7 @@ VERSION 0.1 CAPABILITIES:
 - Spaces system for isolated knowledge workspaces
 
 📄 DOCUMENT INTELLIGENCE:
-- devstral-small-2507 multimodal analysis for OCR, table extraction, form recognition
+- qwen3-vl-30b multimodal analysis for OCR, table extraction, form recognition
 - Support for PDFs, images, Office documents, and text files
 - Structured data extraction (text, tables, forms, layout)
 - Bulk codebase ingestion with 80+ file type support
@@ -68,7 +68,7 @@ VERSION 0.1 CAPABILITIES:
 - Real-time streaming responses and status updates
 
 🔧 TECHNICAL STACK:
-- LLM: devstral-small-2507-mlx via LM Studio (function calling enabled)
+- LLM: qwen3-vl-30b via LM Studio (function calling enabled)
 - Embeddings: qwen3-embedding:latest via Ollama
 - Vector DB: ChromaDB v2 server for knowledge persistence
 - Memory: SQLite for conversation history
@@ -77,7 +77,7 @@ VERSION 0.1 CAPABILITIES:
 
 INITIALIZATION SEQUENCE:
 1. Load environment configuration (.env file required)
-2. Initialize devstral-small-2507-mlx connection via LM Studio
+2. Initialize qwen3-vl-30b connection via LM Studio
 3. Connect to ChromaDB v2 server for knowledge operations
 4. Initialize Ollama embeddings for vectorization
 5. Load/create SQLite database for conversation memory
@@ -1898,7 +1898,7 @@ def initialize_application():
     Initialize all application components required for operation.
 
     This critical function sets up the complete AI assistant infrastructure:
-    1. LLM Connection: Establishes devstral-small-2507-mlx connection via LM Studio with tool calling enabled
+    1. LLM Connection: Establishes qwen3-vl-30b connection via LM Studio with tool calling enabled
     2. Vector Database: Connects to ChromaDB v2 server for persistent knowledge storage
     3. Embeddings: Initializes qwen3-embedding via Ollama for semantic vectorization
     4. Memory: Loads conversation history from SQLite database
@@ -1939,7 +1939,7 @@ def initialize_application():
             api_key=SecretStr(
                 cast(str, LM_STUDIO_API_KEY)
             ),  # API authentication (usually "lm-studio")
-            # Model name (e.g., "devstral-small-2507-mlx")
+            # Model name (e.g., "qwen3-vl-30b")
             model=cast(str, MODEL_NAME),
             temperature=TEMPERATURE,  # Response creativity (0.0-1.0)
         )
@@ -2121,8 +2121,8 @@ def chunk_text(content: str) -> List[str]:
     return text_splitter.split_text(content)
 
 
-# Tool definitions for devstral-small-2507-mlx function calling
-# All 6 tools tested and confirmed working with devstral-small-2507-mlx
+# Tool definitions for qwen3-vl-30b function calling
+# All 6 tools tested and confirmed working with qwen3-vl-30b
 FILE_SYSTEM_TOOLS = [
     {
         "type": "function",
@@ -2145,7 +2145,7 @@ FILE_SYSTEM_TOOLS = [
         "type": "function",
         "function": {
             "name": "parse_document",
-            "description": "Extract structured data from documents using devstral-small-2507's advanced document parsing capabilities",
+            "description": "Extract structured data from documents using qwen3-vl-30b's advanced document parsing capabilities",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -2261,9 +2261,9 @@ FILE_SYSTEM_TOOLS = [
 
 def execute_tool_call(tool_call):
     """
-    Execute a tool call requested by devstral-small-2507-mlx via function calling.
+    Execute a tool call requested by qwen3-vl-30b via function calling.
 
-    This is the central dispatcher for all AI-initiated tool operations. When the devstral-small-2507-mlx
+    This is the central dispatcher for all AI-initiated tool operations. When the qwen3-vl-30b
     model decides to use a tool (based on user intent and tool descriptions), this function:
 
     1. Parses the tool call from LangChain's structured format
@@ -2276,7 +2276,7 @@ def execute_tool_call(tool_call):
     - write_file: Create/modify files with path validation
     - list_directory: Browse directory contents safely
     - get_current_directory: Get current working directory
-    - parse_document: Extract structured data from documents using devstral-small-2507
+    - parse_document: Extract structured data from documents using qwen3-vl-30b
     - learn_information: Store information in ChromaDB knowledge base
     - search_knowledge: Query learned information via semantic search
 
@@ -2513,9 +2513,9 @@ def execute_search_knowledge(query: str, limit: int = 5) -> dict:
 
 def execute_parse_document(file_path: str, extract_type: str) -> dict:
     """
-    Execute document parsing tool using devstral-small-2507's advanced multimodal capabilities.
+    Execute document parsing tool using qwen3-vl-30b's advanced multimodal capabilities.
 
-    This function leverages the devstral-small-2507-mlx model's sophisticated understanding of visual
+    This function leverages the qwen3-vl-30b model's sophisticated understanding of visual
     content to extract structured data from various document types. It acts as a bridge
     between file system access and AI-powered document intelligence.
 
@@ -2534,7 +2534,7 @@ def execute_parse_document(file_path: str, extract_type: str) -> dict:
     1. Security validation (current directory only)
     2. File type verification and support checking
     3. Specialized prompt generation based on extract_type
-    4. devstral-small-2507 analysis with multimodal understanding
+    4. qwen3-vl-30b analysis with multimodal understanding
     5. Structured result formatting for AI consumption
 
     Args:
@@ -2912,7 +2912,7 @@ def execute_parse_document(file_path: str, extract_type: str) -> dict:
                 "file_path": file_path,
                 "extract_type": extract_type,
                 "file_type": file_ext,
-                "analysis": f"Document analysis for {extract_type} extraction using devstral-small-2507 capabilities",
+                "analysis": f"Document analysis for {extract_type} extraction using qwen3-vl-30b capabilities",
                 "note": f"Full {extract_type} extraction not yet implemented for {file_ext} files",
             }
 
@@ -2925,7 +2925,7 @@ def main():
     Main chat loop v0.1 - Core interactive interface with AI tool calling.
 
     This function implements the primary user interaction loop featuring:
-    1. AI tool calling with devstral-small-2507-mlx (7 autonomous tools supported)
+    1. AI tool calling with qwen3-vl-30b (7 autonomous tools supported)
     2. AI learning and knowledge retention via ChromaDB vector database
     3. Comprehensive slash command system for direct user control
     4. Context-aware conversations using semantic search and learned information
@@ -2933,9 +2933,9 @@ def main():
     6. Codebase ingestion for comprehensive AI knowledge building
     7. Persistent conversation memory across sessions via SQLite
     8. Spaces system for isolated knowledge workspaces
-    9. Document intelligence with devstral-small-2507 multimodal analysis
+    9. Document intelligence with qwen3-vl-30b multimodal analysis
 
-    AI TOOL ECOSYSTEM (7 Tools - devstral-small-2507-mlx Function Calling):
+    AI TOOL ECOSYSTEM (7 Tools - qwen3-vl-30b Function Calling):
     =======================
     File System Tools:
     - read_file() - Secure file reading with content validation
@@ -2944,7 +2944,7 @@ def main():
     - get_current_directory() - Current working directory retrieval
 
     Document Intelligence Tools:
-    - parse_document() - devstral-small-2507 multimodal document analysis (OCR, tables, forms, layout)
+    - parse_document() - qwen3-vl-30b multimodal document analysis (OCR, tables, forms, layout)
 
     Knowledge Management Tools:
     - learn_information() - Store information in ChromaDB with metadata

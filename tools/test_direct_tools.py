@@ -77,7 +77,7 @@ messages = [
 
 print("Testing with direct OpenAI API...")
 response = client.chat.completions.create(
-    model="devstral-small-2507-mlx",
+    model="qwen3-vl-30b",
     messages=messages,  # type: ignore
     tools=tools,  # type: ignore
 )

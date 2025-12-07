@@ -174,7 +174,7 @@ class TestCommandIntegration:
 
     @patch("main.conversation_history", [])
     @patch("main.save_memory")
-    def test_clear_command_integration(self, capsys):
+    def test_clear_command_integration(self, mock_save, capsys):
         """Test clear command integration."""
         from main import handle_clear_command
 
@@ -191,7 +191,7 @@ class TestLauncherIntegration:
 
     @patch("launcher.load_dotenv")
     @patch("os.path.exists", return_value=True)
-    def test_launcher_full_flow(self, mock_exists):
+    def test_launcher_full_flow(self, mock_exists, mock_dotenv):
         """Test complete launcher flow."""
         with patch("sys.argv", ["launcher.py", "--cli"]):
             with patch("launcher.launch_cli") as mock_launch_cli:

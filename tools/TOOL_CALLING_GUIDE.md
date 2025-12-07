@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains the complete AI tool calling ecosystem in your AI assistant, featuring **7 powerful tools** that work together with **ChromaDB vector storage**, **Ollama embeddings**, and **devstral-small-2507-mlx's multimodal capabilities** to create an intelligent document processing and knowledge management system.
+This guide explains the complete AI tool calling ecosystem in your AI assistant, featuring **7 powerful tools** that work together with **ChromaDB vector storage**, **Ollama embeddings**, and **qwen3-vl-30b's multimodal capabilities** to create an intelligent document processing and knowledge management system.
 
 ## How Tool Calling Works
 
@@ -80,7 +80,7 @@ final_response = llm.invoke(enhanced_history)  # Includes tool results
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   User Query    │───▶│  devstral-small-2507-mlx   │───▶│   Tool Router   │
+│   User Query    │───▶│  qwen3-vl-30b   │───▶│   Tool Router   │
 │                 │    │  (Multimodal)   │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
@@ -100,7 +100,7 @@ final_response = llm.invoke(enhanced_history)  # Includes tool results
 
 ## Compatible AI Models
 
-- **devstral-small-2507-mlx via LM Studio** ⭐⭐⭐ (Current model with tool calling support)
+- **qwen3-vl-30b via LM Studio** ⭐⭐⭐ (Current model with tool calling support)
 
 ## Available Tools
 
@@ -108,21 +108,21 @@ final_response = llm.invoke(enhanced_history)  # Includes tool results
 
 #### `read_file(file_path: string)` ⭐ **TESTED & WORKING**
 Reads file contents with security restrictions.
-- **Status**: ✅ **Fully tested with devstral-small-2507-mlx**
+- **Status**: ✅ **Fully tested with qwen3-vl-30b**
 - **Security**: Only current directory, max 1MB file size
 - **Returns**: File content, size, success status
 - **Usage**: AI successfully reads and displays file contents
 
 #### `write_file(file_path: string, content: string)` ⭐ **READY**
 Writes content to files with automatic directory creation.
-- **Status**: ✅ **Supported by devstral-small-2507-mlx**
+- **Status**: ✅ **Supported by qwen3-vl-30b**
 - **Security**: Only current directory, path validation
 - **Returns**: Success status, file size
 - **Features**: Auto-creates directories as needed
 
 #### `list_directory(directory_path?: string)` ⭐ **READY**
 Lists directory contents.
-- **Status**: ✅ **Supported by devstral-small-2507-mlx**
+- **Status**: ✅ **Supported by qwen3-vl-30b**
 - **Default**: Current directory (".")
 - **Security**: Only current directory tree
 - **Returns**: File/directory list, total count
@@ -130,32 +130,32 @@ Lists directory contents.
 
 #### `get_current_directory()` ⭐ **TESTED & WORKING**
 Returns current working directory path.
-- **Status**: ✅ **Successfully tested with devstral-small-2507-mlx**
+- **Status**: ✅ **Successfully tested with qwen3-vl-30b**
 - **Returns**: Absolute path string
 - **Usage**: Confirmed working in tool call tests
 
 ### Document Processing Tools
 
 #### `parse_document(file_path: string, extract_type: string)` ⭐ **READY**
-Extracts structured data from documents using devstral-small-2507's multimodal capabilities.
-- **Status**: ✅ **Supported by devstral-small-2507-mlx**
+Extracts structured data from documents using qwen3-vl-30b's multimodal capabilities.
+- **Status**: ✅ **Supported by qwen3-vl-30b**
 - **Extract Types**: "text", "tables", "forms", "layout"
 - **Supported Files**: PDFs, Office docs (DOCX/XLSX), RTF, EPUB, Images (PNG/JPG), Text files (TXT/MD)
 - **Returns**: Structured extraction results based on extract_type
-- **Integration**: Leverages devstral-small-2507's OCR, table recognition, and layout analysis
+- **Integration**: Leverages qwen3-vl-30b's OCR, table recognition, and layout analysis
 
 ### Knowledge Management Tools
 
 #### `learn_information(information: string, metadata?: object)` ⭐ **READY**
 Adds information to AI's knowledge base.
-- **Status**: ✅ **Supported by devstral-small-2507-mlx**
+- **Status**: ✅ **Supported by qwen3-vl-30b**
 - **Parameters**: Information text, optional metadata
 - **Returns**: Success status, information length
 - **Integration**: Works with existing learning system and ChromaDB
 
 #### `search_knowledge(query: string, limit?: number)` ⭐ **READY**
 Searches learned knowledge for relevant information.
-- **Status**: ✅ **Supported by devstral-small-2507-mlx**
+- **Status**: ✅ **Supported by qwen3-vl-30b**
 - **Default limit**: 5 results maximum
 - **Returns**: Search results, match count
 - **Integration**: Uses semantic search with Ollama embeddings
@@ -164,12 +164,12 @@ Searches learned knowledge for relevant information.
 
 ### Step 1: Choose Your AI Model
 
-**For devstral-small-2507-mlx:**
+**For qwen3-vl-30b:**
 ```bash
 # .env (your current configuration)
 LM_STUDIO_URL=http://192.168.0.203:1234/v1
 LM_STUDIO_KEY=lm-studio
-MODEL_NAME=devstral-small-2507-mlx
+MODEL_NAME=qwen3-vl-30b
 ```
 
 ### Step 2: Enable Tool Calling in Code
@@ -333,7 +333,7 @@ The `tools/` folder contains development utilities, examples, and test scripts f
 ### Example Scripts
 
 #### `document_processing_example.py`
-- **Purpose**: Demonstrates document parsing using devstral-small-2507's multimodal capabilities
+- **Purpose**: Demonstrates document parsing using qwen3-vl-30b's multimodal capabilities
 - **Usage**: Run as standalone example for document analysis workflows
 - **Features**: Image processing, OCR, table extraction, form recognition
 - **Status**: Educational example
@@ -410,7 +410,7 @@ The `tools/` folder contains development utilities, examples, and test scripts f
 - **Storage Optimization**: Regular clearing prevents bloated databases
 
 ### GPU Memory Considerations
-- **Current Model**: devstral-small-2507-mlx requires <8GB VRAM (optimal)
+- **Current Model**: qwen3-vl-30b requires <8GB VRAM (optimal)
 - **Large Models**: qwen3-vl-30b requires ~60GB VRAM + context overhead
 - **Tool Overhead**: Each tool call increases memory usage
 - **Context Growth**: Long conversations compound memory requirements
@@ -435,4 +435,4 @@ The `tools/` folder contains development utilities, examples, and test scripts f
 
 **Ready to supercharge your AI assistant with tool calling capabilities!** 🚀
 
-The infrastructure is complete and working with devstral-small-2507-mlx.
+The infrastructure is complete and working with qwen3-vl-30b.

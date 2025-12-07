@@ -117,9 +117,9 @@ class TestCaching(unittest.TestCase):
     """
 
     @patch("main.os.path.exists")
-    @patch("main.open", new_callable=mock_open, read_data='{"test": [1, 2, 3]}')
+    @patch("builtins.open", new_callable=mock_open, read_data='{"test": [1, 2, 3]}')
     @patch("main.json.load")
-    def test_load_embedding_cache(self, mock_json_load, mock_exists):
+    def test_load_embedding_cache(self, mock_json_load, mock_file, mock_exists):
         """Test loading embedding cache."""
         mock_exists.return_value = True
         mock_json_load.return_value = {"test": [1, 2, 3]}
@@ -262,7 +262,7 @@ class TestSlashCommands(unittest.TestCase):
     @patch("main.input", return_value="yes")
     @patch("main.conversation_history", [SystemMessage(content="Test")])
     @patch("main.save_memory")
-    def test_handle_clear_command_yes(self):
+    def test_handle_clear_command_yes(self, mock_save, mock_input):
         """Test /clear command with yes confirmation."""
         import io
         from contextlib import redirect_stdout
@@ -276,7 +276,7 @@ class TestSlashCommands(unittest.TestCase):
         self.assertIn("cleared", output.lower())
 
     @patch("main.input", return_value="no")
-    def test_handle_clear_command_no(self):
+    def test_handle_clear_command_no(self, mock_input):
         """Test /clear command with no confirmation."""
         import io
         from contextlib import redirect_stdout
@@ -346,7 +346,7 @@ class TestSpaceCommands(unittest.TestCase):
     """Test space management commands."""
 
     @patch("main.list_spaces", return_value=["default", "test"])
-    def test_handle_space_command_list(self):
+    def test_handle_space_command_list(self, mock_list):
         """Test /space list command."""
         import io
         from contextlib import redirect_stdout
@@ -360,7 +360,7 @@ class TestSpaceCommands(unittest.TestCase):
 
     @patch("main.list_spaces", return_value=["default"])
     @patch("main.switch_space", return_value=True)
-    def test_handle_space_command_create(self):
+    def test_handle_space_command_create(self, mock_switch, mock_list):
         """Test /space create command."""
         import io
         from contextlib import redirect_stdout
@@ -374,7 +374,7 @@ class TestSpaceCommands(unittest.TestCase):
 
     @patch("main.list_spaces", return_value=["default", "test"])
     @patch("main.switch_space", return_value=True)
-    def test_handle_space_command_switch(self):
+    def test_handle_space_command_switch(self, mock_switch, mock_list):
         """Test /space switch command."""
         import io
         from contextlib import redirect_stdout
@@ -399,7 +399,7 @@ class TestExportCommand(unittest.TestCase):
         ],
     )
     @patch("builtins.open", new_callable=mock_open)
-    def test_handle_export_command_json(self):
+    def test_handle_export_command_json(self, mock_file):
         """Test /export json command."""
         import io
         from contextlib import redirect_stdout

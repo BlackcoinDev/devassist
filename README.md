@@ -9,12 +9,12 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 - **🏢 Spaces System**: Isolated workspaces with separate knowledge bases
 - **💾 Vector Database**: ChromaDB v2 server (required) for knowledge storage and retrieval
 - **📚 Document Processing**: Extract content from PDFs, Word docs, Excel files, RTF, EPUB, and 80+ file types
-- **📄 Advanced Document Analysis**: devstral-small-2507's multimodal capabilities for OCR, table extraction, form analysis, and layout understanding
+- **📄 Advanced Document Analysis**: qwen3-vl-30b's multimodal capabilities for OCR, table extraction, form analysis, and layout understanding
 - **🔧 Codebase Ingestion**: Bulk import entire projects with intelligent file type detection
 - **🔄 Model Switching**: Easy switching between different AI models
 - **💬 Persistent Memory**: SQLite database for conversation history (no JSON files)
 - **🎯 Context Awareness**: AI uses learned information in relevant conversations
-- **🛠️ AI Tool Calling**: devstral-small-2507-mlx supports 7 powerful tools for file operations, document processing, and knowledge management
+- **🛠️ AI Tool Calling**: qwen3-vl-30b supports 7 powerful tools for file operations, document processing, and knowledge management
 - **⚡ Streaming Responses**: Real-time response display for better user experience
 - **🛠️ Rich Commands**: Comprehensive slash command system in both GUI and CLI
 - **🎨 Markdown Support**: Rich text formatting in GUI with HTML rendering
@@ -63,7 +63,7 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   LM Studio     │    │     Ollama      │    │   File System   │
 │   (LLM API)     │    │  (Embeddings)   │    │   (Documents)   │
-│  devstral-mlx   │    │ qwen3-embedding │    │   80+ formats   │
+│  qwen3-vl-30b   │    │ qwen3-embedding │    │   80+ formats   │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -163,7 +163,7 @@ AI: The /populate command processes documents by:
 3. **🧠 Learning System**: AI can learn and retain information via vector database
 4. **💾 ChromaDB v2 Server**: Distributed vector database for persistent knowledge storage
 5. **🔍 Semantic Search**: Context-aware information retrieval using embeddings
-6. **📄 Document Processing**: devstral-small-2507 multimodal analysis for OCR, table extraction, form analysis, and layout understanding
+6. **📄 Document Processing**: qwen3-vl-30b multimodal analysis for OCR, table extraction, form analysis, and layout understanding
 7. **🛠️ AI Tool Calling**: 7 powerful tools for file operations, document processing, and knowledge management
 8. **📝 Code Ingestion**: Bulk import and indexing of codebases with 80+ file type support
 9. **💬 Memory Management**: SQLite-based conversation persistence across sessions
@@ -191,7 +191,7 @@ AI: The /populate command processes documents by:
 ## 📋 Prerequisites
 
 - **Python 3.13.9** (recommended - tested with this version)
-- **LM Studio** running locally with a model loaded (devstral-small-2507-mlx recommended)
+- **LM Studio** running locally with a model loaded (qwen3-vl-30b recommended)
 - **ChromaDB v2 Server** running locally (port 8000) - **REQUIRED** for learning features
 - **Ollama** running locally for embeddings (qwen3-embedding:latest) - **REQUIRED** for learning features
 - **Git** for cloning the repository
@@ -255,7 +255,7 @@ python test/lint/lint-python.py
 
 1. **LM Studio** (Port 1234) - **REQUIRED**:
      ```bash
-     # Install LM Studio and load devstral-small-2507-mlx model
+     # Install LM Studio and load qwen3-vl-30b model
      # Start local server at http://192.168.0.203:1234
      ```
 
@@ -367,7 +367,7 @@ All variables in `.env.example` are **required** - there are no defaults:
 # LM Studio Configuration (REQUIRED)
 LM_STUDIO_URL=http://192.168.0.203:1234/v1    # Your LM Studio endpoint
 LM_STUDIO_KEY=lm-studio                        # API key for LM Studio
-MODEL_NAME=devstral-small-2507-mlx                        # LLM model name
+MODEL_NAME=qwen3-vl-30b                        # LLM model name
 
 # Vector Database Configuration (REQUIRED - ChromaDB is mandatory)
 CHROMA_HOST=192.168.0.204                      # ChromaDB server host
@@ -479,7 +479,7 @@ The application includes a modern PyQt6-based graphical interface with:
 │ AI Assistant v0.1 - Learning Edition            │
 ├─────────────────────────────┬───────────────────┤
 │ Chat Display Area           │ Status: Ready     │
-│ ┌─────────────────────────┐ │ Model: devstral-small-2507-mlx │
+│ ┌─────────────────────────┐ │ Model: qwen3-vl-30b │
 │ │ You: Hello!            │ │                   │
 │ │ AI: Hi there!          │ │ Quick Commands     │
 │ │ ...                     │ │ ┌─────────────┐   │
@@ -550,7 +550,7 @@ AI Assistant: Machine learning algorithms can be supervised, unsupervised, or re
 
 ### AI Tool Integration
 
-**7 AI Tools Available** (devstral-small-2507-mlx can call these autonomously):
+**7 AI Tools Available** (qwen3-vl-30b can call these autonomously):
 
 | Tool | Function | Use Case |
 |------|----------|----------|
@@ -878,7 +878,7 @@ When reporting bugs, please include:
 
 ### Current Working Configuration
 
-**✅ RECOMMENDED SETUP**: devstral-small-2507-mlx provides optimal performance for most systems.
+**✅ RECOMMENDED SETUP**: qwen3-vl-30b provides optimal performance for most systems.
 
 **Performance Expectations**:
 - **Response Times**: 2-5 seconds for typical queries
@@ -895,7 +895,7 @@ When reporting bugs, please include:
 **Root Cause**: Large models require 60GB+ VRAM + context overhead
 
 **Solutions**:
-1. **Use devstral-small-2507-mlx** (recommended - already working perfectly)
+1. **Use qwen3-vl-30b** (recommended - already working perfectly)
 2. **Reduce memory usage**:
    ```bash
    /clear                    # Reset conversation history
@@ -911,7 +911,7 @@ When reporting bugs, please include:
 **Performance Expectations**:
 - **qwen3-4b models**: 3-8 seconds per response
 - **CPU mode**: 10-20 seconds per response
-- **devstral-small-2507-mlx**: 15-30 seconds (with optimizations)
+- **qwen3-vl-30b**: 15-30 seconds (with optimizations)
 
 ## 🤝 Contributing
 

@@ -35,7 +35,7 @@ sys.path.append(".")
 llm = ChatOpenAI(
     base_url="http://192.168.0.203:1234/v1",
     api_key=SecretStr("lm-studio"),
-    model="devstral-small-2507-mlx",
+    model="qwen3-vl-30b",
     temperature=0.0,
 )
 

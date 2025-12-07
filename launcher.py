@@ -56,7 +56,7 @@ CONFIGURATION MANAGEMENT:
     - Supports system environment variable overrides
 
 REQUIRED ENVIRONMENT VARIABLES:
-    - LM_STUDIO_URL: devstral-small-2507-mlx endpoint via LM Studio
+    - LM_STUDIO_URL: qwen3-vl-30b endpoint via LM Studio
     - LM_STUDIO_KEY: API authentication key
     - MODEL_NAME: AI model identifier
     - CHROMA_HOST/PORT: ChromaDB v2 server connection

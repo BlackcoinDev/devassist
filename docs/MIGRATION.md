@@ -44,7 +44,7 @@ This guide covers the currently implemented database backends and important migr
 
 #### Tool Integration Architecture
 ```
-User Query → AI (devstral-small-2507-mlx) → Tool Selection → Execution → Result Integration → AI Response
+User Query → AI (qwen3-vl-30b) → Tool Selection → Execution → Result Integration → AI Response
      ↓              ↓                      ↓            ↓              ↓              ↓
 File System    Multimodal Analysis     Secure        Structured     Conversation     Contextual
 Operations     & Understanding        Execution      Data Output    Context         Responses
@@ -67,7 +67,7 @@ Operations     & Understanding        Execution      Data Output    Context     
 - **No File Storage**: Results exist only in memory/conversation during session
 
 #### Available Tools
-1. **`read_file()`** - Read file contents (tested & working with devstral-small-2507-mlx)
+1. **`read_file()`** - Read file contents (tested & working with qwen3-vl-30b)
 2. **`write_file()`** - Create/modify files (ready)
 3. **`list_directory()`** - Browse directories (ready)
 4. **`get_current_directory()`** - Show current path (tested & working)
@@ -76,7 +76,7 @@ Operations     & Understanding        Execution      Data Output    Context     
 7. **`search_knowledge()`** - Query learned information (ready)
 
 #### Tool Ecosystem Benefits
-- **Document Intelligence**: devstral-small-2507's multimodal capabilities for OCR, table extraction, form analysis
+- **Document Intelligence**: qwen3-vl-30b's multimodal capabilities for OCR, table extraction, form analysis
 - **Knowledge Synthesis**: Tools work together to build comprehensive understanding
 - **Result Integration**: Tool outputs seamlessly feed into AI response generation
 - **Autonomous Operations**: AI can execute complex multi-step tasks without user intervention
@@ -94,7 +94,7 @@ Operations     & Understanding        Execution      Data Output    Context     
 # LM Studio Configuration
 LM_STUDIO_URL=http://192.168.0.203:1234/v1    # Your LM Studio endpoint
 LM_STUDIO_KEY=lm-studio                        # API key for authentication
-MODEL_NAME=devstral-small-2507-mlx                        # LLM model name
+MODEL_NAME=qwen3-vl-30b                        # LLM model name
 
 # Vector Database Configuration (REQUIRED - ChromaDB is mandatory)
 CHROMA_HOST=192.168.0.204                      # ChromaDB server host

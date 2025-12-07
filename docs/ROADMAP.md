@@ -50,7 +50,7 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 **Priority**: Medium  
 **Status**: Planned  
 
-- **Multiple Models**: Support for different Ollama models beyond devstral-small-2507-mlx
+- **Multiple Models**: Support for different Ollama models beyond qwen3-vl-30b
 - **Integration Steps**:
   1. Add model selection to GUI settings panel
   2. Update model loading in `initialize_application()`

@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """
-Test Tool Calling with devstral-small-2507-mlx
+Test Tool Calling with qwen3-vl-30b
 """
 
 # os import removed as it's not used
@@ -54,7 +54,7 @@ def get_current_time():
 # Test 1: Ask for time (should trigger tool)
 print("Test 1: Asking for current time")
 response = client.chat.completions.create(
-    model="devstral-small-2507-mlx",
+    model="qwen3-vl-30b",
     messages=[{"role": "user", "content": "What time is it right now?"}],
     tools=tools,  # type: ignore
 )
@@ -79,7 +79,7 @@ if response.choices[0].message.tool_calls:
     ]
 
     final_response = client.chat.completions.create(
-        model="devstral-small-2507-mlx",
+        model="qwen3-vl-30b",
         messages=messages,  # type: ignore
     )
 
@@ -110,7 +110,7 @@ read_tools = [
 ]
 
 response3 = client.chat.completions.create(
-    model="devstral-small-2507-mlx",
+    model="qwen3-vl-30b",
     messages=[{"role": "user", "content": "read the README file"}],
     tools=read_tools,  # type: ignore
 )
