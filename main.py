@@ -1176,7 +1176,7 @@ def handle_learn_command(content: str):
             # Fallback to LangChain method
             try:
                 vectorstore.add_documents([doc])
-                logger.info("Used LangChain fallback for document addition")
+                logger.debug("Used LangChain fallback for document addition")
             except Exception as fallback_e:
                 logger.error(f"LangChain fallback also failed: {fallback_e}")
                 print(f"\n❌ Failed to learn: {e}\n")
@@ -3102,16 +3102,16 @@ Do not respond with text about not having access to files.
             if LEARNING_MODE == "off":
                 # Learning is completely disabled
                 context = ""
-                logger.info(
+                logger.debug(
                     "Learning mode is off - skipping context integration")
             elif CONTEXT_MODE == "off":
                 # Context integration is disabled
                 context = ""
-                logger.info(
+                logger.debug(
                     "Context mode is off - skipping context integration")
             elif CONTEXT_MODE == "on" and context:
                 # Always include context when available
-                logger.info(
+                logger.debug(
                     f"Context mode is on - including context: {context[:200]}..."
                 )
             elif CONTEXT_MODE == "auto" and context:
@@ -3133,11 +3133,11 @@ Do not respond with text about not having access to files.
                 )
 
                 if is_learning_query:
-                    logger.info(
+                    logger.debug(
                         f"Auto mode - Learning query detected, including context: {context[:200]}..."
                     )
                 else:
-                    logger.info(
+                    logger.debug(
                         f"Auto mode - Regular query, skipping context integration"
                     )
 
@@ -3160,7 +3160,7 @@ Do not respond with text about not having access to files.
                 enhanced_history.insert(
                     0, SystemMessage(content=system_content))
             system_content = "Lets get some coding done.." + tool_instructions
-            logger.info(
+            logger.debug(
                 f"After concatenation, system_content len: {len(system_content)}"
             )
             if context and should_include_context:
@@ -3168,22 +3168,22 @@ Do not respond with text about not having access to files.
 
             # Replace the first system message if it exists, otherwise insert
             if enhanced_history and isinstance(enhanced_history[0], SystemMessage):
-                logger.info("Replacing existing system message")
+                logger.debug("Replacing existing system message")
                 enhanced_history[0] = SystemMessage(content=system_content)
-                logger.info(
+                logger.debug(
                     f"New first message content: {enhanced_history[0].content[:100]}..."
                 )
             else:
-                logger.info("Inserting new system message")
+                logger.debug("Inserting new system message")
                 enhanced_history.insert(
                     0, SystemMessage(content=system_content))
 
-            logger.info(
+            logger.debug(
                 f"Final system message ({len(system_content)} chars): {repr(system_content[:100])}..."
             )
 
             if context and should_include_context:
-                logger.info(
+                logger.debug(
                     f"Context integrated ({len(context)} chars): {context[:100]}..."
                 )
 
@@ -3199,12 +3199,12 @@ Do not respond with text about not having access to files.
             try:
                 # Make initial call with tools already bound to LLM
                 initial_response = llm.invoke(enhanced_history)
-                logger.info(f"LLM response type: {type(initial_response)}")
-                logger.info(
+                logger.debug(f"LLM response type: {type(initial_response)}")
+                logger.debug(
                     f"Has tool_calls attr: {hasattr(initial_response, 'tool_calls')}"
                 )
                 if hasattr(initial_response, "tool_calls"):
-                    logger.info(f"Tool calls: {initial_response.tool_calls}")
+                    logger.debug(f"Tool calls: {initial_response.tool_calls}")
 
                 # Check if the response contains tool calls
                 if (
@@ -3309,9 +3309,10 @@ Do not respond with text about not having access to files.
         except EOFError:
             # End of input stream (e.g., pipe closed, file ended)
             # Common when running in automated environments or with piped input
-            print("\n\nAI Assistant: Input ended. Goodbye!")
+            # Common when running in automated environments or with piped input
             save_memory(conversation_history)
-            logger.info("End of input reached")
+            print("\n\n👋 Goodbye! Your conversation has been saved.")
+            logger.debug("End of input reached")
             break
 
         except Exception as e:
