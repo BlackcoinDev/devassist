@@ -137,12 +137,12 @@ Returns current working directory path.
 ### Document Processing Tools
 
 #### `parse_document(file_path: string, extract_type: string)` ⭐ **READY**
-Extracts structured data from documents using qwen3-vl-30b's multimodal capabilities.
-- **Status**: ✅ **Supported by qwen3-vl-30b**
-- **Extract Types**: "text", "tables", "forms", "layout"
-- **Supported Files**: PDFs, Office docs (DOCX/XLSX), RTF, EPUB, Images (PNG/JPG), Text files (TXT/MD)
-- **Returns**: Structured extraction results based on extract_type
-- **Integration**: Leverages qwen3-vl-30b's OCR, table recognition, and layout analysis
+Extracts structured data from documents using Docling's unified parsing pipeline.
+- **Status**: ✅ **Supported by Docling**
+- **Extract Types**: "text", "tables", "forms", "layout" (Note: Docling extracts full content including these features)
+- **Supported Files**: PDFs, Office docs (DOCX/XLSX), RTF, EPUB, Images, HTML
+- **Returns**: Markdown content with layout preservation
+- **Integration**: Uses Docling for high-fidelity conversion
 
 ### Knowledge Management Tools
 
@@ -332,10 +332,16 @@ The `tools/` folder contains development utilities, examples, and test scripts f
 
 ### Example Scripts
 
-#### `document_processing_example.py`
+#### `vlm_document_processing_example.py`
 - **Purpose**: Demonstrates document parsing using qwen3-vl-30b's multimodal capabilities
 - **Usage**: Run as standalone example for document analysis workflows
 - **Features**: Image processing, OCR, table extraction, form recognition
+- **Status**: Educational example
+
+#### `docling_example.py`
+- **Purpose**: Demonstrates unified document processing with Docling
+- **Usage**: `python tools/docling_example.py <file>`
+- **Features**: High-fidelity conversion of PDF, Docx, HTML to Markdown
 - **Status**: Educational example
 
 #### `enable_tools_example.py`

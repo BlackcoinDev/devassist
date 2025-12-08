@@ -7,7 +7,9 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 - ✅ Dual interfaces: Modern PyQt6 GUI and traditional CLI
 - ✅ AI learning system with ChromaDB v2 vector database
 - ✅ Document processing for 80+ file types
-- ✅ Spaces system for isolated knowledge bases
+- ✅ Places: Spaces system for isolated knowledge bases
+- ✅ Document Processing: Unified processing via Docling
+- ✅ Web Ingestion: URL learning capability
 - ✅ Tool calling capabilities with 7 tools
 - ✅ Conversation memory with SQLite
 - ✅ Markdown support in GUI
@@ -33,17 +35,17 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
   3. Add key rotation mechanisms
 
 ### 2. Unified Document Processing with Docling
-**Priority**: Medium  
-**Status**: Planned  
+**Priority**: Medium
+**Status**: ✅ Completed (v0.1.1)
 
 - **Docling Integration**: Replace multiple separate libraries with Docling for unified document processing
 - **How Docling Replaces Other Libraries**: Docling provides a single, powerful library that handles PDF, DOCX, RTF, EPUB, XLSX, HTML, and other formats with a consistent API. It can extract text, tables, images, and metadata from various document types, reducing the need for separate libraries like PyPDF2 (for PDFs), python-docx (for Word docs), striprtf (for RTF), ebooklib (for EPUB), and openpyxl (for Excel). This simplifies dependencies, improves maintainability, and offers better performance and accuracy for complex documents.
 - **Integration Steps**:
-  1. Install Docling (`pip install docling`)
-  2. Refactor `document_processing_example.py` to use Docling's unified DocumentConverter
-  3. Update `populate_codebase.py` to leverage Docling for all supported formats
-  4. Gradually remove redundant libraries (PyPDF2, python-docx, striprtf, ebooklib, openpyxl) after testing
-  5. Test extraction quality and add support for additional formats like .odt, .mobi
+  1. ✅ Install Docling (`pip install docling`)
+  2. ✅ Refactor `document_processing_example.py` to use Docling's unified DocumentConverter
+  3. ✅ Update `populate_codebase.py` to leverage Docling for all supported formats
+  4. ✅ Gradually remove redundant libraries (PyPDF2, python-docx, striprtf, ebooklib, openpyxl) after testing
+  5. ✅ Test extraction quality and add support for additional formats like .odt, .mobi
 - **Benefits**: Fewer dependencies, unified codebase, enhanced document understanding with layout preservation
 
 ### 3. Advanced AI Model Support

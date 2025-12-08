@@ -332,115 +332,20 @@ def is_binary_file(file_path: str, sample_size: int = 1024) -> bool:
         return True  # Assume binary if can't read
 
 
-def extract_pdf_content(file_path: str) -> str:
+def extract_with_docling(file_path: str) -> str:
     """
-    Extract text content from PDF files using PyPDF2.
-
-    Args:
-        file_path: Path to the PDF file
-
-    Returns:
-        Extracted text content, or empty string if extraction fails
+    Extract content from document files using Docling.
     """
     try:
-        from PyPDF2 import PdfReader  # type: ignore
-
-        reader = PdfReader(file_path)
-        text = ""
-        for page in reader.pages:
-            text += page.extract_text() + "\n"
-        return text.strip()
+        from docling.document_converter import DocumentConverter
+        converter = DocumentConverter()
+        result = converter.convert(file_path)
+        return result.document.export_to_markdown()
     except ImportError:
-        print("⚠️  PyPDF2 not installed, cannot extract PDF content")
+        print("⚠️  docling not installed. Install with: pip install docling")
         return ""
     except Exception as e:
-        print(f"⚠️  Error extracting PDF content from {file_path}: {e}")
-        return ""
-
-
-def extract_docx_content(file_path: str) -> str:
-    """
-    Extract text content from Microsoft Word DOCX files using python-docx.
-
-    Args:
-        file_path: Path to the DOCX file
-
-    Returns:
-        Extracted text content, or empty string if extraction fails
-    """
-    try:
-        from docx import Document  # type: ignore
-
-        doc = Document(file_path)
-        text = ""
-        for paragraph in doc.paragraphs:
-            text += paragraph.text + "\n"
-        return text.strip()
-    except ImportError:
-        print("⚠️  python-docx not installed, cannot extract DOCX content")
-        return ""
-    except Exception as e:
-        print(f"⚠️  Error extracting DOCX content from {file_path}: {e}")
-        return ""
-
-
-def extract_rtf_content(file_path: str) -> str:
-    """
-    Extract text content from Rich Text Format (RTF) files using striprtf.
-
-    Args:
-        file_path: Path to the RTF file
-
-    Returns:
-        Extracted plain text content, or empty string if extraction fails
-    """
-    try:
-        from striprtf.striprtf import rtf_to_text  # type: ignore
-
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            rtf_content = f.read()
-        return rtf_to_text(rtf_content).strip()
-    except ImportError:
-        print("⚠️  striprtf not installed, cannot extract RTF content")
-        return ""
-    except Exception as e:
-        print(f"⚠️  Error extracting RTF content from {file_path}: {e}")
-        return ""
-
-
-def extract_epub_content(file_path: str) -> str:
-    """
-    Extract text content from EPUB e-book files using ebooklib.
-
-    Args:
-        file_path: Path to the EPUB file
-
-    Returns:
-        Extracted text content with HTML tags removed, or empty string if extraction fails
-    """
-    try:
-        import ebooklib  # type: ignore
-        from ebooklib import epub  # type: ignore
-
-        book = epub.read_epub(file_path)
-        text = ""
-
-        for item in book.get_items():
-            if item.get_type() == ebooklib.ITEM_DOCUMENT:
-                # Get content and strip HTML tags
-                content = item.get_content().decode("utf-8", errors="ignore")
-                # Simple HTML tag removal
-                import re
-
-                content = re.sub(r"<[^>]+>", "", content)
-                text += content + "\n"
-
-        return text.strip()
-    except ImportError:
-        print("⚠️  ebooklib not installed, cannot extract EPUB content")
-        return ""
-    except Exception as e:
-        print(f"⚠️  Error extracting EPUB content from {file_path}: {e}")
+        print(f"⚠️  Error extracting content with Docling from {file_path}: {e}")
         return ""
 
 
@@ -456,26 +361,9 @@ def read_file_content(file_path: str, max_size: int = 1024 * 1024) -> str:
         ext = path.suffix.lower()
 
         # Handle special file formats
-        if ext == ".pdf":
-            extracted_content = extract_pdf_content(file_path)
-            if extracted_content:
-                return extracted_content
-            # Fall back to binary check if extraction failed
-
-        elif ext == ".docx":
-            extracted_content = extract_docx_content(file_path)
-            if extracted_content:
-                return extracted_content
-            # Fall back to binary check if extraction failed
-
-        elif ext == ".rtf":
-            extracted_content = extract_rtf_content(file_path)
-            if extracted_content:
-                return extracted_content
-            # Fall back to binary check if extraction failed
-
-        elif ext == ".epub":
-            extracted_content = extract_epub_content(file_path)
+        # Handle special file formats via Docling
+        if ext in [".pdf", ".docx", ".rtf", ".epub", ".odt", ".pptx", ".xlsx"]:
+            extracted_content = extract_with_docling(file_path)
             if extracted_content:
                 return extracted_content
             # Fall back to binary check if extraction failed

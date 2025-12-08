@@ -270,7 +270,8 @@ CONTEXT_MODE = (
     "auto"  # "auto", "on", "off" - controls context integration from vector database
 )
 LEARNING_MODE = "normal"  # "normal", "strict", "off" - controls learning behavior
-# Current workspace/space for vector database operations (will be loaded from settings)
+# Current workspace/space for vector database operations (will be loaded
+# from settings)
 CURRENT_SPACE = "default"
 
 # Embedding cache to reduce redundant API calls
@@ -324,7 +325,8 @@ def ensure_space_collection(space_name: str) -> bool:
 
     try:
         # Check if collection exists by trying to get it
-        # ChromaDB will create it if it doesn't exist when we first add documents
+        # ChromaDB will create it if it doesn't exist when we first add
+        # documents
         return True
     except Exception as e:
         logger.error(
@@ -564,7 +566,8 @@ def load_memory() -> List[BaseMessage]:
             return history
 
         else:
-            # Database not available - this should not happen in normal operation
+            # Database not available - this should not happen in normal
+            # operation
             logger.error(
                 "SQLite database not available for loading conversation memory"
             )
@@ -610,7 +613,8 @@ def save_memory(history: List[BaseMessage]) -> None:
             with db_lock:
                 cursor = db_conn.cursor()
 
-                # Clear existing messages for this session (simple approach - could be optimized)
+                # Clear existing messages for this session (simple approach -
+                # could be optimized)
                 cursor.execute(
                     "DELETE FROM conversations WHERE session_id = 'default'")
 
@@ -628,7 +632,8 @@ def save_memory(history: List[BaseMessage]) -> None:
                 logger.debug("Conversation memory saved to database")
 
         else:
-            # Database not available - this should not happen in normal operation
+            # Database not available - this should not happen in normal
+            # operation
             logger.error(
                 "SQLite database not available for saving conversation memory")
             raise RuntimeError("Database required but not available")
@@ -661,9 +666,11 @@ def get_relevant_context(
         return ""
 
     try:
-        # Generate embedding for the query - embeddings will be available at runtime
+        # Generate embedding for the query - embeddings will be available at
+        # runtime
         try:
-            # Use global embeddings variable (initialized during application startup)
+            # Use global embeddings variable (initialized during application
+            # startup)
             if embeddings is None:
                 logger.warning(
                     "Embeddings not initialized for context retrieval")
@@ -710,7 +717,8 @@ def get_relevant_context(
 
             # Extract documents from response
             docs = []
-            if "documents" in data and data["documents"] and len(data["documents"]) > 0:
+            if "documents" in data and data["documents"] and len(
+                    data["documents"]) > 0:
                 documents = data["documents"][0]  # First query result
                 for doc_content in documents:
                     docs.append(doc_content)
@@ -770,7 +778,8 @@ def trim_history(
     - Ensures conversation stays within reasonable bounds
     - Balances context retention with performance
     """
-    # Calculate maximum allowed length: system message + (pairs * 2 messages per pair)
+    # Calculate maximum allowed length: system message + (pairs * 2 messages
+    # per pair)
     max_length = max_pairs * 2 + 1
 
     # Only trim if history exceeds the limit
@@ -828,6 +837,20 @@ def handle_slash_command(command: str) -> bool:
         handle_list_command(" ".join(cmd_args))
     elif cmd_name == "pwd":
         handle_pwd_command()
+    elif cmd_name == "web":
+        url = " ".join(cmd_args)
+        if not url:
+            print("Usage: /web <url>")
+            return True
+        print(f"🌍 Fetching and learning from: {url}...")
+        result = execute_learn_url(url)
+        if result.get("success"):
+            print(
+                f"✅ Learned from web: {
+                    result.get('title')} ({
+                    result.get('length')} chars)")
+        else:
+            print(f"❌ Failed: {result.get('error')}")
     else:
         print(f"\n❌ Unknown command: /{cmd_name}")
         print("Type /help for available commands\n")
@@ -847,6 +870,7 @@ def show_help():
     print("/populate <path> - Add code files from directory to vector DB")
     print("/clear        - Clear conversation history")
     print("/learn <text> - Add information to knowledge base")
+    print("/web <url>    - Learn content from a webpage")
     print("/export <fmt> - Export conversation (json/markdown)")
     print("/read <file>  - Read file contents")
     print("/write <file> - Write content to file")
@@ -872,7 +896,8 @@ def handle_read_command(file_path: str):
         return
 
     try:
-        # Security: Only allow reading files in current directory and subdirectories
+        # Security: Only allow reading files in current directory and
+        # subdirectories
         current_dir = os.getcwd()
         full_path = os.path.abspath(file_path)
 
@@ -931,7 +956,8 @@ def handle_write_command(args: str):
     file_path, content = parts
 
     try:
-        # Security: Only allow writing files in current directory and subdirectories
+        # Security: Only allow writing files in current directory and
+        # subdirectories
         current_dir = os.getcwd()
         full_path = os.path.abspath(file_path)
 
@@ -1129,7 +1155,8 @@ def handle_learn_command(content: str):
                             )
                         else:
                             logger.error(
-                                f"Failed to create collection: HTTP {create_response.status_code}"
+                                f"Failed to create collection: HTTP {
+                                    create_response.status_code}"
                             )
                             raise Exception("Collection creation failed")
 
@@ -1163,7 +1190,9 @@ def handle_learn_command(content: str):
                     )
                 else:
                     logger.error(
-                        f"Failed to add document to space {CURRENT_SPACE}: {response.status_code} - {response.text}"
+                        f"Failed to add document to space {CURRENT_SPACE}: {
+                            response.status_code} - {
+                            response.text}"
                     )
                     raise Exception("Document addition failed")
 
@@ -1252,7 +1281,8 @@ def show_vectordb():
                 if count > 0:
                     print("\n📄 Sample Documents:")
                     try:
-                        # Try to get sample documents using ChromaDB client directly
+                        # Try to get sample documents using ChromaDB client
+                        # directly
                         chroma_client = vectorstore._client
                         collection = chroma_client.get_collection(
                             collection_name)
@@ -1270,9 +1300,11 @@ def show_vectordb():
                                 metadata = metadatas[i] if i < len(
                                     metadatas) else {}
                                 if isinstance(doc, str):
-                                    # Clean up the preview - remove excessive whitespace and binary-looking content
+                                    # Clean up the preview - remove excessive
+                                    # whitespace and binary-looking content
                                     preview = doc.strip()
-                                    # Check for binary content, PDF metadata, or placeholder text
+                                    # Check for binary content, PDF metadata,
+                                    # or placeholder text
                                     if (
                                         any(
                                             indicator in preview.lower()
@@ -1317,7 +1349,8 @@ def show_vectordb():
                                     print(f"      Preview: {preview}")
                                 else:
                                     print(
-                                        f"  {i + 1}. [Non-text document: {type(doc)}]"
+                                        f"  {i +
+                                             1}. [Non-text document: {type(doc)}]"
                                     )
                         else:
                             print("  No documents found in collection")
@@ -1423,7 +1456,8 @@ def handle_populate_command(dir_path: str):
                 print(f"✅ Cleared collection: {collection_name}")
             else:
                 print(
-                    f"⚠️  Collection may not exist or failed to clear: {response.status_code}"
+                    f"⚠️  Collection may not exist or failed to clear: {
+                        response.status_code}"
                 )
         except Exception as e:
             print(f"⚠️  Failed to clear collection: {e}")
@@ -1498,13 +1532,15 @@ def handle_populate_command(dir_path: str):
                     try:
                         parse_result = execute_parse_document(
                             str(file_path), "text")
-                        if parse_result.get("success") and "content" in parse_result:
+                        if parse_result.get(
+                                "success") and "content" in parse_result:
                             content = parse_result["content"]
                             if not content or (
                                 content.startswith(
                                     "[") and content.endswith("]")
                             ):
-                                # If no content or still a placeholder, skip this file
+                                # If no content or still a placeholder, skip
+                                # this file
                                 continue
                         else:
                             # If parsing failed, skip this file
@@ -1554,7 +1590,8 @@ def handle_populate_command(dir_path: str):
                 # Process batch when it reaches the limit
                 if len(all_documents) >= batch_size:
                     print(
-                        f"💾 Adding batch of {len(all_documents)} chunks to vector database..."
+                        f"💾 Adding batch of {
+                            len(all_documents)} chunks to vector database..."
                     )
                     try:
                         if use_direct_api:
@@ -1578,7 +1615,11 @@ def handle_populate_command(dir_path: str):
                             texts = [doc.page_content for doc in all_documents]
                             metadatas = [doc.metadata for doc in all_documents]
                             ids = [
-                                f"{doc.metadata.get('file_path', 'unknown')}_{doc.metadata.get('chunk_index', i)}"
+                                f"{
+                                    doc.metadata.get(
+                                        'file_path', 'unknown')}_{
+                                    doc.metadata.get(
+                                        'chunk_index', i)}"
                                 for i, doc in enumerate(all_documents)
                             ]
 
@@ -1606,7 +1647,8 @@ def handle_populate_command(dir_path: str):
             # Progress update every 10 files
             if processed_files % 10 == 0:
                 print(
-                    f"📄 Processed {processed_files}/{len(files_to_process)} files "
+                    f"📄 Processed {processed_files}/{
+                        len(files_to_process)} files "
                     f"({total_chunks + len(all_documents)} total chunks)..."
                 )
 
@@ -1638,7 +1680,13 @@ def handle_populate_command(dir_path: str):
                     texts = [doc.page_content for doc in all_documents]
                     metadatas = [doc.metadata for doc in all_documents]
                     ids = [
-                        f"{doc.metadata.get('file_path', 'unknown')}_{doc.metadata.get('chunk_index', i)}"
+                        f"{
+                            doc.metadata.get(
+                                'file_path',
+                                'unknown')}_{
+                            doc.metadata.get(
+                                'chunk_index',
+                                i)}"
                         for i, doc in enumerate(all_documents)
                     ]
 
@@ -1838,7 +1886,8 @@ def handle_export_command(format_type: str = "json"):
     from datetime import datetime
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"conversation_export_{timestamp}.{format_type if format_type != 'markdown' else 'md'}"
+    filename = f"conversation_export_{timestamp}.{
+        format_type if format_type != 'markdown' else 'md'}"
 
     try:
         if format_type == "json":
@@ -1874,7 +1923,8 @@ def handle_export_command(format_type: str = "json"):
             with open(filename, "w", encoding="utf-8") as f:
                 f.write("# AI Assistant Conversation Export\n\n")
                 f.write(
-                    f"**Export Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                    f"**Export Date:** {
+                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
                 )
                 f.write(f"**Total Messages:** {len(conversation_history)}\n\n")
                 f.write("---\n\n")
@@ -1975,7 +2025,8 @@ def initialize_application():
         from langchain_ollama import OllamaEmbeddings
         from typing import Any
 
-        # Custom embeddings class to avoid invalid sampling parameters for embeddings
+        # Custom embeddings class to avoid invalid sampling parameters for
+        # embeddings
         class CustomOllamaEmbeddings(OllamaEmbeddings):
             @property
             def _default_params(self) -> dict[str, Any]:  # noqa: unused property override
@@ -2099,7 +2150,9 @@ def show_welcome():
     print(f"💾 Memory: SQLite ({msg_count} messages loaded)")
 
     # Show current space
-    print(f"🌐 Space: {CURRENT_SPACE} (collection: {get_space_collection_name(CURRENT_SPACE)})")
+    print(
+        f"🌐 Space: {CURRENT_SPACE} (collection: {
+            get_space_collection_name(CURRENT_SPACE)})")
     print("")
 
     # Show usage hints
@@ -2170,7 +2223,7 @@ FILE_SYSTEM_TOOLS = [
         "type": "function",
         "function": {
             "name": "parse_document",
-            "description": "Extract structured data from documents using qwen3-vl-30b's advanced document parsing capabilities",
+            "description": "Extract structured data from documents (PDF, Docx, etc.) using Docling's unified processing pipeline",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -2181,10 +2234,10 @@ FILE_SYSTEM_TOOLS = [
                     "extract_type": {
                         "type": "string",
                         "enum": ["text", "tables", "forms", "layout"],
-                        "description": "Type of data to extract from the document",
+                        "description": "Compatibility parameter (Docling extracts all content as structured Markdown)",
                     },
                 },
-                "required": ["file_path", "extract_type"],
+                "required": ["file_path"],
             },
         },
     },
@@ -2338,7 +2391,8 @@ def execute_tool_call(tool_call):
     result = None
 
     try:
-        # Handle LangChain tool call format (dict with 'name', 'args', 'id', 'type')
+        # Handle LangChain tool call format (dict with 'name', 'args', 'id',
+        # 'type')
         function_name = tool_call["name"]
         arguments = tool_call["args"]
         tool_call_id = tool_call["id"]
@@ -2497,7 +2551,8 @@ def execute_get_current_directory() -> dict:
         return {"error": str(e)}
 
 
-def execute_learn_information(information: str, metadata: dict | None = None) -> dict:
+def execute_learn_information(
+        information: str, metadata: dict | None = None) -> dict:
     """Execute learn information tool."""
     try:
         if not information.strip():
@@ -2600,345 +2655,42 @@ def execute_parse_document(file_path: str, extract_type: str) -> dict:
         if not os.path.exists(full_path):
             return {"error": f"File not found: {file_path}"}
 
-        # Check if file is a supported document type
-        supported_extensions = {
-            ".pdf",
-            ".png",
-            ".jpg",
-            ".jpeg",
-            ".bmp",
-            ".tiff",  # Images
-            ".docx",
-            ".xlsx",
-            ".pptx",  # Office documents
-            ".rtf",  # Rich Text Format
-            ".epub",  # EPUB e-books
-            ".txt",
-            ".md",
-            ".rst",
-            ".json",
-            ".xml",
-            ".csv",  # Text documents
-        }
-        file_ext = os.path.splitext(full_path)[1].lower()
+        # Docling supports a wide range of formats
+        # We process them all through the same unified pipeline
+        try:
+            from docling.document_converter import DocumentConverter
 
-        if file_ext not in supported_extensions:
-            return {
-                "error": f"Unsupported file type: {file_ext}. Supported: {', '.join(supported_extensions)}"
-            }
+            # Initialize converter
+            converter = DocumentConverter()
 
-        # Extract content based on file type and extract_type
-        if file_ext == ".pdf":
-            try:
-                from PyPDF2 import PdfReader
+            # Convert document
+            result = converter.convert(full_path)
 
-                reader = PdfReader(full_path)
-                extracted_text = ""
+            # Export to markdown (excellent for LLM consumption)
+            content = result.document.export_to_markdown()
 
-                for page in reader.pages:
-                    text = page.extract_text()
-                    if text.strip():
-                        extracted_text += text + "\n"
+            file_ext = os.path.splitext(full_path)[1].lower()
 
-                if not extracted_text.strip():
-                    return {
-                        "success": False,
-                        "error": "No readable text found in PDF (may contain only images or be scanned)",
-                    }
-
-                # Clean up the text
-                extracted_text = extracted_text.replace("\x00", "").strip()
-
-                if extract_type == "text":
-                    return {
-                        "success": True,
-                        "file_path": file_path,
-                        "extract_type": extract_type,
-                        "file_type": file_ext,
-                        "content": extracted_text,
-                        "analysis": extracted_text,
-                        "pages": len(reader.pages),
-                    }
-                else:
-                    # For other extract types, return basic text for now
-                    return {
-                        "success": True,
-                        "file_path": file_path,
-                        "extract_type": extract_type,
-                        "file_type": file_ext,
-                        "analysis": f"Basic text extraction from PDF. Full {extract_type} analysis not yet implemented.",
-                        "content": extracted_text[:500] + "..."
-                        if len(extracted_text) > 500
-                        else extracted_text,
-                        "pages": len(reader.pages),
-                    }
-
-            except Exception as e:  # type: ignore
-                if "No module named" in str(e) and "striprtf" in str(e):
-                    return {
-                        "success": False,
-                        "error": "striprtf not available for RTF processing. Install with: pip install striprtf",
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"RTF processing failed: {str(e)}",
-                    }
-            except Exception as e:  # type: ignore  # type: ignore
-                return {"success": False, "error": f"PDF processing failed: {str(e)}"}
-
-        elif file_ext == ".docx":
-            # Extract text content from Microsoft Word documents (.docx)
-            # Uses python-docx library to read document structure and extract readable text
-            # Processes both paragraph text and table cell content for comprehensive extraction
-            try:
-                from docx import Document
-
-                doc = Document(full_path)
-                content = ""
-
-                # Extract text from all paragraphs in the document
-                for paragraph in doc.paragraphs:
-                    if paragraph.text.strip():
-                        content += paragraph.text + "\n"
-
-                # Extract text from all tables in the document
-                # Tables are processed row by row, cell by cell
-                for table in doc.tables:
-                    for row in table.rows:
-                        for cell in row.cells:
-                            if cell.text.strip():
-                                content += cell.text + "\n"
-
-                return {
-                    "success": True,
-                    "file_path": file_path,
-                    "extract_type": extract_type,
-                    "file_type": file_ext,
-                    "content": content,
-                    "analysis": content,
-                }
-            except Exception as e:  # type: ignore  # type: ignore
-                if "No module named" in str(e) and "docx" in str(e):
-                    return {
-                        "success": False,
-                        "error": "python-docx not available for DOCX processing. Install with: pip install python-docx",
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"DOCX processing failed: {str(e)}",
-                    }
-
-        elif file_ext == ".rtf":
-            # Extract text content from Rich Text Format files (.rtf)
-            # Uses striprtf library to strip RTF formatting codes and extract plain text
-            # Handles RTF control sequences and converts to readable text content
-            try:
-                import striprtf  # type: ignore
-
-                # Read the RTF file with UTF-8 encoding and error replacement
-                with open(full_path, "r", encoding="utf-8", errors="replace") as f:
-                    rtf_content = f.read()
-
-                # Strip RTF formatting to get plain text
-                content = striprtf.striprtf(rtf_content)  # type: ignore
-
-                return {
-                    "success": True,
-                    "file_path": file_path,
-                    "extract_type": extract_type,
-                    "file_type": file_ext,
-                    "content": content,
-                    "analysis": content,
-                }
-            except ImportError:  # type: ignore
-                return {
-                    "success": False,
-                    "error": "striprtf not available for RTF processing. Install with: pip install striprtf",
-                }
-            except Exception as e:  # type: ignore
-                return {
-                    "success": False,
-                    "error": f"RTF processing failed: {str(e)}",
-                }
-
-        elif file_ext == ".epub":
-            # Extract text content from EPUB e-book files (.epub)
-            # Uses ebooklib to parse EPUB structure and extract text from HTML chapters
-            # Processes all document items, strips HTML tags, and concatenates readable text
-            try:
-                import ebooklib
-                from ebooklib import epub
-
-                book = epub.read_epub(full_path)
-                content = ""
-
-                for item in book.get_items():
-                    if item.get_type() == ebooklib.ITEM_DOCUMENT:
-                        # Extract text from HTML content
-                        html_content = item.get_content().decode("utf-8")
-                        # Simple HTML text extraction (remove tags)
-                        import re
-
-                        text_content = re.sub(r"<[^>]+>", "", html_content)
-                        text_content = re.sub(
-                            r"\s+", " ", text_content).strip()
-                        if text_content:
-                            content += text_content + "\n\n"
-
-                return {
-                    "success": True,
-                    "file_path": file_path,
-                    "extract_type": extract_type,
-                    "file_type": file_ext,
-                    "content": content,
-                    "analysis": content,
-                }
-            except Exception as e:  # type: ignore
-                if "No module named" in str(e) and "ebooklib" in str(e):
-                    return {
-                        "success": False,
-                        "error": "ebooklib not available for EPUB processing. Install with: pip install ebooklib",
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"EPUB processing failed: {str(e)}",
-                    }
-            except ImportError:  # type: ignore
-                return {
-                    "success": False,
-                    "error": "ebooklib not available for EPUB processing. Install with: pip install ebooklib",
-                }
-            except Exception as e:  # type: ignore
-                return {
-                    "success": False,
-                    "error": f"EPUB processing failed: {str(e)}",
-                }
-            except ImportError:  # type: ignore
-                return {
-                    "success": False,
-                    "error": "ebooklib not available for EPUB processing",
-                }
-            except Exception as e:  # type: ignore
-                return {
-                    "success": False,
-                    "error": f"EPUB processing failed: {str(e)}",
-                }
-
-        elif file_ext == ".xlsx":
-            # Extract text content from Excel spreadsheet files (.xlsx)
-            # Uses openpyxl to read workbook structure and extract cell values
-            # Processes all sheets, converting tabular data to tab-separated text format
-            try:
-                from openpyxl import load_workbook  # type: ignore
-
-                # Load workbook with data_only=True to get cell values instead of formulas
-                wb = load_workbook(full_path, data_only=True)
-                content = ""
-
-                # Process each worksheet in the workbook
-                for sheet_name in wb.sheetnames:
-                    sheet = wb[sheet_name]
-                    content += f"Sheet: {sheet_name}\n"
-
-                    # Iterate through all rows, extracting cell values
-                    for row in sheet.iter_rows(values_only=True):
-                        # Convert row to tab-separated string, handling None values
-                        row_text = "\t".join(
-                            str(cell) if cell is not None else "" for cell in row
-                        )
-                        if row_text.strip():
-                            content += row_text + "\n"
-
-                    content += "\n"
-
-                return {
-                    "success": True,
-                    "file_path": file_path,
-                    "extract_type": extract_type,
-                    "file_type": file_ext,
-                    "content": content,
-                    "analysis": content,
-                }
-            except Exception as e:  # type: ignore
-                if "No module named" in str(e) and "openpyxl" in str(e):
-                    return {
-                        "success": False,
-                        "error": "openpyxl not available for XLSX processing. Install with: pip install openpyxl",
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"XLSX processing failed: {str(e)}",
-                    }
-            except ImportError:  # type: ignore
-                return {
-                    "success": False,
-                    "error": "openpyxl not available for XLSX processing. Install with: pip install openpyxl",
-                }
-            except Exception as e:  # type: ignore
-                return {
-                    "success": False,
-                    "error": f"XLSX processing failed: {str(e)}",
-                }
-            except Exception as e:  # type: ignore
-                if "No module named" in str(e) and "docx" in str(e):
-                    return {
-                        "success": False,
-                        "error": "python-docx not available for DOCX processing. Install with: pip install python-docx",
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"DOCX processing failed: {str(e)}",
-                    }
-            except Exception as e:  # type: ignore
-                return {
-                    "success": False,
-                    "error": f"XLSX processing failed: {str(e)}",
-                }
-            except ImportError:  # type: ignore
-                return {
-                    "success": False,
-                    "error": "ebooklib not available for EPUB processing",
-                }
-            except Exception as e:  # type: ignore
-                return {
-                    "success": False,
-                    "error": f"EPUB processing failed: {str(e)}",
-                }
-
-        elif file_ext in [".txt", ".md", ".rst", ".json", ".xml", ".csv"]:
-            # For text-based files, just read the content
-            try:
-                with open(full_path, "r", encoding="utf-8", errors="replace") as f:
-                    content = f.read()
-
-                return {
-                    "success": True,
-                    "file_path": file_path,
-                    "extract_type": extract_type,
-                    "file_type": file_ext,
-                    "content": content,
-                    "analysis": content,
-                }
-            except Exception as e:  # type: ignore
-                return {
-                    "success": False,
-                    "error": f"Text file reading failed: {str(e)}",
-                }
-
-        else:
-            # For other file types, return placeholder for now
             return {
                 "success": True,
                 "file_path": file_path,
+                # Kept for API compatibility, though Docling handles all
                 "extract_type": extract_type,
                 "file_type": file_ext,
-                "analysis": f"Document analysis for {extract_type} extraction using qwen3-vl-30b capabilities",
-                "note": f"Full {extract_type} extraction not yet implemented for {file_ext} files",
+                "content": content,
+                "analysis": content,  # Content is the analysis in this case
+                "note": "Processed via Docling Unified Pipeline"
+            }
+
+        except ImportError:
+            return {
+                "success": False,
+                "error": "docling library not installed. Please install with: pip install docling"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Docling processing failed: {str(e)}"
             }
 
     except Exception as e:
@@ -3029,7 +2781,8 @@ def main():
 
             # Additional quit command check (belt and suspenders approach)
             # Handles edge cases where quit might be embedded in other text
-            if any(quit_cmd in user_input.lower() for quit_cmd in ["quit", "exit"]):
+            if any(quit_cmd in user_input.lower()
+                   for quit_cmd in ["quit", "exit"]):
                 save_memory(conversation_history)
                 print("\n👋 Goodbye! Your conversation has been saved.")
                 break
@@ -3071,7 +2824,8 @@ def main():
             # =============================================================================
 
             # Prepare enhanced conversation history for LLM with context integration
-            # The goal is to provide the AI with relevant background knowledge while maintaining conversation flow
+            # The goal is to provide the AI with relevant background knowledge
+            # while maintaining conversation flow
             enhanced_history = conversation_history.copy()
 
             # Apply context integration based on user-controlled settings
@@ -3115,7 +2869,8 @@ Do not respond with text about not having access to files.
                     f"Context mode is on - including context: {context[:200]}..."
                 )
             elif CONTEXT_MODE == "auto" and context:
-                # Auto mode: Use context for learning queries, skip for meta questions
+                # Auto mode: Use context for learning queries, skip for meta
+                # questions
                 learning_keywords = [
                     "what have you learned",
                     "what did you learn",
@@ -3154,20 +2909,23 @@ Do not respond with text about not having access to files.
                 system_content += f" Use this context: {context}"
 
             # Replace the first system message if it exists, otherwise insert
-            if enhanced_history and isinstance(enhanced_history[0], SystemMessage):
+            if enhanced_history and isinstance(
+                    enhanced_history[0], SystemMessage):
                 enhanced_history[0] = SystemMessage(content=system_content)
             else:
                 enhanced_history.insert(
                     0, SystemMessage(content=system_content))
             system_content = "Lets get some coding done.." + tool_instructions
             logger.debug(
-                f"After concatenation, system_content len: {len(system_content)}"
+                f"After concatenation, system_content len: {
+                    len(system_content)}"
             )
             if context and should_include_context:
                 system_content += f" Use this context: {context}"
 
             # Replace the first system message if it exists, otherwise insert
-            if enhanced_history and isinstance(enhanced_history[0], SystemMessage):
+            if enhanced_history and isinstance(
+                    enhanced_history[0], SystemMessage):
                 logger.debug("Replacing existing system message")
                 enhanced_history[0] = SystemMessage(content=system_content)
                 logger.debug(
@@ -3179,7 +2937,11 @@ Do not respond with text about not having access to files.
                     0, SystemMessage(content=system_content))
 
             logger.debug(
-                f"Final system message ({len(system_content)} chars): {repr(system_content[:100])}..."
+                f"Final system message ({
+                    len(system_content)} chars): {
+                    repr(
+                        system_content[
+                            :100])}..."
             )
 
             if context and should_include_context:
@@ -3201,7 +2963,10 @@ Do not respond with text about not having access to files.
                 initial_response = llm.invoke(enhanced_history)
                 logger.debug(f"LLM response type: {type(initial_response)}")
                 logger.debug(
-                    f"Has tool_calls attr: {hasattr(initial_response, 'tool_calls')}"
+                    f"Has tool_calls attr: {
+                        hasattr(
+                            initial_response,
+                            'tool_calls')}"
                 )
                 if hasattr(initial_response, "tool_calls"):
                     logger.debug(f"Tool calls: {initial_response.tool_calls}")
@@ -3264,7 +3029,8 @@ Do not respond with text about not having access to files.
 
                     response += content
 
-            # Render the response with markdown formatting for better CLI display
+            # Render the response with markdown formatting for better CLI
+            # display
             try:
                 from rich.console import Console
                 from rich.markdown import Markdown
@@ -3281,7 +3047,8 @@ Do not respond with text about not having access to files.
                 print("AI Assistant:", response)
 
             # Add AI response to conversation history
-            # Critical: Use AIMessage (not SystemMessage) for proper message typing
+            # Critical: Use AIMessage (not SystemMessage) for proper message
+            # typing
             conversation_history.append(AIMessage(content=response))
 
             # Trim conversation history to prevent memory bloat
@@ -3316,7 +3083,8 @@ Do not respond with text about not having access to files.
             break
 
         except Exception as e:
-            # Catch-all for any other LLM or processing errors (API errors, model issues, etc.)
+            # Catch-all for any other LLM or processing errors (API errors,
+            # model issues, etc.)
             logger.error(f"Error processing request: {e}")
             print(f"\n\nError: {type(e).__name__}: {e}\n")
             # Remove failed user message to maintain conversation integrity
@@ -3330,7 +3098,8 @@ Do not respond with text about not having access to files.
         # =============================================================================
 
         except KeyboardInterrupt:
-            # User pressed Ctrl+C - graceful shutdown preserving conversation state
+            # User pressed Ctrl+C - graceful shutdown preserving conversation
+            # state
             save_memory(conversation_history)  # Preserve conversation state
             print("\n\n👋 Goodbye! Your conversation has been saved.")
             logger.debug("User interrupted the program")
@@ -3346,3 +3115,60 @@ Do not respond with text about not having access to files.
 # This ensures the chat interface only starts when the script is run standalone
 if __name__ == "__main__":
     main()
+
+
+def execute_learn_url(url: str) -> dict:
+    """
+    Fetch and learn content from a URL using Docling.
+
+    This function leverages Docling's ability to fetch and parse web pages into structured markdown,
+    which is then added to the knowledge base.
+    """
+    try:
+        from docling.document_converter import DocumentConverter
+        from langchain_core.documents import Document
+        from datetime import datetime
+
+        # Initialize converter
+        converter = DocumentConverter()
+
+        # Convert web content directly from URL
+        # Docling handles fetching and HTML-to-Markdown conversion
+        result = converter.convert(url)
+        content = result.document.export_to_markdown()
+
+        # Create metadata
+        title = "Web Page"  # Docling might expose title, but safe default
+        if hasattr(result.document, "title") and result.document.title:
+            title = result.document.title
+
+        doc = Document(
+            page_content=content,
+            metadata={
+                "source": url,
+                "title": title,
+                "type": "web_page",
+                "added_at": datetime.now().isoformat()
+            }
+        )
+
+        # Add to vector store
+        if vectorstore:
+            # Use the existing logic or direct add
+            vectorstore.add_documents([doc])
+
+            # Periodic cleanup logic from handle_learn_command
+            global operation_count
+            operation_count += 1
+            if operation_count % 50 == 0:
+                cleanup_memory()
+
+            return {"success": True, "title": title,
+                    "url": url, "length": len(content)}
+        else:
+            return {"error": "Vector database not initialized"}
+
+    except ImportError:
+        return {"error": "docling library not installed"}
+    except Exception as e:
+        return {"error": str(e)}

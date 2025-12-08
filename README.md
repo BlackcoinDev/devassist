@@ -8,7 +8,8 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 - **🧠 Learning AI**: Teach the AI new information via /learn command that persists across sessions
 - **🏢 Spaces System**: Isolated workspaces with separate knowledge bases
 - **💾 Vector Database**: ChromaDB v2 server (required) for knowledge storage and retrieval
-- **📚 Document Processing**: Extract content from PDFs, Word docs, Excel files, RTF, EPUB, and 80+ file types
+- **📚 Document Processing**: Unified processing via Docling for PDFs, Word, Excel, RTF, EPUB, and more
+- **🌍 Web Ingestion**: Learn direct from URLs with `/web` command (powered by Docling)
 - **📄 Advanced Document Analysis**: qwen3-vl-30b's multimodal capabilities for OCR, table extraction, form analysis, and layout understanding
 - **🔧 Codebase Ingestion**: Bulk import entire projects with intelligent file type detection
 - **🔄 Model Switching**: Easy switching between different AI models
@@ -72,11 +73,8 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 ### PDF Processing Pipeline
 1. **File Discovery**: `/populate <directory>` scans for supported document types (PDF, DOCX, XLSX, RTF, EPUB, TXT, MD, etc.)
 2. **Content Extraction**: Specialized libraries extract text content:
-   - **PDF**: PyPDF2 for page-by-page text extraction
-   - **DOCX**: python-docx for paragraph and table content
-   - **RTF**: striprtf for rich text format parsing
-   - **EPUB**: ebooklib for e-book HTML content extraction
-   - **XLSX**: openpyxl for spreadsheet data extraction
+   - **Unified**: Docling handles PDF, DOCX, XLSX, RTF, EPUB, HTML, and Images
+   - **Performance**: High-fidelity text extraction with layout awareness
    - **Text Files**: Direct UTF-8 reading with encoding detection
 3. **Text Chunking**: RecursiveCharacterTextSplitter creates 1500-character chunks with 200-character overlap for optimal retrieval
 4. **Embedding Generation**: Ollama qwen3-embedding:latest converts text chunks to vector embeddings
