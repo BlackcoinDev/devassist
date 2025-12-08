@@ -613,23 +613,27 @@ def save_memory(history: List[BaseMessage]) -> None:
             with db_lock:
                 cursor = db_conn.cursor()
 
-                # Clear existing messages for this session (simple approach -
-                # could be optimized)
+                # Clear existing messages for this session
                 cursor.execute(
                     "DELETE FROM conversations WHERE session_id = 'default'")
 
-                # Insert new messages
-                for msg in history:
-                    cursor.execute(
-                        """
-                        INSERT INTO conversations (session_id, message_type, content)
-                        VALUES (?, ?, ?)
+                # Prepare data for bulk insert
+                data_to_insert = [
+                    ("default", type(msg).__name__, msg.content)
+                    for msg in history
+                ]
+
+                # Use executemany for efficient bulk insertion
+                cursor.executemany(
+                    """
+                    INSERT INTO conversations (session_id, message_type, content)
+                    VALUES (?, ?, ?)
                     """,
-                        ("default", type(msg).__name__, msg.content),
-                    )
+                    data_to_insert
+                )
 
                 db_conn.commit()
-                logger.debug("Conversation memory saved to database")
+                logger.debug(f"Saved {len(data_to_insert)} messages to database")
 
         else:
             # Database not available - this should not happen in normal
@@ -2826,7 +2830,15 @@ def main():
             # Prepare enhanced conversation history for LLM with context integration
             # The goal is to provide the AI with relevant background knowledge
             # while maintaining conversation flow
-            enhanced_history = conversation_history.copy()
+
+            # context slicing: Keep SystemMessage + Last 20 messages for LLM context
+            # This allows the DB to hold 1000+ messages (Long Term) while checking context (Short Term)
+            llm_context_limit = 20
+            if len(conversation_history) > llm_context_limit:
+                 # Preserves SystemMessage at [0] and appends recent history
+                 enhanced_history = [conversation_history[0]] + conversation_history[-llm_context_limit:]
+            else:
+                 enhanced_history = conversation_history.copy()
 
             # Apply context integration based on user-controlled settings
             is_learning_query = False  # Track if this is a learning-related query
@@ -3054,7 +3066,7 @@ Do not respond with text about not having access to files.
             # Trim conversation history to prevent memory bloat
             # Maintains recent context while staying within API limits
             conversation_history[:] = trim_history(
-                conversation_history, MAX_HISTORY_PAIRS
+                conversation_history, 500  # Keep 1000 messages in memory/DB (Archive), only last 20 sent to LLM
             )
 
             # =============================================================================
