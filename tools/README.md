@@ -187,7 +187,7 @@ MODEL_NAME=qwen3-vl-30b
 
 ### Step 2: Enable Tool Calling in Code
 
-Modify the conversation loop in `main.py`:
+Modify the conversation loop in `src/main.py`:
 
 ```python
 # Replace this (current streaming approach):
@@ -358,7 +358,7 @@ The `tools/` folder contains development utilities, examples, and test scripts f
 - **Status**: Educational example
 
 #### `enable_tools_example.py`
-- **Purpose**: Shows how to modify main.py to enable tool calling
+- **Purpose**: Shows how to modify src/main.py to enable tool calling
 - **Usage**: Reference code for integrating tool calling into conversation loops
 - **Features**: Code snippets for tool integration
 - **Status**: Integration guide
@@ -377,17 +377,16 @@ The `tools/` folder contains development utilities, examples, and test scripts f
 
 ### Test Scripts
 
-#### `test_tools.py`
-- **Purpose**: Comprehensive test suite for all tool functions
-- **Usage**: `python tools/test_tools.py` for automated testing
-- **Features**: Unit tests for each tool, error handling validation
-- **Status**: Test suite
+#### Tool Testing Scripts
+Located in `tests/tools/` directory for comprehensive testing:
 
-#### `test_direct_tools.py`
-- **Purpose**: Tests direct ChromaDB API integration for tools
-- **Usage**: Validates vector database operations
-- **Features**: Direct API testing, reliability checks
-- **Status**: Integration tests
+- **`test_direct_tools.py`**: Direct ChromaDB API integration testing
+- **`test_main_tools.py`**: Main application tool integration testing
+- **`test_parse_document.py`**: Document parsing functionality testing
+- **`test_langchain_tools.py`**: LangChain tool integration testing
+- **`test_fresh_conversation.py`**: Fresh conversation testing
+
+**Usage**: Run via `python3 tests/run_tests.py` or `python3 -m pytest tests/tools/`
 
 #### `test_langchain_tools.py`
 - **Purpose**: Tests LangChain wrapper integration for tools
@@ -403,7 +402,7 @@ The `tools/` folder contains development utilities, examples, and test scripts f
 
 #### `test_main_tools.py`
 - **Purpose**: Tests tool integration with main application
-- **Usage**: End-to-end testing with main.py
+- **Usage**: End-to-end testing with src/main.py
 - **Features**: Full application integration tests
 - **Status**: Main app tests
 
@@ -417,7 +416,7 @@ The `tools/` folder contains development utilities, examples, and test scripts f
 
 - **Production Use**: Only `populate_codebase.py` is intended for production use
 - **Development**: Other scripts are for testing and development purposes
-- **Dependencies**: All scripts require the same dependencies as main.py
+- **Dependencies**: All scripts require the same dependencies as src/main.py
 - **Environment**: Ensure `.env` is configured for database connections
 - **Testing**: Run test scripts to validate tool functionality before deployment
 

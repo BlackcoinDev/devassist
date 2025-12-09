@@ -357,7 +357,7 @@ class PopulateWorker(QThread):
 
                 try:
                     for i in range(0, total_chunks, batch_size):
-                        batch = all_docs[i : i + batch_size]
+                        batch = all_docs[i: i + batch_size]
                         batch_number = (i // batch_size) + 1
                         total_batches = (total_chunks + batch_size - 1) // batch_size
 

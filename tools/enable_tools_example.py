@@ -98,7 +98,7 @@ def enable_tool_calling_example():
     print("=" * 50)
     print("To enable tool calling in your AI assistant:")
     print()
-    print("1. Choose a compatible AI model (see TOOL_CALLING_GUIDE.md)")
+    print("1. Choose a compatible AI model (see README.md)")
     print("2. Update your .env file with the model configuration")
     print("3. Replace the LLM response generation in main.py with:")
     print()

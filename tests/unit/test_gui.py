@@ -55,15 +55,15 @@ skip_gui_tests = not os.environ.get("RUN_GUI_TESTS", "").lower() in ("1", "true"
 class TestGUISupportFunctions:
     """Test GUI support functions that don't require Qt."""
 
-    @patch("gui.BACKEND_AVAILABLE", True)
+    @patch("src.gui.BACKEND_AVAILABLE", True)
     @patch("src.main.load_memory")
     def test_load_conversation_success(self, mock_load_memory):
         """Test successful conversation loading."""
         from src.gui import AIAssistantGUI
 
         # Mock the GUI class without Qt dependencies
-        with patch("gui.QMainWindow.__init__", return_value=None):
-            with patch("gui.AIAssistantGUI.init_ui", return_value=None):
+        with patch("src.gui.QMainWindow.__init__", return_value=None):
+            with patch("src.gui.AIAssistantGUI.init_ui", return_value=None):
                 gui = AIAssistantGUI.__new__(AIAssistantGUI)
 
                 # Test the load_conversation method
@@ -74,13 +74,14 @@ class TestGUISupportFunctions:
 
                 mock_load_memory.assert_called_once()
 
-    @patch("gui.BACKEND_AVAILABLE", False)
+    @patch("src.gui.BACKEND_AVAILABLE", False)
     def test_load_conversation_no_backend(self):
-        """Test conversation loading when backend is not available."""
+        """Test conversation loading when backend is unavailable."""
         from src.gui import AIAssistantGUI
 
-        with patch("gui.QMainWindow.__init__", return_value=None):
-            with patch("gui.AIAssistantGUI.init_ui", return_value=None):
+        # Mock the GUI class without Qt dependencies
+        with patch("src.gui.QMainWindow.__init__", return_value=None):
+            with patch("src.gui.AIAssistantGUI.init_ui", return_value=None):
                 gui = AIAssistantGUI.__new__(AIAssistantGUI)
 
                 gui.status_label = MagicMock()
@@ -91,9 +92,10 @@ class TestGUISupportFunctions:
                 # Should display backend not available message
                 gui.chat_display.append.assert_called_once()
 
-    @patch("gui.MARKDOWN_AVAILABLE", True)
-    @patch("gui.markdown")
-    def test_markdown_to_html_with_markdown(self):
+    @patch("src.gui.markdown")
+    @patch("src.gui.markdown")
+    @patch("src.gui.MARKDOWN_AVAILABLE", True)
+    def test_markdown_to_html_with_markdown(self, _mock_md_available, _mock_md):
         """Test markdown to HTML conversion when markdown is available."""
         from src.gui import AIAssistantGUI
 
@@ -108,7 +110,7 @@ class TestGUISupportFunctions:
         assert "color: #ffffff" in result  # Dark theme
         gui.markdown_converter.convert.assert_called_once_with("**bold**")
 
-    @patch("gui.MARKDOWN_AVAILABLE", False)
+    @patch("src.gui.MARKDOWN_AVAILABLE", False)
     def test_markdown_to_html_plain_text(self):
         """Test markdown to HTML fallback to plain text."""
         from src.gui import AIAssistantGUI
@@ -186,7 +188,7 @@ class TestGUIConfiguration:
 class TestGUIWorker:
     """Test GUI worker thread (partial testing without Qt)."""
 
-    @patch("gui.BACKEND_AVAILABLE", True)
+    @patch("src.gui.BACKEND_AVAILABLE", True)
     def test_ai_worker_initialization(self):
         """Test AI worker initialization."""
         from src.gui import AIWorker
@@ -196,8 +198,7 @@ class TestGUIWorker:
         assert hasattr(worker, "response_ready")
         assert hasattr(worker, "error_occurred")
 
-    @patch("gui.BACKEND_AVAILABLE", False)
-    @patch("gui.AIWorker.response_ready")
+    @patch("src.gui.BACKEND_AVAILABLE", False)
     def test_ai_worker_no_backend(self):
         """Test AI worker when backend is not available."""
         from src.gui import AIWorker

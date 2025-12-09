@@ -30,7 +30,7 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 - **[ROADMAP.md](docs/ROADMAP.md)**: Future development plans including security enhancements, Docling integration, Pydantic-AI, LangGraph, and more
 - **[MIGRATION.md](docs/MIGRATION.md)**: Migration guide and version upgrade notes
 - **[AGENTS.md](AGENTS.md)**: Agent guidelines and architecture documentation
-- **[TOOL_CALLING_GUIDE.md](tools/TOOL_CALLING_GUIDE.md)**: Guide for AI tool calling capabilities
+- **[README.md](tools/README.md)**: Guide for AI tool calling capabilities
 
 ## 🏗️ Architecture
 
@@ -759,28 +759,24 @@ devassist/
 │   ├── MIGRATION.md           # Migration guide and documentation
 │   └── ROADMAP.md             # Future development roadmap
 ├── tools/
-│   ├── TOOL_CALLING_GUIDE.md          # Guide for AI tool calling
-│   ├── populate_codebase.py           # Codebase population script for bulk import
-│   ├── document_processing_example.py # Document processing examples
-│   ├── integrated_document_workflow.py# Integrated document workflow
-│   ├── enable_tools_example.py        # Tool enabling examples
-│   ├── tool_demo.py                   # Tool demonstration script
-│   ├── test_tools.py                  # Tool testing utilities
-│   ├── test_direct_tools.py           # Direct tool tests
-│   ├── test_fresh_conversation.py     # Fresh conversation tests
-│   ├── test_langchain_tools.py        # LangChain tool tests
-│   ├── test_main_tools.py             # Main tool tests
-│   └── test_parse_document.py         # Document parsing tests
+│   ├── README.md                      # Guide for AI tool calling
+│   ├── populate_codebase.py          # Codebase population script for bulk import
+│   ├── docling_example.py            # Document processing with Docling
+│   ├── vlm_document_processing_example.py # VLM document processing examples
+│   ├── integrated_document_workflow.py # Integrated document workflow
+│   ├── enable_tools_example.py       # Tool enabling examples
+│   ├── tool_demo.py                  # Tool demonstration script
+│   ├── tool_calling_demo.py          # Tool calling demonstration
+│   └── check_mem0.py                 # Mem0 integration checking
 ├── tests/
 │   ├── __init__.py            # Test package initialization
 │   ├── conftest.py            # Pytest fixtures and configuration
 │   ├── fixtures/              # Test fixtures directory
 │   ├── integration/           # Integration tests
 │   └── unit/                  # Unit tests
-├── test/
-│   └── lint/                  # Linting scripts
-│       ├── all-lint.py        # Comprehensive project linting
-│       └── lint-python.py     # Python-specific linting
+├── tests/lint/                # Linting scripts
+│   ├── all-lint.py            # Comprehensive project linting
+│   └── lint-python.py         # Python-specific linting
 ├── samples/
 │   ├── Blackcoin-POS-3.pdf                        # Sample PDF document
 │   ├── blackcoin-pos-protocol-v2-whitepaper.pdf   # Sample whitepaper

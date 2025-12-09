@@ -35,9 +35,9 @@ Features:
 - CI/CD compatible exit codes
 
 Usage:
-    python3 run_tests.py                    # Run all tests
+    python3 tests/run_tests.py                    # Run all tests
     python3 -m pytest                       # Alternative direct pytest usage
-    RUN_GUI_TESTS=1 python3 run_tests.py    # Include GUI tests (not recommended)
+    RUN_GUI_TESTS=1 python3 tests/run_tests.py    # Include GUI tests (not recommended)
 """
 
 import sys
@@ -71,17 +71,34 @@ def run_tests():
         import subprocess
         import sys
 
+        # Check for verbose flag
+        import argparse
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "--verbose", "-v", action="store_true", help="Run tests with verbose output"
+        )
+        args = parser.parse_args()
+
         # Run pytest with optimized settings for CI/CD
         cmd = [
             sys.executable,
             "-m",
             "pytest",
-            "-k",
-            "not test_gui",  # Exclude GUI tests to prevent crashes
             "--tb=short",  # Shorter traceback for cleaner output
             "--strict-markers",  # Ensure marker consistency
-            "-q",  # Quiet output, show only essential info
         ]
+
+        # Include GUI tests if RUN_GUI_TESTS=1 is set
+        run_gui_tests = os.getenv("RUN_GUI_TESTS", "0") == "1"
+        if not run_gui_tests:
+            cmd.extend(["-k", "not test_gui"])  # Exclude GUI tests to prevent crashes
+
+        # Add verbose flag if requested
+        if args.verbose:
+            cmd.append("-v")  # Verbose output
+        else:
+            cmd.append("-q")  # Quiet output, show only essential info
 
         print("Using pytest for comprehensive testing...")
         result = subprocess.run(cmd, cwd=os.path.dirname(__file__))

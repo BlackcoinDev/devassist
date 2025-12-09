@@ -1254,14 +1254,17 @@ def show_vectordb():
         print("\n❌ Vector database not available.\n")
         return
 
+    # Initialize variables that may be used in error handling
+    collection_name = get_space_collection_name(CURRENT_SPACE)
+    collection_id = None
+
     try:
         print("\n--- Vector Database Contents ---")
 
         # Try to get documents from ChromaDB via direct API
         try:
             # Find collection for current space
-            collection_name = get_space_collection_name(CURRENT_SPACE)
-            collection_id = None
+            # collection_name and collection_id are already initialized above
 
             list_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
             list_response = api_session.get(list_url, timeout=10)
@@ -1325,7 +1328,7 @@ def show_vectordb():
                                         try:
                                             # Parse date
                                             dates.append(metadata["added_at"])
-                                        except:
+                                        except Exception:
                                             pass
 
                             print(f"\n📋 Statistics:")
@@ -1353,7 +1356,7 @@ def show_vectordb():
                                         print(
                                             f"   📅 Date Range: {earliest.strftime('%Y-%m-%d')} to {latest.strftime('%Y-%m-%d')}"
                                         )
-                                except:
+                                except Exception:
                                     pass
 
                             # Show recent additions (last 3 by date)
@@ -1489,11 +1492,8 @@ def show_vectordb():
             else:
                 print("❌ Could not retrieve collection statistics")
 
-        except Exception as e:
-            print(f"❌ Error accessing vector database: {e}")
-
     except Exception as e:
-        print(f"❌ Failed to show vector database: {e}")
+        print(f"❌ Error accessing vector database: {e}")
 
 
 def show_mem0():
@@ -1504,6 +1504,10 @@ def show_mem0():
     """
     if user_memory is None:
         print("\n❌ Mem0 personalized memory not available.\n")
+        return
+
+    if user_memory is None:
+        print("\n❌ Mem0 not available.\n")
         return
 
     try:
@@ -2320,7 +2324,7 @@ def initialize_application():
                     },
                 },
             }
-            user_memory = Memory.from_config(mem0_config)
+            user_memory = Memory.from_config(mem0_config)  # type: ignore[attr-defined]
             print("✅ Connected to Mem0 (User Personalized Memory)")
         except Exception as e:
             # Non-critical failure - continue without it
@@ -2721,6 +2725,29 @@ def execute_tool_call(tool_call):
         else:
             result = {"error": f"Unknown tool: {function_name}"}
 
+        # Verbose logging for successful tool execution
+        if VERBOSE_LOGGING and SHOW_TOOL_DETAILS:
+            if isinstance(result, dict):
+                if "error" in result:
+                    print(f"❌ Tool {function_name} completed with error")
+                else:
+                    success_msg = f"✅ Tool {function_name} completed"
+                    if "success" in result and result["success"]:
+                        # Add some result summary for common tools
+                        if function_name == "read_file" and "content" in result:
+                            content_len = len(result["content"])
+                            success_msg += f" ({content_len} chars read)"
+                        elif (
+                            function_name == "list_directory"
+                            and "total_items" in result
+                        ):
+                            total_items = result["total_items"]
+                            success_msg += f" ({total_items} items listed)"
+                        elif function_name == "write_file" and "size" in result:
+                            size = result["size"]
+                            success_msg += f" ({size} chars written)"
+                    print(success_msg)
+
         return {
             "tool_call_id": tool_call_id,
             "function_name": function_name,
@@ -2986,42 +3013,8 @@ def execute_parse_document(file_path: str, extract_type: str) -> dict:
         except Exception as e:
             return {"success": False, "error": f"Docling processing failed: {str(e)}"}
 
-        # Verbose logging for successful tool execution
-        if VERBOSE_LOGGING and SHOW_TOOL_DETAILS:
-            if isinstance(result, dict):
-                if "error" in result:
-                    print(f"❌ Tool {function_name} completed with error")
-                else:
-                    success_msg = f"✅ Tool {function_name} completed"
-                    if "success" in result and result["success"]:
-                        # Add some result summary for common tools
-                        if function_name == "read_file" and "content" in result:
-                            content_len = len(result["content"])
-                            success_msg += f" ({content_len} chars read)"
-                        elif (
-                            function_name == "list_directory"
-                            and "total_items" in result
-                        ):
-                            total_items = result["total_items"]
-                            success_msg += f" ({total_items} items listed)"
-                        elif function_name == "write_file" and "size" in result:
-                            size = result["size"]
-                            success_msg += f" ({size} chars written)"
-                    print(success_msg)
-
-        return {
-            "tool_call_id": tool_call_id,
-            "function_name": function_name,
-            "result": result,
-        }
-
     except Exception as e:
-        # Verbose logging for tool execution errors
-        if VERBOSE_LOGGING and SHOW_TOOL_DETAILS:
-            print(
-                f"❌ Tool {function_name if 'function_name' in locals() else 'unknown'} failed: {str(e)}"
-            )
-        return {"error": str(e)}
+        return {"error": f"Document parsing failed: {str(e)}"}
 
 
 def main():
@@ -3155,9 +3148,19 @@ def main():
 
                     mem_list = []
                     if isinstance(mem_results, dict) and "results" in mem_results:
-                        mem_list = [r["memory"] for r in mem_results["results"]]
+                        results = mem_results["results"]
+                        if isinstance(results, list):
+                            mem_list = [
+                                r.get("memory", "")
+                                for r in results
+                                if isinstance(r, dict)
+                            ]
                     elif isinstance(mem_results, list):
-                        mem_list = [r["memory"] for r in mem_results]
+                        mem_list = [
+                            r.get("memory", "")
+                            for r in mem_results
+                            if isinstance(r, dict)
+                        ]
 
                     if mem_list:
                         mem_str = "\n".join(mem_list)
@@ -3171,7 +3174,8 @@ def main():
 
                 def run_mem0_add(text):
                     try:
-                        user_memory.add(text, user_id="default_user")
+                        if user_memory is not None:
+                            user_memory.add(text, user_id="default_user")  # type: ignore[attr-defined]
                     except Exception as ex:
                         # Only log Mem0 errors if verbose logging is enabled
                         # This prevents spam from LM Studio compatibility issues
@@ -3325,6 +3329,7 @@ Do not respond with text about not having access to files.
             # Try tool-enabled response first
             try:
                 # Make initial call with tools already bound to LLM
+                llm_start_time = None
                 if VERBOSE_LOGGING:
                     print("🤖 Sending prompt to LLM...")
                     import time
@@ -3333,7 +3338,9 @@ Do not respond with text about not having access to files.
 
                 initial_response = llm.invoke(enhanced_history)
 
-                if VERBOSE_LOGGING:
+                if VERBOSE_LOGGING and llm_start_time is not None:
+                    import time  # Re-import in case not imported above
+
                     llm_duration = time.time() - llm_start_time
                     print(f"⚡ Initial LLM call completed in {llm_duration:.2f}s")
 
@@ -3417,11 +3424,14 @@ Do not respond with text about not having access to files.
                         enhanced_history.append(HumanMessage(content=tool_message))
 
                         # Make follow-up call with tool results and error handling
+                        followup_start_time = None
                         try:
                             if VERBOSE_LOGGING:
                                 print(
                                     "🤖 Generating follow-up response with tool results..."
                                 )
+                                import time
+
                                 followup_start_time = time.time()
 
                             # Check context length before calling LLM
@@ -3449,7 +3459,9 @@ Do not respond with text about not having access to files.
 
                             final_response = llm.invoke(enhanced_history)
 
-                            if VERBOSE_LOGGING:
+                            if VERBOSE_LOGGING and followup_start_time is not None:
+                                import time  # Ensure time is imported
+
                                 followup_duration = time.time() - followup_start_time
                                 print(
                                     f"⚡ Follow-up LLM call completed in {followup_duration:.2f}s"
@@ -3499,6 +3511,7 @@ Do not respond with text about not having access to files.
 
                                     # Final response after all tools with basic error handling
                                     try:
+                                        final_start_time = None
                                         if VERBOSE_LOGGING:
                                             print(
                                                 "🤖 Generating final response after additional tools..."
@@ -3544,7 +3557,12 @@ Do not respond with text about not having access to files.
                                             enhanced_history
                                         )
 
-                                        if VERBOSE_LOGGING:
+                                        if (
+                                            VERBOSE_LOGGING
+                                            and final_start_time is not None
+                                        ):
+                                            import time  # Ensure time is imported
+
                                             final_duration = (
                                                 time.time() - final_start_time
                                             )
@@ -3567,7 +3585,10 @@ Do not respond with text about not having access to files.
                                         logger.error(
                                             f"Final LLM call failed after tool execution: {e}"
                                         )
-                                        response = f"I successfully executed the tools, but encountered an error generating the final response: {str(e)}. The tool results are still available above."
+                                        response = (
+                                            f"I successfully executed the tools, but encountered an error "
+                                            f"generating the final response: {str(e)}. The tool results are still available above."
+                                        )
                                         if VERBOSE_LOGGING:
                                             print(
                                                 f"❌ Final response generation failed: {str(e)}"
@@ -3717,8 +3738,10 @@ def execute_learn_url(url: str) -> dict:
 
         # Create metadata
         title = "Web Page"  # Docling might expose title, but safe default
-        if hasattr(result.document, "title") and result.document.title:
-            title = result.document.title
+        if hasattr(result.document, "title") and getattr(
+            result.document, "title", None
+        ):  # type: ignore
+            title = getattr(result.document, "title")  # type: ignore
 
         doc = Document(
             page_content=content,

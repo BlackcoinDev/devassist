@@ -125,8 +125,8 @@ def main():
 
     # Check for required files
     required_files = [
-        "src.main.py",
-        "gui.py",
+        "src/main.py",
+        "src/gui.py",
         "launcher.py",
         "AGENTS.md",
         "README.md",
@@ -141,7 +141,7 @@ def main():
 
     # 4. Project structure check
     print("\n📁 Project Structure:")
-    expected_dirs = ["venv", "test"]
+    expected_dirs = ["venv", "tests"]
     for dir_name in expected_dirs:
         if os.path.exists(dir_name):
             print(f"✅ {dir_name}/ directory exists")
