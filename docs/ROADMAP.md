@@ -2,7 +2,7 @@
 
 This document outlines the future development roadmap for the Blackcoin DevAssist application, a LangChain-based AI learning assistant with GUI/CLI interfaces.
 
-## Current Status (v0.1)
+## Current Status (v0.1.1)
 
 - ✅ Dual interfaces: Modern PyQt6 GUI and traditional CLI
 - ✅ AI learning system with ChromaDB v2 vector database
@@ -36,7 +36,7 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 
 ### 2. Unified Document Processing with Docling
 **Priority**: Medium
-**Status**: ✅ Completed (v0.1.1)
+**Status**: ✅ Completed (v0.1.1.1)
 
 - **Docling Integration**: Replace multiple separate libraries with Docling for unified document processing
 - **How Docling Replaces Other Libraries**: Docling provides a single, powerful library that handles PDF, DOCX, RTF, EPUB, XLSX, HTML, and other formats with a consistent API. It can extract text, tables, images, and metadata from various document types, reducing the need for separate libraries like PyPDF2 (for PDFs), python-docx (for Word docs), striprtf (for RTF), ebooklib (for EPUB), and openpyxl (for Excel). This simplifies dependencies, improves maintainability, and offers better performance and accuracy for complex documents.
@@ -218,7 +218,7 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 
 ### 14. Mem0 AI Integration
 **Priority**: Medium
-**Status**: ✅ Completed (v0.1.2)  
+**Status**: ✅ Completed (v0.1.1.2)  
 
 - **Mem0 Overview**: Mem0 is an AI memory framework that provides intelligent, long-term memory management for agents, enabling better context retention, recall, and personalization across sessions.
 - **How It Integrates**: Enhance the current SQLite-based conversation memory with Mem0's advanced memory system, allowing the AI to remember user preferences, past interactions, and learned information more effectively. Mem0 uses the remote ChromaDB server for vectorized memory storage alongside SQLite for history/metadata tracking.
@@ -247,7 +247,7 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 ## Future Vision and Use Cases
 
 ### Project Evolution Analysis
-Based on the current state (v0.1 with GUI/CLI, AI learning, document processing, and tool calling) and the roadmap (security, performance, AI enhancements, multi-user support), the project can evolve into a comprehensive AI-powered development platform. The core strengths lie in its modular architecture, local AI integration, and extensible tool system.
+Based on the current state (v0.1.1 with GUI/CLI, AI learning, document processing, and tool calling) and the roadmap (security, performance, AI enhancements, multi-user support), the project can evolve into a comprehensive AI-powered development platform. The core strengths lie in its modular architecture, local AI integration, and extensible tool system.
 
 ### Potential Use Cases
 

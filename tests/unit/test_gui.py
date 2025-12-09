@@ -56,7 +56,7 @@ class TestGUISupportFunctions:
     """Test GUI support functions that don't require Qt."""
 
     @patch("gui.BACKEND_AVAILABLE", True)
-    @patch("main.load_memory")
+    @patch("src.main.load_memory")
     def test_load_conversation_success(self, mock_load_memory):
         """Test successful conversation loading."""
         from src.gui import AIAssistantGUI

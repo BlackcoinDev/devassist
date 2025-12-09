@@ -37,6 +37,17 @@ Fixtures:
 
 import pytest
 from unittest.mock import MagicMock
+import os
+
+# Load environment variables from .env file for tests
+try:
+    from dotenv import load_dotenv
+
+    # Load from project root
+    load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+except ImportError:
+    # dotenv not available, continue with system environment
+    pass
 
 
 @pytest.fixture

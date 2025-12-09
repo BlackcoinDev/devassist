@@ -25,7 +25,7 @@ class TestToolCallExecution:
             "args": {"file_path": "test.txt"},
         }
 
-        with patch("main.execute_read_file") as mock_execute:
+        with patch("src.main.execute_read_file") as mock_execute:
             mock_execute.return_value = {"success": True, "content": "test content"}
 
             result = execute_tool_call(tool_call)
@@ -42,7 +42,7 @@ class TestToolCallExecution:
             "args": {"file_path": "output.txt", "content": "new content"},
         }
 
-        with patch("main.execute_write_file") as mock_execute:
+        with patch("src.main.execute_write_file") as mock_execute:
             mock_execute.return_value = {"success": True, "size": 11}
 
             result = execute_tool_call(tool_call)
@@ -59,7 +59,7 @@ class TestToolCallExecution:
             "args": {"directory_path": "/tmp"},
         }
 
-        with patch("main.execute_list_directory") as mock_execute:
+        with patch("src.main.execute_list_directory") as mock_execute:
             mock_execute.return_value = {"success": True, "total_items": 5}
 
             result = execute_tool_call(tool_call)
@@ -72,7 +72,7 @@ class TestToolCallExecution:
         """Test executing get_current_directory tool call."""
         tool_call = {"id": "test_cwd", "name": "get_current_directory", "args": {}}
 
-        with patch("main.execute_get_current_directory") as mock_execute:
+        with patch("src.main.execute_get_current_directory") as mock_execute:
             mock_execute.return_value = {
                 "success": True,
                 "current_directory": "/home/user",
@@ -92,7 +92,7 @@ class TestToolCallExecution:
             "args": {"file_path": "document.pdf", "extract_type": "text"},
         }
 
-        with patch("main.execute_parse_document") as mock_execute:
+        with patch("src.main.execute_parse_document") as mock_execute:
             mock_execute.return_value = {"success": True, "content": "parsed content"}
 
             result = execute_tool_call(tool_call)
@@ -112,7 +112,7 @@ class TestToolCallExecution:
             },
         }
 
-        with patch("main.execute_learn_information") as mock_execute:
+        with patch("src.main.execute_learn_information") as mock_execute:
             mock_execute.return_value = {"success": True, "learned": True}
 
             result = execute_tool_call(tool_call)
@@ -131,7 +131,7 @@ class TestToolCallExecution:
             "args": {"query": "Python basics", "limit": 3},
         }
 
-        with patch("main.execute_search_knowledge") as mock_execute:
+        with patch("src.main.execute_search_knowledge") as mock_execute:
             mock_execute.return_value = {"success": True, "result_count": 2}
 
             result = execute_tool_call(tool_call)
@@ -148,7 +148,7 @@ class TestToolCallExecution:
             "args": {"query": "latest AI news"},
         }
 
-        with patch("main.execute_web_search") as mock_execute:
+        with patch("src.main.execute_web_search") as mock_execute:
             mock_execute.return_value = {"success": True, "result_count": 5}
 
             result = execute_tool_call(tool_call)
@@ -180,7 +180,7 @@ class TestToolCallExecution:
             "args": {"file_path": "test.txt"},
         }
 
-        with patch("main.execute_read_file") as mock_execute:
+        with patch("src.main.execute_read_file") as mock_execute:
             mock_execute.side_effect = Exception("Tool execution failed")
 
             result = execute_tool_call(tool_call)
@@ -193,8 +193,8 @@ class TestToolCallExecution:
 class TestToolCallIntegration:
     """Test tool calling in conversation context."""
 
-    @patch("main.llm")
-    @patch("main.vectorstore")
+    @patch("src.main.llm")
+    @patch("src.main.vectorstore")
     def test_tool_call_in_conversation_flow(self, mock_vectorstore, mock_llm):
         """Test that tool calls integrate properly into conversation flow."""
         # Mock LLM response with tool call
@@ -213,7 +213,7 @@ class TestToolCallIntegration:
         mock_llm.invoke.return_value = mock_response
 
         # Mock tool execution
-        with patch("main.execute_read_file") as mock_execute:
+        with patch("src.main.execute_read_file") as mock_execute:
             mock_execute.return_value = {"success": True, "content": "README content"}
 
             # This would be tested in a full conversation integration test
@@ -227,7 +227,7 @@ class TestToolCallIntegration:
             {"id": "call_2", "name": "read_file", "args": {"file_path": "file2.txt"}},
         ]
 
-        with patch("main.execute_read_file") as mock_execute:
+        with patch("src.main.execute_read_file") as mock_execute:
             mock_execute.return_value = {"success": True, "content": "content"}
 
             results = []

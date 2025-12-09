@@ -42,7 +42,7 @@ def test_parse_document():
 
     # Test 2: Unsupported file type
     print("\n2. Testing unsupported file type:")
-    result = execute_parse_document("main.py", "text")
+    result = execute_parse_document("src.main.py", "text")
     print(f"Result: {result}")
 
     # Test 3: Valid parameters (will show placeholder)

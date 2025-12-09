@@ -1,4 +1,4 @@
-# AI Assistant Chat Application v0.1 - Learning Edition
+# AI Assistant Chat Application v0.1.1 - Learning Edition
 
 An advanced interactive AI chat assistant powered by LangChain, LM Studio, and ChromaDB vector database. Features comprehensive learning capabilities, multi-format document processing, robust error handling, and complete feature parity between GUI and CLI interfaces.
 
@@ -36,7 +36,7 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                              DevAssist v0.1                              │
+│                            DevAssist v0.1.1                             │
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │   ┌─────────────┐      ┌─────────────┐      ┌─────────────────────────┐  │
@@ -483,7 +483,7 @@ The application includes a modern PyQt6-based graphical interface with:
 ### GUI Layout
 ```
 ┌─────────────────────────────────────────────────┐
-│ AI Assistant v0.1 - Learning Edition            │
+│ AI Assistant v0.1.1 - Learning Edition            │
 ├─────────────────────────────┬───────────────────┤
 │ Chat Display Area           │ Status: Ready     │
 │ ┌─────────────────────────┐ │ Model: qwen3-vl-30b │

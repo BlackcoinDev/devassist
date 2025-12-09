@@ -2,11 +2,11 @@
 
 This guide covers the currently implemented database backends and important migration information for the AI Assistant application.
 
-## ⚠️ Breaking Changes in v0.1
+## ⚠️ Breaking Changes in v0.1.1
 
 ### Configuration Requirements
 
-**IMPORTANT**: Starting with v0.1, the application requires a `.env` file and no longer uses hardcoded defaults.
+**IMPORTANT**: Starting with v0.1.1, the application requires a `.env` file and no longer uses hardcoded defaults.
 
 #### What Changed
 - **Before**: Application worked with or without `.env`, used hardcoded fallbacks, ChromaDB was optional
@@ -40,7 +40,7 @@ This guide covers the currently implemented database backends and important migr
 
 ### New Tool Capabilities
 
-**MAJOR ENHANCEMENT**: v0.1 introduces **8 AI tools** that work together with the existing knowledge management system:
+**MAJOR ENHANCEMENT**: v0.1.1 introduces **8 AI tools** that work together with the existing knowledge management system:
 
 #### Tool Integration Architecture
 ```

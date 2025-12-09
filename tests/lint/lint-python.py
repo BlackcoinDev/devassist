@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 """
-Python Linting Script v0.1
+Python Linting Script v0.1.1
 Runs comprehensive linting checks on Python files in the project.
 
 Dependencies: autopep8, flake8, mypy, vulture, codespell
@@ -60,7 +60,7 @@ def main():
     Performs syntax validation, style checking, type checking, dead code detection,
     and spell checking across all Python files in the project.
     """
-    print("🐍 Python Code Linting v0.1")
+    print("🐍 Python Code Linting v0.1.1")
     print("=" * 50)
 
     # Get project root directory

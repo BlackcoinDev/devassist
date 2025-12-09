@@ -37,10 +37,10 @@ class TestApplicationIntegration:
 
         # Mock all the complex imports and dependencies
         with (
-            patch("main.ChatOpenAI") as mock_llm,
+            patch("src.main.ChatOpenAI") as mock_llm,
             patch("chromadb.HttpClient") as mock_client,
             patch("langchain_chroma.Chroma") as mock_chroma,
-            patch("main.sqlite3.connect") as mock_sqlite,
+            patch("src.main.sqlite3.connect") as mock_sqlite,
         ):
             # Setup mock return values
             mock_llm_instance = MagicMock()
@@ -75,9 +75,9 @@ class TestApplicationIntegration:
         mock_lock = MagicMock()
 
         with (
-            patch("main.DB_TYPE", "sqlite"),
-            patch("main.db_conn", mock_conn),
-            patch("main.db_lock", mock_lock),
+            patch("src.main.DB_TYPE", "sqlite"),
+            patch("src.main.db_conn", mock_conn),
+            patch("src.main.db_lock", mock_lock),
         ):
             # Test save
             from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
@@ -109,14 +109,14 @@ class TestApplicationIntegration:
 
         # Test space switching (mocked)
         with (
-            patch("main.ensure_space_collection", return_value=True),
-            patch("main.save_current_space"),
+            patch("src.main.ensure_space_collection", return_value=True),
+            patch("src.main.save_current_space"),
         ):
             result = switch_space("test_space")
             assert result is True
             # Note: In real implementation, CURRENT_SPACE would change
 
-    @patch("main.vectorstore")
+    @patch("src.main.vectorstore")
     def test_context_retrieval_flow(self, mock_vectorstore):
         """Test context retrieval flow."""
         from src.main import get_relevant_context
@@ -126,9 +126,9 @@ class TestApplicationIntegration:
         mock_embeddings.embed_query.return_value = [0.1, 0.2, 0.3]
 
         with (
-            patch("main.vectorstore", mock_vectorstore),
-            patch("main.embeddings", mock_embeddings),
-            patch("main.requests.Session") as mock_session,
+            patch("src.main.vectorstore", mock_vectorstore),
+            patch("src.main.embeddings", mock_embeddings),
+            patch("src.main.requests.Session") as mock_session,
         ):
             mock_response = MagicMock()
             mock_response.status_code = 200
@@ -167,20 +167,20 @@ class TestCommandIntegration:
         from src.main import handle_slash_command
 
         # Mock conversation history to ensure consistent output
-        with patch("main.conversation_history", []):
+        with patch("src.main.conversation_history", []):
             result = handle_slash_command("/memory")
             assert result is True
 
             captured = capsys.readouterr()
             assert "No conversation history" in captured.out
 
-    @patch("main.conversation_history", [])
-    @patch("main.save_memory")
+    @patch("src.main.conversation_history", [])
+    @patch("src.main.save_memory")
     def test_clear_command_integration(self, mock_save, capsys):
         """Test clear command integration."""
         from src.main import handle_clear_command
 
-        with patch("main.input", return_value="yes"):
+        with patch("src.main.input", return_value="yes"):
             result = handle_clear_command()
             assert result is False
             mock_save.assert_called_once()  # Verify memory is saved during clear
@@ -197,7 +197,7 @@ class TestLauncherIntegration:
         """Test complete launcher flow."""
         with patch("sys.argv", ["launcher.py", "--cli"]):
             with patch("launcher.launch_cli") as mock_launch_cli:
-                from launcher import src.main as main as launcher_main
+                from launcher import main as launcher_main
 
                 launcher_main()
 

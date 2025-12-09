@@ -92,7 +92,7 @@ SAMPLE_VECTOR_CONTENT = [  # noqa: F841 # vulture: noqa
 # Sample file system structure for testing (future use)
 SAMPLE_FILE_STRUCTURE = {  # noqa: F841 # vulture: noqa
     "src": {
-        "main.py": "# Main application file",
+        "src.main.py": "# Main application file",
         "gui.py": "# GUI application file",
         "launcher.py": "# Application launcher",
     },
