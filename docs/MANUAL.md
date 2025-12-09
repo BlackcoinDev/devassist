@@ -42,6 +42,22 @@ The AI can "decide" to use tools without you explicitly asking.
 
 ---
 
+### 4. Personalized Memory (Mem0)
+**Your AI now "knows" you.**
+Unlike the Knowledge Base (which stores facts about *topics*), Mem0 creates a dynamic profile of **your** preferences, coding style, and personal context.
+
+*   **Automatic**: You don't need to run `/learn`. The system silently observes your messages in the background.
+*   **Adaptive**: If you say "I prefer Python 3.10 type hints", Mem0 remembers `User Preference: Python 3.10 Type Hints`.
+*   **Contextual**: For every future message, the AI checks Mem0: "Who is this user? How do they like their code?" and adapts the response automatically.
+
+**Example**:
+1.  **You**: "I hate verbose comments."
+2.  **Mem0**: *Silently adds preference*.
+3.  **You**: "Write a function to sum a list."
+4.  **AI**: Generates clean code with minimal comments, because it *remembers*.
+
+---
+
 ## 📄 Document & Web Processing
 
 We utilize **Docling**, a unified document processing engine, to handle everything from PDFs to Websites.
@@ -115,3 +131,4 @@ Mass-ingest an entire directory of code and documents.
 *   **Embeddings**: `qwen3-embedding` (via Ollama).
 *   **LLM**: `qwen3-vl-30b` (via LM Studio).
 *   **Processing**: Docling (for all file/web parsing).
+*   **Personalization**: Mem0 (User Preference Graph).

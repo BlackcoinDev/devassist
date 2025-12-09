@@ -123,6 +123,14 @@ from typing import List, Optional, Dict, cast
 # Security and configuration
 from pydantic import SecretStr  # Secure handling of API keys
 
+# Mem0 for personalized memory
+try:
+    from mem0 import Memory
+    MEM0_AVAILABLE = True
+except ImportError:
+    Memory = None
+    MEM0_AVAILABLE = False
+
 # =============================================================================
 # LOGGING AND ENVIRONMENT SETUP
 # =============================================================================
@@ -287,6 +295,7 @@ llm = None
 vectorstore = None
 embeddings = None
 chroma_client = None
+user_memory = None # Personalized memory instance
 conversation_history: List[BaseMessage] = []
 
 # Connection pooling for external API calls
@@ -2122,6 +2131,48 @@ def initialize_application():
     # This provides continuity across application sessions
     conversation_history[:] = load_memory()
 
+
+
+    # ============================================================================
+    # MEM0 INITIALIZATION (USER MEMORY)
+    # ============================================================================
+    global user_memory
+    if MEM0_AVAILABLE:
+        try:
+            # Configure Mem0 to use Local Stack (LM Studio + Ollama + Chroma)
+            # This ensures privacy by keeping all data local
+            mem0_config = {
+                "llm": {
+                    "provider": "openai",
+                    "config": {
+                        "model": MODEL_NAME,
+                        "openai_base_url": LM_STUDIO_BASE_URL,
+                        "api_key": LM_STUDIO_API_KEY,
+                        "temperature": 0.1
+                    }
+                },
+                "embedder": {
+                    "provider": "ollama",
+                    "config": {
+                        "model": EMBEDDING_MODEL,
+                        "base_url": OLLAMA_BASE_URL
+                    }
+                },
+                "vector_store": {
+                    "provider": "chroma",
+                    "config": {
+                        "collection_name": "mem0_user_prefs",
+                        "path": "chroma_db_mem0",
+                    }
+                }
+            }
+            user_memory = Memory.from_config(mem0_config)
+            print("✅ Connected to Mem0 (User Personalized Memory)")
+        except Exception as e:
+            # Non-critical failure - continue without it
+            print(f"⚠️ Failed to initialize Mem0: {e} (Continuing without personalization)")
+            user_memory = None
+
     return True
 
 
@@ -2821,7 +2872,38 @@ def main():
             # Retrieve relevant context from knowledge base using semantic similarity search
             # This enhances AI responses by providing background information from learned data
             # Only performed if vector database is enabled and available
+            # Retrieve relevant context from knowledge base using semantic similarity search
+            # This enhances AI responses by providing background information from learned data
+            # Only performed if vector database is enabled and available
             context = get_relevant_context(user_input) if vectorstore else ""
+            if user_memory:
+                try:
+                    # Search for relevant user memories/preferences
+                    mem_results = user_memory.search(user_input, user_id="default_user")
+                    
+                    mem_list = []
+                    if isinstance(mem_results, dict) and "results" in mem_results:
+                         mem_list = [r["memory"] for r in mem_results["results"]]
+                    elif isinstance(mem_results, list):
+                         mem_list = [r["memory"] for r in mem_results]
+                    
+                    if mem_list:
+                        mem_str = "\n".join(mem_list)
+                        context += f"\n\n[User Context & Preferences]:\n{mem_str}"
+                        # logger.info(f"🧠 Found personalized context: {len(mem_list)} items")
+                except Exception as e:
+                    logger.warning(f"Mem0 search error: {e}")
+            
+            # MEM0 TEACHING (Background Thread)
+            if user_memory:
+                def run_mem0_add(text):
+                    try:
+                        user_memory.add(text, user_id="default_user")
+                    except Exception as ex:
+                        logger.warning(f"Mem0 background add failed: {ex}")
+                
+                # Run learning in background to not block chat
+                threading.Thread(target=run_mem0_add, args=(user_input,)).start()
 
             # =============================================================================
             # ENHANCED PROMPT CONSTRUCTION

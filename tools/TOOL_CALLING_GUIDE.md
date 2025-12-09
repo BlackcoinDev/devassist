@@ -98,6 +98,12 @@ final_response = llm.invoke(enhanced_history)  # Includes tool results
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
+### Implicit Capabilities (Non-Tool Features)
+Some features work automatically in the background without the AI needing to call a tool:
+*   **Personalized Memory (Mem0)**: Automatically captures user preferences. The AI doesn't call `save_preference`; the system does it on every message.
+*   **Web Ingestion (`/web`)**: Triggered by user slash commands, not AI tool logic.
+
+
 ## Compatible AI Models
 
 - **qwen3-vl-30b via LM Studio** ⭐⭐⭐ (Current model with tool calling support)

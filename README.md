@@ -15,6 +15,7 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 - **🔄 Model Switching**: Easy switching between different AI models
 - **💬 Persistent Memory**: SQLite database for conversation history (no JSON files)
 - **🎯 Context Awareness**: AI uses learned information in relevant conversations
+- **👤 Personalized Memory**: Learns user preferences and style automatically via Mem0
 - **🛠️ AI Tool Calling**: qwen3-vl-30b supports 7 powerful tools for file operations, document processing, and knowledge management
 - **⚡ Streaming Responses**: Real-time response display for better user experience
 - **🛠️ Rich Commands**: Comprehensive slash command system in both GUI and CLI
