@@ -253,8 +253,8 @@ class TestWebSearchTools:
             {"title": "Test Result", "body": "Test content", "href": "https://test.com"}
         ]
 
-        with patch.dict("sys.modules", {"duckduckgo_search": MagicMock()}):
-            with patch("duckduckgo_search.DDGS", mock_ddgs):
+        with patch.dict("sys.modules", {"ddgs": MagicMock()}):
+            with patch("ddgs.DDGS", mock_ddgs):
                 result = execute_web_search("test query")
 
                 assert result["success"] is True
@@ -263,18 +263,16 @@ class TestWebSearchTools:
 
     def test_search_web_failure(self):
         """Test web search failure."""
-        with patch.dict("sys.modules", {"duckduckgo_search": MagicMock()}):
-            with patch(
-                "duckduckgo_search.DDGS", side_effect=Exception("Network error")
-            ):
+        with patch.dict("sys.modules", {"ddgs": MagicMock()}):
+            with patch("ddgs.DDGS", side_effect=Exception("Network error")):
                 result = execute_web_search("test query")
 
                 assert "error" in result
                 assert "failed" in result["error"].lower()
 
     def test_search_web_import_error(self):
-        """Test web search when duckduckgo-search is not installed."""
-        with patch.dict("sys.modules", {"duckduckgo_search": None}):
+        """Test web search when ddgs is not installed."""
+        with patch.dict("sys.modules", {"ddgs": None}):
             result = execute_web_search("test query")
 
             assert "error" in result

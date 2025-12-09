@@ -2435,8 +2435,8 @@ FILE_SYSTEM_TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "parse_document",
-            "description": "Extract structured data from documents (PDF, Docx, etc.) using Docling's unified processing pipeline",
+            "name": "search_web",
+            "description": "Search the public internet for current information using DuckDuckGo (privacy-focused) via ddgs library",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -2607,14 +2607,12 @@ def execute_web_search(query: str) -> dict:
             # If DDGS search fails, provide diagnostic info
             logger.error(f"DDGS search execution error: {str(search_err)}")
             return {
-                "error": f"Web search failed: {str(search_err)}. The duckduckgo-search package is installed but encountered an error."
+                "error": f"Web search failed: {str(search_err)}. The ddgs package is installed but encountered an error."
             }
 
     except ImportError as ie:
-        logger.error(f"Failed to import duckduckgo_search: {str(ie)}")
-        return {
-            "error": "duckduckgo-search not installed. Run: pip install duckduckgo-search"
-        }
+        logger.error(f"Failed to import ddgs: {str(ie)}")
+        return {"error": "ddgs not installed. Run: pip install ddgs"}
     except Exception as e:
         logger.error(f"Unexpected error in web search: {str(e)}")
         return {"error": f"Search failed: {str(e)}"}

@@ -171,7 +171,7 @@ Searches the public internet using DuckDuckGo.
 - **Status**: ✅ **Supported by qwen3-vl-30b**
 - **Capabilities**: Real-time web results, privacy-focused
 - **Returns**: Top 5 search result snippets
-- **Integration**: Uses `duckduckgo-search` library without API keys
+- **Integration**: Uses `ddgs` library without API keys
 
 ## Implementation Steps
 
