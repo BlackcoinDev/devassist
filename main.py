@@ -39,7 +39,7 @@ VERSION 0.1 CAPABILITIES:
 ========================
 🤖 AI FEATURES:
 - Conversational AI with qwen3-vl-30b via LM Studio
-- 7 specialized tools for file operations and document processing
+- 8 specialized tools for file operations, document processing, and web search
 - Autonomous tool calling with natural language triggers
 - Context-aware responses using learned knowledge
 
@@ -81,8 +81,8 @@ INITIALIZATION SEQUENCE:
 3. Connect to ChromaDB v2 server for knowledge operations
 4. Initialize Ollama embeddings for vectorization
 5. Load/create SQLite database for conversation memory
-6. Bind 7 AI tools to LLM for autonomous execution
-7. Start interactive chat loop with tool calling support
+6. Bind 8 AI tools to LLM for autonomous execution
+8. Start interactive chat loop with tool calling support
 4. Load space settings and current workspace configuration
 5. Load conversation history from SQLite database
 6. Enter main chat loop with learning capabilities
@@ -102,6 +102,7 @@ from langchain_core.messages import (
     SystemMessage,
     AIMessage,
 )  # Message types for chat
+
 # Base class for all message types
 from langchain_core.messages import BaseMessage
 from langchain_text_splitters import (
@@ -117,6 +118,7 @@ import json  # Serialization for conversation memory
 import sqlite3  # SQLite database for conversation memory
 import threading  # Thread synchronization for database operations
 from datetime import datetime  # Timestamps for learned knowledge
+
 # Type hints for better code clarity
 from typing import List, Optional, Dict, cast
 
@@ -126,6 +128,7 @@ from pydantic import SecretStr  # Secure handling of API keys
 # Mem0 for personalized memory
 try:
     from mem0 import Memory
+
     MEM0_AVAILABLE = True
 except ImportError:
     Memory = None
@@ -310,8 +313,10 @@ retry_strategy = Retry(
     backoff_factor=0.3,
     status_forcelist=[429, 500, 502, 503, 504],
 )
-adapter = HTTPAdapter(max_retries=retry_strategy,
-                      pool_connections=10, pool_maxsize=20)
+adapter = HTTPAdapter(
+    max_retries=retry_strategy,
+    pool_connections=10,
+    pool_maxsize=20)
 api_session.mount("http://", adapter)
 api_session.mount("https://", adapter)
 
@@ -362,7 +367,8 @@ def list_spaces() -> List[str]:
             return spaces
         else:
             logger.warning(
-                f"Failed to list collections: HTTP {response.status_code}")
+                f"Failed to list collections: HTTP {
+                    response.status_code}")
             return ["default"]
     except Exception as e:
         logger.error(f"Error listing spaces: {e}")
@@ -555,7 +561,8 @@ def load_memory() -> List[BaseMessage]:
 
             if not rows:
                 logger.debug(
-                    "No conversation history found in database, starting fresh")
+                    "No conversation history found in database, starting fresh"
+                )
                 return [SystemMessage(content="Lets get some coding done..")]
 
             # Reconstruct message objects from database rows
@@ -628,8 +635,7 @@ def save_memory(history: List[BaseMessage]) -> None:
 
                 # Prepare data for bulk insert
                 data_to_insert = [
-                    ("default", type(msg).__name__, msg.content)
-                    for msg in history
+                    ("default", type(msg).__name__, msg.content) for msg in history
                 ]
 
                 # Use executemany for efficient bulk insertion
@@ -638,7 +644,7 @@ def save_memory(history: List[BaseMessage]) -> None:
                     INSERT INTO conversations (session_id, message_type, content)
                     VALUES (?, ?, ?)
                     """,
-                    data_to_insert
+                    data_to_insert,
                 )
 
                 db_conn.commit()
@@ -861,9 +867,10 @@ def handle_slash_command(command: str) -> bool:
         result = execute_learn_url(url)
         if result.get("success"):
             print(
-                f"✅ Learned from web: {
-                    result.get('title')} ({
-                    result.get('length')} chars)")
+                f"✅ Learned from web: {result.get('title')} ({
+                    result.get('length')
+                } chars)"
+            )
         else:
             print(f"❌ Failed: {result.get('error')}")
     else:
@@ -1009,7 +1016,8 @@ def handle_list_command(dir_path: str = ""):
 
             if not full_path.startswith(current_dir):
                 print(
-                    f"\n❌ Access denied: Cannot list directories outside current directory")
+                    f"\n❌ Access denied: Cannot list directories outside current directory"
+                )
                 print(f"Current directory: {current_dir}\n")
                 return
 
@@ -1072,7 +1080,8 @@ def show_memory():
         return
 
     print(
-        f"\n📝 Conversation History ({len(conversation_history)} messages):\n")
+        f"\n📝 Conversation History ({
+            len(conversation_history)} messages):\n")
     for i, msg in enumerate(conversation_history):
         msg_type = type(msg).__name__.replace("Message", "")
         content = str(msg.content)
@@ -1095,8 +1104,9 @@ def handle_clear_command() -> bool:
         # Add a new system message for the fresh start
         from langchain_core.messages import SystemMessage
 
-        conversation_history = [SystemMessage(
-            content="Lets get some coding done..")]
+        conversation_history = [
+            SystemMessage(
+                content="Lets get some coding done..")]
         save_memory(conversation_history)
         return False
     else:
@@ -1168,17 +1178,20 @@ def handle_learn_command(content: str):
                         if create_response.status_code == 201:
                             collection_id = create_response.json().get("id")
                             logger.info(
-                                f"Created new collection for space {CURRENT_SPACE}: {collection_name}")
+                                f"Created new collection for space {CURRENT_SPACE}: {collection_name}"
+                            )
                         else:
                             logger.error(
                                 f"Failed to create collection: HTTP {
-                                    create_response.status_code}"
+                                    create_response.status_code
+                                }"
                             )
                             raise Exception("Collection creation failed")
 
                 except Exception as e:  # type: ignore
                     logger.error(
-                        f"Error managing collection for space {CURRENT_SPACE}: {e}")
+                        f"Error managing collection for space {CURRENT_SPACE}: {e}"
+                    )
                     raise
 
                 # Add document to the space's collection
@@ -1201,12 +1214,13 @@ def handle_learn_command(content: str):
 
                 if response.status_code == 201:
                     logger.info(
-                        f"Document added successfully to space {CURRENT_SPACE}: {doc_id}")
+                        f"Document added successfully to space {CURRENT_SPACE}: {doc_id}"
+                    )
                 else:
                     logger.error(
                         f"Failed to add document to space {CURRENT_SPACE}: {
-                            response.status_code} - {
-                            response.text}"
+                            response.status_code
+                        } - {response.text}"
                     )
                     raise Exception("Document addition failed")
 
@@ -1274,7 +1288,8 @@ def show_vectordb():
                 return
 
             logger.info(
-                f"Using collection for space {CURRENT_SPACE}: {collection_name} (ID: {collection_id})")
+                f"Using collection for space {CURRENT_SPACE}: {collection_name} (ID: {collection_id})"
+            )
 
             # Get collection statistics instead of all documents
             count_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections/{collection_id}/count"  # noqa: E501
@@ -1359,8 +1374,7 @@ def show_vectordb():
                                     )
                                     print(
                                         f"  {
-                                            i +
-                                            1}. {source} (added: {added_at})")
+                                            i + 1}. {source} (added: {added_at})")
                                     print(f"      Preview: {preview}")
                                 else:
                                     print(
@@ -1474,7 +1488,8 @@ def handle_populate_command(dir_path: str):
             else:
                 print(
                     f"⚠️  Collection may not exist or failed to clear: {
-                        response.status_code}"
+                        response.status_code
+                    }"
                 )
         except Exception as e:
             print(f"⚠️  Failed to clear collection: {e}")
@@ -1608,15 +1623,17 @@ def handle_populate_command(dir_path: str):
                 if len(all_documents) >= batch_size:
                     print(
                         f"💾 Adding batch of {
-                            len(all_documents)} chunks to vector database..."
+                            len(all_documents)
+                        } chunks to vector database..."
                     )
                     try:
                         if use_direct_api:
                             # Use direct ChromaDB API
                             # Ensure chroma_client is initialized
                             if chroma_client is None:
-                                chroma_client = HttpClient(host=cast(
-                                    str, CHROMA_HOST), port=CHROMA_PORT)
+                                chroma_client = HttpClient(
+                                    host=cast(str, CHROMA_HOST), port=CHROMA_PORT
+                                )
 
                             if chroma_client is None or embeddings is None:
                                 raise Exception(
@@ -1631,11 +1648,9 @@ def handle_populate_command(dir_path: str):
                             texts = [doc.page_content for doc in all_documents]
                             metadatas = [doc.metadata for doc in all_documents]
                             ids = [
-                                f"{
-                                    doc.metadata.get(
-                                        'file_path', 'unknown')}_{
-                                    doc.metadata.get(
-                                        'chunk_index', i)}"
+                                f"{doc.metadata.get('file_path', 'unknown')}_{
+                                    doc.metadata.get('chunk_index', i)
+                                }"
                                 for i, doc in enumerate(all_documents)
                             ]
 
@@ -1696,13 +1711,9 @@ def handle_populate_command(dir_path: str):
                     texts = [doc.page_content for doc in all_documents]
                     metadatas = [doc.metadata for doc in all_documents]
                     ids = [
-                        f"{
-                            doc.metadata.get(
-                                'file_path',
-                                'unknown')}_{
-                            doc.metadata.get(
-                                'chunk_index',
-                                i)}"
+                        f"{doc.metadata.get('file_path', 'unknown')}_{
+                            doc.metadata.get('chunk_index', i)
+                        }"
                         for i, doc in enumerate(all_documents)
                     ]
 
@@ -1869,7 +1880,8 @@ def handle_space_command(cmd_args: str):
 
         # Confirm deletion
         confirm = input(
-            f"Are you sure you want to delete space '{target_space}' and all its data? (yes/no): ")
+            f"Are you sure you want to delete space '{target_space}' and all its data? (yes/no): "
+        )
         if confirm.lower() not in ["yes", "y"]:
             print("\n❌ Deletion cancelled\n")
             return
@@ -1902,7 +1914,8 @@ def handle_export_command(format_type: str = "json"):
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"conversation_export_{timestamp}.{
-        format_type if format_type != 'markdown' else 'md'}"
+        format_type if format_type != 'markdown' else 'md'
+    }"
 
     try:
         if format_type == "json":
@@ -1955,10 +1968,12 @@ def handle_export_command(format_type: str = "json"):
                         f.write(f"## AI Response {i + 1}\n\n{content}\n\n")
                     elif msg_type == "System":
                         f.write(
-                            f"### System Message {i + 1}\n\n*{content}*\n\n")
+                            f"### System Message {
+                                i + 1}\n\n*{content}*\n\n")
                     else:
                         f.write(
-                            f"## {msg_type} Message {i + 1}\n\n{content}\n\n")
+                            f"## {msg_type} Message {
+                                i + 1}\n\n{content}\n\n")
 
                     f.write("---\n\n")
 
@@ -1979,7 +1994,7 @@ def initialize_application():
     2. Vector Database: Connects to ChromaDB v2 server for persistent knowledge storage
     3. Embeddings: Initializes qwen3-embedding via Ollama for semantic vectorization
     4. Memory: Loads conversation history from SQLite database
-    5. Tool Binding: Attaches 7 AI tools to LLM for autonomous execution
+    5. Tool Binding: Attaches 8 AI tools to LLM for autonomous execution
 
     The initialization sequence ensures all components work together:
     - Tool calling requires LLM + proper tool definitions
@@ -2055,7 +2070,10 @@ def initialize_application():
 
         # Connect to ChromaDB server
         chroma_client = HttpClient(
-            host=cast(str, CHROMA_HOST), port=CHROMA_PORT)
+            host=cast(
+                str,
+                CHROMA_HOST),
+            port=CHROMA_PORT)
 
         # Initialize Ollama embeddings for text vectorization
         embeddings = CustomOllamaEmbeddings(
@@ -2148,30 +2166,28 @@ def initialize_application():
                         "model": MODEL_NAME,
                         "openai_base_url": LM_STUDIO_BASE_URL,
                         "api_key": LM_STUDIO_API_KEY,
-                        "temperature": 0.1
-                    }
+                        "temperature": 0.1,
+                    },
                 },
                 "embedder": {
                     "provider": "ollama",
-                    "config": {
-                        "model": EMBEDDING_MODEL,
-                        "base_url": OLLAMA_BASE_URL
-                    }
+                    "config": {"model": EMBEDDING_MODEL, "base_url": OLLAMA_BASE_URL},
                 },
                 "vector_store": {
                     "provider": "chroma",
                     "config": {
                         "collection_name": "mem0_user_prefs",
                         "path": "chroma_db_mem0",
-                    }
-                }
+                    },
+                },
             }
             user_memory = Memory.from_config(mem0_config)
             print("✅ Connected to Mem0 (User Personalized Memory)")
         except Exception as e:
             # Non-critical failure - continue without it
             print(
-                f"⚠️ Failed to initialize Mem0: {e} (Continuing without personalization)")
+                f"⚠️ Failed to initialize Mem0: {e} (Continuing without personalization)"
+            )
             user_memory = None
 
     return True
@@ -2208,7 +2224,9 @@ def show_welcome():
     # Show current space
     print(
         f"🌐 Space: {CURRENT_SPACE} (collection: {
-            get_space_collection_name(CURRENT_SPACE)})")
+            get_space_collection_name(CURRENT_SPACE)
+        })"
+    )
     print("")
 
     # Show usage hints
@@ -2420,14 +2438,12 @@ def execute_web_search(query: str) -> dict:
             # max_results=5 to keep context manageable
             results = list(ddgs.text(query, max_results=5))
 
-        return {
-            "success": True,
-            "result_count": len(results),
-            "results": results
-        }
+        return {"success": True, "result_count": len(
+            results), "results": results}
     except ImportError:
         return {
-            "error": "duckduckgo-search not installed. Run: pip install duckduckgo-search"}
+            "error": "duckduckgo-search not installed. Run: pip install duckduckgo-search"
+        }
     except Exception as e:
         return {"error": f"Search failed: {str(e)}"}
 
@@ -2444,7 +2460,7 @@ def execute_tool_call(tool_call):
     3. Applies security checks and sandboxing
     4. Returns structured results for AI consumption
 
-    SUPPORTED TOOLS (7 total):
+    SUPPORTED TOOLS (8 total):
     - read_file: Read file contents with security restrictions
     - write_file: Create/modify files with path validation
     - list_directory: Browse directory contents safely
@@ -2545,7 +2561,8 @@ def execute_read_file(file_path: str) -> dict:
 
         if not full_path.startswith(current_dir):
             return {
-                "error": "Access denied: Cannot read files outside current directory"}
+                "error": "Access denied: Cannot read files outside current directory"
+            }
 
         if not os.path.exists(full_path):
             return {"error": f"File not found: {file_path}"}
@@ -2583,7 +2600,8 @@ def execute_write_file(file_path: str, content: str) -> dict:
 
         if not full_path.startswith(current_dir):
             return {
-                "error": "Access denied: Cannot write files outside current directory"}
+                "error": "Access denied: Cannot write files outside current directory"
+            }
 
         # Create directory if needed
         dir_path = os.path.dirname(full_path)
@@ -2608,7 +2626,8 @@ def execute_list_directory(directory_path: str = ".") -> dict:
 
         if not full_path.startswith(current_dir):
             return {
-                "error": "Access denied: Cannot list directories outside current directory"}
+                "error": "Access denied: Cannot list directories outside current directory"
+            }
 
         if not os.path.exists(full_path):
             return {"error": f"Directory not found: {directory_path}"}
@@ -2774,19 +2793,17 @@ def execute_parse_document(file_path: str, extract_type: str) -> dict:
                 "file_type": file_ext,
                 "content": content,
                 "analysis": content,  # Content is the analysis in this case
-                "note": "Processed via Docling Unified Pipeline"
+                "note": "Processed via Docling Unified Pipeline",
             }
 
         except ImportError:
             return {
                 "success": False,
-                "error": "docling library not installed. Please install with: pip install docling"
+                "error": "docling library not installed. Please install with: pip install docling",
             }
         except Exception as e:
-            return {
-                "success": False,
-                "error": f"Docling processing failed: {str(e)}"
-            }
+            return {"success": False,
+                    "error": f"Docling processing failed: {str(e)}"}
 
     except Exception as e:
         return {"error": str(e)}
@@ -2797,7 +2814,7 @@ def main():
     Main chat loop v0.1 - Core interactive interface with AI tool calling.
 
     This function implements the primary user interaction loop featuring:
-    1. AI tool calling with qwen3-vl-30b (7 autonomous tools supported)
+    1. AI tool calling with qwen3-vl-30b (8 autonomous tools supported)
     2. AI learning and knowledge retention via ChromaDB vector database
     3. Comprehensive slash command system for direct user control
     4. Context-aware conversations using semantic search and learned information
@@ -2895,7 +2912,8 @@ def main():
             # Large inputs can cause token limit errors or memory problems
             if len(user_input) > MAX_INPUT_LENGTH:
                 print(
-                    f"\nError: Input exceeds maximum length of {MAX_INPUT_LENGTH} characters.")
+                    f"\nError: Input exceeds maximum length of {MAX_INPUT_LENGTH} characters."
+                )
                 continue
 
                 # /model - Display current model information
@@ -2922,9 +2940,8 @@ def main():
                         user_input, user_id="default_user")
 
                     mem_list = []
-                    if isinstance(
-                            mem_results,
-                            dict) and "results" in mem_results:
+                    if isinstance(mem_results,
+                                  dict) and "results" in mem_results:
                         mem_list = [r["memory"]
                                     for r in mem_results["results"]]
                     elif isinstance(mem_results, list):
@@ -2939,6 +2956,7 @@ def main():
 
             # MEM0 TEACHING (Background Thread)
             if user_memory:
+
                 def run_mem0_add(text):
                     try:
                         user_memory.add(text, user_id="default_user")
@@ -2964,8 +2982,9 @@ def main():
             llm_context_limit = 20
             if len(conversation_history) > llm_context_limit:
                 # Preserves SystemMessage at [0] and appends recent history
-                enhanced_history = [conversation_history[0]] + \
-                    conversation_history[-llm_context_limit:]
+                enhanced_history = [conversation_history[0]] + conversation_history[
+                    -llm_context_limit:
+                ]
             else:
                 enhanced_history = conversation_history.copy()
 
@@ -3025,7 +3044,8 @@ Do not respond with text about not having access to files.
                 ]
 
                 is_learning_query = any(
-                    keyword in user_input.lower() for keyword in learning_keywords)
+                    keyword in user_input.lower() for keyword in learning_keywords
+                )
 
                 if is_learning_query:
                     logger.debug(
@@ -3033,7 +3053,8 @@ Do not respond with text about not having access to files.
                     )
                 else:
                     logger.debug(
-                        f"Auto mode - Regular query, skipping context integration")
+                        f"Auto mode - Regular query, skipping context integration"
+                    )
 
             # Apply context to enhanced history if available
             should_include_context = CONTEXT_MODE == "on" or (
@@ -3053,7 +3074,8 @@ Do not respond with text about not having access to files.
                 enhanced_history[0] = SystemMessage(content=system_content)
             else:
                 enhanced_history.insert(
-                    0, SystemMessage(content=system_content))
+                    0, SystemMessage(
+                        content=system_content))
             system_content = "Lets get some coding done.." + tool_instructions
             logger.debug(
                 f"After concatenation, system_content len: {
@@ -3073,14 +3095,13 @@ Do not respond with text about not having access to files.
             else:
                 logger.debug("Inserting new system message")
                 enhanced_history.insert(
-                    0, SystemMessage(content=system_content))
+                    0, SystemMessage(
+                        content=system_content))
 
             logger.debug(
-                f"Final system message ({
-                    len(system_content)} chars): {
-                    repr(
-                        system_content[
-                            :100])}..."
+                f"Final system message ({len(system_content)} chars): {
+                    repr(system_content[:100])
+                }..."
             )
 
             if context and should_include_context:
@@ -3137,7 +3158,9 @@ Do not respond with text about not having access to files.
 
                         enhanced_history.append(
                             AIMessage(
-                                content=initial_response.content or "Using tools..."))
+                                content=initial_response.content or "Using tools..."
+                            )
+                        )
                         enhanced_history.append(
                             HumanMessage(content=tool_message))
 
@@ -3154,7 +3177,8 @@ Do not respond with text about not having access to files.
             except Exception as e:  # type: ignore
                 # Fallback to regular streaming if tool calling fails
                 logger.warning(
-                    f"Tool calling failed, falling back to regular response: {e}")
+                    f"Tool calling failed, falling back to regular response: {e}"
+                )
                 # Stream response tokens from LLM (fallback method)
                 for chunk in llm.stream(enhanced_history):
                     content = chunk.content
@@ -3192,7 +3216,8 @@ Do not respond with text about not having access to files.
             conversation_history[:] = trim_history(
                 # Keep 1000 messages in memory/DB (Archive), only last 20 sent
                 # to LLM
-                conversation_history, 500
+                conversation_history,
+                500,
             )
 
             # =============================================================================
@@ -3286,8 +3311,8 @@ def execute_learn_url(url: str) -> dict:
                 "source": url,
                 "title": title,
                 "type": "web_page",
-                "added_at": datetime.now().isoformat()
-            }
+                "added_at": datetime.now().isoformat(),
+            },
         )
 
         # Add to vector store

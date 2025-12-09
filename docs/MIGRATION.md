@@ -40,7 +40,7 @@ This guide covers the currently implemented database backends and important migr
 
 ### New Tool Capabilities
 
-**MAJOR ENHANCEMENT**: v0.1 introduces **7 AI tools** that work together with the existing knowledge management system:
+**MAJOR ENHANCEMENT**: v0.1 introduces **8 AI tools** that work together with the existing knowledge management system:
 
 #### Tool Integration Architecture
 ```

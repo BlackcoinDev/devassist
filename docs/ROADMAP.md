@@ -179,7 +179,7 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 
 - **Pydantic-AI Overview**: Pydantic-AI is a Python library that combines Pydantic's data validation with AI model interactions, enabling structured tool calling, agent-based workflows, and type-safe AI responses. It can enhance the app by providing more reliable and structured AI interactions, better error handling, and integration with existing Pydantic models.
 - **Pydantic-AI Graphs**: An extension for building graph-based agent workflows, allowing complex multi-step reasoning, conditional logic, and dynamic agent routing. This can create more sophisticated AI behaviors beyond linear tool calling.
-- **How It Integrates**: Replace or augment LangChain's tool calling with Pydantic-AI's structured approach and graphs, allowing for better validation of AI outputs and inputs. This can improve the reliability of the 7 tools and add support for more complex agent behaviors with graph-based decision making.
+- **How It Integrates**: Replace or augment LangChain's tool calling with Pydantic-AI's structured approach and graphs, allowing for better validation of AI outputs and inputs. This can improve the reliability of the 8 tools and add support for more complex agent behaviors with graph-based decision making.
 - **Integration Steps**:
   1. Install Pydantic-AI (`pip install pydantic-ai`)
   2. Refactor tool definitions to use Pydantic-AI's structured tools
@@ -193,7 +193,7 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 **Status**: Planned  
 
 - **Arcade Overview**: Arcade is a library/framework for agent authorization and secure tool execution, providing fine-grained access control for AI agents interacting with external tools and APIs.
-- **How It Integrates**: Integrate Arcade to add authorization layers to the 7 tools, ensuring that AI actions are validated and permitted based on user permissions and security policies. This enhances security for file operations, API calls, and system interactions.
+- **How It Integrates**: Integrate Arcade to add authorization layers to the 8 tools, ensuring that AI actions are validated and permitted based on user permissions and security policies. This enhances security for file operations, API calls, and system interactions.
 - **Integration Steps**:
   1. Install Arcade library (`pip install arcade-ai` or similar)
   2. Define authorization policies for each tool
@@ -235,7 +235,7 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 **Status**: Planned  
 
 - **LangGraph Overview**: LangGraph is a library for building stateful, multi-actor applications with LLMs, using graph-based workflows to manage complex agent interactions and decision-making processes.
-- **How It Integrates**: Extend the current tool-calling system with LangGraph's graph-based architecture, enabling more sophisticated agent behaviors, conditional logic, and multi-step workflows beyond the existing 7 tools.
+- **How It Integrates**: Extend the current tool-calling system with LangGraph's graph-based architecture, enabling more sophisticated agent behaviors, conditional logic, and multi-step workflows beyond the existing 8 tools.
 - **Integration Steps**:
   1. Install LangGraph (`pip install langgraph`)
   2. Design graph structures for complex tasks

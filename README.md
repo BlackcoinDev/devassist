@@ -2,7 +2,7 @@
 
 An advanced interactive AI chat assistant powered by LangChain, LM Studio, and ChromaDB vector database. Features comprehensive learning capabilities, multi-format document processing, robust error handling, and complete feature parity between GUI and CLI interfaces.
 
-## 🌟 Features v0.1
+## 🌟 Features v0.1.1
 
 - **🖥️ Modern GUI**: Beautiful PyQt6 interface with dark/light themes
 - **🧠 Learning AI**: Teach the AI new information via /learn command that persists across sessions
@@ -16,7 +16,7 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 - **💬 Persistent Memory**: SQLite database for conversation history (no JSON files)
 - **🎯 Context Awareness**: AI uses learned information in relevant conversations
 - **👤 Personalized Memory**: Learns user preferences and style automatically via Mem0
-- **🛠️ AI Tool Calling**: qwen3-vl-30b supports 7 powerful tools for file operations, document processing, and knowledge management
+- **🛠️ AI Tool Calling**: qwen3-vl-30b supports 8 powerful tools for file operations, document processing, knowledge management, and web search
 - **⚡ Streaming Responses**: Real-time response display for better user experience
 - **🛠️ Rich Commands**: Comprehensive slash command system in both GUI and CLI
 - **🎨 Markdown Support**: Rich text formatting in GUI with HTML rendering
@@ -55,7 +55,7 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 │          ▼                    ▼                    ▼                     │
 │   ┌─────────────┐      ┌─────────────┐      ┌─────────────┐              │
 │   │  AI Tools   │      │  Memory     │      │  Knowledge  │              │
-│   │  (7 tools)  │      │  (SQLite)   │      │  (ChromaDB) │              │
+│   │  (8 tools)  │      │  (SQLite)   │      │  (ChromaDB) │              │
 │   └─────────────┘      └─────────────┘      └─────────────┘              │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
@@ -155,7 +155,7 @@ AI: The /populate command processes documents by:
 - Build custom knowledge bases for specific domains
 - Ask questions that combine learned information with document content
 
-### Core Components v0.1
+### Core Components v0.1.1
 
 1. **🖥️ GUI Interface**: Modern PyQt6 graphical interface with complete CLI command parity
 2. **💻 CLI Interface**: Traditional terminal interface with full functionality
@@ -163,7 +163,7 @@ AI: The /populate command processes documents by:
 4. **💾 ChromaDB v2 Server**: Distributed vector database for persistent knowledge storage
 5. **🔍 Semantic Search**: Context-aware information retrieval using embeddings
 6. **📄 Document Processing**: qwen3-vl-30b multimodal analysis for OCR, table extraction, form analysis, and layout understanding
-7. **🛠️ AI Tool Calling**: 7 powerful tools for file operations, document processing, and knowledge management
+7. **🛠️ AI Tool Calling**: 8 powerful tools for file operations, document processing, knowledge management, and web search
 8. **📝 Code Ingestion**: Bulk import and indexing of codebases with 80+ file type support
 9. **💬 Memory Management**: SQLite-based conversation persistence across sessions
 10. **🎛️ Model Management**: Dynamic model switching and configuration
@@ -250,7 +250,7 @@ python test/lint/lint-python.py
 - **✅ Feature Parity**: GUI and CLI have identical functionality
 - **✅ Logging**: Comprehensive logging across both interfaces
 
-## 🔧 Required Services v0.1
+## 🔧 Required Services v0.1.1
 
 1. **LM Studio** (Port 1234) - **REQUIRED**:
      ```bash
@@ -358,7 +358,7 @@ python test/lint/lint-python.py
 
 3. **The application will fail to start** without a properly configured `.env` file.
 
-### Required Settings v0.1
+### Required Settings v0.1.1
 
 All variables in `.env.example` are **required** - there are no defaults:
 
@@ -539,7 +539,7 @@ You: quit
 👋 Goodbye! Your conversation has been saved.
 ```
 
-### Slash Commands v0.1
+### Slash Commands v0.1.1
 
 | Command | Description | Example |
 |---------|-------------|---------|
@@ -592,7 +592,7 @@ User: "analyze this PDF"
 AI: Calls parse_document() → Gets {"success": true, "content": "..."} → Analyzes data → "Based on the PDF content..."
 ```
 
-### Learning & Knowledge Features v0.1
+### Learning & Knowledge Features v0.1.1
 
 **Teach the AI anything:**
 ```bash
