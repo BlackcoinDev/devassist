@@ -131,6 +131,7 @@ class TestCaching(unittest.TestCase):
 
         load_embedding_cache()
         assert len(main.EMBEDDING_CACHE) > 0
+        mock_file.assert_called_once()  # Verify file was opened
 
     def test_cleanup_memory(self):
         """Test memory cleanup function."""
@@ -185,7 +186,8 @@ class TestMemoryManagement(unittest.TestCase):
         save_memory(messages)
 
         # Verify database operations were called
-        assert mock_cursor.execute.call_count >= 2  # DELETE and INSERTs
+        mock_cursor.execute.assert_called_once()  # DELETE operation
+        mock_cursor.executemany.assert_called_once()  # INSERT operations
         mock_conn.commit.assert_called_once()
 
     def test_trim_history_no_trim(self):
@@ -274,6 +276,8 @@ class TestSlashCommands(unittest.TestCase):
 
         self.assertFalse(result)  # Should not exit
         self.assertIn("cleared", output.lower())
+        mock_input.assert_called_once()  # Verify user was prompted
+        mock_save.assert_called_once()  # Verify memory was saved
 
     @patch("main.input", return_value="no")
     def test_handle_clear_command_no(self, mock_input):
@@ -357,6 +361,7 @@ class TestSpaceCommands(unittest.TestCase):
         output = f.getvalue()
 
         self.assertIn("Available spaces", output)
+        mock_list.assert_called_once()  # Verify spaces were listed
 
     @patch("main.list_spaces", return_value=["default"])
     @patch("main.switch_space", return_value=True)
@@ -371,6 +376,8 @@ class TestSpaceCommands(unittest.TestCase):
         output = f.getvalue()
 
         self.assertIn("Created and switched", output)
+        mock_list.assert_called_once()  # Verify spaces were checked
+        mock_switch.assert_called_once_with("newspace")  # Verify space was switched
 
     @patch("main.list_spaces", return_value=["default", "test"])
     @patch("main.switch_space", return_value=True)
@@ -385,6 +392,8 @@ class TestSpaceCommands(unittest.TestCase):
         output = f.getvalue()
 
         self.assertIn("Switched to space", output)
+        mock_list.assert_called_once()  # Verify spaces were checked
+        mock_switch.assert_called_once_with("test")  # Verify space was switched
 
 
 class TestExportCommand(unittest.TestCase):

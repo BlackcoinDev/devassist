@@ -348,6 +348,47 @@ When implementing new features:
 4. Ensure backward compatibility
 5. Run full test suite
 
+### 16. Code Quality & Testing Infrastructure Overhaul
+**Priority**: High
+**Status**: Planned
+
+- **Code Quality Improvements**:
+  - Resolve all Flake8 style violations (18+ issues in main.py, tools/check_mem0.py)
+  - Auto-format code with autopep8 for consistent styling
+  - Fix MyPy type checking issues and Vulture dead code warnings
+  - Implement pre-commit hooks for automatic quality checks
+
+- **Testing Infrastructure Enhancement**:
+  - Fix unused mock variables in test files (5 Vulture warnings)
+  - Add comprehensive tool testing coverage (currently 1/8 tools tested)
+  - Implement proper test markers and categorization
+  - Create dedicated tool test suites (unit, integration, execution tests)
+  - Improve test fixtures and mocking strategies
+
+- **Tool Testing Implementation**:
+  - Unit tests for all 8 AI tools (read_file, write_file, list_directory, get_current_directory, parse_document, learn_information, search_knowledge, search_web)
+  - Integration tests for tool calling through LLM interface
+  - Security and error handling validation
+  - Mock external dependencies (filesystem, web APIs, databases)
+
+- **CI/CD Quality Gates**:
+  - 90%+ code coverage including tool functions
+  - All linting checks pass (flake8, mypy, vulture, codespell)
+  - Comprehensive tool functionality testing
+  - Fast test execution (< 30 seconds total)
+
+**Integration Steps**:
+✅ 1. Run autopep8 auto-formatting on main.py and tools/
+✅ 2. Fix remaining manual style issues and dead code
+3. Create comprehensive tool test suite in tests/unit/test_tools.py
+4. Add tool integration tests in tests/integration/test_tool_calling.py
+5. Update pytest configuration for tool test markers
+6. Implement test fixtures for tool mocking
+7. Add pre-commit hooks for quality enforcement
+8. Update AGENTS.md with new testing standards
+
+**Benefits**: Clean, maintainable codebase with comprehensive test coverage, reliable tool functionality, and automated quality assurance.
+
 ## Timeline
 
 - **Q1 2025**: Security enhancements (SQLCipher)

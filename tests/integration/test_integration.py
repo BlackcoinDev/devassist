@@ -94,7 +94,8 @@ class TestApplicationIntegration:
             save_memory(test_messages)
 
             # Verify database operations were called
-            assert mock_cursor.execute.call_count >= 2  # DELETE and INSERTs
+            mock_cursor.execute.assert_called_once()  # DELETE operation
+            mock_cursor.executemany.assert_called_once()  # INSERT operations
             mock_conn.commit.assert_called_once()
 
     def test_space_management_integration(self):
@@ -181,6 +182,7 @@ class TestCommandIntegration:
         with patch("main.input", return_value="yes"):
             result = handle_clear_command()
             assert result is False
+            mock_save.assert_called_once()  # Verify memory is saved during clear
 
             captured = capsys.readouterr()
             assert "cleared" in captured.out.lower()
@@ -189,9 +191,8 @@ class TestCommandIntegration:
 class TestLauncherIntegration:
     """Integration tests for launcher."""
 
-    @patch("launcher.load_dotenv")
     @patch("os.path.exists", return_value=True)
-    def test_launcher_full_flow(self, mock_exists, mock_dotenv):
+    def test_launcher_full_flow(self, mock_exists):
         """Test complete launcher flow."""
         with patch("sys.argv", ["launcher.py", "--cli"]):
             with patch("launcher.launch_cli") as mock_launch_cli:

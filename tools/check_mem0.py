@@ -8,20 +8,23 @@ and configured to talk to your local LM Studio and Ollama instances.
 Usage:
     python3 tools/check_mem0.py
 """
+
 import os
 import sys
 from dotenv import load_dotenv
 
-# Add parent directory to path to import main if needed, 
+# Add parent directory to path to import main if needed,
 # although we will mostly replicate the config logic to obtain a cleaner test.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
 def check_mem0():
     print("🔍 Checking Mem0 Integration...")
-    
+
     # 1. Check Import
     try:
         from mem0 import Memory
+
         print("✅ Mem0 library checks out (imported successfully).")
     except ImportError:
         print("❌ Mem0 library NOT found. Please run: pip install -r requirements.txt")
@@ -29,13 +32,12 @@ def check_mem0():
 
     # 2. Load Environment
     load_dotenv()
-    
+
     lm_studio_url = os.getenv("LM_STUDIO_URL")
     ollama_url = os.getenv("OLLAMA_BASE_URL")
     model_name = os.getenv("MODEL_NAME")
     embedding_model = os.getenv("EMBEDDING_MODEL")
-    chroma_host = os.getenv("CHROMA_HOST")
-    
+
     if not all([lm_studio_url, ollama_url, model_name, embedding_model]):
         print("❌ Missing environment variables. Check your .env file.")
         return
@@ -43,7 +45,7 @@ def check_mem0():
     print(f"ℹ️  Configuration:")
     print(f"   - LLM: {model_name} at {lm_studio_url}")
     print(f"   - Embedding: {embedding_model} at {ollama_url}")
-    
+
     # 3. Initialize Memory
     print("\n🔄 Initializing Memory connection...")
     try:
@@ -54,28 +56,25 @@ def check_mem0():
                     "model": model_name,
                     "openai_base_url": lm_studio_url,
                     "api_key": "lm-studio",
-                    "temperature": 0.1
-                }
+                    "temperature": 0.1,
+                },
             },
             "embedder": {
                 "provider": "ollama",
-                "config": {
-                    "model": embedding_model,
-                    "base_url": ollama_url
-                }
+                "config": {"model": embedding_model, "base_url": ollama_url},
             },
             "vector_store": {
                 "provider": "chroma",
                 "config": {
                     "collection_name": "test_mem0_integration",
                     "path": "chroma_db_mem0_test",
-                }
-            }
+                },
+            },
         }
-        
+
         m = Memory.from_config(mem0_config)
         print("✅ Memory initialized.")
-        
+
     except Exception as e:
         print(f"❌ Initialization failed: {e}")
         return
@@ -97,28 +96,33 @@ def check_mem0():
     try:
         results = m.search("What is my favorite color?", user_id="test_user")
         print(f"Result: {results}")
-        
+
         # Verify content
         found = False
-        if isinstance(results, dict) and 'results' in results:
-            for r in results['results']:
-                if "Magenta" in r.get('memory', '') or "#FF00FF" in r.get('memory', ''):
+        if isinstance(results, dict) and "results" in results:
+            for r in results["results"]:
+                if "Magenta" in r.get("memory", "") or "#FF00FF" in r.get("memory", ""):
                     found = True
         elif isinstance(results, list):
-             for r in results:
-                if "Magenta" in r.get('memory', '') or "#FF00FF" in r.get('memory', ''):
+            for r in results:
+                if "Magenta" in r.get("memory", "") or "#FF00FF" in r.get("memory", ""):
                     found = True
-                    
+
         if found:
             print("✅ Verified: Retrieved specific fact from memory.")
         else:
-            print("⚠️  Warning: Write succeeded but search didn't return the exact fact immediately.")
-            print("    (This can happen if the LLM extraction wasn't perfect or indexing is slow)")
-            
+            print(
+                "⚠️  Warning: Write succeeded but search didn't return the exact fact immediately."
+            )
+            print(
+                "    (This can happen if the LLM extraction wasn't perfect or indexing is slow)"
+            )
+
     except Exception as e:
         print(f"❌ Search failed: {e}")
 
     print("\n🎉 Mem0 Check Complete.")
+
 
 if __name__ == "__main__":
     check_mem0()

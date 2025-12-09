@@ -295,7 +295,7 @@ llm = None
 vectorstore = None
 embeddings = None
 chroma_client = None
-user_memory = None # Personalized memory instance
+user_memory = None  # Personalized memory instance
 conversation_history: List[BaseMessage] = []
 
 # Connection pooling for external API calls
@@ -642,7 +642,9 @@ def save_memory(history: List[BaseMessage]) -> None:
                 )
 
                 db_conn.commit()
-                logger.debug(f"Saved {len(data_to_insert)} messages to database")
+                logger.debug(
+                    f"Saved {
+                        len(data_to_insert)} messages to database")
 
         else:
             # Database not available - this should not happen in normal
@@ -1007,8 +1009,7 @@ def handle_list_command(dir_path: str = ""):
 
             if not full_path.startswith(current_dir):
                 print(
-                    f"\n❌ Access denied: Cannot list directories outside current directory"
-                )
+                    f"\n❌ Access denied: Cannot list directories outside current directory")
                 print(f"Current directory: {current_dir}\n")
                 return
 
@@ -1023,7 +1024,10 @@ def handle_list_command(dir_path: str = ""):
             target_dir = full_path
 
         print(
-            f"\n📁 Directory: {os.path.relpath(target_dir, os.getcwd()) or '.'}")
+            f"\n📁 Directory: {
+                os.path.relpath(
+                    target_dir,
+                    os.getcwd()) or '.'}")
         print("-" * 50)
 
         items = os.listdir(target_dir)
@@ -1164,8 +1168,7 @@ def handle_learn_command(content: str):
                         if create_response.status_code == 201:
                             collection_id = create_response.json().get("id")
                             logger.info(
-                                f"Created new collection for space {CURRENT_SPACE}: {collection_name}"
-                            )
+                                f"Created new collection for space {CURRENT_SPACE}: {collection_name}")
                         else:
                             logger.error(
                                 f"Failed to create collection: HTTP {
@@ -1175,8 +1178,7 @@ def handle_learn_command(content: str):
 
                 except Exception as e:  # type: ignore
                     logger.error(
-                        f"Error managing collection for space {CURRENT_SPACE}: {e}"
-                    )
+                        f"Error managing collection for space {CURRENT_SPACE}: {e}")
                     raise
 
                 # Add document to the space's collection
@@ -1199,8 +1201,7 @@ def handle_learn_command(content: str):
 
                 if response.status_code == 201:
                     logger.info(
-                        f"Document added successfully to space {CURRENT_SPACE}: {doc_id}"
-                    )
+                        f"Document added successfully to space {CURRENT_SPACE}: {doc_id}")
                 else:
                     logger.error(
                         f"Failed to add document to space {CURRENT_SPACE}: {
@@ -1273,8 +1274,7 @@ def show_vectordb():
                 return
 
             logger.info(
-                f"Using collection for space {CURRENT_SPACE}: {collection_name} (ID: {collection_id})"
-            )
+                f"Using collection for space {CURRENT_SPACE}: {collection_name} (ID: {collection_id})")
 
             # Get collection statistics instead of all documents
             count_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections/{collection_id}/count"  # noqa: E501
@@ -1358,7 +1358,9 @@ def show_vectordb():
                                         else "unknown"
                                     )
                                     print(
-                                        f"  {i + 1}. {source} (added: {added_at})")
+                                        f"  {
+                                            i +
+                                            1}. {source} (added: {added_at})")
                                     print(f"      Preview: {preview}")
                                 else:
                                     print(
@@ -1369,7 +1371,9 @@ def show_vectordb():
                             print("  No documents found in collection")
                     except Exception as e:  # type: ignore
                         print(
-                            f"  Could not retrieve sample documents: {str(e)[:100]}")
+                            f"  Could not retrieve sample documents: {
+                                str(e)[
+                                    :100]}")
                         print(
                             "  (This is normal for some document types or if the collection is empty)"
                         )
@@ -1611,9 +1615,8 @@ def handle_populate_command(dir_path: str):
                             # Use direct ChromaDB API
                             # Ensure chroma_client is initialized
                             if chroma_client is None:
-                                chroma_client = HttpClient(
-                                    host=cast(str, CHROMA_HOST), port=CHROMA_PORT
-                                )
+                                chroma_client = HttpClient(host=cast(
+                                    str, CHROMA_HOST), port=CHROMA_PORT)
 
                             if chroma_client is None or embeddings is None:
                                 raise Exception(
@@ -1866,8 +1869,7 @@ def handle_space_command(cmd_args: str):
 
         # Confirm deletion
         confirm = input(
-            f"Are you sure you want to delete space '{target_space}' and all its data? (yes/no): "
-        )
+            f"Are you sure you want to delete space '{target_space}' and all its data? (yes/no): ")
         if confirm.lower() not in ["yes", "y"]:
             print("\n❌ Deletion cancelled\n")
             return
@@ -2131,8 +2133,6 @@ def initialize_application():
     # This provides continuity across application sessions
     conversation_history[:] = load_memory()
 
-
-
     # ============================================================================
     # MEM0 INITIALIZATION (USER MEMORY)
     # ============================================================================
@@ -2170,7 +2170,8 @@ def initialize_application():
             print("✅ Connected to Mem0 (User Personalized Memory)")
         except Exception as e:
             # Non-critical failure - continue without it
-            print(f"⚠️ Failed to initialize Mem0: {e} (Continuing without personalization)")
+            print(
+                f"⚠️ Failed to initialize Mem0: {e} (Continuing without personalization)")
             user_memory = None
 
     return True
@@ -2413,19 +2414,20 @@ def execute_web_search(query: str) -> dict:
     """Execute web search using DuckDuckGo."""
     try:
         from duckduckgo_search import DDGS
-        
+
         print(f"🌍 Searching web for: '{query}'")
         with DDGS() as ddgs:
             # max_results=5 to keep context manageable
             results = list(ddgs.text(query, max_results=5))
-            
+
         return {
-            "success": True, 
+            "success": True,
             "result_count": len(results),
             "results": results
         }
     except ImportError:
-        return {"error": "duckduckgo-search not installed. Run: pip install duckduckgo-search"}
+        return {
+            "error": "duckduckgo-search not installed. Run: pip install duckduckgo-search"}
     except Exception as e:
         return {"error": f"Search failed: {str(e)}"}
 
@@ -2543,8 +2545,7 @@ def execute_read_file(file_path: str) -> dict:
 
         if not full_path.startswith(current_dir):
             return {
-                "error": "Access denied: Cannot read files outside current directory"
-            }
+                "error": "Access denied: Cannot read files outside current directory"}
 
         if not os.path.exists(full_path):
             return {"error": f"File not found: {file_path}"}
@@ -2582,8 +2583,7 @@ def execute_write_file(file_path: str, content: str) -> dict:
 
         if not full_path.startswith(current_dir):
             return {
-                "error": "Access denied: Cannot write files outside current directory"
-            }
+                "error": "Access denied: Cannot write files outside current directory"}
 
         # Create directory if needed
         dir_path = os.path.dirname(full_path)
@@ -2608,8 +2608,7 @@ def execute_list_directory(directory_path: str = ".") -> dict:
 
         if not full_path.startswith(current_dir):
             return {
-                "error": "Access denied: Cannot list directories outside current directory"
-            }
+                "error": "Access denied: Cannot list directories outside current directory"}
 
         if not os.path.exists(full_path):
             return {"error": f"Directory not found: {directory_path}"}
@@ -2896,8 +2895,7 @@ def main():
             # Large inputs can cause token limit errors or memory problems
             if len(user_input) > MAX_INPUT_LENGTH:
                 print(
-                    f"\nError: Input exceeds maximum length of {MAX_INPUT_LENGTH} characters."
-                )
+                    f"\nError: Input exceeds maximum length of {MAX_INPUT_LENGTH} characters.")
                 continue
 
                 # /model - Display current model information
@@ -2920,21 +2918,25 @@ def main():
             if user_memory:
                 try:
                     # Search for relevant user memories/preferences
-                    mem_results = user_memory.search(user_input, user_id="default_user")
-                    
+                    mem_results = user_memory.search(
+                        user_input, user_id="default_user")
+
                     mem_list = []
-                    if isinstance(mem_results, dict) and "results" in mem_results:
-                         mem_list = [r["memory"] for r in mem_results["results"]]
+                    if isinstance(
+                            mem_results,
+                            dict) and "results" in mem_results:
+                        mem_list = [r["memory"]
+                                    for r in mem_results["results"]]
                     elif isinstance(mem_results, list):
-                         mem_list = [r["memory"] for r in mem_results]
-                    
+                        mem_list = [r["memory"] for r in mem_results]
+
                     if mem_list:
                         mem_str = "\n".join(mem_list)
                         context += f"\n\n[User Context & Preferences]:\n{mem_str}"
                         # logger.info(f"🧠 Found personalized context: {len(mem_list)} items")
                 except Exception as e:
                     logger.warning(f"Mem0 search error: {e}")
-            
+
             # MEM0 TEACHING (Background Thread)
             if user_memory:
                 def run_mem0_add(text):
@@ -2942,9 +2944,11 @@ def main():
                         user_memory.add(text, user_id="default_user")
                     except Exception as ex:
                         logger.warning(f"Mem0 background add failed: {ex}")
-                
+
                 # Run learning in background to not block chat
-                threading.Thread(target=run_mem0_add, args=(user_input,)).start()
+                threading.Thread(
+                    target=run_mem0_add, args=(
+                        user_input,)).start()
 
             # =============================================================================
             # ENHANCED PROMPT CONSTRUCTION
@@ -2955,13 +2959,15 @@ def main():
             # while maintaining conversation flow
 
             # context slicing: Keep SystemMessage + Last 20 messages for LLM context
-            # This allows the DB to hold 1000+ messages (Long Term) while checking context (Short Term)
+            # This allows the DB to hold 1000+ messages (Long Term) while
+            # checking context (Short Term)
             llm_context_limit = 20
             if len(conversation_history) > llm_context_limit:
-                 # Preserves SystemMessage at [0] and appends recent history
-                 enhanced_history = [conversation_history[0]] + conversation_history[-llm_context_limit:]
+                # Preserves SystemMessage at [0] and appends recent history
+                enhanced_history = [conversation_history[0]] + \
+                    conversation_history[-llm_context_limit:]
             else:
-                 enhanced_history = conversation_history.copy()
+                enhanced_history = conversation_history.copy()
 
             # Apply context integration based on user-controlled settings
             is_learning_query = False  # Track if this is a learning-related query
@@ -3019,8 +3025,7 @@ Do not respond with text about not having access to files.
                 ]
 
                 is_learning_query = any(
-                    keyword in user_input.lower() for keyword in learning_keywords
-                )
+                    keyword in user_input.lower() for keyword in learning_keywords)
 
                 if is_learning_query:
                     logger.debug(
@@ -3028,8 +3033,7 @@ Do not respond with text about not having access to files.
                     )
                 else:
                     logger.debug(
-                        f"Auto mode - Regular query, skipping context integration"
-                    )
+                        f"Auto mode - Regular query, skipping context integration")
 
             # Apply context to enhanced history if available
             should_include_context = CONTEXT_MODE == "on" or (
@@ -3133,9 +3137,7 @@ Do not respond with text about not having access to files.
 
                         enhanced_history.append(
                             AIMessage(
-                                content=initial_response.content or "Using tools..."
-                            )
-                        )
+                                content=initial_response.content or "Using tools..."))
                         enhanced_history.append(
                             HumanMessage(content=tool_message))
 
@@ -3152,8 +3154,7 @@ Do not respond with text about not having access to files.
             except Exception as e:  # type: ignore
                 # Fallback to regular streaming if tool calling fails
                 logger.warning(
-                    f"Tool calling failed, falling back to regular response: {e}"
-                )
+                    f"Tool calling failed, falling back to regular response: {e}")
                 # Stream response tokens from LLM (fallback method)
                 for chunk in llm.stream(enhanced_history):
                     content = chunk.content
@@ -3189,7 +3190,9 @@ Do not respond with text about not having access to files.
             # Trim conversation history to prevent memory bloat
             # Maintains recent context while staying within API limits
             conversation_history[:] = trim_history(
-                conversation_history, 500  # Keep 1000 messages in memory/DB (Archive), only last 20 sent to LLM
+                # Keep 1000 messages in memory/DB (Archive), only last 20 sent
+                # to LLM
+                conversation_history, 500
             )
 
             # =============================================================================
