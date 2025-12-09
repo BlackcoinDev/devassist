@@ -313,10 +313,7 @@ retry_strategy = Retry(
     backoff_factor=0.3,
     status_forcelist=[429, 500, 502, 503, 504],
 )
-adapter = HTTPAdapter(
-    max_retries=retry_strategy,
-    pool_connections=10,
-    pool_maxsize=20)
+adapter = HTTPAdapter(max_retries=retry_strategy, pool_connections=10, pool_maxsize=20)
 api_session.mount("http://", adapter)
 api_session.mount("https://", adapter)
 
@@ -343,8 +340,7 @@ def ensure_space_collection(space_name: str) -> bool:
         # documents
         return True
     except Exception as e:
-        logger.error(
-            f"Failed to ensure collection for space {space_name}: {e}")
+        logger.error(f"Failed to ensure collection for space {space_name}: {e}")
         return False
 
 
@@ -366,9 +362,7 @@ def list_spaces() -> List[str]:
                         spaces.append(space_name)
             return spaces
         else:
-            logger.warning(
-                f"Failed to list collections: HTTP {
-                    response.status_code}")
+            logger.warning(f"Failed to list collections: HTTP {response.status_code}")
             return ["default"]
     except Exception as e:
         logger.error(f"Error listing spaces: {e}")
@@ -575,8 +569,7 @@ def load_memory() -> List[BaseMessage]:
                 elif msg_type == "AIMessage":
                     history.append(AIMessage(content=content))
                 else:
-                    logger.warning(
-                        f"Unknown message type: {msg_type}, skipping")
+                    logger.warning(f"Unknown message type: {msg_type}, skipping")
 
             logger.debug(f"Loaded {len(history)} messages from database")
             return history
@@ -630,8 +623,7 @@ def save_memory(history: List[BaseMessage]) -> None:
                 cursor = db_conn.cursor()
 
                 # Clear existing messages for this session
-                cursor.execute(
-                    "DELETE FROM conversations WHERE session_id = 'default'")
+                cursor.execute("DELETE FROM conversations WHERE session_id = 'default'")
 
                 # Prepare data for bulk insert
                 data_to_insert = [
@@ -648,15 +640,12 @@ def save_memory(history: List[BaseMessage]) -> None:
                 )
 
                 db_conn.commit()
-                logger.debug(
-                    f"Saved {
-                        len(data_to_insert)} messages to database")
+                logger.debug(f"Saved {len(data_to_insert)} messages to database")
 
         else:
             # Database not available - this should not happen in normal
             # operation
-            logger.error(
-                "SQLite database not available for saving conversation memory")
+            logger.error("SQLite database not available for saving conversation memory")
             raise RuntimeError("Database required but not available")
 
     except Exception as e:
@@ -693,14 +682,12 @@ def get_relevant_context(
             # Use global embeddings variable (initialized during application
             # startup)
             if embeddings is None:
-                logger.warning(
-                    "Embeddings not initialized for context retrieval")
+                logger.warning("Embeddings not initialized for context retrieval")
                 return ""
 
             query_embedding = embeddings.embed_query(query)
         except (AttributeError, NameError, Exception) as e:
-            logger.warning(
-                f"Embeddings not available for context retrieval: {e}")
+            logger.warning(f"Embeddings not available for context retrieval: {e}")
             return ""
 
         # Find collection for the specified space
@@ -718,8 +705,7 @@ def get_relevant_context(
                         collection_id = coll.get("id")
                         break
         except Exception as e:
-            logger.warning(
-                f"Error finding collection for space {space_name}: {e}")
+            logger.warning(f"Error finding collection for space {space_name}: {e}")
 
         if not collection_id:
             logger.warning(f"Could not find collection for space {space_name}")
@@ -738,8 +724,7 @@ def get_relevant_context(
 
             # Extract documents from response
             docs = []
-            if "documents" in data and data["documents"] and len(
-                    data["documents"]) > 0:
+            if "documents" in data and data["documents"] and len(data["documents"]) > 0:
                 documents = data["documents"][0]  # First query result
                 for doc_content in documents:
                     docs.append(doc_content)
@@ -753,8 +738,7 @@ def get_relevant_context(
             if len(QUERY_CACHE) % 50 == 0:
                 save_query_cache()
 
-            context = "\n\n".join(
-                [f"From knowledge base:\n{doc}" for doc in docs])
+            context = "\n\n".join([f"From knowledge base:\n{doc}" for doc in docs])
             return f"\n\nRelevant context:\n{context}\n\n"
         else:
             print(f"ChromaDB query failed: {response.status_code}")
@@ -806,7 +790,7 @@ def trim_history(
     # Only trim if history exceeds the limit
     if len(history) > max_length:
         # Keep system message (index 0) + most recent messages
-        return [history[0]] + history[-(max_pairs * 2):]
+        return [history[0]] + history[-(max_pairs * 2) :]
 
     # Return unchanged if within limits
     return history
@@ -838,6 +822,8 @@ def handle_slash_command(command: str) -> bool:
         handle_learn_command(" ".join(cmd_args))
     elif cmd_name == "vectordb":
         show_vectordb()
+    elif cmd_name == "mem0":
+        show_mem0()
     elif cmd_name == "populate":
         handle_populate_command(" ".join(cmd_args))
     elif cmd_name == "model":
@@ -885,6 +871,7 @@ def show_help():
     print("\n--- Available Commands ---")
     print("/memory       - Show conversation history")
     print("/vectordb     - Show vector database contents")
+    print("/mem0         - Show personalized memory contents")
     print("/model        - Show current model information")
     print("/space <cmd>  - Space/workspace management (list/create/switch/delete)")
     print("/context <mode> - Control context integration (auto/on/off)")
@@ -1031,11 +1018,7 @@ def handle_list_command(dir_path: str = ""):
 
             target_dir = full_path
 
-        print(
-            f"\n📁 Directory: {
-                os.path.relpath(
-                    target_dir,
-                    os.getcwd()) or '.'}")
+        print(f"\n📁 Directory: {os.path.relpath(target_dir, os.getcwd()) or '.'}")
         print("-" * 50)
 
         items = os.listdir(target_dir)
@@ -1079,14 +1062,11 @@ def show_memory():
         print("\n📝 No conversation history available.\n")
         return
 
-    print(
-        f"\n📝 Conversation History ({
-            len(conversation_history)} messages):\n")
+    print(f"\n📝 Conversation History ({len(conversation_history)} messages):\n")
     for i, msg in enumerate(conversation_history):
         msg_type = type(msg).__name__.replace("Message", "")
         content = str(msg.content)
-        content_preview = content[:100] + \
-            "..." if len(content) > 100 else content
+        content_preview = content[:100] + "..." if len(content) > 100 else content
         print(f"{i + 1:2d}. {msg_type}: {content_preview}")
     print()
 
@@ -1104,9 +1084,7 @@ def handle_clear_command() -> bool:
         # Add a new system message for the fresh start
         from langchain_core.messages import SystemMessage
 
-        conversation_history = [
-            SystemMessage(
-                content="Lets get some coding done..")]
+        conversation_history = [SystemMessage(content="Lets get some coding done..")]
         save_memory(conversation_history)
         return False
     else:
@@ -1136,7 +1114,7 @@ def handle_learn_command(content: str):
         doc = Document(
             page_content=content,  # The information to remember
             metadata={
-                "source": "manual",  # Mark as manually added
+                "source": "user-input",  # Mark as manually added via /learn command
                 "added_at": str(datetime.now()),  # Timestamp for tracking
             },
         )
@@ -1255,8 +1233,8 @@ def show_vectordb():
     """
     Display information about the current vector database contents.
 
-    Shows collection statistics, document count, and sample content from the
-    ChromaDB vector database. Provides insights into the AI's knowledge base.
+    Shows collection statistics, chunk count, unique sources, and content insights
+    from the ChromaDB vector database. Provides insights into the AI's knowledge base.
     """
     if vectorstore is None:
         print("\n❌ Vector database not available.\n")
@@ -1282,14 +1260,125 @@ def show_vectordb():
                         break
 
             if not collection_id:
-                print(
-                    f"❌ No collection found for current space '{CURRENT_SPACE}'")
+                print(f"❌ No collection found for current space '{CURRENT_SPACE}'")
                 print("The space may not have any documents yet.")
                 return
 
             logger.info(
                 f"Using collection for space {CURRENT_SPACE}: {collection_name} (ID: {collection_id})"
             )
+
+            # Get collection statistics
+            count_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections/{collection_id}/count"  # noqa: E501
+            count_response = api_session.get(count_url, timeout=10)
+
+            if count_response.status_code == 200:
+                count_data = count_response.json()
+                chunk_count = (
+                    count_data
+                    if isinstance(count_data, int)
+                    else count_data.get("count", 0)
+                )
+                print(f"📊 Collection: {collection_name}")
+                print(f"📈 Chunks: {chunk_count}")
+                print(f"🏢 Space: {CURRENT_SPACE}")
+
+                if chunk_count > 0:
+                    try:
+                        # Get metadata for statistics
+                        chroma_client = vectorstore._client
+                        collection = chroma_client.get_collection(collection_name)
+                        results = collection.get(
+                            limit=min(chunk_count, 1000),  # Sample up to 1000 for stats
+                            include=["metadatas"],
+                        )
+
+                        if results and "metadatas" in results and results["metadatas"]:
+                            metadatas = results["metadatas"]
+
+                            # Analyze metadata for insights
+                            sources = set()
+                            content_types = set()
+                            dates = []
+
+                            for metadata in metadatas:
+                                if metadata:
+                                    if "source" in metadata:
+                                        sources.add(metadata["source"])
+                                    if "content_type" in metadata:
+                                        content_types.add(metadata["content_type"])
+                                    if "added_at" in metadata:
+                                        try:
+                                            # Parse date
+                                            dates.append(metadata["added_at"])
+                                        except:
+                                            pass
+
+                            print(f"\n📋 Statistics:")
+                            print(f"   📄 Unique Sources: {len(sources)}")
+                            if sources:
+                                print(
+                                    f"   🔗 Sources: {', '.join(list(sources)[:5])}{'...' if len(sources) > 5 else ''}"
+                                )
+
+                            if content_types:
+                                print(
+                                    f"   📝 Content Types: {', '.join(content_types)}"
+                                )
+
+                            if dates:
+                                try:
+                                    date_objs = [
+                                        datetime.fromisoformat(d.replace("Z", "+00:00"))
+                                        for d in dates
+                                        if d
+                                    ]
+                                    if date_objs:
+                                        earliest = min(date_objs)
+                                        latest = max(date_objs)
+                                        print(
+                                            f"   📅 Date Range: {earliest.strftime('%Y-%m-%d')} to {latest.strftime('%Y-%m-%d')}"
+                                        )
+                                except:
+                                    pass
+
+                            # Show recent additions (last 3 by date)
+                            # Show sample sources
+                            sample_sources = []
+                            for metadata in metadatas[:5]:  # Check first 5 for examples
+                                if metadata and metadata.get("source"):
+                                    sample_sources.append(
+                                        (
+                                            metadata.get("source"),
+                                            metadata.get("added_at", "unknown"),
+                                        )
+                                    )
+                                    if len(sample_sources) >= 3:
+                                        break
+
+                            if sample_sources:
+                                print(f"\n🕒 Sample Sources:")
+                                for i, (source, added_at) in enumerate(sample_sources):
+                                    print(f"   {i + 1}. {source} (added: {added_at})")
+
+                        else:
+                            print("\n📋 Statistics: Unable to retrieve metadata")
+
+                    except Exception as e:
+                        print(f"\n❌ Error retrieving statistics: {e}")
+                else:
+                    print(f"\n  No chunks found in the knowledge base.")
+                    print(
+                        f"  Use /learn to add information or /populate to add codebases."
+                    )
+            else:
+                print(f"Failed to retrieve chunks: HTTP {count_response.status_code}")
+                print("Vector database connection may have issues.")
+
+            print("--- End Vector Database ---")
+
+        except Exception as e:
+            print(f"❌ Error displaying vector database: {str(e)}")
 
             # Get collection statistics instead of all documents
             count_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections/{collection_id}/count"  # noqa: E501
@@ -1312,21 +1401,18 @@ def show_vectordb():
                         # Try to get sample documents using ChromaDB client
                         # directly
                         chroma_client = vectorstore._client
-                        collection = chroma_client.get_collection(
-                            collection_name)
+                        collection = chroma_client.get_collection(collection_name)
                         results = collection.get(
                             limit=3, include=["documents", "metadatas"]
                         )
 
                         if results and "documents" in results and results["documents"]:
                             docs = results["documents"]
-                            metadatas = results.get("metadatas") or [
-                                {}] * len(docs)
+                            metadatas = results.get("metadatas") or [{}] * len(docs)
 
                             # First 3 documents
                             for i, doc in enumerate(docs[:3]):
-                                metadata = metadatas[i] if i < len(
-                                    metadatas) else {}
+                                metadata = metadatas[i] if i < len(metadatas) else {}
                                 if isinstance(doc, str):
                                     # Clean up the preview - remove excessive
                                     # whitespace and binary-looking content
@@ -1372,22 +1458,16 @@ def show_vectordb():
                                         if metadata
                                         else "unknown"
                                     )
-                                    print(
-                                        f"  {
-                                            i + 1}. {source} (added: {added_at})")
+                                    print(f"  {i + 1}. {source} (added: {added_at})")
                                     print(f"      Preview: {preview}")
                                 else:
                                     print(
-                                        f"  {i +
-                                             1}. [Non-text document: {type(doc)}]"
+                                        f"  {i + 1}. [Non-text document: {type(doc)}]"
                                     )
                         else:
                             print("  No documents found in collection")
                     except Exception as e:  # type: ignore
-                        print(
-                            f"  Could not retrieve sample documents: {
-                                str(e)[
-                                    :100]}")
+                        print(f"  Could not retrieve sample documents: {str(e)[:100]}")
                         print(
                             "  (This is normal for some document types or if the collection is empty)"
                         )
@@ -1400,6 +1480,46 @@ def show_vectordb():
 
     except Exception as e:
         print(f"❌ Failed to show vector database: {e}")
+
+
+def show_mem0():
+    """
+    Display information about the current Mem0 personalized memory contents.
+
+    Shows user memory statistics and sample memories from the Mem0 system.
+    """
+    if user_memory is None:
+        print("\n❌ Mem0 personalized memory not available.\n")
+        return
+
+    try:
+        print("\n--- Mem0 Personalized Memory Contents ---")
+
+        # Get all memories for the user
+        memories = user_memory.get_all(user_id="user")
+
+        if not memories or not memories.get("results"):
+            print("📊 No personalized memories stored yet.")
+            print("Memories are automatically created from your conversations.")
+            return
+
+        results = memories["results"]
+        print(f"📊 Memories: {len(results)}")
+        print(f"👤 User ID: user")
+
+        if results:
+            print("\n🧠 Sample Memories:")
+            for i, memory in enumerate(results[:5]):  # Show first 5
+                content = memory.get("memory", "No content")
+                if len(content) > 200:
+                    content = content[:200] + "..."
+                print(f"  {i + 1}. {content}")
+
+            if len(results) > 5:
+                print(f"  ... and {len(results) - 5} more")
+
+    except Exception as e:
+        print(f"\n❌ Failed to retrieve Mem0 contents: {e}\n")
 
 
 def handle_populate_command(dir_path: str):
@@ -1429,8 +1549,7 @@ def handle_populate_command(dir_path: str):
 
     # Check if directory exists
     if not directory:
-        print(
-            "\nUsage: /populate /path/to/directory [--dry-run] [--direct-api]")
+        print("\nUsage: /populate /path/to/directory [--dry-run] [--direct-api]")
         print("Examples:")
         print("   /populate /Users/username/projects/myapp")
         print("   /populate src/ --dry-run")
@@ -1562,14 +1681,11 @@ def handle_populate_command(dir_path: str):
                 if file_path.suffix.lower() in [".pdf"]:
                     # For PDFs, extract text using document processing
                     try:
-                        parse_result = execute_parse_document(
-                            str(file_path), "text")
-                        if parse_result.get(
-                                "success") and "content" in parse_result:
+                        parse_result = execute_parse_document(str(file_path), "text")
+                        if parse_result.get("success") and "content" in parse_result:
                             content = parse_result["content"]
                             if not content or (
-                                content.startswith(
-                                    "[") and content.endswith("]")
+                                content.startswith("[") and content.endswith("]")
                             ):
                                 # If no content or still a placeholder, skip
                                 # this file
@@ -1640,10 +1756,8 @@ def handle_populate_command(dir_path: str):
                                     "ChromaDB client or embeddings not initialized"
                                 )
 
-                            collection_name = get_space_collection_name(
-                                CURRENT_SPACE)
-                            collection = chroma_client.get_collection(
-                                collection_name)
+                            collection_name = get_space_collection_name(CURRENT_SPACE)
+                            collection = chroma_client.get_collection(collection_name)
 
                             texts = [doc.page_content for doc in all_documents]
                             metadatas = [doc.metadata for doc in all_documents]
@@ -1678,8 +1792,7 @@ def handle_populate_command(dir_path: str):
             # Progress update every 10 files
             if processed_files % 10 == 0:
                 print(
-                    f"📄 Processed {processed_files}/{
-                        len(files_to_process)} files "
+                    f"📄 Processed {processed_files}/{len(files_to_process)} files "
                     f"({total_chunks + len(all_documents)} total chunks)..."
                 )
 
@@ -1696,17 +1809,14 @@ def handle_populate_command(dir_path: str):
                         )
 
                     if chroma_client is None or embeddings is None:
-                        raise Exception(
-                            "ChromaDB client or embeddings not initialized")
+                        raise Exception("ChromaDB client or embeddings not initialized")
 
                     collection_name = get_space_collection_name(CURRENT_SPACE)
                     try:
-                        collection = chroma_client.get_collection(
-                            collection_name)
+                        collection = chroma_client.get_collection(collection_name)
                     except Exception:
                         # Collection doesn't exist, create it
-                        collection = chroma_client.create_collection(
-                            collection_name)
+                        collection = chroma_client.create_collection(collection_name)
 
                     texts = [doc.page_content for doc in all_documents]
                     metadatas = [doc.metadata for doc in all_documents]
@@ -1751,8 +1861,7 @@ def show_model_info():
     """Show current model information."""
     print(f"\n🤖 Current Model: {MODEL_NAME}")
     base_url_display = (
-        LM_STUDIO_BASE_URL.replace(
-            "/v1", "") if LM_STUDIO_BASE_URL else "unknown"
+        LM_STUDIO_BASE_URL.replace("/v1", "") if LM_STUDIO_BASE_URL else "unknown"
     )
     print(f"🌐 API Endpoint: http://{base_url_display}")
     print(f"🎯 Temperature: {TEMPERATURE}")
@@ -1951,8 +2060,7 @@ def handle_export_command(format_type: str = "json"):
             with open(filename, "w", encoding="utf-8") as f:
                 f.write("# AI Assistant Conversation Export\n\n")
                 f.write(
-                    f"**Export Date:** {
-                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                    f"**Export Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
                 )
                 f.write(f"**Total Messages:** {len(conversation_history)}\n\n")
                 f.write("---\n\n")
@@ -1967,13 +2075,9 @@ def handle_export_command(format_type: str = "json"):
                     elif msg_type == "AI":
                         f.write(f"## AI Response {i + 1}\n\n{content}\n\n")
                     elif msg_type == "System":
-                        f.write(
-                            f"### System Message {
-                                i + 1}\n\n*{content}*\n\n")
+                        f.write(f"### System Message {i + 1}\n\n*{content}*\n\n")
                     else:
-                        f.write(
-                            f"## {msg_type} Message {
-                                i + 1}\n\n{content}\n\n")
+                        f.write(f"## {msg_type} Message {i + 1}\n\n{content}\n\n")
 
                     f.write("---\n\n")
 
@@ -2069,11 +2173,7 @@ def initialize_application():
                 }
 
         # Connect to ChromaDB server
-        chroma_client = HttpClient(
-            host=cast(
-                str,
-                CHROMA_HOST),
-            port=CHROMA_PORT)
+        chroma_client = HttpClient(host=cast(str, CHROMA_HOST), port=CHROMA_PORT)
 
         # Initialize Ollama embeddings for text vectorization
         embeddings = CustomOllamaEmbeddings(
@@ -2086,8 +2186,7 @@ def initialize_application():
         # Attempt to connect to existing collection for current workspace
         # Collections are isolated per workspace for knowledge separation
         try:
-            chroma_client.get_collection(
-                name=get_space_collection_name(CURRENT_SPACE))
+            chroma_client.get_collection(name=get_space_collection_name(CURRENT_SPACE))
             # Collection exists - connect to it
             vectorstore = Chroma(
                 client=chroma_client,
@@ -2119,8 +2218,7 @@ def initialize_application():
     global db_conn, db_lock
     if DB_TYPE == "sqlite":
         try:
-            db_conn = sqlite3.connect(
-                cast(str, DB_PATH), check_same_thread=False)
+            db_conn = sqlite3.connect(cast(str, DB_PATH), check_same_thread=False)
             db_lock = threading.Lock()
 
             # Create conversations table if it doesn't exist
@@ -2154,6 +2252,8 @@ def initialize_application():
     # ============================================================================
     # MEM0 INITIALIZATION (USER MEMORY)
     # ============================================================================
+    # Mem0 uses both ChromaDB (vector storage for memories) and SQLite (history/metadata)
+    # This provides semantic search capabilities while maintaining change tracking
     global user_memory
     if MEM0_AVAILABLE:
         try:
@@ -2171,7 +2271,10 @@ def initialize_application():
                 },
                 "embedder": {
                     "provider": "ollama",
-                    "config": {"model": EMBEDDING_MODEL, "base_url": OLLAMA_BASE_URL},
+                    "config": {
+                        "model": EMBEDDING_MODEL,
+                        "ollama_base_url": OLLAMA_BASE_URL,
+                    },
                 },
                 "vector_store": {
                     "provider": "chroma",
@@ -2438,8 +2541,7 @@ def execute_web_search(query: str) -> dict:
             # max_results=5 to keep context manageable
             results = list(ddgs.text(query, max_results=5))
 
-        return {"success": True, "result_count": len(
-            results), "results": results}
+        return {"success": True, "result_count": len(results), "results": results}
     except ImportError:
         return {
             "error": "duckduckgo-search not installed. Run: pip install duckduckgo-search"
@@ -2665,8 +2767,7 @@ def execute_get_current_directory() -> dict:
         return {"error": str(e)}
 
 
-def execute_learn_information(
-        information: str, metadata: dict | None = None) -> dict:
+def execute_learn_information(information: str, metadata: dict | None = None) -> dict:
     """Execute learn information tool."""
     try:
         if not information.strip():
@@ -2802,8 +2903,7 @@ def execute_parse_document(file_path: str, extract_type: str) -> dict:
                 "error": "docling library not installed. Please install with: pip install docling",
             }
         except Exception as e:
-            return {"success": False,
-                    "error": f"Docling processing failed: {str(e)}"}
+            return {"success": False, "error": f"Docling processing failed: {str(e)}"}
 
     except Exception as e:
         return {"error": str(e)}
@@ -2848,6 +2948,7 @@ def main():
     Available Commands:
     - /learn <text> - Teach AI new information
     - /vectordb - Inspect learned knowledge base
+    - /mem0 - Inspect personalized memory
     - /populate <path> - Bulk import codebases
     - /model - Check/switch AI models
     - /memory - View conversation history
@@ -2893,8 +2994,7 @@ def main():
 
             # Additional quit command check (belt and suspenders approach)
             # Handles edge cases where quit might be embedded in other text
-            if any(quit_cmd in user_input.lower()
-                   for quit_cmd in ["quit", "exit"]):
+            if any(quit_cmd in user_input.lower() for quit_cmd in ["quit", "exit"]):
                 save_memory(conversation_history)
                 print("\n👋 Goodbye! Your conversation has been saved.")
                 break
@@ -2936,14 +3036,11 @@ def main():
             if user_memory:
                 try:
                     # Search for relevant user memories/preferences
-                    mem_results = user_memory.search(
-                        user_input, user_id="default_user")
+                    mem_results = user_memory.search(user_input, user_id="default_user")
 
                     mem_list = []
-                    if isinstance(mem_results,
-                                  dict) and "results" in mem_results:
-                        mem_list = [r["memory"]
-                                    for r in mem_results["results"]]
+                    if isinstance(mem_results, dict) and "results" in mem_results:
+                        mem_list = [r["memory"] for r in mem_results["results"]]
                     elif isinstance(mem_results, list):
                         mem_list = [r["memory"] for r in mem_results]
 
@@ -2964,9 +3061,7 @@ def main():
                         logger.warning(f"Mem0 background add failed: {ex}")
 
                 # Run learning in background to not block chat
-                threading.Thread(
-                    target=run_mem0_add, args=(
-                        user_input,)).start()
+                threading.Thread(target=run_mem0_add, args=(user_input,)).start()
 
             # =============================================================================
             # ENHANCED PROMPT CONSTRUCTION
@@ -3016,13 +3111,11 @@ Do not respond with text about not having access to files.
             if LEARNING_MODE == "off":
                 # Learning is completely disabled
                 context = ""
-                logger.debug(
-                    "Learning mode is off - skipping context integration")
+                logger.debug("Learning mode is off - skipping context integration")
             elif CONTEXT_MODE == "off":
                 # Context integration is disabled
                 context = ""
-                logger.debug(
-                    "Context mode is off - skipping context integration")
+                logger.debug("Context mode is off - skipping context integration")
             elif CONTEXT_MODE == "on" and context:
                 # Always include context when available
                 logger.debug(
@@ -3069,24 +3162,19 @@ Do not respond with text about not having access to files.
                 system_content += f" Use this context: {context}"
 
             # Replace the first system message if it exists, otherwise insert
-            if enhanced_history and isinstance(
-                    enhanced_history[0], SystemMessage):
+            if enhanced_history and isinstance(enhanced_history[0], SystemMessage):
                 enhanced_history[0] = SystemMessage(content=system_content)
             else:
-                enhanced_history.insert(
-                    0, SystemMessage(
-                        content=system_content))
+                enhanced_history.insert(0, SystemMessage(content=system_content))
             system_content = "Lets get some coding done.." + tool_instructions
             logger.debug(
-                f"After concatenation, system_content len: {
-                    len(system_content)}"
+                f"After concatenation, system_content len: {len(system_content)}"
             )
             if context and should_include_context:
                 system_content += f" Use this context: {context}"
 
             # Replace the first system message if it exists, otherwise insert
-            if enhanced_history and isinstance(
-                    enhanced_history[0], SystemMessage):
+            if enhanced_history and isinstance(enhanced_history[0], SystemMessage):
                 logger.debug("Replacing existing system message")
                 enhanced_history[0] = SystemMessage(content=system_content)
                 logger.debug(
@@ -3094,9 +3182,7 @@ Do not respond with text about not having access to files.
                 )
             else:
                 logger.debug("Inserting new system message")
-                enhanced_history.insert(
-                    0, SystemMessage(
-                        content=system_content))
+                enhanced_history.insert(0, SystemMessage(content=system_content))
 
             logger.debug(
                 f"Final system message ({len(system_content)} chars): {
@@ -3123,10 +3209,7 @@ Do not respond with text about not having access to files.
                 initial_response = llm.invoke(enhanced_history)
                 logger.debug(f"LLM response type: {type(initial_response)}")
                 logger.debug(
-                    f"Has tool_calls attr: {
-                        hasattr(
-                            initial_response,
-                            'tool_calls')}"
+                    f"Has tool_calls attr: {hasattr(initial_response, 'tool_calls')}"
                 )
                 if hasattr(initial_response, "tool_calls"):
                     logger.debug(f"Tool calls: {initial_response.tool_calls}")
@@ -3161,8 +3244,7 @@ Do not respond with text about not having access to files.
                                 content=initial_response.content or "Using tools..."
                             )
                         )
-                        enhanced_history.append(
-                            HumanMessage(content=tool_message))
+                        enhanced_history.append(HumanMessage(content=tool_message))
 
                         # Make follow-up call with tool results
                         final_response = llm.invoke(enhanced_history)
@@ -3227,8 +3309,7 @@ Do not respond with text about not having access to files.
         except ConnectionError as e:
             # Network connectivity issues - LM Studio server is unreachable
             logger.error(f"Connection error: {e}")
-            print(
-                f"\n\nError: Cannot connect to LM Studio at {LM_STUDIO_BASE_URL}")
+            print(f"\n\nError: Cannot connect to LM Studio at {LM_STUDIO_BASE_URL}")
             print("Please ensure LM Studio is running and accessible.\n")
             # Remove failed user message to prevent conversation corruption
             if conversation_history and isinstance(
@@ -3326,8 +3407,7 @@ def execute_learn_url(url: str) -> dict:
             if operation_count % 50 == 0:
                 cleanup_memory()
 
-            return {"success": True, "title": title,
-                    "url": url, "length": len(content)}
+            return {"success": True, "title": title, "url": url, "length": len(content)}
         else:
             return {"error": "Vector database not initialized"}
 

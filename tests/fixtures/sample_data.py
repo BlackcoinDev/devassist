@@ -43,6 +43,7 @@ SAMPLE_COMMANDS = [  # noqa: F841 # vulture: noqa
     "/memory",
     "/clear",
     "/vectordb",
+    "/mem0",
     "/model",
     "/context auto",
     "/learning normal",

@@ -91,7 +91,8 @@ Mass-ingest an entire directory of code and documents.
 | **`/learn <text>`** | Manually add a snippet of text to memory. |
 | **`/populate <dir>`** | Bulk learn files from a folder. |
 | **`/memory`** | Show recent conversation history. |
-| **`/vectordb`** | Peek at what is stored in the vector DB. |
+| **`/vectordb`** | View knowledge base statistics and sources. |
+| **`/mem0`** | Peek at personalized memory contents. |
 | **`/read <file>`** | Read a local file. |
 | **`/write <file>`** | Create or edit a file. |
 | **`/clear`** | Wipe the current conversation context (but not long-term memory). |

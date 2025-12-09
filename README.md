@@ -438,6 +438,7 @@ You: /help
 --- Available Commands ---
 /memory       - Show conversation history
 /vectordb     - Show vector database contents
+/mem0         - Show personalized memory contents
 /model        - Show current model information
 /context <mode> - Control context integration (auto/on/off)
 /learning <mode> - Control learning behavior (normal/strict/off)
@@ -493,7 +494,7 @@ The application includes a modern PyQt6-based graphical interface with:
                                 └─────────────────┘
 ```
 
-**Note**: The GUI provides complete feature parity with the CLI, including all slash commands (/help, /clear, /learn, /vectordb, /populate, /context, /learning, /space, etc.) processed locally without calling the AI. The interface defaults to a dark theme for better readability, with rich markdown formatting and comprehensive logging.
+**Note**: The GUI provides complete feature parity with the CLI, including all slash commands (/help, /clear, /learn, /vectordb, /mem0, /populate, /context, /learning, /space, etc.) processed locally without calling the AI. The interface defaults to a dark theme for better readability, with rich markdown formatting and comprehensive logging.
 
 ### Markdown Formatting
 The GUI supports markdown formatting in messages:
@@ -544,7 +545,8 @@ You: quit
 | Command | Description | Example |
 |---------|-------------|---------|
 | `/learn <text>` | **Teach AI new information** (stores in ChromaDB) | `/learn Docker containers are lightweight` |
-| `/vectordb` | **Inspect learned knowledge** (queries vector database) | `/vectordb` |
+| `/vectordb` | **Inspect knowledge base** (shows chunks, sources, statistics) | `/vectordb` |
+| `/mem0` | **Inspect personalized memory** (user preferences and context) | `/mem0` |
 | `/populate <path>` | **Bulk import codebases** (uses document processing tools) | `/populate /path/to/project` |
 | `/model` | **Check/switch AI models** | `/model` |
 | `/memory` | **View conversation history** (SQLite database) | `/memory` |

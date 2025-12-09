@@ -63,7 +63,8 @@ class TestApplicationIntegration:
             mock_llm.assert_called_once()
             mock_client.assert_called_once()
             mock_chroma.assert_called_once()
-            mock_sqlite.assert_called_once()
+            # SQLite is called for conversation memory and Mem0 history
+            assert mock_sqlite.call_count >= 1
 
     def test_memory_persistence_flow(self):
         """Test memory save/load persistence flow."""

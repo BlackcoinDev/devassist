@@ -43,7 +43,7 @@ SUPPORTED INTERFACES:
 
 💻 CLI MODE:
     - Traditional terminal-based interface
-    - Full slash command support (/learn, /vectordb, etc.)
+    - Full slash command support (/learn, /vectordb, /mem0, etc.)
     - Direct tool access and system control
     - Optimized for power users and automation
 
