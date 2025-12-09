@@ -254,6 +254,12 @@ if not DB_PATH:
 DB_PATH = cast(str, DB_PATH)  # Type assertion for mypy
 assert DB_PATH is not None, "DB_PATH should not be None after validation"
 
+# Verbose Logging Configuration - for detailed AI processing visibility
+VERBOSE_LOGGING = os.getenv("VERBOSE_LOGGING", "false").lower() == "true"
+SHOW_LLM_REASONING = os.getenv("SHOW_LLM_REASONING", "true").lower() == "true"
+SHOW_TOKEN_USAGE = os.getenv("SHOW_TOKEN_USAGE", "true").lower() == "true"
+SHOW_TOOL_DETAILS = os.getenv("SHOW_TOOL_DETAILS", "true").lower() == "true"
+
 # Vector Database Configuration - for knowledge base and context retrieval
 CHROMA_HOST = os.getenv("CHROMA_HOST")  # ChromaDB server host
 if not CHROMA_HOST:
@@ -2267,6 +2273,8 @@ def initialize_application():
                         "openai_base_url": LM_STUDIO_BASE_URL,
                         "api_key": LM_STUDIO_API_KEY,
                         "temperature": 0.1,
+                        # Note: response_format is handled by the mem0 LLM
+                        # adapters for compatibility with LM Studio / OpenAI.
                     },
                 },
                 "embedder": {
@@ -2383,17 +2391,17 @@ FILE_SYSTEM_TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "read_file",
-            "description": "Read the contents of a file in the current directory",
+            "name": "search_web",
+            "description": "Search the public internet for current information using DuckDuckGo (privacy-focused)",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "file_path": {
+                    "query": {
                         "type": "string",
-                        "description": "Path to the file to read (relative to current directory)",
+                        "description": "The search query to find information online",
                     }
                 },
-                "required": ["file_path"],
+                "required": ["query"],
             },
         },
     },
@@ -2533,16 +2541,41 @@ FILE_SYSTEM_TOOLS = [
 
 
 def execute_web_search(query: str) -> dict:
-    """Execute web search using DuckDuckGo."""
+    """Execute web search using DuckDuckGo with improved filtering."""
     try:
         from duckduckgo_search import DDGS
 
         print(f"🌍 Searching web for: '{query}'")
-        with DDGS() as ddgs:
-            # max_results=5 to keep context manageable
-            results = list(ddgs.text(query, max_results=5))
 
-        return {"success": True, "result_count": len(results), "results": results}
+        # Improve search query for better results
+        enhanced_query = query
+        # Don't over-enhance if already crypto-related
+        crypto_keywords = [
+            "cryptocurrency",
+            "crypto",
+            "blockchain",
+            "bitcoin",
+            "coin",
+            "token",
+            "defi",
+            "web3",
+        ]
+        has_crypto = any(keyword in query.lower() for keyword in crypto_keywords)
+        if not has_crypto and ("coin" in query.lower() or "token" in query.lower()):
+            # Add context for potential crypto queries
+            enhanced_query = f"{query} cryptocurrency"
+
+        with DDGS() as ddgs:
+            # Get more results initially for better filtering
+            raw_results = list(ddgs.text(enhanced_query, max_results=10))
+
+        # Return results directly (no filtering)
+        return {
+            "success": True,
+            "result_count": len(raw_results),
+            "results": raw_results,
+        }
+
     except ImportError:
         return {
             "error": "duckduckgo-search not installed. Run: pip install duckduckgo-search"
@@ -2610,6 +2643,19 @@ def execute_tool_call(tool_call):
         function_name = tool_call["name"]
         arguments = tool_call["args"]
         tool_call_id = tool_call["id"]
+
+        # Verbose logging for tool execution
+        if VERBOSE_LOGGING and SHOW_TOOL_DETAILS:
+            print(f"⚙️ Executing {function_name}...")
+            if arguments:
+                # Show key arguments (truncate long values)
+                arg_summary = {}
+                for key, value in arguments.items():
+                    if isinstance(value, str) and len(value) > 50:
+                        arg_summary[key] = f"{value[:50]}..."
+                    else:
+                        arg_summary[key] = value
+                print(f"   Arguments: {arg_summary}")
 
         if function_name == "read_file":
             file_path = arguments.get("file_path", "")
@@ -2906,7 +2952,41 @@ def execute_parse_document(file_path: str, extract_type: str) -> dict:
         except Exception as e:
             return {"success": False, "error": f"Docling processing failed: {str(e)}"}
 
+        # Verbose logging for successful tool execution
+        if VERBOSE_LOGGING and SHOW_TOOL_DETAILS:
+            if isinstance(result, dict):
+                if "error" in result:
+                    print(f"❌ Tool {function_name} completed with error")
+                else:
+                    success_msg = f"✅ Tool {function_name} completed"
+                    if "success" in result and result["success"]:
+                        # Add some result summary for common tools
+                        if function_name == "read_file" and "content" in result:
+                            content_len = len(result["content"])
+                            success_msg += f" ({content_len} chars read)"
+                        elif (
+                            function_name == "list_directory"
+                            and "total_items" in result
+                        ):
+                            total_items = result["total_items"]
+                            success_msg += f" ({total_items} items listed)"
+                        elif function_name == "write_file" and "size" in result:
+                            size = result["size"]
+                            success_msg += f" ({size} chars written)"
+                    print(success_msg)
+
+        return {
+            "tool_call_id": tool_call_id,
+            "function_name": function_name,
+            "result": result,
+        }
+
     except Exception as e:
+        # Verbose logging for tool execution errors
+        if VERBOSE_LOGGING and SHOW_TOOL_DETAILS:
+            print(
+                f"❌ Tool {function_name if 'function_name' in locals() else 'unknown'} failed: {str(e)}"
+            )
         return {"error": str(e)}
 
 
@@ -3059,7 +3139,11 @@ def main():
                     try:
                         user_memory.add(text, user_id="default_user")
                     except Exception as ex:
-                        logger.warning(f"Mem0 background add failed: {ex}")
+                        # Only log Mem0 errors if verbose logging is enabled
+                        # This prevents spam from LM Studio compatibility issues
+                        if VERBOSE_LOGGING:
+                            logger.warning(f"Mem0 background add failed: {ex}")
+                        # Silently continue - Mem0 failures are non-critical
 
                 # Run learning in background to not block chat
                 threading.Thread(target=run_mem0_add, args=(user_input,)).start()
@@ -3207,13 +3291,56 @@ Do not respond with text about not having access to files.
             # Try tool-enabled response first
             try:
                 # Make initial call with tools already bound to LLM
+                if VERBOSE_LOGGING:
+                    print("🤖 Sending prompt to LLM...")
                 initial_response = llm.invoke(enhanced_history)
+
+                # Verbose logging of LLM response details
+                if VERBOSE_LOGGING:
+                    print("📥 LLM Response received")
+                    if hasattr(initial_response, "usage") and SHOW_TOKEN_USAGE:
+                        usage = getattr(initial_response, "usage", None)
+                        if usage:
+                            prompt_tokens = getattr(usage, "prompt_tokens", "N/A")
+                            completion_tokens = getattr(
+                                usage, "completion_tokens", "N/A"
+                            )
+                            total_tokens = getattr(usage, "total_tokens", "N/A")
+                            print(
+                                f"🔄 Token Usage: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total"
+                            )
+
+                    if (
+                        hasattr(initial_response, "reasoning_content")
+                        and SHOW_LLM_REASONING
+                    ):
+                        reasoning = getattr(initial_response, "reasoning_content", "")
+                        if reasoning and reasoning.strip():
+                            reasoning_text = reasoning.strip()
+                            print(
+                                f"🧠 LLM Reasoning: {reasoning_text[:200]}{'...' if len(reasoning_text) > 200 else ''}"
+                            )
+
                 logger.debug(f"LLM response type: {type(initial_response)}")
                 logger.debug(
                     f"Has tool_calls attr: {hasattr(initial_response, 'tool_calls')}"
                 )
                 if hasattr(initial_response, "tool_calls"):
                     logger.debug(f"Tool calls: {initial_response.tool_calls}")
+                    if VERBOSE_LOGGING and SHOW_TOOL_DETAILS:
+                        if initial_response.tool_calls:
+                            print(
+                                f"🔧 LLM Generated {len(initial_response.tool_calls)} Tool Call(s)"
+                            )
+                            for i, tc in enumerate(initial_response.tool_calls):
+                                tool_name = (
+                                    tc.get("name", "unknown")
+                                    if isinstance(tc, dict)
+                                    else getattr(tc, "name", "unknown")
+                                )
+                                print(f"   {i + 1}. {tool_name}")
+                        else:
+                            print("🔧 LLM Generated: No tool calls")
 
                 # Check if the response contains tool calls
                 if (
@@ -3248,8 +3375,58 @@ Do not respond with text about not having access to files.
                         enhanced_history.append(HumanMessage(content=tool_message))
 
                         # Make follow-up call with tool results
-                        final_response = llm.invoke(enhanced_history)
-                        response = final_response.content or ""
+                        try:
+                            final_response = llm.invoke(enhanced_history)
+
+                            # Check if follow-up response contains additional tool calls
+                            if (
+                                hasattr(final_response, "tool_calls")
+                                and final_response.tool_calls
+                            ):
+                                # Execute additional tool calls
+                                additional_tool_results = []
+                                for tool_call in final_response.tool_calls:
+                                    tool_name = (
+                                        tool_call.get("name", "unknown")
+                                        if isinstance(tool_call, dict)
+                                        else getattr(tool_call, "name", "unknown")
+                                    )
+                                    print(f"🔧 Executing additional tool: {tool_name}")
+                                    result = execute_tool_call(tool_call)
+                                    additional_tool_results.append(result)
+
+                                # Add additional tool results and make final call
+                                if additional_tool_results:
+                                    additional_tool_message = (
+                                        "Additional tool execution results:\n"
+                                    )
+                                    for result in additional_tool_results:
+                                        additional_tool_message += f"- {result['function_name']}: {result['result']}\n"
+
+                                    enhanced_history.append(
+                                        AIMessage(
+                                            content=final_response.content
+                                            or "Executing additional tools..."
+                                        )
+                                    )
+                                    enhanced_history.append(
+                                        HumanMessage(content=additional_tool_message)
+                                    )
+
+                                    # Final response after all tools
+                                    final_final_response = llm.invoke(enhanced_history)
+                                    response = final_final_response.content or ""
+                                else:
+                                    response = final_response.content or ""
+                            else:
+                                # No additional tool calls, use the follow-up response
+                                response = final_response.content or ""
+
+                        except Exception as e:
+                            logger.error(
+                                f"Follow-up LLM call failed after tool execution: {e}"
+                            )
+                            response = f"I executed the tool successfully, but encountered an error generating the final response: {str(e)}"
                     else:
                         response = initial_response.content or ""
 

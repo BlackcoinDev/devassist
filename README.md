@@ -18,6 +18,7 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 - **👤 Personalized Memory**: Learns user preferences and style automatically via Mem0
 - **🛠️ AI Tool Calling**: qwen3-vl-30b supports 8 powerful tools for file operations, document processing, knowledge management, and web search
 - **⚡ Streaming Responses**: Real-time response display for better user experience
+- **🔍 Verbose Logging**: Optional detailed step-by-step AI processing visibility
 - **🛠️ Rich Commands**: Comprehensive slash command system in both GUI and CLI
 - **🎨 Markdown Support**: Rich text formatting in GUI with HTML rendering
 - **🔧 Configuration**: **Requires** `.env` file - no hardcoded defaults
@@ -381,6 +382,12 @@ MAX_HISTORY_PAIRS=5                            # Conversation memory limit
 TEMPERATURE=0.7                               # LLM creativity (0.0-1.0)
 MAX_INPUT_LENGTH=10000                        # Maximum input length
 
+# Verbose Logging (Optional - shows detailed AI processing)
+VERBOSE_LOGGING=false                         # Enable detailed step-by-step logging
+SHOW_LLM_REASONING=true                        # Display LLM reasoning content
+SHOW_TOKEN_USAGE=true                          # Show token usage statistics
+SHOW_TOOL_DETAILS=true                         # Detailed tool execution logging
+
 # Database Configuration (REQUIRED)
 DB_TYPE=sqlite                                # Database type
 DB_PATH=db/history.db                         # SQLite database path
@@ -593,6 +600,44 @@ You: quit
 User: "analyze this PDF"
 AI: Calls parse_document() → Gets {"success": true, "content": "..."} → Analyzes data → "Based on the PDF content..."
 ```
+
+### Verbose Logging & AI Transparency
+
+**See exactly what the AI is thinking and doing** with detailed step-by-step logging:
+
+```bash
+# Enable in .env file
+VERBOSE_LOGGING=true
+SHOW_LLM_REASONING=true
+SHOW_TOKEN_USAGE=true
+SHOW_TOOL_DETAILS=true
+```
+
+**What you'll see:**
+```
+🤖 Sending prompt to LLM...
+📥 LLM Response received
+🔄 Token Usage: 1245 prompt + 685 completion = 1930 total
+🧠 LLM Reasoning: The user is asking about their AI agent project...
+🔧 LLM Generated 1 Tool Call(s)
+   1. read_file
+⚙️ Executing read_file...
+   Arguments: {'file_path': 'README.md'}
+✅ Tool read_file completed (1247 chars read)
+AI Assistant: [comprehensive analysis based on file content]
+```
+
+**Configuration Options:**
+- `VERBOSE_LOGGING`: Master switch for detailed logging
+- `SHOW_LLM_REASONING`: Display AI's internal thought process
+- `SHOW_TOKEN_USAGE`: Show prompt/completion token counts
+- `SHOW_TOOL_DETAILS`: Detailed tool execution information
+
+**Perfect for:**
+- Understanding AI decision-making
+- Debugging tool usage
+- Educational purposes
+- Development and testing
 
 ### Learning & Knowledge Features v0.1.1
 
