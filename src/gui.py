@@ -178,6 +178,7 @@ class AIWorker(QThread):
                 CHROMA_HOST,  # type: ignore[assignment]
                 CHROMA_PORT,
                 MAX_HISTORY_PAIRS,
+                VERBOSE_LOGGING,
                 list_spaces,
                 switch_space,
                 delete_space,
@@ -232,6 +233,29 @@ class AIWorker(QThread):
 
             # Auto-save conversation
             save_memory(conversation_history)
+
+            # MEM0 TEACHING (Background Thread) - Store user input as memory
+            from src.main import user_memory
+
+            if user_memory:
+
+                def run_mem0_add(text):
+                    try:
+                        if user_memory is not None:
+                            user_memory.add(text, user_id="default_user")  # type: ignore[attr-defined]
+                            if VERBOSE_LOGGING:
+                                logger.info(
+                                    f"Mem0: Stored memory from GUI: '{text[:50]}...'"
+                                )
+                    except Exception as ex:
+                        # Only log Mem0 errors if verbose logging is enabled
+                        if VERBOSE_LOGGING:
+                            logger.warning(f"Mem0 GUI background add failed: {ex}")
+
+                # Run learning in background to not block GUI
+                import threading
+
+                threading.Thread(target=run_mem0_add, args=(self.user_input,)).start()
 
             logger.info(
                 f"AIWorker: Successfully processed response ({
@@ -357,7 +381,7 @@ class PopulateWorker(QThread):
 
                 try:
                     for i in range(0, total_chunks, batch_size):
-                        batch = all_docs[i: i + batch_size]
+                        batch = all_docs[i : i + batch_size]
                         batch_number = (i // batch_size) + 1
                         total_batches = (total_chunks + batch_size - 1) // batch_size
 
@@ -1293,7 +1317,10 @@ class AIAssistantGUI(QMainWindow):
 
     def display_mem0_memory(self):
         """Display Mem0 personalized memory contents (similar to CLI /mem0)."""
-        from src.main import user_memory
+        # Import at runtime to get the initialized value
+        import src.main
+
+        user_memory = src.main.user_memory
 
         try:
             self.chat_display.append(
@@ -1306,7 +1333,7 @@ class AIAssistantGUI(QMainWindow):
                 )
                 return
 
-            memories = user_memory.get_all(user_id="user")
+            memories = user_memory.get_all(user_id="default_user")
 
             if not memories or not memories.get("results"):
                 self.chat_display.append("📊 No personalized memories stored yet.<br>")

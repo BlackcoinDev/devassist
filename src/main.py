@@ -1503,10 +1503,6 @@ def show_mem0():
     Shows user memory statistics and sample memories from the Mem0 system.
     """
     if user_memory is None:
-        print("\n❌ Mem0 personalized memory not available.\n")
-        return
-
-    if user_memory is None:
         print("\n❌ Mem0 not available.\n")
         return
 
@@ -1514,7 +1510,10 @@ def show_mem0():
         print("\n--- Mem0 Personalized Memory Contents ---")
 
         # Get all memories for the user
-        memories = user_memory.get_all(user_id="user")
+        memories = user_memory.get_all(user_id="default_user")
+
+        if VERBOSE_LOGGING:
+            print(f"🧠 Mem0: Retrieved {len(memories.get('results', []))} memories")
 
         if not memories or not memories.get("results"):
             print("📊 No personalized memories stored yet.")
@@ -3176,6 +3175,8 @@ def main():
                     try:
                         if user_memory is not None:
                             user_memory.add(text, user_id="default_user")  # type: ignore[attr-defined]
+                            if VERBOSE_LOGGING:
+                                print(f"🧠 Mem0: Stored memory: '{text[:50]}...'")
                     except Exception as ex:
                         # Only log Mem0 errors if verbose logging is enabled
                         # This prevents spam from LM Studio compatibility issues
