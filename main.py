@@ -823,7 +823,15 @@ def handle_slash_command(command: str) -> bool:
     elif cmd_name == "memory":
         show_memory()
     elif cmd_name == "clear":
-        return handle_clear_command()
+        # handle_clear_command returns a boolean indicating whether the
+        # application should exit; regardless of that value we must
+        # indicate the slash command was handled to the caller of
+        # `handle_slash_command` (which expects True when a slash
+        # command was processed). Return True here so the main loop
+        # doesn't print an "Unknown command" message after a handled
+        # slash command.
+        _ = handle_clear_command()
+        return True
     elif cmd_name == "learn":
         handle_learn_command(" ".join(cmd_args))
     elif cmd_name == "vectordb":
@@ -2267,14 +2275,33 @@ def initialize_application():
             # This ensures privacy by keeping all data local
             mem0_config = {
                 "llm": {
-                    "provider": "openai",
+                    # Use the LM Studio provider config so we can pass a
+                    # provider-specific response format without editing
+                    # site-packages. LMStudioConfig accepts
+                    # `lmstudio_base_url` and `lmstudio_response_format`.
+                    "provider": "lmstudio",
                     "config": {
                         "model": MODEL_NAME,
-                        "openai_base_url": LM_STUDIO_BASE_URL,
+                        "lmstudio_base_url": LM_STUDIO_BASE_URL,
                         "api_key": LM_STUDIO_API_KEY,
                         "temperature": 0.1,
-                        # Note: response_format is handled by the mem0 LLM
-                        # adapters for compatibility with LM Studio / OpenAI.
+                        # Provide a permissive json_schema so mem0's
+                        # internal calls that previously used
+                        # `{"type": "json_object"}` are accepted by
+                        # LM Studio / OpenAI clients which require
+                        # `json_schema` or `text`.
+                        "lmstudio_response_format": {
+                            "type": "json_schema",
+                            "json_schema": {
+                                # LM Studio / OpenAI structured output expects
+                                # a `schema` key inside `json_schema` whose
+                                # value is the actual JSON Schema object.
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": True,
+                                }
+                            },
+                        },
                     },
                 },
                 "embedder": {
@@ -2543,7 +2570,7 @@ FILE_SYSTEM_TOOLS = [
 def execute_web_search(query: str) -> dict:
     """Execute web search using DuckDuckGo with improved filtering."""
     try:
-        from duckduckgo_search import DDGS
+        from ddgs import DDGS
 
         print(f"🌍 Searching web for: '{query}'")
 
@@ -2565,22 +2592,31 @@ def execute_web_search(query: str) -> dict:
             # Add context for potential crypto queries
             enhanced_query = f"{query} cryptocurrency"
 
-        with DDGS() as ddgs:
-            # Get more results initially for better filtering
-            raw_results = list(ddgs.text(enhanced_query, max_results=10))
+        try:
+            with DDGS() as ddgs:
+                # Get more results initially for better filtering
+                raw_results = list(ddgs.text(enhanced_query, max_results=10))
 
-        # Return results directly (no filtering)
-        return {
-            "success": True,
-            "result_count": len(raw_results),
-            "results": raw_results,
-        }
+            # Return results directly (no filtering)
+            return {
+                "success": True,
+                "result_count": len(raw_results),
+                "results": raw_results,
+            }
+        except Exception as search_err:
+            # If DDGS search fails, provide diagnostic info
+            logger.error(f"DDGS search execution error: {str(search_err)}")
+            return {
+                "error": f"Web search failed: {str(search_err)}. The duckduckgo-search package is installed but encountered an error."
+            }
 
-    except ImportError:
+    except ImportError as ie:
+        logger.error(f"Failed to import duckduckgo_search: {str(ie)}")
         return {
             "error": "duckduckgo-search not installed. Run: pip install duckduckgo-search"
         }
     except Exception as e:
+        logger.error(f"Unexpected error in web search: {str(e)}")
         return {"error": f"Search failed: {str(e)}"}
 
 
@@ -3293,7 +3329,15 @@ Do not respond with text about not having access to files.
                 # Make initial call with tools already bound to LLM
                 if VERBOSE_LOGGING:
                     print("🤖 Sending prompt to LLM...")
+                    import time
+
+                    llm_start_time = time.time()
+
                 initial_response = llm.invoke(enhanced_history)
+
+                if VERBOSE_LOGGING:
+                    llm_duration = time.time() - llm_start_time
+                    print(f"⚡ Initial LLM call completed in {llm_duration:.2f}s")
 
                 # Verbose logging of LLM response details
                 if VERBOSE_LOGGING:
@@ -3374,9 +3418,51 @@ Do not respond with text about not having access to files.
                         )
                         enhanced_history.append(HumanMessage(content=tool_message))
 
-                        # Make follow-up call with tool results
+                        # Make follow-up call with tool results and error handling
                         try:
+                            if VERBOSE_LOGGING:
+                                print(
+                                    "🤖 Generating follow-up response with tool results..."
+                                )
+                                followup_start_time = time.time()
+
+                            # Check context length before calling LLM
+                            total_chars = sum(
+                                len(msg.content or "") for msg in enhanced_history
+                            )
+                            if VERBOSE_LOGGING:
+                                print(
+                                    f"📏 Follow-up context length: {total_chars} characters"
+                                )
+
+                            # Trim context if too long
+                            if total_chars > 80000:
+                                trimmed_history = []
+                                if enhanced_history and hasattr(
+                                    enhanced_history[0], "type"
+                                ):
+                                    trimmed_history.append(enhanced_history[0])
+                                trimmed_history.extend(
+                                    enhanced_history[-8:]
+                                )  # Keep last 8 messages
+                                enhanced_history = trimmed_history
+                                if VERBOSE_LOGGING:
+                                    print("✂️ Follow-up context trimmed")
+
                             final_response = llm.invoke(enhanced_history)
+
+                            if VERBOSE_LOGGING:
+                                followup_duration = time.time() - followup_start_time
+                                print(
+                                    f"⚡ Follow-up LLM call completed in {followup_duration:.2f}s"
+                                )
+
+                                if hasattr(final_response, "usage"):
+                                    usage = getattr(final_response, "usage", None)
+                                    if usage:
+                                        print(
+                                            f"🔄 Follow-up tokens: {getattr(usage, 'total_tokens', 'N/A')}"
+                                        )
 
                             # Check if follow-up response contains additional tool calls
                             if (
@@ -3413,9 +3499,81 @@ Do not respond with text about not having access to files.
                                         HumanMessage(content=additional_tool_message)
                                     )
 
-                                    # Final response after all tools
-                                    final_final_response = llm.invoke(enhanced_history)
-                                    response = final_final_response.content or ""
+                                    # Final response after all tools with basic error handling
+                                    try:
+                                        if VERBOSE_LOGGING:
+                                            print(
+                                                "🤖 Generating final response after additional tools..."
+                                            )
+                                            import time
+
+                                            final_start_time = time.time()
+
+                                        # Check context length before calling LLM
+                                        total_chars = sum(
+                                            len(msg.content or "")
+                                            for msg in enhanced_history
+                                        )
+                                        if VERBOSE_LOGGING:
+                                            print(
+                                                f"📏 Context length: {total_chars} characters"
+                                            )
+
+                                        # Trim context if too long (rough estimate: ~100k chars = ~25k tokens)
+                                        if total_chars > 80000:
+                                            # Keep system message and last few messages
+                                            trimmed_history = []
+                                            if enhanced_history and hasattr(
+                                                enhanced_history[0], "type"
+                                            ):
+                                                # Keep system message
+                                                trimmed_history.append(
+                                                    enhanced_history[0]
+                                                )
+
+                                            # Keep last 10 messages to preserve recent context
+                                            trimmed_history.extend(
+                                                enhanced_history[-10:]
+                                            )
+                                            enhanced_history = trimmed_history
+
+                                            if VERBOSE_LOGGING:
+                                                print(
+                                                    "✂️ Context trimmed to prevent token limit issues"
+                                                )
+
+                                        final_final_response = llm.invoke(
+                                            enhanced_history
+                                        )
+
+                                        if VERBOSE_LOGGING:
+                                            final_duration = (
+                                                time.time() - final_start_time
+                                            )
+                                            print(
+                                                f"⚡ Final response generated in {final_duration:.2f}s"
+                                            )
+
+                                            if hasattr(final_final_response, "usage"):
+                                                usage = getattr(
+                                                    final_final_response, "usage", None
+                                                )
+                                                if usage:
+                                                    print(
+                                                        f"🔄 Final response tokens: {getattr(usage, 'total_tokens', 'N/A')}"
+                                                    )
+
+                                        response = final_final_response.content or ""
+
+                                    except Exception as e:
+                                        logger.error(
+                                            f"Final LLM call failed after tool execution: {e}"
+                                        )
+                                        response = f"I successfully executed the tools, but encountered an error generating the final response: {str(e)}. The tool results are still available above."
+                                        if VERBOSE_LOGGING:
+                                            print(
+                                                f"❌ Final response generation failed: {str(e)}"
+                                            )
                                 else:
                                     response = final_response.content or ""
                             else:

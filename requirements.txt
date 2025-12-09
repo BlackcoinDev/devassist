@@ -24,4 +24,4 @@ types-Markdown
 types-requests
 vulture
 mem0ai
-duckduckgo-search
+ddgs
