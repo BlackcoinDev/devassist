@@ -25,7 +25,7 @@ Test the parse_document tool implementation
 """
 
 import sys
-from main import execute_parse_document
+from src.main import execute_parse_document
 
 sys.path.append(".")
 

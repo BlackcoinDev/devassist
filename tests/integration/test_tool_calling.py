@@ -11,7 +11,7 @@ Tests the integration between LLM and tool execution:
 
 from unittest.mock import patch, MagicMock
 
-from main import execute_tool_call
+from src.main import execute_tool_call
 
 
 class TestToolCallExecution:

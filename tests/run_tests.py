@@ -96,7 +96,7 @@ def run_tests():
 
         # Fallback: Basic import and functionality validation
         try:
-            import main  # noqa: F401
+            import src.main as main  # noqa: F401
             import launcher  # noqa: F401
 
             print("✅ Core modules import successfully")

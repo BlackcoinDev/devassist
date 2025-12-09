@@ -1139,7 +1139,7 @@ def handle_learn_command(content: str):
         # Generate embeddings using Ollama
         try:
             # Import here to handle initialization order
-            from main import embeddings  # type: ignore
+            from src.main import embeddings  # type: ignore
 
             embeddings_result = embeddings.embed_documents([doc.page_content])
             if embeddings_result and len(embeddings_result) > 0:

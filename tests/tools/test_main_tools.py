@@ -26,7 +26,7 @@ Test tool calling in main.py context
 
 # os import removed as it's not used
 import sys
-from main import execute_tool_call
+from src.main import execute_tool_call
 
 sys.path.append(".")
 

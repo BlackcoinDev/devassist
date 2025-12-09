@@ -13,7 +13,7 @@ import os
 import sys
 from dotenv import load_dotenv
 
-# Add parent directory to path to import main if needed,
+# Add parent directory to path to import src.main as main if needed,
 # although we will mostly replicate the config logic to obtain a cleaner test.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

@@ -73,7 +73,7 @@ def main():
 
     # 1. Python linting
     print("\n🐍 Python Files:")
-    if not run_command("python test/lint/lint-python.py", "Python linting"):
+    if not run_command("python tests/lint/lint-python.py", "Python linting"):
         all_passed = False
 
     # 2. Shell script linting (if shellcheck is available)

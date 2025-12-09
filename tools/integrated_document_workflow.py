@@ -28,7 +28,7 @@ the embedding and ChromaDB knowledge management system.
 """
 
 import sys
-from main import (
+from src.main import (
     execute_parse_document,
     execute_learn_information,
     execute_search_knowledge,

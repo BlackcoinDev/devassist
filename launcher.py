@@ -179,7 +179,7 @@ The CLI provides the traditional terminal interface with:
     if launch_gui:
         print("🚀 Launching AI Assistant GUI...")
         try:
-            from gui import main as gui_main
+            from src.gui import main as gui_main
 
             gui_main()
         except ImportError as e:
@@ -204,7 +204,7 @@ def launch_cli():
     including all slash commands and interactive chat.
     """
     try:
-        from main import main as cli_main
+        from src.main import main as cli_main
 
         cli_main()
     except Exception as e:

@@ -16,7 +16,7 @@ Tests for all 8 AI tools with proper mocking and isolation:
 from unittest.mock import patch, mock_open, MagicMock
 
 # Import tool functions
-from main import (
+from src.main import (
     execute_read_file,
     execute_write_file,
     execute_list_directory,
@@ -200,7 +200,7 @@ class TestDocumentProcessingTools:
 class TestKnowledgeManagementTools:
     """Test knowledge base operations."""
 
-    @patch("main.vectorstore")
+    @patch("src.main.vectorstore")
     def test_learn_information_success(self, mock_vectorstore):
         """Test successful information learning."""
         mock_vectorstore.add_texts.return_value = ["doc_id_1"]
@@ -210,7 +210,7 @@ class TestKnowledgeManagementTools:
         assert result["success"] is True
         assert result["learned"] is True
 
-    @patch("main.vectorstore")
+    @patch("src.main.vectorstore")
     def test_learn_information_failure(self, mock_vectorstore):
         """Test learning information failure."""
         mock_vectorstore.add_texts.side_effect = Exception("Storage error")
@@ -221,7 +221,7 @@ class TestKnowledgeManagementTools:
         # due to fallback behavior
         assert isinstance(result, dict)
 
-    @patch("main.get_relevant_context")
+    @patch("src.main.get_relevant_context")
     def test_search_knowledge_success(self, mock_get_context):
         """Test successful knowledge search."""
         mock_get_context.return_value = ["Python info", "More Python info"]
@@ -231,7 +231,7 @@ class TestKnowledgeManagementTools:
         assert result["success"] is True
         assert result["result_count"] == 2
 
-    @patch("main.vectorstore")
+    @patch("src.main.vectorstore")
     def test_search_knowledge_no_results(self, mock_vectorstore):
         """Test knowledge search with no results."""
         mock_vectorstore.similarity_search_with_score.return_value = []

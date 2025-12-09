@@ -163,7 +163,7 @@ class AIWorker(QThread):
     def run(self):
         try:
             # Import configuration and core functions
-            from main import (  # noqa: F401
+            from src.main import (  # noqa: F401
                 load_memory,
                 save_memory,
                 get_relevant_context,
@@ -447,7 +447,7 @@ class AIAssistantGUI(QMainWindow):
         super().__init__()
 
         # Import functions from main.py
-        from main import load_current_space
+        from src.main import load_current_space
 
         self.worker = None
         self.dark_theme = True  # Default to dark theme
@@ -1033,7 +1033,7 @@ class AIAssistantGUI(QMainWindow):
 
     def load_conversation(self):
         """Load existing conversation history."""
-        from main import load_memory
+        from src.main import load_memory
 
         try:
             if BACKEND_AVAILABLE:
@@ -1174,7 +1174,7 @@ class AIAssistantGUI(QMainWindow):
 
     def display_vector_database(self):
         """Display vector database contents (similar to CLI /vectordb)."""
-        from main import get_vectorstore
+        from src.main import get_vectorstore
 
         try:
             import requests
@@ -1293,7 +1293,7 @@ class AIAssistantGUI(QMainWindow):
 
     def display_mem0_memory(self):
         """Display Mem0 personalized memory contents (similar to CLI /mem0)."""
-        from main import user_memory
+        from src.main import user_memory
 
         try:
             self.chat_display.append(
@@ -1407,7 +1407,7 @@ class AIAssistantGUI(QMainWindow):
 
     def change_space(self, space_name):
         """Change current workspace/space."""
-        from main import switch_space, list_spaces
+        from src.main import switch_space, list_spaces
 
         global CURRENT_SPACE
         if switch_space(space_name):
@@ -1461,7 +1461,7 @@ class AIAssistantGUI(QMainWindow):
 
     def handle_quit(self):
         """Handle quit commands."""
-        from main import save_memory
+        from src.main import save_memory
 
         formatted_response = self.markdown_to_html("Goodbye! Have a great day!")
         self.chat_display.append(f"<b>AI Assistant:</b><br>{formatted_response}<br>")
@@ -1488,7 +1488,7 @@ class AIAssistantGUI(QMainWindow):
             )
             return
 
-        from main import (
+        from src.main import (
             save_memory,
             get_space_collection_name,
             list_spaces,
@@ -2066,7 +2066,7 @@ Use Ctrl+C for immediate interruption.<br>
 
     def closeEvent(self, a0):  # type: ignore[override]
         """Handle application close."""
-        from main import save_memory
+        from src.main import save_memory
 
         try:
             if BACKEND_AVAILABLE:
@@ -2090,7 +2090,7 @@ def main():
     # Initialize backend components (same as CLI)
     if BACKEND_AVAILABLE:
         try:
-            from main import initialize_application
+            from src.main import initialize_application
 
             if not initialize_application():
                 print(

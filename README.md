@@ -221,10 +221,10 @@ All Python dependencies are listed in `requirements.txt`. Key libraries include:
 ### Automated Quality Checks
 ```bash
 # Run comprehensive project linting
-python test/lint/all-lint.py
+python tests/lint/all-lint.py
 
 # Run Python-specific linting only
-python test/lint/lint-python.py
+python tests/lint/lint-python.py
 ```
 
 ### Quality Assurance Tools
@@ -236,7 +236,7 @@ python test/lint/lint-python.py
 
 ### Development Workflow
 1. **Write Code** → Features implemented with comprehensive error handling
-2. **Run Lints** → `python test/lint/all-lint.py` for quality assurance
+2. **Run Lints** → `python tests/lint/all-lint.py` for quality assurance
 3. **Fix Issues** → Address any style, type, or logic problems
 4. **Test Integration** → Verify with CLI and GUI interfaces
 5. **Deploy** → Production-ready code with clean quality metrics
@@ -247,7 +247,7 @@ python test/lint/lint-python.py
 - **✅ Style**: All linting checks pass (no warnings)
 - **✅ Dependencies**: All imports resolved and tested
 - **✅ Documentation**: Required files validated (README.md, AGENTS.md, MIGRATION.md)
-- **✅ Core Files**: All application files validated (main.py, gui.py, launcher.py)
+- **✅ Core Files**: All application files validated (src/main.py, src/gui.py, launcher.py)
 - **✅ Feature Parity**: GUI and CLI have identical functionality
 - **✅ Logging**: Comprehensive logging across both interfaces
 
@@ -748,9 +748,10 @@ This recursively scans directories and adds all code files to the ChromaDB vecto
 ```
 devassist/
 ├── launcher.py                # Unified launcher for GUI/CLI versions
-├── gui.py                     # PyQt6 graphical user interface
-├── main.py                    # CLI application with learning capabilities
-├── run_tests.py               # Test runner script
+├── src/
+│   ├── main.py                # CLI application with learning capabilities
+│   └── gui.py                 # PyQt6 graphical user interface
+├── tests/run_tests.py         # Test runner script
 ├── requirements.txt           # Python dependencies
 ├── pytest.ini                 # Pytest configuration
 ├── mypy.ini                   # MyPy type checking configuration
@@ -796,8 +797,8 @@ devassist/
 
 ### Key Files Explanation
 
-- **`main.py`**: Core application with chat loop, ChromaDB integration, and rich commands
-- **`gui.py`**: PyQt6-based graphical user interface with full CLI parity
+- **`src/main.py`**: Core application with chat loop, ChromaDB integration, and rich commands
+- **`src/gui.py`**: PyQt6-based graphical user interface with full CLI parity
 - **`launcher.py`**: Unified entry point for starting GUI or CLI modes
 - **`tools/populate_codebase.py`**: Script to bulk-load codebases into ChromaDB vector database
 - **`docs/ROADMAP.md`**: Detailed future development plans and integrations
@@ -808,7 +809,7 @@ devassist/
 
 ### Adding New Features
 
-1. **New Commands**: Add to the slash command handler in `main.py`
+1. **New Commands**: Add to the slash command handler in `src/main.py`
 2. **Configuration**: Add environment variables to `.env` and code
 3. **Knowledge**: Use `/learn` command or use the `/populate` command
 
@@ -860,7 +861,7 @@ devassist/
 
 ### Debug Mode
 
-Enable detailed logging by modifying the logging level in `main.py`:
+Enable detailed logging by modifying the logging level in `src/main.py`:
 
 ```python
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -878,7 +879,7 @@ rm -rf chroma_data/
 # ChromaDB data is stored in server directory and will be reset
 
 # Restart with clean state
-python3 main.py
+python3 src/main.py
 ```
 
 ## 📊 Performance Notes

@@ -59,7 +59,7 @@ class TestGUISupportFunctions:
     @patch("main.load_memory")
     def test_load_conversation_success(self, mock_load_memory):
         """Test successful conversation loading."""
-        from gui import AIAssistantGUI
+        from src.gui import AIAssistantGUI
 
         # Mock the GUI class without Qt dependencies
         with patch("gui.QMainWindow.__init__", return_value=None):
@@ -77,7 +77,7 @@ class TestGUISupportFunctions:
     @patch("gui.BACKEND_AVAILABLE", False)
     def test_load_conversation_no_backend(self):
         """Test conversation loading when backend is not available."""
-        from gui import AIAssistantGUI
+        from src.gui import AIAssistantGUI
 
         with patch("gui.QMainWindow.__init__", return_value=None):
             with patch("gui.AIAssistantGUI.init_ui", return_value=None):
@@ -95,7 +95,7 @@ class TestGUISupportFunctions:
     @patch("gui.markdown")
     def test_markdown_to_html_with_markdown(self):
         """Test markdown to HTML conversion when markdown is available."""
-        from gui import AIAssistantGUI
+        from src.gui import AIAssistantGUI
 
         gui = AIAssistantGUI.__new__(AIAssistantGUI)
         gui.dark_theme = True
@@ -111,7 +111,7 @@ class TestGUISupportFunctions:
     @patch("gui.MARKDOWN_AVAILABLE", False)
     def test_markdown_to_html_plain_text(self):
         """Test markdown to HTML fallback to plain text."""
-        from gui import AIAssistantGUI
+        from src.gui import AIAssistantGUI
 
         gui = AIAssistantGUI.__new__(AIAssistantGUI)
         gui.dark_theme = False
@@ -124,7 +124,7 @@ class TestGUISupportFunctions:
 
     def test_plain_text_to_html_dark_theme(self):
         """Test plain text to HTML conversion with dark theme."""
-        from gui import AIAssistantGUI
+        from src.gui import AIAssistantGUI
 
         gui = AIAssistantGUI.__new__(AIAssistantGUI)
         gui.dark_theme = True
@@ -137,7 +137,7 @@ class TestGUISupportFunctions:
 
     def test_plain_text_to_html_light_theme(self):
         """Test plain text to HTML conversion with light theme."""
-        from gui import AIAssistantGUI
+        from src.gui import AIAssistantGUI
 
         gui = AIAssistantGUI.__new__(AIAssistantGUI)
         gui.dark_theme = False
@@ -157,7 +157,7 @@ class TestGUIConfiguration:
     def test_gui_constants_loaded(self):
         """Test that GUI constants are properly loaded."""
         # Test that the constants are accessible
-        from gui import (  # noqa: F401
+        from src.gui import (  # noqa: F401
             CONTEXT_MODE,
             LEARNING_MODE,
             MODEL_NAME,
@@ -173,7 +173,7 @@ class TestGUIConfiguration:
 
     def test_markdown_availability(self):
         """Test markdown availability detection."""
-        from gui import MARKDOWN_AVAILABLE
+        from src.gui import MARKDOWN_AVAILABLE
 
         # This should be a boolean
         assert isinstance(MARKDOWN_AVAILABLE, bool)
@@ -189,7 +189,7 @@ class TestGUIWorker:
     @patch("gui.BACKEND_AVAILABLE", True)
     def test_ai_worker_initialization(self):
         """Test AI worker initialization."""
-        from gui import AIWorker
+        from src.gui import AIWorker
 
         worker = AIWorker("test message")
         assert worker.user_input == "test message"
@@ -200,7 +200,7 @@ class TestGUIWorker:
     @patch("gui.AIWorker.response_ready")
     def test_ai_worker_no_backend(self):
         """Test AI worker when backend is not available."""
-        from gui import AIWorker
+        from src.gui import AIWorker
 
         worker = AIWorker("test message")
 

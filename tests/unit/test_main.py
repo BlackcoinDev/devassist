@@ -48,7 +48,7 @@ from unittest.mock import MagicMock, patch, mock_open
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # Import functions to test - these are the core business logic functions
-from main import (  # noqa: F401
+from src.main import (  # noqa: F401
     get_space_collection_name,
     ensure_space_collection,
     list_spaces,
@@ -95,12 +95,12 @@ class TestSpaceManagement(unittest.TestCase):
         """Test collection name for custom space."""
         assert get_space_collection_name("myspace") == "space_myspace"
 
-    @patch("main.vectorstore")
+    @patch("src.main.vectorstore")
     def test_ensure_space_collection_success(self, mock_vectorstore):
         """Test successful space collection ensuring."""
         assert ensure_space_collection("test_space") is True
 
-    @patch("main.vectorstore", None)
+    @patch("src.main.vectorstore", None)
     def test_ensure_space_collection_failure(self):
         """Test failed space collection ensuring."""
         result = ensure_space_collection("test_space")
@@ -116,16 +116,16 @@ class TestCaching(unittest.TestCase):
     - Cache persistence across sessions
     """
 
-    @patch("main.os.path.exists")
+    @patch("src.main.os.path.exists")
     @patch("builtins.open", new_callable=mock_open, read_data='{"test": [1, 2, 3]}')
-    @patch("main.json.load")
+    @patch("src.main.json.load")
     def test_load_embedding_cache(self, mock_json_load, mock_file, mock_exists):
         """Test loading embedding cache."""
         mock_exists.return_value = True
         mock_json_load.return_value = {"test": [1, 2, 3]}
 
         # Reset global cache
-        import main
+        import src.main as main
 
         main.EMBEDDING_CACHE.clear()
 
@@ -150,9 +150,9 @@ class TestMemoryManagement(unittest.TestCase):
     - Database connection handling and error recovery
     """
 
-    @patch("main.DB_TYPE", "sqlite")
-    @patch("main.db_conn")
-    @patch("main.db_lock")
+    @patch("src.main.DB_TYPE", "sqlite")
+    @patch("src.main.db_conn")
+    @patch("src.main.db_lock")
     def test_load_memory_sqlite(self, mock_lock, mock_conn):
         """Test loading memory from SQLite."""
         mock_cursor = MagicMock()
@@ -169,9 +169,9 @@ class TestMemoryManagement(unittest.TestCase):
         assert isinstance(messages[1], HumanMessage)
         assert isinstance(messages[2], AIMessage)
 
-    @patch("main.DB_TYPE", "sqlite")
-    @patch("main.db_conn")
-    @patch("main.db_lock")
+    @patch("src.main.DB_TYPE", "sqlite")
+    @patch("src.main.db_conn")
+    @patch("src.main.db_lock")
     def test_save_memory_sqlite(self, mock_lock, mock_conn):
         """Test saving memory to SQLite."""
         mock_cursor = MagicMock()
@@ -261,9 +261,9 @@ class TestSlashCommands(unittest.TestCase):
         result = handle_slash_command("regular message")
         assert result is False
 
-    @patch("main.input", return_value="yes")
-    @patch("main.conversation_history", [SystemMessage(content="Test")])
-    @patch("main.save_memory")
+    @patch("src.main.input", return_value="yes")
+    @patch("src.main.conversation_history", [SystemMessage(content="Test")])
+    @patch("src.main.save_memory")
     def test_handle_clear_command_yes(self, mock_save, mock_input):
         """Test /clear command with yes confirmation."""
         import io
@@ -279,7 +279,7 @@ class TestSlashCommands(unittest.TestCase):
         mock_input.assert_called_once()  # Verify user was prompted
         mock_save.assert_called_once()  # Verify memory was saved
 
-    @patch("main.input", return_value="no")
+    @patch("src.main.input", return_value="no")
     def test_handle_clear_command_no(self, mock_input):
         """Test /clear command with no confirmation."""
         import io
@@ -349,7 +349,7 @@ class TestContextAndLearning(unittest.TestCase):
 class TestSpaceCommands(unittest.TestCase):
     """Test space management commands."""
 
-    @patch("main.list_spaces", return_value=["default", "test"])
+    @patch("src.main.list_spaces", return_value=["default", "test"])
     def test_handle_space_command_list(self, mock_list):
         """Test /space list command."""
         import io
@@ -363,8 +363,8 @@ class TestSpaceCommands(unittest.TestCase):
         self.assertIn("Available spaces", output)
         mock_list.assert_called_once()  # Verify spaces were listed
 
-    @patch("main.list_spaces", return_value=["default"])
-    @patch("main.switch_space", return_value=True)
+    @patch("src.main.list_spaces", return_value=["default"])
+    @patch("src.main.switch_space", return_value=True)
     def test_handle_space_command_create(self, mock_switch, mock_list):
         """Test /space create command."""
         import io
@@ -379,8 +379,8 @@ class TestSpaceCommands(unittest.TestCase):
         mock_list.assert_called_once()  # Verify spaces were checked
         mock_switch.assert_called_once_with("newspace")  # Verify space was switched
 
-    @patch("main.list_spaces", return_value=["default", "test"])
-    @patch("main.switch_space", return_value=True)
+    @patch("src.main.list_spaces", return_value=["default", "test"])
+    @patch("src.main.switch_space", return_value=True)
     def test_handle_space_command_switch(self, mock_switch, mock_list):
         """Test /space switch command."""
         import io
@@ -400,7 +400,7 @@ class TestExportCommand(unittest.TestCase):
     """Test export command functionality."""
 
     @patch(
-        "main.conversation_history",
+        "src.main.conversation_history",
         [
             SystemMessage(content="System"),
             HumanMessage(content="Human"),
@@ -420,7 +420,7 @@ class TestExportCommand(unittest.TestCase):
 
         self.assertIn("exported", output.lower())
 
-    @patch("main.conversation_history", [])
+    @patch("src.main.conversation_history", [])
     def test_handle_export_command_empty(self):
         """Test /export command with empty history."""
         import io
@@ -437,11 +437,11 @@ class TestExportCommand(unittest.TestCase):
 class TestInitialization(unittest.TestCase):
     """Test application initialization."""
 
-    @patch("main.ChatOpenAI")
+    @patch("src.main.ChatOpenAI")
     @patch("chromadb.HttpClient")
     @patch("langchain_ollama.OllamaEmbeddings")
     @patch("langchain_chroma.Chroma")
-    @patch("main.sqlite3.connect")
+    @patch("src.main.sqlite3.connect")
     def test_initialize_application_success(
         self, mock_sqlite, mock_chroma, mock_embeddings, mock_client, mock_llm
     ):
@@ -482,7 +482,7 @@ class TestInitialization(unittest.TestCase):
             result = initialize_application()
             self.assertTrue(result)
 
-    @patch("main.ChatOpenAI", side_effect=Exception("Connection failed"))
+    @patch("src.main.ChatOpenAI", side_effect=Exception("Connection failed"))
     def test_initialize_application_llm_failure(self, mock_llm):
         """Test initialization failure due to LLM connection issues."""
         with patch.dict(

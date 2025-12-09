@@ -33,7 +33,7 @@ class TestApplicationIntegration:
 
     def test_full_initialization_flow(self):
         """Test complete application initialization flow."""
-        from main import initialize_application
+        from src.main import initialize_application
 
         # Mock all the complex imports and dependencies
         with (
@@ -68,7 +68,7 @@ class TestApplicationIntegration:
 
     def test_memory_persistence_flow(self):
         """Test memory save/load persistence flow."""
-        from main import save_memory
+        from src.main import save_memory
 
         # Mock database connection and lock
         mock_conn = MagicMock()
@@ -101,7 +101,7 @@ class TestApplicationIntegration:
 
     def test_space_management_integration(self):
         """Test space management integration."""
-        from main import get_space_collection_name, switch_space
+        from src.main import get_space_collection_name, switch_space
 
         # Test collection naming
         assert get_space_collection_name("default") == "knowledge_base"
@@ -119,7 +119,7 @@ class TestApplicationIntegration:
     @patch("main.vectorstore")
     def test_context_retrieval_flow(self, mock_vectorstore):
         """Test context retrieval flow."""
-        from main import get_relevant_context
+        from src.main import get_relevant_context
 
         mock_vectorstore = MagicMock()
         mock_embeddings = MagicMock()
@@ -153,7 +153,7 @@ class TestCommandIntegration:
 
     def test_slash_command_integration(self, capsys):
         """Test slash command integration."""
-        from main import handle_slash_command
+        from src.main import handle_slash_command
 
         # Test help command
         result = handle_slash_command("/help")
@@ -164,7 +164,7 @@ class TestCommandIntegration:
 
     def test_memory_command_integration(self, capsys):
         """Test memory command integration."""
-        from main import handle_slash_command
+        from src.main import handle_slash_command
 
         # Mock conversation history to ensure consistent output
         with patch("main.conversation_history", []):
@@ -178,7 +178,7 @@ class TestCommandIntegration:
     @patch("main.save_memory")
     def test_clear_command_integration(self, mock_save, capsys):
         """Test clear command integration."""
-        from main import handle_clear_command
+        from src.main import handle_clear_command
 
         with patch("main.input", return_value="yes"):
             result = handle_clear_command()
@@ -197,7 +197,7 @@ class TestLauncherIntegration:
         """Test complete launcher flow."""
         with patch("sys.argv", ["launcher.py", "--cli"]):
             with patch("launcher.launch_cli") as mock_launch_cli:
-                from launcher import main as launcher_main
+                from launcher import src.main as main as launcher_main
 
                 launcher_main()
 
@@ -216,7 +216,7 @@ class TestEndToEnd:
     def test_import_chain(self):
         """Test that all main modules can be imported."""
         # Test main module import
-        import main
+        import src.main as main
 
         assert hasattr(main, "initialize_application")
 
@@ -227,7 +227,7 @@ class TestEndToEnd:
 
         # Test gui import (may fail if PyQt6 not available)
         try:
-            import gui
+            import src.gui as gui
 
             assert hasattr(gui, "AIAssistantGUI")
         except ImportError:
@@ -237,7 +237,7 @@ class TestEndToEnd:
     def test_configuration_loading(self):
         """Test configuration loading from environment."""
         # Test that configuration variables are accessible
-        import main
+        import src.main as main
 
         # These should be set from mock_env fixture
         assert hasattr(main, "LM_STUDIO_BASE_URL")
