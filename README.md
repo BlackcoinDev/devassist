@@ -573,6 +573,7 @@ You: quit
 | `parse_document()` | Extract text/tables/forms/layout | "analyze this PDF" |
 | `learn_information()` | Store in knowledge base | "remember this fact" |
 | `search_knowledge()` | Query learned information | "what do you know about X" |
+| `search_web()` | Search internet with DuckDuckGo | "what's the latest on AI" |
 
 #### Tool Result Flow & AI Usage
 

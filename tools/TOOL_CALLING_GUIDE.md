@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains the complete AI tool calling ecosystem in your AI assistant, featuring **7 powerful tools** that work together with **ChromaDB vector storage**, **Ollama embeddings**, and **qwen3-vl-30b's multimodal capabilities** to create an intelligent document processing and knowledge management system.
+This guide explains the complete AI tool calling ecosystem in your AI assistant, featuring **8 powerful tools** that work together with **ChromaDB vector storage**, **Ollama embeddings**, and **qwen3-vl-30b's multimodal capabilities** to create an intelligent document processing and knowledge management system.
 
 ## How Tool Calling Works
 
@@ -165,6 +165,13 @@ Searches learned knowledge for relevant information.
 - **Default limit**: 5 results maximum
 - **Returns**: Search results, match count
 - **Integration**: Uses semantic search with Ollama embeddings
+
+#### `search_web(query: string)` ⭐ **READY**
+Searches the public internet using DuckDuckGo.
+- **Status**: ✅ **Supported by qwen3-vl-30b**
+- **Capabilities**: Real-time web results, privacy-focused
+- **Returns**: Top 5 search result snippets
+- **Integration**: Uses `duckduckgo-search` library without API keys
 
 ## Implementation Steps
 

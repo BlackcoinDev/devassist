@@ -10,7 +10,7 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 - ✅ Places: Spaces system for isolated knowledge bases
 - ✅ Document Processing: Unified processing via Docling
 - ✅ Web Ingestion: URL learning capability
-- ✅ Tool calling capabilities with 7 tools
+- ✅ Tool calling capabilities with 8 tools (including web search)
 - ✅ Conversation memory with SQLite
 - ✅ Markdown support in GUI
 

@@ -2389,7 +2389,45 @@ FILE_SYSTEM_TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_web",
+            "description": "Search the public internet for current information using DuckDuckGo (privacy-focused)",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search queries to find information online",
+                    },
+                },
+                "required": ["query"],
+            },
+        },
+    },
 ]
+
+
+def execute_web_search(query: str) -> dict:
+    """Execute web search using DuckDuckGo."""
+    try:
+        from duckduckgo_search import DDGS
+        
+        print(f"🌍 Searching web for: '{query}'")
+        with DDGS() as ddgs:
+            # max_results=5 to keep context manageable
+            results = list(ddgs.text(query, max_results=5))
+            
+        return {
+            "success": True, 
+            "result_count": len(results),
+            "results": results
+        }
+    except ImportError:
+        return {"error": "duckduckgo-search not installed. Run: pip install duckduckgo-search"}
+    except Exception as e:
+        return {"error": f"Search failed: {str(e)}"}
 
 
 def execute_tool_call(tool_call):
@@ -2476,6 +2514,9 @@ def execute_tool_call(tool_call):
             file_path = arguments.get("file_path", "")
             extract_type = arguments.get("extract_type", "text")
             result = execute_parse_document(file_path, extract_type)
+        elif function_name == "search_web":
+            query = arguments.get("query", "")
+            result = execute_web_search(query)
         else:
             result = {"error": f"Unknown tool: {function_name}"}
 

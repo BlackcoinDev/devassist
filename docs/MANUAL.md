@@ -38,6 +38,7 @@ Spaces allow you to isolate knowledge into different buckets. This prevents the 
 The AI can "decide" to use tools without you explicitly asking.
 *   **Example**: If you say "Create a file called test.py", it calls `write_file`.
 *   **Example**: If you say "Read the README", it calls `read_file`.
+*   **Example**: If you ask "What's the latest news on AI?", it calls `search_web` to search DuckDuckGo.
 *   **Auto-Learning**: If you correct the AI or provide a definition it didn't know (e.g., "Actually, 'like-for-like' in finance means..."), it may autonomously call `learn_information` to save that fact for ever.
 
 ---
