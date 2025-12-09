@@ -67,7 +67,8 @@ def check_mem0():
                 "provider": "chroma",
                 "config": {
                     "collection_name": "test_mem0_integration",
-                    "path": "chroma_db_mem0_test",
+                    "host": "192.168.0.204",
+                    "port": 8000,
                 },
             },
         }

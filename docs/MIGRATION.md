@@ -111,7 +111,7 @@ MAX_INPUT_LENGTH=10000                        # Maximum input length
 
 # Database Configuration
 DB_TYPE=sqlite                                # Database type
-DB_PATH=conversation_memory.db                # SQLite database path
+DB_PATH=db/history.db                         # SQLite database path
 
 # System Configuration
 KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround

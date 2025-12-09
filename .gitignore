@@ -170,9 +170,8 @@ dmypy.json
 chroma_data/
 faiss_index/
 
-# Conversation memory
-conversation_memory.json
-conversation_memory.db
+# Database files
+db/
 *.db
 *.db-journal
 

@@ -176,7 +176,7 @@ AI: The /populate command processes documents by:
 ### Storage System
 
 #### SQLite Database (Required)
-- **Storage**: SQLite database (`conversation_memory.db`)
+- **Storage**: SQLite database (`db/history.db`)
 - **Features**: ACID transactions, concurrent access, SQL querying, indexing
 - **Advantages**: Data integrity, thread-safe, persistent across sessions
 - **Configuration**: `DB_TYPE=sqlite` in `.env` (required, no alternatives)
@@ -383,7 +383,7 @@ MAX_INPUT_LENGTH=10000                        # Maximum input length
 
 # Database Configuration (REQUIRED)
 DB_TYPE=sqlite                                # Database type
-DB_PATH=conversation_memory.db                # SQLite database path
+DB_PATH=db/history.db                         # SQLite database path
 
 # System Configuration (REQUIRED)
 KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
@@ -740,7 +740,8 @@ devassist/
 │   ├── blackcoin-pos-protocol-v2-whitepaper.pdf   # Sample whitepaper
 │   └── blackcoin-pos-protocol-v3.1-whitepaper.pdf # Sample whitepaper v3.1
 ├── venv/                      # Python 3.13 virtual environment
-├── conversation_memory.db     # SQLite database for persistent chat history
+├── db/                         # Database files directory
+│   └── history.db              # SQLite database for persistent chat history
 ├── .env                       # Configuration (copy from .env.example)
 ├── .env.example               # Configuration template
 ├── AGENTS.md                  # Agent guidelines and architecture docs
@@ -757,7 +758,8 @@ devassist/
 - **`docs/ROADMAP.md`**: Detailed future development plans and integrations
 - **`docs/MIGRATION.md`**: Guide for migrating between versions
 - **`tests/`**: Comprehensive test suite with unit and integration tests
-- **`conversation_memory.db`**: SQLite database for persistent chat history
+- **`db/history.db`**: SQLite database for persistent chat history
+- **Remote ChromaDB**: Personalized user memory storage
 
 ### Adding New Features
 
@@ -797,7 +799,7 @@ devassist/
 - Check Python version compatibility (requires Python 3.13.9)
 
 **"Memory not loading"**
-- Check `conversation_memory.db` exists and is readable
+- Check `db/history.db` exists and is readable
 - Verify file permissions and SQLite database integrity
 - The app will create a new database if corrupted
 
@@ -825,7 +827,7 @@ To completely reset the application:
 
 ```bash
 # Remove memory and vector databases
-rm -f conversation_memory.db
+rm -f db/history.db
 rm -rf chroma_data/
 
 # ChromaDB data is stored in server directory and will be reset

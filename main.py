@@ -2280,7 +2280,8 @@ def initialize_application():
                     "provider": "chroma",
                     "config": {
                         "collection_name": "mem0_user_prefs",
-                        "path": "chroma_db_mem0",
+                        "host": CHROMA_HOST,
+                        "port": CHROMA_PORT,
                     },
                 },
             }
