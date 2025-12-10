@@ -3613,6 +3613,14 @@ Do not respond with text about not having access to files.
                             print(
                                 f"🔄 Token Usage: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total"
                             )
+                    
+                    # Log tool call information
+                    has_tools = hasattr(initial_response, "tool_calls") and initial_response.tool_calls
+                    if has_tools:
+                        tool_names = [tc.get('name', 'unknown') for tc in initial_response.tool_calls]
+                        print(f"🔧 Tools requested: {', '.join(tool_names)}")
+                    else:
+                        print("🔧 No tools requested")
 
                     if (
                         hasattr(initial_response, "reasoning_content")
@@ -3660,7 +3668,22 @@ Do not respond with text about not having access to files.
                             else getattr(tool_call, "name", "unknown")
                         )
                         print(f"🔧 Executing tool: {tool_name}")
+                        
+                        if VERBOSE_LOGGING:
+                            tool_start_time = time.time()
+                        
                         result = execute_tool_call(tool_call)
+                        
+                        if VERBOSE_LOGGING:
+                            tool_duration = time.time() - tool_start_time
+                            print(f"⏱️  {tool_name} completed in {tool_duration:.2f}s")
+                            
+                            # Log tool result status
+                            if 'error' in result:
+                                print(f"❌ Tool error: {result['error']}")
+                            else:
+                                print(f"✅ Tool success: {result.get('function_name', 'unknown')}")
+                        
                         tool_results.append(result)
 
                     # Add tool results to conversation for follow-up
@@ -3688,6 +3711,14 @@ Do not respond with text about not having access to files.
                                 import time
 
                                 followup_start_time = time.time()
+                                
+                                # Log the tool results being used
+                                if VERBOSE_LOGGING:
+                                    print(f"📋 Using {len(tool_results)} tool results:")
+                                    for i, result in enumerate(tool_results, 1):
+                                        func_name = result.get('function_name', 'unknown')
+                                        status = '✅ Success' if 'success' in result else '❌ Error'
+                                        print(f"   {i}. {func_name}: {status}")
 
                             # Check context length before calling LLM
                             total_chars = sum(
@@ -3697,6 +3728,8 @@ Do not respond with text about not having access to files.
                                 print(
                                     f"📏 Follow-up context length: {total_chars} characters"
                                 )
+                                if total_chars > 15000:
+                                    print("⚠️  Large context may impact performance")
 
                             # Trim context if too long
                             if total_chars > 80000:
@@ -3774,6 +3807,10 @@ Do not respond with text about not having access to files.
                                             import time
 
                                             final_start_time = time.time()
+                                            
+                                            # Log additional tool results
+                                            if additional_tool_results:
+                                                print(f"📋 Using {len(additional_tool_results)} additional tool results")
 
                                         # Check context length before calling LLM
                                         total_chars = sum(
@@ -3784,6 +3821,8 @@ Do not respond with text about not having access to files.
                                             print(
                                                 f"📏 Context length: {total_chars} characters"
                                             )
+                                            if total_chars > 20000:
+                                                print("⚠️  Very large context may impact performance and quality")
 
                                         # Trim context if too long (rough estimate: ~100k chars = ~25k tokens)
                                         if total_chars > 80000:
@@ -3829,15 +3868,30 @@ Do not respond with text about not having access to files.
                                             print(
                                                 f"⚡ Final response generated in {final_duration:.2f}s"
                                             )
-
+                                            
+                                            # Log final response characteristics
+                                            response_text = final_final_response.content or ""
+                                            print(f"💬 Response length: {len(response_text)} characters")
+                                            
                                             if hasattr(final_final_response, "usage"):
                                                 usage = getattr(
                                                     final_final_response, "usage", None
                                                 )
                                                 if usage:
+                                                    prompt_tokens = getattr(usage, "prompt_tokens", "N/A")
+                                                    completion_tokens = getattr(usage, "completion_tokens", "N/A")
+                                                    total_tokens = getattr(usage, "total_tokens", "N/A")
                                                     print(
-                                                        f"🔄 Final response tokens: {getattr(usage, 'total_tokens', 'N/A')}"
+                                                        f"🔄 Final Token Usage: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total"
                                                     )
+                                                    
+                                                    # Calculate efficiency
+                                                    if total_tokens != "N/A" and len(response_text) > 0:
+                                                        try:
+                                                            chars_per_token = len(response_text) / int(total_tokens)
+                                                            print(f"📊 Efficiency: {chars_per_token:.1f} characters per token")
+                                                        except (ValueError, ZeroDivisionError):
+                                                            pass
 
                                         response = final_final_response.content or ""
 
