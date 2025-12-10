@@ -3535,49 +3535,62 @@ def main():
             if force_tool_call:
                 try:
                     tool_result = execute_tool_call(force_tool_call)
-                    # Display tool result to user
-                    print("AI Assistant:")
-                    if isinstance(tool_result, dict) and "result" in tool_result:
-                        result_content = tool_result["result"]
-                        if (
-                            isinstance(result_content, dict)
-                            and "success" in result_content
-                        ):
-                            if result_content["success"]:
-                                print("✅ Tool executed successfully")
-                                # Format and display results
-                                if "results" in result_content:
-                                    results = result_content["results"]
-                                    if isinstance(results, list) and len(results) > 0:
-                                        print(f"Found {len(results)} results:")
-                                        for i, result in enumerate(
-                                            results[:5], 1
-                                        ):  # Show first 5
-                                            title = result.get("title", "No title")
-                                            body = (
-                                                result.get("body", "")[:200] + "..."
-                                                if len(result.get("body", "")) > 200
-                                                else result.get("body", "")
-                                            )
-                                            print(f"{i}. {title}")
-                                            if body:
-                                                print(f"   {body}")
-                                    else:
-                                        print("No results found.")
-                            else:
-                                print(
-                                    f"❌ Tool failed: {result_content.get('error', 'Unknown error')}"
-                                )
-                        else:
-                            print(f"Tool result: {result_content}")
-                    else:
-                        print(f"Tool executed: {tool_result}")
 
-                    # Add tool result to conversation for context
-                    tool_message = f"Tool result: {tool_result}"
+                    # Add tool result to conversation for AI analysis
+                    tool_message = f"Tool executed: {tool_result}"
                     conversation_history.append(AIMessage(content=tool_message))
+
+                    # Generate AI analysis of the tool results
+                    analysis_prompt = f"""
+I just executed a {force_tool_call["name"]} tool with query: {force_tool_call["args"]["query"]}
+
+Tool Result: {tool_result}
+
+Please analyze these results and provide a helpful summary or answer to the user's original request: "{user_input}"
+
+Focus on the most relevant information and provide insights or a direct answer if possible.
+"""
+
+                    # Create analysis message for LLM
+                    analysis_messages = conversation_history + [
+                        HumanMessage(content=analysis_prompt)
+                    ]
+
                     if VERBOSE_LOGGING:
-                        print(f"✅ Forced tool executed: {force_tool_call['name']}")
+                        print(
+                            f"🤖 Generating analysis of {force_tool_call['name']} results..."
+                        )
+
+                    # Get AI analysis of the results
+                    analysis_response = llm.invoke(analysis_messages)
+
+                    # Display the AI's analysis
+                    response = (
+                        analysis_response.content
+                        or "I executed the tool but couldn't analyze the results."
+                    )
+
+                    # Render the response with markdown formatting
+                    try:
+                        from rich.console import Console
+                        from rich.markdown import Markdown
+
+                        console = Console()
+                        print("AI Assistant:")
+                        if isinstance(response, str):
+                            console.print(Markdown(response))
+                        else:
+                            console.print(str(response))
+                    except ImportError:
+                        print("AI Assistant:", response)
+
+                    # Add AI analysis to conversation history
+                    conversation_history.append(AIMessage(content=response))
+
+                    if VERBOSE_LOGGING:
+                        print(
+                            f"✅ Forced tool executed and analyzed: {force_tool_call['name']}"
+                        )
                     continue  # Skip normal LLM processing for this input
                 except Exception as e:
                     error_msg = f"Error executing forced tool: {e}"
