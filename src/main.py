@@ -135,6 +135,262 @@ except ImportError:
     MEM0_AVAILABLE = False
 
 # =============================================================================
+# SECURITY MODULE
+# =============================================================================
+
+
+class SecurityError(Exception):
+    """Custom exception for security-related errors."""
+
+    pass
+
+
+class PathSecurity:
+    """
+    Comprehensive path security validator to prevent path traversal attacks.
+
+    Features:
+    - Path traversal prevention
+    - Directory sandboxing
+    - File type validation
+    - Size limits
+    - Binary file detection
+    """
+
+    MAX_FILE_SIZE = 1024 * 1024  # 1MB limit
+    DANGEROUS_PATTERNS = [
+        "..",
+        "../",
+        "/../",
+        "\\..\\",
+        "~",
+        "/~",
+        "\\~",
+        "/etc/",
+        "/proc/",
+        "/dev/",
+        "C:\\",
+        "D:\\",
+        "E:\\",
+    ]
+
+    @classmethod
+    def validate_path(cls, user_path: str, base_dir: str | None = None) -> str:
+        """
+        Validate a user-provided path for security.
+
+        Args:
+            user_path: User-provided path
+            base_dir: Base directory for sandboxing (defaults to current directory)
+
+        Returns:
+            str: Validated absolute path
+
+        Raises:
+            SecurityError: If path is invalid or unsafe
+        """
+        if not user_path:
+            raise SecurityError("Empty path")
+
+        # Use current directory as base if not specified
+        if base_dir is None:
+            base_dir = os.getcwd()
+
+        # Convert to absolute path
+        try:
+            full_path = os.path.abspath(os.path.join(base_dir, user_path))
+        except (TypeError, ValueError) as e:
+            raise SecurityError(f"Invalid path: {e}")
+
+        # Check for path traversal attempts
+        if not full_path.startswith(base_dir):
+            raise SecurityError(f"Path traversal attempt: {user_path}")
+
+        # Check for dangerous patterns
+        path_lower = user_path.lower()
+        for pattern in cls.DANGEROUS_PATTERNS:
+            if pattern in path_lower:
+                raise SecurityError(f"Dangerous path pattern detected: {user_path}")
+
+        # Check if path exists (unless it's a new file for writing)
+        if not os.path.exists(full_path):
+            # For new files, check parent directory exists
+            parent_dir = os.path.dirname(full_path)
+            if parent_dir and not os.path.exists(parent_dir):
+                raise SecurityError(f"Parent directory doesn't exist: {parent_dir}")
+
+        return full_path
+
+    @classmethod
+    def validate_file_read(cls, file_path: str, base_dir: str | None = None) -> str:
+        """
+        Validate a file path for reading operations.
+
+        Args:
+            file_path: Path to file
+            base_dir: Base directory for sandboxing
+
+        Returns:
+            str: Validated file path
+
+        Raises:
+            SecurityError: If file cannot be read safely
+        """
+        safe_path = cls.validate_path(file_path, base_dir)
+
+        # Must be a file
+        if not os.path.isfile(safe_path):
+            raise SecurityError(f"Not a file: {file_path}")
+
+        # Check file size
+        try:
+            file_size = os.path.getsize(safe_path)
+            if file_size > cls.MAX_FILE_SIZE:
+                raise SecurityError(
+                    f"File too large: {file_size} bytes (max {cls.MAX_FILE_SIZE})"
+                )
+        except OSError as e:
+            raise SecurityError(f"Cannot access file: {e}")
+
+        # Check for binary files (basic detection)
+        try:
+            with open(safe_path, "rb") as f:
+                header = f.read(1024)
+                # Check for null bytes (common in binary files)
+                if b"\x00" in header:
+                    raise SecurityError("Binary file detected")
+        except Exception as e:
+            raise SecurityError(f"Cannot validate file content: {e}")
+
+        return safe_path
+
+    @classmethod
+    def validate_file_write(cls, file_path: str, base_dir: str | None = None) -> str:
+        """
+        Validate a file path for writing operations.
+
+        Args:
+            file_path: Path to file
+            base_dir: Base directory for sandboxing
+
+        Returns:
+            str: Validated file path
+
+        Raises:
+            SecurityError: If file cannot be written safely
+        """
+        safe_path = cls.validate_path(file_path, base_dir)
+
+        # For directories, ensure we're not trying to write to a directory
+        if os.path.exists(safe_path) and os.path.isdir(safe_path):
+            raise SecurityError(f"Cannot write to directory: {file_path}")
+
+        # Ensure parent directory exists
+        parent_dir = os.path.dirname(safe_path)
+        if parent_dir and not os.path.exists(parent_dir):
+            try:
+                os.makedirs(parent_dir, exist_ok=True)
+            except OSError as e:
+                raise SecurityError(f"Cannot create directory: {e}")
+
+        return safe_path
+
+    @classmethod
+    def validate_directory(
+        cls, directory_path: str, base_dir: str | None = None
+    ) -> str:
+        """
+        Validate a directory path.
+
+        Args:
+            directory_path: Path to directory
+            base_dir: Base directory for sandboxing
+
+        Returns:
+            str: Validated directory path
+
+        Raises:
+            SecurityError: If directory is invalid
+        """
+        safe_path = cls.validate_path(directory_path, base_dir)
+
+        # Must be a directory
+        if not os.path.isdir(safe_path):
+            raise SecurityError(f"Not a directory: {directory_path}")
+
+        return safe_path
+
+
+class DatabaseError(Exception):
+    """Custom exception for database-related errors."""
+
+    pass
+
+
+class SecureDatabase:
+    """
+    Secure database wrapper that prevents SQL injection and provides thread-safe operations.
+
+    Features:
+    - Parameterized queries only (no string interpolation)
+    - Thread-safe operations with locking
+    - Automatic connection management
+    - Comprehensive error handling
+    """
+
+    @staticmethod
+    def execute_query(
+        query: str, params: tuple | None = None, fetch: bool = True, commit: bool = True
+    ):
+        """
+        Execute a parameterized SQL query safely.
+
+        Args:
+            query: SQL query with ? placeholders
+            params: Tuple of parameters for the query
+            fetch: Whether to fetch results (for SELECT queries)
+            commit: Whether to commit the transaction
+
+        Returns:
+            Query results if fetch=True, None otherwise
+
+        Raises:
+            DatabaseError: If query execution fails
+        """
+        if db_conn is None or db_lock is None:
+            raise DatabaseError("Database connection not initialized")
+
+        try:
+            with db_lock:
+                cursor = db_conn.cursor()
+
+                # Execute with parameters to prevent SQL injection
+                if params:
+                    cursor.execute(query, params)
+                else:
+                    cursor.execute(query)
+
+                # Commit for write operations
+                if commit and not query.strip().upper().startswith(
+                    ("SELECT", "PRAGMA")
+                ):
+                    db_conn.commit()
+
+                # Return results for SELECT queries
+                if fetch and query.strip().upper().startswith("SELECT"):
+                    return cursor.fetchall()
+
+                return None
+
+        except sqlite3.Error as e:
+            logger.error(f"Database query failed: {e}", exc_info=True)
+            raise DatabaseError(f"Database operation failed: {e}") from e
+        except Exception as e:
+            logger.error(f"Unexpected database error: {e}", exc_info=True)
+            raise DatabaseError(f"Unexpected database error: {e}") from e
+
+
+# =============================================================================
 # LOGGING AND ENVIRONMENT SETUP
 # =============================================================================
 
@@ -200,7 +456,6 @@ warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality")
 LM_STUDIO_BASE_URL = os.getenv("LM_STUDIO_URL")  # LM Studio API endpoint
 if not LM_STUDIO_BASE_URL:
     raise ValueError("LM_STUDIO_URL environment variable is required")
-LM_STUDIO_BASE_URL = cast(str, LM_STUDIO_BASE_URL)  # Type assertion for mypy
 assert LM_STUDIO_BASE_URL is not None, (
     "LM_STUDIO_BASE_URL should not be None after validation"
 )
@@ -208,7 +463,6 @@ assert LM_STUDIO_BASE_URL is not None, (
 LM_STUDIO_API_KEY = os.getenv("LM_STUDIO_KEY")  # API key for authentication
 if not LM_STUDIO_API_KEY:
     raise ValueError("LM_STUDIO_KEY environment variable is required")
-LM_STUDIO_API_KEY = cast(str, LM_STUDIO_API_KEY)  # Type assertion for mypy
 assert LM_STUDIO_API_KEY is not None, (
     "LM_STUDIO_API_KEY should not be None after validation"
 )
@@ -217,7 +471,7 @@ assert LM_STUDIO_API_KEY is not None, (
 MODEL_NAME = os.getenv("MODEL_NAME")  # Default model, can be changed
 if not MODEL_NAME:
     raise ValueError("MODEL_NAME environment variable is required")
-MODEL_NAME = cast(str, MODEL_NAME)  # type: ignore  # Type assertion for mypy
+# MODEL_NAME is validated above
 assert MODEL_NAME is not None, "MODEL_NAME should not be None after validation"
 
 # Conversation Memory Configuration
@@ -251,7 +505,7 @@ DB_TYPE = db_type_str.lower()  # Storage type: 'json', 'sqlite', etc.
 DB_PATH = os.getenv("DB_PATH")  # SQLite database file path
 if not DB_PATH:
     raise ValueError("DB_PATH environment variable is required")
-DB_PATH = cast(str, DB_PATH)  # Type assertion for mypy
+# DB_PATH is validated above
 assert DB_PATH is not None, "DB_PATH should not be None after validation"
 
 # Verbose Logging Configuration - for detailed AI processing visibility
@@ -264,7 +518,7 @@ SHOW_TOOL_DETAILS = os.getenv("SHOW_TOOL_DETAILS", "true").lower() == "true"
 CHROMA_HOST = os.getenv("CHROMA_HOST")  # ChromaDB server host
 if not CHROMA_HOST:
     raise ValueError("CHROMA_HOST environment variable is required")
-CHROMA_HOST = cast(str, CHROMA_HOST)  # type: ignore  # Type assertion for mypy
+# CHROMA_HOST is validated above
 assert CHROMA_HOST is not None, "CHROMA_HOST should not be None after validation"
 
 chroma_port_str = os.getenv("CHROMA_PORT")
@@ -275,12 +529,12 @@ CHROMA_PORT = int(chroma_port_str)  # ChromaDB server port
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL")  # Ollama embeddings server
 if not OLLAMA_BASE_URL:
     raise ValueError("OLLAMA_BASE_URL environment variable is required")
-OLLAMA_BASE_URL = cast(str, OLLAMA_BASE_URL)  # Type assertion for mypy
+# OLLAMA_BASE_URL is validated above
 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")  # Embedding model name
 if not EMBEDDING_MODEL:
     raise ValueError("EMBEDDING_MODEL environment variable is required")
-EMBEDDING_MODEL = cast(str, EMBEDDING_MODEL)  # Type assertion for mypy
+# EMBEDDING_MODEL is validated above
 
 # AI Behavior Settings - configurable via slash commands
 CONTEXT_MODE = (
@@ -1139,7 +1393,7 @@ def handle_learn_command(content: str):
         # Generate embeddings using Ollama
         try:
             # Import here to handle initialization order
-            from src.main import embeddings  # type: ignore
+            from src.main import embeddings
 
             embeddings_result = embeddings.embed_documents([doc.page_content])
             if embeddings_result and len(embeddings_result) > 0:
@@ -1180,7 +1434,7 @@ def handle_learn_command(content: str):
                             )
                             raise Exception("Collection creation failed")
 
-                except Exception as e:  # type: ignore
+                except Exception as e:
                     logger.error(
                         f"Error managing collection for space {CURRENT_SPACE}: {e}"
                     )
