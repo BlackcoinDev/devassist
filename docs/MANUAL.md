@@ -129,8 +129,14 @@ Mass-ingest an entire directory of code and documents.
 ---
 
 ## 🛠 Technical Details
-*   **Vector DB**: ChromaDB (stores embeddings).
-*   **Embeddings**: `qwen3-embedding` (via Ollama).
-*   **LLM**: `qwen3-vl-30b` (via LM Studio).
-*   **Processing**: Docling (for all file/web parsing).
-*   **Personalization**: Mem0 (User Preference Graph).
+
+For comprehensive technical architecture details, please refer to the [ARCHITECTURE.md](ARCHITECTURE.md) document.
+
+**Key Technical Components:**
+*   **Vector DB**: ChromaDB (stores embeddings)
+*   **Embeddings**: `qwen3-embedding` (via Ollama)
+*   **LLM**: `qwen3-vl-30b` (via LM Studio)
+*   **Processing**: Docling (for all file/web parsing)
+*   **Personalization**: Mem0 (User Preference Graph)
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for complete system architecture, data flow diagrams, and technical implementation details.

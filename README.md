@@ -27,6 +27,7 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 
 ## 📖 Documentation
 
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Comprehensive system architecture, component diagrams, and technical implementation details
 - **[ROADMAP.md](docs/ROADMAP.md)**: Future development plans including security enhancements, Docling integration, Pydantic-AI, LangGraph, and more
 - **[MIGRATION.md](docs/MIGRATION.md)**: Migration guide and version upgrade notes
 - **[AGENTS.md](AGENTS.md)**: Agent guidelines and architecture documentation

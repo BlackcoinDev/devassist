@@ -20,6 +20,8 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 **Priority**: High  
 **Status**: Planned  
 
+For current security architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 - **SQLCipher Encryption**: Replace basic SQLite with encrypted database for conversation memory.
 - **Integration Steps**:
   1. Install SQLCipher library (`pip install pysqlcipher3`)
@@ -68,6 +70,8 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 ### 4. Performance Optimizations
 **Priority**: Medium  
 **Status**: Planned  
+
+For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 - **Embedding Caching**: Cache embeddings to reduce API calls
 - **Integration Steps**:

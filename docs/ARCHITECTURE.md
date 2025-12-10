@@ -1,0 +1,336 @@
+# AI Assistant Architecture
+
+This document provides a comprehensive architectural overview of the AI Assistant application, serving as a reference for all other documentation files.
+
+## 🏗️ System Architecture
+
+### High-Level Overview
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   LM Studio     │    │ ChromaDB v2    │    │    Ollama       │
+│ (AI Brain)      │◄──►│ (Vector DB)    │◄──►│ (Embeddings)    │
+│ Port: 1234      │    │ Port: 8000     │    │ Port: 11434     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         ▲                       ▲                       ▲
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │  launcher.py    │
+                    │ (GUI/CLI)       │
+                    │   selector      │
+                    └─────────────────┘
+                             │
+                ┌────────────┴────────────┐
+                │                         │
+        ┌─────────────────┐      ┌─────────────────┐
+        │     src/gui.py      │      │    src/main.py      │
+        │ (PyQt6 GUI)     │      │   (CLI App)     │
+        │  Markdown       │      │     v0.1        │
+        │   Support       │      │   Learning AI   │
+        └─────────────────┘      └─────────────────┘
+                │                         │
+        ┌───────┴───────┐         ┌───────┴───────┐
+        │ initialize_  │         │  show_welcome │
+        │ application() │         │     ()       │
+        └───────────────┘         └───────────────┘
+                │                         │
+                └────────────┬────────────┘
+                             │
+                    ┌─────────────────┐
+                    │   SQLite DB     │
+                    │ (Chat Memory)   │
+                    └─────────────────┘
+```
+
+### Data Flow
+
+1. **Interface Selection** → `launcher.py` chooses GUI or CLI
+2. **Application Initialization** → `initialize_application()` sets up LLM and vector database
+3. **Space Loading** → Load last used workspace from `space_settings.json`
+4. **Welcome Display** → `show_welcome()` shows interface and current space info
+5. **User Teaching** → `/learn` commands add knowledge to current space's collection
+6. **Code Ingestion** → `/populate` bulk imports codebases to current space
+7. **Text Chunking** → `chunk_text()` processes content for vector storage
+8. **Query Processing** → User asks questions via GUI or CLI
+9. **Context Retrieval** → Current space's ChromaDB collection provides relevant learned information
+10. **AI Enhancement** → LM Studio generates responses with space-specific learned context
+11. **Memory Persistence** → SQLite saves conversation history
+12. **Space Persistence** → Current space setting saved to `space_settings.json`
+13. **Knowledge Growth** → AI learns continuously within current space
+
+## 🧠 Core Components
+
+### 1. AI Tools (8 Tools)
+
+The AI has access to 8 powerful tools for various operations:
+
+| Tool Name | Description | Status |
+|-----------|-------------|--------|
+| `read_file()` | Read file contents | ✅ Tested & Working |
+| `write_file()` | Create/modify files | ✅ Ready |
+| `list_directory()` | Browse directories | ✅ Ready |
+| `get_current_directory()` | Show current path | ✅ Tested & Working |
+| `parse_document()` | Extract text/tables/forms/layout from documents | ✅ Ready |
+| `learn_information()` | Store in knowledge base | ✅ Ready |
+| `search_knowledge()` | Query learned information | ✅ Ready |
+| `search_web()` | Search the internet using DuckDuckGo | ✅ Ready |
+
+**Tool Integration Architecture:**
+```
+User Query → AI (qwen3-vl-30b) → Tool Selection → Execution → Result Integration → AI Response
+     ↓              ↓                      ↓            ↓              ↓              ↓
+File System    Multimodal Analysis     Secure        Structured     Conversation     Contextual
+Operations     & Understanding        Execution      Data Output    Context         Responses
+```
+
+### 2. Spaces System
+
+The Spaces system provides isolated workspaces with separate knowledge bases:
+
+- **Isolation**: Each space has its own dedicated collection in the Vector Database
+- **Persistence**: The app remembers your last used space (`space_settings.json`)
+- **Safety**: Switching spaces completely changes what the AI "knows"
+
+**Commands:**
+- `/space list` - Show all spaces
+- `/space switch <name>` - Create or switch to a space
+- `/space delete <name>` - Delete a space
+
+### 3. Memory Systems
+
+#### Personalized Memory (Mem0)
+
+Mem0 creates a dynamic profile of user preferences and context:
+
+- **Automatic**: Silent observation of messages in the background
+- **Adaptive**: Remembers user preferences and coding style
+- **Contextual**: Checks Mem0 for every message to adapt responses
+
+#### Conversation Memory (SQLite)
+
+SQLite database stores conversation history with:
+
+- **ACID transactions** for data integrity
+- **Concurrent access** for multiple processes
+- **SQL querying** for search/filter operations
+- **File-based storage** for easy backup
+
+### 4. Document Processing
+
+The system supports 80+ file types through unified processing:
+
+- **PDF, DOCX, RTF, EPUB, XLSX** extraction
+- **Smart chunking** with 1500-char chunks
+- **Paragraph-aware boundaries** for better retrieval
+- **Quality filtering** to skip low-value content
+- **Binary detection** with null byte analysis
+
+## 🗄️ Database Architecture
+
+### SQLite Schema
+
+```sql
+-- Conversations table
+CREATE TABLE conversations (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    user_id TEXT,
+    message_type TEXT NOT NULL CHECK (message_type IN ('system', 'human', 'ai')),
+    content TEXT NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    metadata TEXT, -- JSON string
+    checksum TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for performance
+CREATE INDEX idx_session_timestamp ON conversations(session_id, timestamp);
+CREATE INDEX idx_user_session ON conversations(user_id, session_id);
+CREATE INDEX idx_timestamp ON conversations(timestamp);
+
+-- Sessions table for metadata
+CREATE TABLE sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    title TEXT, -- Auto-generated or user-set
+    model TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_message_at DATETIME,
+    message_count INTEGER DEFAULT 0
+);
+```
+
+### ChromaDB v2 Architecture
+
+- **Server-based**: Dedicated vector database server
+- **Persistent storage**: All learned information survives app restarts
+- **Direct API integration**: Optimized for reliability and performance
+- **Collection-based**: Each space has its own collection
+
+## 🔧 Configuration
+
+### Required Environment Variables
+
+```bash
+# LM Studio Configuration
+LM_STUDIO_URL=http://192.168.0.203:1234/v1    # Your LM Studio endpoint
+LM_STUDIO_KEY=lm-studio                        # API key for authentication
+MODEL_NAME=qwen3-vl-30b                        # LLM model name
+
+# Vector Database Configuration (REQUIRED)
+CHROMA_HOST=192.168.0.204                      # ChromaDB server host
+CHROMA_PORT=8000                               # ChromaDB server port
+
+# Ollama Configuration
+OLLAMA_BASE_URL=http://192.168.0.204:11434    # Ollama embeddings endpoint
+EMBEDDING_MODEL=qwen3-embedding:latest        # Embedding model name
+
+# Application Settings
+MAX_HISTORY_PAIRS=5                            # Conversation memory limit
+TEMPERATURE=0.7                               # LLM creativity (0.0-1.0)
+MAX_INPUT_LENGTH=10000                        # Maximum input length
+
+# Database Configuration
+DB_TYPE=sqlite                                # Database type
+DB_PATH=db/history.db                         # SQLite database path
+
+# System Configuration
+KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
+```
+
+## 🛡️ Security Architecture
+
+### Encryption Strategies
+
+#### Database-Level Encryption
+```python
+# SQLCipher for SQLite
+conn.execute(f"PRAGMA key='{encryption_key}'")
+```
+
+#### Application-Level Encryption
+```python
+from cryptography.fernet import Fernet
+
+class EncryptedStore:
+    def __init__(self, key_path: str):
+        self.cipher = self._load_or_create_key(key_path)
+
+    def encrypt_content(self, content: str) -> str:
+        return self.cipher.encrypt(content.encode()).decode()
+
+    def decrypt_content(self, encrypted_content: str) -> str:
+        return self.cipher.decrypt(encrypted_content.encode()).decode()
+```
+
+### Access Control
+
+```python
+def get_user_conversations(user_id: str, session_id: str = None):
+    """Ensure users can only access their own conversations"""
+    query = "SELECT * FROM conversations WHERE user_id = ?"
+    params = [user_id]
+
+    if session_id:
+        query += " AND session_id = ?"
+        params.append(session_id)
+
+    return db.execute(query, params)
+```
+
+## 📊 Performance Architecture
+
+### Indexing Strategies
+
+```sql
+-- SQLite
+CREATE INDEX idx_session_timestamp ON conversations(session_id, timestamp DESC);
+CREATE INDEX idx_content_length ON conversations(LENGTH(content));
+
+-- PostgreSQL
+CREATE INDEX CONCURRENTLY idx_content_fts ON conversations USING gin(to_tsvector('english', content));
+CREATE INDEX CONCURRENTLY idx_metadata ON conversations USING gin(metadata);
+```
+
+### Query Optimization
+
+```python
+# Efficient pagination
+def get_messages_paginated(session_id: str, page: int = 1, per_page: int = 50):
+    offset = (page - 1) * per_page
+    return db.execute('''
+        SELECT * FROM conversations
+        WHERE session_id = ?
+        ORDER BY timestamp DESC
+        LIMIT ? OFFSET ?
+    ''', (session_id, per_page, offset))
+
+# Recent messages (most common query)
+def get_recent_messages(session_id: str, hours: int = 24):
+    return db.execute('''
+        SELECT * FROM conversations
+        WHERE session_id = ? AND timestamp > datetime('now', '-{} hours')
+        ORDER BY timestamp DESC
+    '''.format(hours), (session_id,))
+```
+
+## 🔄 Integration Points
+
+### Service Dependencies
+
+1. **LM Studio**: Local LLM server (http://192.168.0.203:1234)
+2. **ChromaDB v2 Server**: Vector database (http://192.168.0.204:8000)
+3. **Ollama**: Embedding server (http://192.168.0.204:11434)
+
+### Service Startup Commands
+
+```bash
+# Terminal 1: LM Studio (load qwen3-vl-30b model)
+m studio --start-server
+
+# Terminal 2: ChromaDB v2 Server
+chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
+
+# Terminal 3: Ollama
+ollama serve
+```
+
+## 📋 Key Features Matrix
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Dual Interfaces | ✅ | GUI (PyQt6) and CLI with full feature parity |
+| AI Learning System | ✅ | ChromaDB v2 vector database integration |
+| Document Processing | ✅ | 80+ file types with unified processing |
+| Spaces System | ✅ | Isolated workspaces with separate knowledge bases |
+| Tool Calling | ✅ | 8 AI tools for file operations and knowledge management |
+| Memory Persistence | ✅ | SQLite database for conversation history |
+| Markdown Support | ✅ | Rich text rendering in GUI |
+| Web Ingestion | ✅ | URL learning capability via `/web` command |
+| Personalized Memory | ✅ | Mem0 for user preference tracking |
+| Smart Chunking | ✅ | 1500-char chunks with paragraph-aware boundaries |
+| Quality Filtering | ✅ | Automatic filtering of binary files and low-value content |
+
+## 🎯 Design Principles
+
+1. **Local-First**: All processing happens locally for privacy
+2. **Modular Architecture**: Components can be updated independently
+3. **Feature Parity**: GUI and CLI interfaces must have identical functionality
+4. **Extensible**: Easy to add new tools and features
+5. **Secure**: Encryption and access control built-in
+6. **Performant**: Optimized queries and caching strategies
+7. **User-Centric**: Focus on developer productivity and experience
+
+## 🔗 Cross-Reference Guide
+
+For more detailed information, refer to:
+
+- **MANUAL.md**: User-facing documentation and usage guides
+- **MIGRATION.md**: Migration instructions and breaking changes
+- **ROADMAP.md**: Future development plans and feature timeline
+- **AGENTS.md**: Comprehensive agent documentation and technical details
+
+This architecture document serves as the canonical reference for the system's design and components.

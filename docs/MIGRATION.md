@@ -43,12 +43,8 @@ This guide covers the currently implemented database backends and important migr
 **MAJOR ENHANCEMENT**: v0.1.1 introduces **8 AI tools** that work together with the existing knowledge management system:
 
 #### Tool Integration Architecture
-```
-User Query → AI (qwen3-vl-30b) → Tool Selection → Execution → Result Integration → AI Response
-     ↓              ↓                      ↓            ↓              ↓              ↓
-File System    Multimodal Analysis     Secure        Structured     Conversation     Contextual
-Operations     & Understanding        Execution      Data Output    Context         Responses
-```
+
+For detailed tool integration architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 #### Tool Result Handling & AI Usage
 
@@ -119,221 +115,68 @@ KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
 
 ## 🗄️ Database Implementation
 
-## 🗄️ Implemented Databases
+For comprehensive database architecture details, please refer to the [ARCHITECTURE.md](ARCHITECTURE.md) document.
 
 ### SQLite (Recommended)
 
-#### Advantages
-- **Zero configuration** - no server setup required
-- **ACID transactions** - data integrity guaranteed
-- **Concurrent access** - handles multiple processes safely
-- **SQL querying** - can search/filter conversation history
-- **File-based** - easy backup and portability
-- **Built-in encryption** support with SQLCipher
+**Advantages:**
+- Zero configuration - no server setup required
+- ACID transactions - data integrity guaranteed
+- Concurrent access - handles multiple processes safely
+- SQL querying - can search/filter conversation history
+- File-based - easy backup and portability
+- Built-in encryption support with SQLCipher
 
-#### Schema Design
-```sql
--- Conversations table
-CREATE TABLE conversations (
-    id TEXT PRIMARY KEY,
-    session_id TEXT NOT NULL,
-    user_id TEXT,
-    message_type TEXT NOT NULL CHECK (message_type IN ('system', 'human', 'ai')),
-    content TEXT NOT NULL,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    metadata TEXT, -- JSON string
-    checksum TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Indexes for performance
-CREATE INDEX idx_session_timestamp ON conversations(session_id, timestamp);
-CREATE INDEX idx_user_session ON conversations(user_id, session_id);
-CREATE INDEX idx_timestamp ON conversations(timestamp);
-
--- Sessions table for metadata
-CREATE TABLE sessions (
-    id TEXT PRIMARY KEY,
-    user_id TEXT,
-    title TEXT, -- Auto-generated or user-set
-    model TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_message_at DATETIME,
-    message_count INTEGER DEFAULT 0
-);
-```
-
-#### Python Implementation
-```python
-import sqlite3
-import json
-from datetime import datetime
-import hashlib
-
-class SQLiteMemoryStore:
-    def __init__(self, db_path: str = "conversations.db"):
-        self.db_path = db_path
-        self.init_db()
-
-    def init_db(self):
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute('''
-                CREATE TABLE IF NOT EXISTS conversations (
-                    id TEXT PRIMARY KEY,
-                    session_id TEXT NOT NULL,
-                    user_id TEXT,
-                    message_type TEXT NOT NULL,
-                    content TEXT NOT NULL,
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    metadata TEXT,
-                    checksum TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            conn.execute('CREATE INDEX IF NOT EXISTS idx_session_timestamp ON conversations(session_id, timestamp)')
-
-    def save_message(self, session_id: str, message_type: str, content: str,
-                    user_id: str = None, metadata: Dict[str, Any] = None) -> str:
-        message_id = f"msg_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{hashlib.md5(str(datetime.now().timestamp()).encode()).hexdigest()[:8]}"
-        checksum = hashlib.sha256(content.encode()).hexdigest()
-
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute('''
-                INSERT INTO conversations (id, session_id, user_id, message_type, content, metadata, checksum)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (message_id, session_id, user_id, message_type, content,
-                  json.dumps(metadata) if metadata else None, checksum))
-
-        return message_id
-
-    def load_conversation(self, session_id: str, limit: int = None) -> List[Dict[str, Any]]:
-        with sqlite3.connect(self.db_path) as conn:
-            query = '''
-                SELECT id, message_type, content, timestamp, metadata, checksum
-                FROM conversations
-                WHERE session_id = ?
-                ORDER BY timestamp
-            '''
-            params = [session_id]
-
-            if limit:
-                query += ' LIMIT ?'
-                params.append(limit)
-
-            cursor = conn.execute(query, params)
-            messages = []
-
-            for row in cursor:
-                message = {
-                    'id': row[0],
-                    'type': row[1],
-                    'content': row[2],
-                    'timestamp': row[3],
-                    'metadata': json.loads(row[4]) if row[4] else None,
-                    'checksum': row[5]
-                }
-                messages.append(message)
-
-        return messages
-```
-
-#### Encryption Setup
-```bash
-# Install SQLCipher
-pip install pysqlcipher3
-
-# Use encrypted connection
-import sqlcipher3 as sqlite3
-
-# Connect with encryption key
-conn = sqlite3.connect('conversations.db')
-conn.execute(f"PRAGMA key='{encryption_key}'")
-```
+**Complete Schema Design and Implementation:** See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed SQLite schema, Python implementation, and encryption setup.
 
 
 
 ## 🔐 Security Considerations
 
+For comprehensive security architecture details, please refer to the [ARCHITECTURE.md](ARCHITECTURE.md) document.
+
 ### Encryption Strategies
 
-#### 1. Database-Level Encryption
-```python
-# SQLCipher for SQLite
-conn.execute(f"PRAGMA key='{encryption_key}'")
+**Database-Level Encryption:**
+- SQLCipher for SQLite
+- PostgreSQL with pgcrypto
+- MongoDB with encryption at rest
 
-# PostgreSQL with pgcrypto
-CREATE EXTENSION pgcrypto;
-UPDATE users SET password = crypt('new_password', gen_salt('bf', 8));
-
-# MongoDB with encryption at rest
-# Configure mongod with encryption options
-```
-
-#### 2. Application-Level Encryption
-```python
-from cryptography.fernet import Fernet
-
-class EncryptedStore:
-    def __init__(self, key_path: str):
-        self.cipher = self._load_or_create_key(key_path)
-
-    def encrypt_content(self, content: str) -> str:
-        return self.cipher.encrypt(content.encode()).decode()
-
-    def decrypt_content(self, encrypted_content: str) -> str:
-        return self.cipher.decrypt(encrypted_content.encode()).decode()
-```
+**Application-Level Encryption:**
+- Fernet encryption for content
+- Secure key management
 
 ### Access Control
 
-#### Multi-Tenant Isolation
-```python
-def get_user_conversations(user_id: str, session_id: str = None):
-    """Ensure users can only access their own conversations"""
-    query = "SELECT * FROM conversations WHERE user_id = ?"
-    params = [user_id]
+**Multi-Tenant Isolation:**
+- User-specific conversation access
+- Session-based permissions
+- Secure data separation
 
-    if session_id:
-        query += " AND session_id = ?"
-        params.append(session_id)
-
-    return db.execute(query, params)
-```
+**Complete Security Implementation:** See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed encryption strategies, access control mechanisms, and security best practices.
 
 ## 📊 Performance Optimization
 
-### Indexing Strategies
-```sql
--- SQLite
-CREATE INDEX idx_session_timestamp ON conversations(session_id, timestamp DESC);
-CREATE INDEX idx_content_length ON conversations(LENGTH(content));
+For comprehensive performance architecture details, please refer to the [ARCHITECTURE.md](ARCHITECTURE.md) document.
 
--- PostgreSQL
-CREATE INDEX CONCURRENTLY idx_content_fts ON conversations USING gin(to_tsvector('english', content));
-CREATE INDEX CONCURRENTLY idx_metadata ON conversations USING gin(metadata);
-```
+### Indexing Strategies
+
+**SQLite Optimization:**
+- Session-timestamp indexing for fast retrieval
+- Content length indexing for size-based queries
+
+**PostgreSQL Optimization:**
+- Full-text search with GIN indexes
+- Metadata indexing for complex queries
 
 ### Query Optimization
-```python
-# Efficient pagination
-def get_messages_paginated(session_id: str, page: int = 1, per_page: int = 50):
-    offset = (page - 1) * per_page
-    return db.execute('''
-        SELECT * FROM conversations
-        WHERE session_id = ?
-        ORDER BY timestamp DESC
-        LIMIT ? OFFSET ?
-    ''', (session_id, per_page, offset))
 
-# Recent messages (most common query)
-def get_recent_messages(session_id: str, hours: int = 24):
-    return db.execute('''
-        SELECT * FROM conversations
-        WHERE session_id = ? AND timestamp > datetime('now', '-{} hours')
-        ORDER BY timestamp DESC
-    '''.format(hours), (session_id,))
-```
+**Efficient Data Access:**
+- Pagination strategies for large datasets
+- Time-based filtering for recent messages
+- Optimized query patterns for common operations
+
+**Complete Performance Implementation:** See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed indexing strategies, query optimization techniques, and performance best practices.
 
 ## 🔄 Migration Strategies
 
