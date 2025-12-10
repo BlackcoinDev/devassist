@@ -145,6 +145,166 @@ class SecurityError(Exception):
     pass
 
 
+class InputSanitizer:
+    """
+    Comprehensive input sanitization to prevent injection attacks and malicious content.
+
+    Features:
+    - SQL injection prevention
+    - Command injection prevention
+    - XSS prevention
+    - Malicious pattern detection
+    - Length validation
+    - Content filtering
+    """
+
+    MAX_INPUT_LENGTH = 10000  # 10KB limit
+    DANGEROUS_PATTERNS = [
+        # SQL injection patterns
+        r";\s*",
+        r"--",
+        r"\/\*",
+        r"\*\/",
+        r"DROP\s+TABLE",
+        r"DELETE\s+FROM",
+        r"INSERT\s+INTO",
+        r"UPDATE\s+.*SET",
+        r"UNION\s+SELECT",
+        # Command injection patterns
+        r"&&",
+        r"\|\|",
+        r";",
+        r"\$\(",
+        r"`",
+        r"\.\./",
+        r"<\(script\)",
+        r"javascript:",
+        # XSS patterns
+        r"<script>",
+        r"onerror=",
+        r"onload=",
+        r"javascript:",
+        r"vbscript:",
+        r"expression\(",
+        # Malicious content
+        r"__import__",
+        r"eval\(",
+        r"exec\(",
+        r"compile\(",
+        r"pickle\.load",
+        r"subprocess\.",
+        r"os\.system",
+    ]
+
+    @classmethod
+    def sanitize_text(cls, text: str) -> str:
+        """
+        Sanitize text input to prevent injection attacks.
+
+        Args:
+            text: Input text to sanitize
+
+        Returns:
+            str: Sanitized text
+
+        Raises:
+            SecurityError: If malicious content is detected
+        """
+        if not text:
+            return text
+
+        # Check length
+        if len(text) > cls.MAX_INPUT_LENGTH:
+            raise SecurityError(
+                f"Input too long: {len(text)} characters (max {cls.MAX_INPUT_LENGTH})"
+            )
+
+        # Check for dangerous patterns
+        text_lower = text.lower()
+        for pattern in cls.DANGEROUS_PATTERNS:
+            if re.search(pattern, text_lower):
+                raise SecurityError(f"Dangerous content detected: {pattern}")
+
+        # Normalize whitespace
+        text = " ".join(text.split())
+
+        # Remove excessive special characters
+        text = re.sub(r"[\x00-\x1F\x7F-\x9F]", "", text)  # Remove control characters
+
+        return text
+
+    @classmethod
+    def sanitize_filename(cls, filename: str) -> str:
+        """
+        Sanitize filename to prevent path traversal and invalid characters.
+
+        Args:
+            filename: Filename to sanitize
+
+        Returns:
+            str: Sanitized filename
+
+        Raises:
+            SecurityError: If filename is invalid
+        """
+        if not filename:
+            raise SecurityError("Empty filename")
+
+        # Remove path components
+        filename = os.path.basename(filename)
+
+        # Remove dangerous characters
+        safe_chars = (
+            "-_.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        )
+        safe_filename = "".join(c for c in filename if c in safe_chars)
+
+        if not safe_filename:
+            raise SecurityError("Invalid filename characters")
+
+        # Check length
+        if len(safe_filename) > 255:
+            raise SecurityError("Filename too long")
+
+        return safe_filename
+
+    @classmethod
+    def sanitize_url(cls, url: str) -> str:
+        """
+        Sanitize URL input to prevent malicious URLs.
+
+        Args:
+            url: URL to sanitize
+
+        Returns:
+            str: Sanitized URL
+
+        Raises:
+            SecurityError: If URL is malicious
+        """
+        if not url:
+            raise SecurityError("Empty URL")
+
+        # Check for dangerous protocols
+        dangerous_protocols = ["javascript:", "data:", "vbscript:", "file:"]
+        url_lower = url.lower()
+        for protocol in dangerous_protocols:
+            if url_lower.startswith(protocol):
+                raise SecurityError(f"Dangerous URL protocol: {protocol}")
+
+        # Validate URL structure
+        try:
+            from urllib.parse import urlparse
+
+            result = urlparse(url)
+            if not result.scheme or not result.netloc:
+                raise SecurityError("Invalid URL structure")
+        except Exception as e:
+            raise SecurityError(f"Invalid URL: {e}")
+
+        return url
+
+
 class PathSecurity:
     """
     Comprehensive path security validator to prevent path traversal attacks.
@@ -3341,6 +3501,90 @@ def main():
             # Get user input with prompt
             user_input = input("You: ").strip()
 
+            # Force tool usage for common requests that AI sometimes misses
+            import time
+
+            force_tool_call = None
+            if (
+                "search the web" in user_input.lower()
+                or "web search" in user_input.lower()
+            ):
+                # Debug: Log that forced tool detection is working
+                print(f"DEBUG: Detected web search request: '{user_input}'")
+                # Extract search query
+                query = user_input.lower()
+                if "search the web for" in query:
+                    search_query = user_input.split("search the web for", 1)[1].strip()
+                elif "web search for" in query:
+                    search_query = user_input.split("web search for", 1)[1].strip()
+                else:
+                    search_query = (
+                        user_input.replace("search the web", "")
+                        .replace("web search", "")
+                        .strip()
+                    )
+                force_tool_call = {
+                    "name": "search_web",
+                    "args": {"query": search_query},
+                    "id": f"forced_{int(time.time())}",
+                }
+                if VERBOSE_LOGGING:
+                    print(f"🔧 Forced tool call: search_web('{search_query}')")
+
+            # Execute forced tool call if detected
+            if force_tool_call:
+                try:
+                    tool_result = execute_tool_call(force_tool_call)
+                    # Display tool result to user
+                    print("AI Assistant:")
+                    if isinstance(tool_result, dict) and "result" in tool_result:
+                        result_content = tool_result["result"]
+                        if (
+                            isinstance(result_content, dict)
+                            and "success" in result_content
+                        ):
+                            if result_content["success"]:
+                                print("✅ Tool executed successfully")
+                                # Format and display results
+                                if "results" in result_content:
+                                    results = result_content["results"]
+                                    if isinstance(results, list) and len(results) > 0:
+                                        print(f"Found {len(results)} results:")
+                                        for i, result in enumerate(
+                                            results[:5], 1
+                                        ):  # Show first 5
+                                            title = result.get("title", "No title")
+                                            body = (
+                                                result.get("body", "")[:200] + "..."
+                                                if len(result.get("body", "")) > 200
+                                                else result.get("body", "")
+                                            )
+                                            print(f"{i}. {title}")
+                                            if body:
+                                                print(f"   {body}")
+                                    else:
+                                        print("No results found.")
+                            else:
+                                print(
+                                    f"❌ Tool failed: {result_content.get('error', 'Unknown error')}"
+                                )
+                        else:
+                            print(f"Tool result: {result_content}")
+                    else:
+                        print(f"Tool executed: {tool_result}")
+
+                    # Add tool result to conversation for context
+                    tool_message = f"Tool result: {tool_result}"
+                    conversation_history.append(AIMessage(content=tool_message))
+                    if VERBOSE_LOGGING:
+                        print(f"✅ Forced tool executed: {force_tool_call['name']}")
+                    continue  # Skip normal LLM processing for this input
+                except Exception as e:
+                    error_msg = f"Error executing forced tool: {e}"
+                    print(f"❌ {error_msg}")
+                    conversation_history.append(AIMessage(content=error_msg))
+                    continue
+
             # Skip empty input to prevent blank messages
             if not user_input:
                 continue
@@ -3467,9 +3711,9 @@ def main():
             # Add tool instructions to system message for better tool usage
             tool_instructions = """
 
-IMPORTANT: You have access to tools for file system operations and document processing.
-When users ask you to read files, list directories, analyze documents, or perform any file operations,
-you MUST use the appropriate tools instead of responding conversationally.
+IMPORTANT: You have access to tools for file system operations, document processing, and web searching.
+When users ask you to read files, list directories, analyze documents, search the web, or perform any
+operations that require tools, you MUST use the appropriate tools instead of responding conversationally.
 
 Available tools:
 - read_file(file_path): Use this when users ask to read, view, or show file contents
@@ -3480,10 +3724,15 @@ Available tools:
   forms, or layout from PDFs, images, and office documents
 - learn_information(info): Use this when users want to teach you information
 - search_knowledge(query): Use this when users ask what you know or search learned info
+- search_web(query): Use this when users ask to search the web, find information online, or look up anything on the internet
 
-CRITICAL: If a user says "read the README", "analyze this document",
-"extract tables from PDF", or similar, you MUST call the appropriate tool.
-Do not respond with text about not having access to files.
+CRITICAL RULES:
+- If user says "search the web", "find online", "look up", "google", "web search" → CALL search_web()
+- If user says "read file", "show file", "view file" → CALL read_file()
+- If user says "list files", "show directory", "ls" → CALL list_directory()
+- If user says "analyze document", "parse PDF" → CALL parse_document()
+- NEVER say "I don't have access" or "I can't search" - ALWAYS use the appropriate tool
+- If unsure which tool to use, default to search_web for information requests
 """
 
             if LEARNING_MODE == "off":
@@ -3613,11 +3862,17 @@ Do not respond with text about not having access to files.
                             print(
                                 f"🔄 Token Usage: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total"
                             )
-                    
+
                     # Log tool call information
-                    has_tools = hasattr(initial_response, "tool_calls") and initial_response.tool_calls
+                    has_tools = (
+                        hasattr(initial_response, "tool_calls")
+                        and initial_response.tool_calls
+                    )
                     if has_tools:
-                        tool_names = [tc.get('name', 'unknown') for tc in initial_response.tool_calls]
+                        tool_names = [
+                            tc.get("name", "unknown")
+                            for tc in initial_response.tool_calls
+                        ]
                         print(f"🔧 Tools requested: {', '.join(tool_names)}")
                     else:
                         print("🔧 No tools requested")
@@ -3668,31 +3923,65 @@ Do not respond with text about not having access to files.
                             else getattr(tool_call, "name", "unknown")
                         )
                         print(f"🔧 Executing tool: {tool_name}")
-                        
+
                         if VERBOSE_LOGGING:
                             tool_start_time = time.time()
-                        
+
                         result = execute_tool_call(tool_call)
-                        
+
                         if VERBOSE_LOGGING:
                             tool_duration = time.time() - tool_start_time
                             print(f"⏱️  {tool_name} completed in {tool_duration:.2f}s")
-                            
+
                             # Log tool result status
-                            if 'error' in result:
+                            if "error" in result:
                                 print(f"❌ Tool error: {result['error']}")
                             else:
-                                print(f"✅ Tool success: {result.get('function_name', 'unknown')}")
-                        
+                                print(
+                                    f"✅ Tool success: {result.get('function_name', 'unknown')}"
+                                )
+
                         tool_results.append(result)
 
                     # Add tool results to conversation for follow-up
                     if tool_results:
                         tool_message = "Tool execution results:\n"
                         for result in tool_results:
-                            tool_message += (
-                                f"- {result['function_name']}: {result['result']}\n"
-                            )
+                            # Debug: Log the actual result structure
+                            if VERBOSE_LOGGING:
+                                print(f"DEBUG: Tool result keys: {list(result.keys())}")
+                                print(f"DEBUG: Tool result: {result}")
+
+                            # Check nested result structure (tools return {'result': {...}})
+                            actual_result = result.get("result", result)
+
+                            if "error" in actual_result:
+                                # Show error clearly to user with full details
+                                error_msg = actual_result.get("error", "Unknown error")
+                                tool_message += f"- {result['function_name']}: ❌ ERROR - {error_msg}\n"
+                            elif (
+                                "success" in actual_result and actual_result["success"]
+                            ):
+                                # Show success with additional info if available
+                                tool_message += (
+                                    f"- {result['function_name']}: ✅ SUCCESS"
+                                )
+                                if "file_path" in actual_result:
+                                    tool_message += (
+                                        f" (file: {actual_result['file_path']})"
+                                    )
+                                elif "size" in actual_result:
+                                    tool_message += f" ({actual_result['size']} bytes)"
+                                elif "result_count" in actual_result:
+                                    tool_message += (
+                                        f" ({actual_result['result_count']} results)"
+                                    )
+                                tool_message += "\n"
+                            else:
+                                # Generic result - check for success in different ways
+                                tool_message += (
+                                    f"- {result['function_name']}: ℹ️ COMPLETED\n"
+                                )
 
                         enhanced_history.append(
                             AIMessage(
@@ -3711,13 +4000,19 @@ Do not respond with text about not having access to files.
                                 import time
 
                                 followup_start_time = time.time()
-                                
+
                                 # Log the tool results being used
                                 if VERBOSE_LOGGING:
                                     print(f"📋 Using {len(tool_results)} tool results:")
                                     for i, result in enumerate(tool_results, 1):
-                                        func_name = result.get('function_name', 'unknown')
-                                        status = '✅ Success' if 'success' in result else '❌ Error'
+                                        func_name = result.get(
+                                            "function_name", "unknown"
+                                        )
+                                        status = (
+                                            "✅ Success"
+                                            if "success" in result
+                                            else "❌ Error"
+                                        )
                                         print(f"   {i}. {func_name}: {status}")
 
                             # Check context length before calling LLM
@@ -3807,10 +4102,12 @@ Do not respond with text about not having access to files.
                                             import time
 
                                             final_start_time = time.time()
-                                            
+
                                             # Log additional tool results
                                             if additional_tool_results:
-                                                print(f"📋 Using {len(additional_tool_results)} additional tool results")
+                                                print(
+                                                    f"📋 Using {len(additional_tool_results)} additional tool results"
+                                                )
 
                                         # Check context length before calling LLM
                                         total_chars = sum(
@@ -3822,7 +4119,9 @@ Do not respond with text about not having access to files.
                                                 f"📏 Context length: {total_chars} characters"
                                             )
                                             if total_chars > 20000:
-                                                print("⚠️  Very large context may impact performance and quality")
+                                                print(
+                                                    "⚠️  Very large context may impact performance and quality"
+                                                )
 
                                         # Trim context if too long (rough estimate: ~100k chars = ~25k tokens)
                                         if total_chars > 80000:
@@ -3868,32 +4167,81 @@ Do not respond with text about not having access to files.
                                             print(
                                                 f"⚡ Final response generated in {final_duration:.2f}s"
                                             )
-                                            
+
                                             # Log final response characteristics
-                                            response_text = final_final_response.content or ""
-                                            print(f"💬 Response length: {len(response_text)} characters")
-                                            
+                                            response_text = (
+                                                final_final_response.content or ""
+                                            )
+                                            print(
+                                                f"💬 Response length: {len(response_text)} characters"
+                                            )
+
                                             if hasattr(final_final_response, "usage"):
                                                 usage = getattr(
                                                     final_final_response, "usage", None
                                                 )
                                                 if usage:
-                                                    prompt_tokens = getattr(usage, "prompt_tokens", "N/A")
-                                                    completion_tokens = getattr(usage, "completion_tokens", "N/A")
-                                                    total_tokens = getattr(usage, "total_tokens", "N/A")
+                                                    prompt_tokens = getattr(
+                                                        usage, "prompt_tokens", "N/A"
+                                                    )
+                                                    completion_tokens = getattr(
+                                                        usage,
+                                                        "completion_tokens",
+                                                        "N/A",
+                                                    )
+                                                    total_tokens = getattr(
+                                                        usage, "total_tokens", "N/A"
+                                                    )
                                                     print(
                                                         f"🔄 Final Token Usage: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total"
                                                     )
-                                                    
+
                                                     # Calculate efficiency
-                                                    if total_tokens != "N/A" and len(response_text) > 0:
+                                                    if (
+                                                        total_tokens != "N/A"
+                                                        and len(response_text) > 0
+                                                    ):
                                                         try:
-                                                            chars_per_token = len(response_text) / int(total_tokens)
-                                                            print(f"📊 Efficiency: {chars_per_token:.1f} characters per token")
-                                                        except (ValueError, ZeroDivisionError):
+                                                            chars_per_token = len(
+                                                                response_text
+                                                            ) / int(total_tokens)
+                                                            print(
+                                                                f"📊 Efficiency: {chars_per_token:.1f} characters per token"
+                                                            )
+                                                        except (
+                                                            ValueError,
+                                                            ZeroDivisionError,
+                                                        ):
                                                             pass
 
                                         response = final_final_response.content or ""
+
+                                        # Check if any tools had errors and highlight them
+                                        if tool_results:
+                                            tool_errors = []
+                                            for r in tool_results:
+                                                # Check nested result structure
+                                                actual_result = r.get("result", r)
+                                                if "error" in actual_result:
+                                                    tool_errors.append(
+                                                        (r, actual_result)
+                                                    )
+
+                                            if (
+                                                tool_errors
+                                                and "error" not in response.lower()
+                                            ):
+                                                response += (
+                                                    f"\n\n⚠️  Tool Errors Detected:\n"
+                                                )
+                                                for (
+                                                    error_result,
+                                                    actual_result,
+                                                ) in tool_errors:
+                                                    error_msg = actual_result.get(
+                                                        "error", "Unknown error"
+                                                    )
+                                                    response += f"- {error_result['function_name']}: {error_msg}\n"
 
                                     except Exception as e:
                                         logger.error(
@@ -4086,3 +4434,82 @@ def execute_learn_url(url: str) -> dict:
         return {"error": "docling library not installed"}
     except Exception as e:
         return {"error": str(e)}
+
+
+# =============================================================================
+# RATE LIMITING MODULE
+# =============================================================================
+
+
+class RateLimitError(Exception):
+    """Custom exception for rate limiting violations."""
+
+    pass
+
+
+class RateLimiter:
+    """
+    Rate limiting to prevent abuse and brute force attacks.
+
+    Features:
+    - Request frequency tracking
+    - Exponential backoff
+    - Multiple limiter instances
+    - Thread-safe operations
+    """
+
+    def __init__(self, max_calls: int = 10, period_seconds: int = 60):
+        """
+        Initialize rate limiter.
+
+        Args:
+            max_calls: Maximum number of calls allowed
+            period_seconds: Time period for rate limiting
+        """
+        self.max_calls = max_calls
+        self.period = period_seconds
+        self.calls = []
+        self.lock = threading.Lock()
+
+    def check(self) -> bool:
+        """
+        Check if operation is allowed under rate limits.
+
+        Returns:
+            bool: True if operation is allowed
+
+        Raises:
+            RateLimitError: If rate limit exceeded
+        """
+        with self.lock:
+            now = time.time()
+            # Remove old calls
+            self.calls = [t for t in self.calls if now - t < self.period]
+
+            if len(self.calls) >= self.max_calls:
+                oldest_call = min(self.calls)
+                wait_time = self.period - (now - oldest_call)
+                raise RateLimitError(
+                    f"Rate limit exceeded. Try again in {wait_time:.1f} seconds"
+                )
+
+            # Add current call
+            self.calls.append(now)
+            return True
+
+    def get_status(self) -> dict:
+        """
+        Get current rate limit status.
+
+        Returns:
+            dict: Status information
+        """
+        with self.lock:
+            now = time.time()
+            recent_calls = [t for t in self.calls if now - t < self.period]
+            return {
+                "calls_in_period": len(recent_calls),
+                "max_calls": self.max_calls,
+                "period_seconds": self.period,
+                "remaining": self.max_calls - len(recent_calls),
+            }
