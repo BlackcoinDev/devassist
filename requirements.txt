@@ -17,6 +17,9 @@ openai
 pydantic
 PyQt6
 pytest
+pylint
+bandit
+black
 python-dotenv
 requests
 rich
