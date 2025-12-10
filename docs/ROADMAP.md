@@ -38,7 +38,7 @@ For current security architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### 2. Unified Document Processing with Docling
 **Priority**: Medium
-**Status**: ✅ Completed (v0.1.1.1)
+**Status**: ✅ Completed (v0.1.1)
 
 - **Docling Integration**: Replace multiple separate libraries with Docling for unified document processing
 - **How Docling Replaces Other Libraries**: Docling provides a single, powerful library that handles PDF, DOCX, RTF, EPUB, XLSX, HTML, and other formats with a consistent API. It can extract text, tables, images, and metadata from various document types, reducing the need for separate libraries like PyPDF2 (for PDFs), python-docx (for Word docs), striprtf (for RTF), ebooklib (for EPUB), and openpyxl (for Excel). This simplifies dependencies, improves maintainability, and offers better performance and accuracy for complex documents.
@@ -222,7 +222,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### 14. Mem0 AI Integration
 **Priority**: Medium
-**Status**: ✅ Completed (v0.1.1.2)  
+**Status**: ✅ Completed (v0.1.1)  
 
 - **Mem0 Overview**: Mem0 is an AI memory framework that provides intelligent, long-term memory management for agents, enabling better context retention, recall, and personalization across sessions.
 - **How It Integrates**: Enhance the current SQLite-based conversation memory with Mem0's advanced memory system, allowing the AI to remember user preferences, past interactions, and learned information more effectively. Mem0 uses the remote ChromaDB server for vectorized memory storage alongside SQLite for history/metadata tracking.

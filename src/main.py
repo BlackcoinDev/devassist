@@ -3812,6 +3812,11 @@ Do not respond with text about not having access to files.
                                             enhanced_history
                                         )
 
+                                        if VERBOSE_LOGGING:
+                                            print(
+                                                f"🔍 Final response content: '{final_final_response.content[:100] if final_final_response.content else 'None'}...'"
+                                            )
+
                                         if (
                                             VERBOSE_LOGGING
                                             and final_start_time is not None

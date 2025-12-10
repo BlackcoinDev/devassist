@@ -523,7 +523,7 @@ python3 launcher.py --gui  # Explicit GUI launch
 
 ```
 ============================================================
-      AI Assistant Chat Interface v0.1.0
+      AI Assistant Chat Interface v0.1.1
 ============================================================
 📍 Python: 3.13.11 | Model: qwen3-vl-30b
 🔗 LM Studio: http://192.168.0.203:1234/v1

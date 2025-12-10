@@ -2111,7 +2111,7 @@ def main():
 
     # Set application properties
     app.setApplicationName("AI Assistant")
-    app.setApplicationVersion("0.1")
+    app.setApplicationVersion("0.1.1")
     app.setOrganizationName("Blackcoin Development")
 
     # Initialize backend components (same as CLI)

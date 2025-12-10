@@ -27,7 +27,7 @@ This document provides a comprehensive architectural overview of the AI Assistan
         ┌─────────────────┐      ┌─────────────────┐
         │     src/gui.py      │      │    src/main.py      │
         │ (PyQt6 GUI)     │      │   (CLI App)     │
-        │  Markdown       │      │     v0.1        │
+        │  Markdown       │      │     v0.1.1       │
         │   Support       │      │   Learning AI   │
         └─────────────────┘      └─────────────────┘
                 │                         │
