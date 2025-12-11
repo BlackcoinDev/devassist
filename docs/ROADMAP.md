@@ -43,7 +43,7 @@ For current security architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 - **Docling Integration**: Replace multiple separate libraries with Docling for unified document processing
 - **How Docling Replaces Other Libraries**: Docling provides a single, powerful library that handles PDF, DOCX, RTF, EPUB, XLSX, HTML, and other formats with a consistent API. It can extract text, tables, images, and metadata from various document types, reducing the need for separate libraries like PyPDF2 (for PDFs), python-docx (for Word docs), striprtf (for RTF), ebooklib (for EPUB), and openpyxl (for Excel). This simplifies dependencies, improves maintainability, and offers better performance and accuracy for complex documents.
 - **Integration Steps**:
-  1. ✅ Install Docling (`pip install docling`)
+  1. ✅ Install Docling (`uv pip install docling`)
   2. ✅ Refactor `document_processing_example.py` to use Docling's unified DocumentConverter
   3. ✅ Update `populate_codebase.py` to leverage Docling for all supported formats
   4. ✅ Gradually remove redundant libraries (PyPDF2, python-docx, striprtf, ebooklib, openpyxl) after testing

@@ -234,12 +234,12 @@ except Exception as e:
 
 1. **Run the demonstration:**
    ```bash
-   python3 tools/tool_demo.py
+   uv run python tools/tool_demo.py
    ```
 
 2. **Test with your AI model:**
    ```bash
-   python3 launcher.py --cli
+   uv run python launcher.py --cli
    # Try: "read the README file"
    # Try: "list the files in the current directory"
    # Try: "create a test.txt file with hello world content"
@@ -386,7 +386,7 @@ Located in `tests/tools/` directory for comprehensive testing:
 - **`test_langchain_tools.py`**: LangChain tool integration testing
 - **`test_fresh_conversation.py`**: Fresh conversation testing
 
-**Usage**: Run via `python3 tests/run_tests.py` or `python3 -m pytest tests/tools/`
+**Usage**: Run via `uv run pytest tests/tools/` or `uv run pytest`
 
 #### `test_langchain_tools.py`
 - **Purpose**: Tests LangChain wrapper integration for tools

@@ -229,7 +229,7 @@ AI: *Provides summary based on web content*
 
 ## 📋 Prerequisites
 
-- **Python 3.13.9** (recommended - tested with this version) ⚠️ **Python 3.14 is NOT compatible yet**
+- **Python 3.13.x** (latest available, e.g., 3.13.11 or newer) ⚠️ **Python 3.14 is NOT compatible yet**
 - **uv** package manager (recommended for dependency management)
 - **LM Studio** running locally with a model loaded (qwen3-vl-30b recommended)
 - **ChromaDB v2 Server** running locally (port 8000) - **REQUIRED** for learning features
@@ -332,17 +332,17 @@ python tests/lint/lint-python.py
    cd devassist
    ```
 
-2. **Create Python 3.13 virtual environment**:
+2. **Create Python 3.13.x virtual environment**:
 
      **Using uv (recommended):**
      ```bash
-     uv venv venv --python 3.13
-     source venv/bin/activate  # On Windows: venv\Scripts\activate
+     uv venv venv --python 3.13  # Uses latest 3.13.x available on your system
+     source venv/bin/activate    # On Windows: venv\Scripts\activate
      ```
 
      **Using pip3:**
      ```bash
-     python3.13 -m venv venv
+     python3 -m venv venv
      source venv/bin/activate  # On Windows: venv\Scripts\activate
      ```
 
@@ -373,12 +373,12 @@ python tests/lint/lint-python.py
 
     **GUI Version (Recommended):**
     ```bash
-    python3 launcher.py        # Modern graphical interface
+    uv run python launcher.py        # Modern graphical interface
     ```
 
     **CLI Version (Terminal):**
     ```bash
-    python3 launcher.py --cli  # Traditional terminal interface
+    uv run python launcher.py --cli  # Traditional terminal interface
     ```
 
 ## ⚙️ Configuration
@@ -464,11 +464,11 @@ cp .env.example .env  # If not already done
 # Edit .env with your configuration
 
 # Start the chat assistant
-python3 launcher.py   # Recommended: unified launcher
+uv run python launcher.py   # Recommended: unified launcher
 # OR
-python3 launcher.py --cli  # CLI only
+uv run python launcher.py --cli  # CLI only
 # OR
-python3 launcher.py --gui  # GUI only
+uv run python launcher.py --gui  # GUI only
 ```
 
 **Note**: The application will fail to start without a properly configured `.env` file containing all required environment variables.
@@ -552,8 +552,8 @@ The GUI supports markdown formatting in messages:
 
 ### Launching GUI
 ```bash
-python3 launcher.py        # Default - launches GUI
-python3 launcher.py --gui  # Explicit GUI launch
+uv run python launcher.py        # Default - launches GUI
+uv run python launcher.py --gui  # Explicit GUI launch
 ```
 
 ### GUI vs CLI
@@ -883,8 +883,8 @@ devassist/
 
 **"Import errors"**
 - Activate virtual environment: `source venv/bin/activate`
-- Install dependencies: `pip install -r requirements.txt`
-- Check Python version compatibility (requires Python 3.13.9)
+- Install dependencies: `uv pip install -r requirements.txt`
+- Check Python version compatibility (requires Python 3.13.x)
 
 **"Memory not loading"**
 - Check `db/history.db` exists and is readable
@@ -921,7 +921,7 @@ rm -rf chroma_data/
 # ChromaDB data is stored in server directory and will be reset
 
 # Restart with clean state
-python3 src/main.py
+uv run python src/main.py
 ```
 
 ## 📊 Performance Notes
@@ -941,7 +941,7 @@ For traditional Python installation:
 
 ```bash
 # Install as a package
-pip install -e .
+uv pip install -e .
 
 # Run as installed package
 ai-assistant-cli    # CLI version

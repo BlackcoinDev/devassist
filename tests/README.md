@@ -96,46 +96,46 @@ Code quality assurance:
 ### Quick Start
 ```bash
 # Run all tests (excludes GUI tests by default)
-python3 tests/run_tests.py
+uv run pytest
 
 # Run with verbose output
-python3 tests/run_tests.py --verbose
+uv run pytest -v
 
 # Include GUI tests (may cause Qt crashes)
-RUN_GUI_TESTS=1 python3 tests/run_tests.py --verbose
+RUN_GUI_TESTS=1 uv run pytest tests/unit/test_gui.py -v
 ```
 
 ### Direct pytest Usage
 ```bash
 # Run all tests
-python3 -m pytest
+uv run pytest
 
 # Run specific test file
-python3 -m pytest tests/unit/test_main.py -v
+uv run pytest tests/unit/test_main.py -v
 
 # Run specific test class
-python3 -m pytest tests/unit/test_main.py::TestSpaceManagement -v
+uv run pytest tests/unit/test_main.py::TestSpaceManagement -v
 
 # Run specific test method
-python3 -m pytest tests/unit/test_main.py::TestSpaceManagement::test_get_space_collection_name_default -v
+uv run pytest tests/unit/test_main.py::TestSpaceManagement::test_get_space_collection_name_default -v
 
 # Run with coverage report
-python3 -m pytest --cov=src.main --cov-report=term-missing
+uv run pytest --cov=src.main --cov-report=term-missing
 
 # Run only integration tests
-python3 -m pytest tests/integration/ -v
+uv run pytest tests/integration/ -v
 
 # Run only unit tests
-python3 -m pytest tests/unit/ -v
+uv run pytest tests/unit/ -v
 ```
 
 ### Linting
 ```bash
 # Run Python-specific linting
-python3 tests/lint/lint-python.py
+uv run python tests/lint/lint-python.py
 
 # Run comprehensive project linting
-python3 tests/lint/all-lint.py
+uv run python tests/lint/all-lint.py
 ```
 
 ## 📊 Test Results Summary
@@ -217,13 +217,13 @@ addopts =
 ### Automated Testing
 ```bash
 # Full test suite (CI/CD)
-python3 tests/run_tests.py
+uv run pytest
 
 # With coverage reporting
-python3 -m pytest --cov=src.main --cov-report=xml
+uv run pytest --cov=src.main --cov-report=xml
 
 # Linting checks
-python3 tests/lint/all-lint.py
+uv run python tests/lint/all-lint.py
 ```
 
 ### Quality Gates
@@ -238,13 +238,13 @@ python3 tests/lint/all-lint.py
 ### Running Failed Tests
 ```bash
 # Run only failed tests
-python3 -m pytest --lf
+uv run pytest --lf
 
 # Run with detailed output
-python3 -m pytest -v -s
+uv run pytest -v -s
 
 # Debug specific test
-python3 -m pytest tests/unit/test_main.py::TestSpaceManagement::test_get_space_collection_name_default -v -s
+uv run pytest tests/unit/test_main.py::TestSpaceManagement::test_get_space_collection_name_default -v -s
 ```
 
 ### Common Issues
