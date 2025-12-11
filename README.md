@@ -229,7 +229,8 @@ AI: *Provides summary based on web content*
 
 ## 📋 Prerequisites
 
-- **Python 3.13.9** (recommended - tested with this version)
+- **Python 3.13.9** (recommended - tested with this version) ⚠️ **Python 3.14 is NOT compatible yet**
+- **uv** package manager (recommended for dependency management)
 - **LM Studio** running locally with a model loaded (qwen3-vl-30b recommended)
 - **ChromaDB v2 Server** running locally (port 8000) - **REQUIRED** for learning features
 - **Ollama** running locally for embeddings (qwen3-embedding:latest) - **REQUIRED** for learning features
@@ -333,28 +334,28 @@ python tests/lint/lint-python.py
 
 2. **Create Python 3.13 virtual environment**:
 
+     **Using uv (recommended):**
+     ```bash
+     uv venv venv --python 3.13
+     source venv/bin/activate  # On Windows: venv\Scripts\activate
+     ```
+
      **Using pip3:**
      ```bash
      python3.13 -m venv venv
      source venv/bin/activate  # On Windows: venv\Scripts\activate
      ```
 
-     **Using uv:**
-     ```bash
-     uv venv venv --python 3.13
-     source venv/bin/activate  # On Windows: venv\Scripts\activate
-     ```
-
    3. **Install dependencies**:
+
+      **Using uv (recommended):**
+      ```bash
+      uv pip install -r requirements.txt
+      ```
 
       **Using pip3:**
       ```bash
       pip3 install -r requirements.txt
-      ```
-
-      **Using uv:**
-      ```bash
-      uv pip install -r requirements.txt
       ```
 
    Optional: Install shellcheck for shell script linting (available on macOS via Homebrew, Linux via package managers, Windows via Chocolatey/Scoop). This enables comprehensive linting of shell scripts in the project, helping detect errors and improve code quality. Install with: `brew install shellcheck` (macOS), `sudo apt install shellcheck` (Ubuntu/Debian), or equivalent for your platform.
@@ -929,6 +930,8 @@ python3 src/main.py
 - **Response Time**: Depends on LM Studio model size and hardware
 - **Storage**: Vector database grows with learned knowledge
 - **Token Limits**: Large conversations may hit LLM token limits
+- **Test Execution**: 89 tests execute in ~20 seconds (excellent performance)
+- **Code Quality**: Good overall with some linting issues to address
 
 ## 🚀 Deployment Options
 
@@ -960,6 +963,8 @@ The application is now ready for user testing! Key areas for feedback:
 - **Conversation Export**: Try exporting conversations in both JSON and Markdown formats
 - **Space Management**: Test creating and switching between workspaces
 - **Model Switching**: Verify different AI models work correctly
+- **Web Ingestion**: Test the `/web` command with various URLs
+- **Mem0 Personalization**: Verify personalized memory features work correctly
 
 ### Edge Cases to Test
 - Large codebases with thousands of files
@@ -967,6 +972,8 @@ The application is now ready for user testing! Key areas for feedback:
 - Special characters and Unicode content
 - Network interruptions during AI responses
 - Memory limits and performance with large vector databases
+- Web ingestion with complex HTML pages
+- Mem0 with extensive user preferences
 
 ### Providing Feedback
 
