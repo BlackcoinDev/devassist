@@ -16,7 +16,9 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 - **💬 Persistent Memory**: SQLite database for conversation history (no JSON files)
 - **🎯 Context Awareness**: AI uses learned information in relevant conversations
 - **👤 Personalized Memory**: Learns user preferences and style automatically via Mem0
+- **🧠 Mem0 AI Integration**: Advanced memory system that creates dynamic user profiles, remembers preferences, coding style, and personal context for better personalized responses
 - **🛠️ AI Tool Calling**: qwen3-vl-30b supports 8 powerful tools for file operations, document processing, knowledge management, and web search
+- **🌍 Web Ingestion**: Learn content directly from URLs using the `/web` command
 - **⚡ Streaming Responses**: Real-time response display for better user experience
 - **🔍 Verbose Logging**: Optional detailed step-by-step AI processing visibility
 - **🛠️ Rich Commands**: Comprehensive slash command system in both GUI and CLI
@@ -172,6 +174,8 @@ AI: The /populate command processes documents by:
 11. **⚙️ Command System**: Unified slash commands in both GUI and CLI interfaces
 12. **🔗 LangChain Integration**: Orchestrates LLM, embeddings, and vector database interactions
 13. **✅ Type Safety**: Full MyPy type checking with comprehensive error handling
+14. **🧠 Mem0 Personalized Memory**: Advanced AI memory system for user preference tracking and contextual awareness
+15. **🌍 Web Ingestion**: URL-based learning with Docling for web content extraction and processing
 
 ## 🗄️ Database Planning
 
@@ -188,6 +192,40 @@ AI: The /populate command processes documents by:
 - **Search Features**: Full-text search and conversation analytics
 - **Multi-user Support**: User isolation and authentication
 - **Advanced Analytics**: Conversation insights and reporting
+
+## 🧠 Mem0 Personalized Memory System
+
+The AI now "knows" you through the Mem0 personalized memory system:
+
+- **Automatic Learning**: Mem0 silently observes your messages and learns your preferences without explicit commands
+- **Adaptive Responses**: The AI remembers your coding style, preferences, and context to provide better tailored responses
+- **Contextual Awareness**: For every message, Mem0 provides relevant context to help the AI understand your needs
+- **Persistent Memory**: User preferences are stored and remembered across sessions
+
+**Example Usage:**
+```bash
+You: "I prefer Python 3.10 type hints"
+Mem0: *Silently remembers your preference*
+You: "Write a function to sum a list"
+AI: *Generates code with Python 3.10 type hints because it remembers your preference*
+```
+
+## 🌍 Web Ingestion Features
+
+The `/web` command allows you to learn content directly from webpages:
+
+- **URL Learning**: Ingest any webpage content into your knowledge base
+- **Docling Processing**: Uses Docling for high-quality content extraction and cleaning
+- **Markdown Conversion**: Converts web content to clean Markdown format
+- **Vector Storage**: Stores web content in ChromaDB for semantic search
+
+**Example Usage:**
+```bash
+You: /web https://example.com/documentation
+AI: ✅ Learned from web: Example Documentation
+You: What did you learn about Example?
+AI: *Provides summary based on web content*
+```
 
 ## 📋 Prerequisites
 
@@ -553,6 +591,7 @@ You: quit
 | Command | Description | Example |
 |---------|-------------|---------|
 | `/learn <text>` | **Teach AI new information** (stores in ChromaDB) | `/learn Docker containers are lightweight` |
+| `/web <url>` | **Learn content from webpage** (web ingestion via Docling) | `/web https://example.com` |
 | `/vectordb` | **Inspect knowledge base** (shows chunks, sources, statistics) | `/vectordb` |
 | `/mem0` | **Inspect personalized memory** (user preferences and context) | `/mem0` |
 | `/populate <path>` | **Bulk import codebases** (uses document processing tools) | `/populate /path/to/project` |
@@ -584,6 +623,11 @@ You: quit
 | `learn_information()` | Store in knowledge base | "remember this fact" |
 | `search_knowledge()` | Query learned information | "what do you know about X" |
 | `search_web()` | Search internet with DuckDuckGo | "what's the latest on AI" |
+
+**Tool Testing Status:**
+- ✅ `read_file()` and `get_current_directory()` are fully tested and working
+- ✅ All other tools are implemented and functional
+- 🔧 Additional testing recommended for production use
 
 #### Tool Result Flow & AI Usage
 

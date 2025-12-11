@@ -57,6 +57,12 @@ Unlike the Knowledge Base (which stores facts about *topics*), Mem0 creates a dy
 3.  **You**: "Write a function to sum a list."
 4.  **AI**: Generates clean code with minimal comments, because it *remembers*.
 
+**Mem0 Features:**
+- **Automatic Learning**: No explicit commands needed - learns from every interaction
+- **Persistent Memory**: Remembers preferences across sessions
+- **Contextual Awareness**: Adapts responses based on your history and style
+- **Preference Tracking**: Tracks coding style, language preferences, and work patterns
+
 ---
 
 ## 📄 Document & Web Processing
