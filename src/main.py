@@ -112,6 +112,8 @@ from langchain_text_splitters import (
 # Standard library imports
 import os  # Environment variable and file system operations
 import sys  # System operations and exit handling
+import re  # Regular expression operations for text processing
+import time  # Time-related operations for performance tracking
 import warnings  # Suppress compatibility warnings
 import logging  # Structured logging throughout the application
 import json  # Serialization for conversation memory
@@ -1601,7 +1603,11 @@ def handle_learn_command(content: str):
                     raise
 
                 # Add document to the space's collection
-                add_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections/{collection_id}/add"  # noqa: E501
+                add_url = (
+                    f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/"
+                    f"tenants/default_tenant/databases/default_database/"
+                    f"collections/{collection_id}/add"
+                )
 
                 # Prepare the document data with embeddings
                 doc_id = f"doc_{len(doc.page_content)}_{int(datetime.now().timestamp() * 1000000)}"
@@ -1700,7 +1706,11 @@ def show_vectordb():
             )
 
             # Get collection statistics
-            count_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections/{collection_id}/count"  # noqa: E501
+            count_url = (
+                f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/"
+                f"tenants/default_tenant/databases/default_database/"
+                f"collections/{collection_id}/count"
+            )
             count_response = api_session.get(count_url, timeout=10)
 
             if count_response.status_code == 200:
@@ -1812,7 +1822,11 @@ def show_vectordb():
             print(f"❌ Error displaying vector database: {str(e)}")
 
             # Get collection statistics instead of all documents
-            count_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections/{collection_id}/count"  # noqa: E501
+            count_url = (
+                f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/"
+                f"tenants/default_tenant/databases/default_database/"
+                f"collections/{collection_id}/count"
+            )
             count_response = api_session.get(count_url, timeout=10)
 
             if count_response.status_code == 200:
@@ -2204,7 +2218,7 @@ def handle_populate_command(dir_path: str):
 
                             collection.add(
                                 documents=texts,
-                                embeddings=embeddings_list,  # type: ignore
+                                embeddings=embeddings_list,
                                 metadatas=metadatas,
                                 ids=ids,
                             )
@@ -2263,7 +2277,7 @@ def handle_populate_command(dir_path: str):
 
                     collection.add(
                         documents=texts,
-                        embeddings=embeddings_list,  # type: ignore
+                        embeddings=embeddings_list,
                         metadatas=metadatas,
                         ids=ids,
                     )
@@ -4481,7 +4495,7 @@ class RateLimiter:
         """
         self.max_calls = max_calls
         self.period = period_seconds
-        self.calls = []
+        self.calls: list[float] = []
         self.lock = threading.Lock()
 
     def check(self) -> bool:
