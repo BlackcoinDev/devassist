@@ -4179,7 +4179,7 @@ CRITICAL RULES:
 
                                         if VERBOSE_LOGGING:
                                             print(
-                                                f"🔍 Final response content: '{final_final_response.content[:100] if final_final_response.content else 'None'}...'"
+                                                f"🔍 Response: '{final_final_response.content[:100] if final_final_response.content else 'None'}...'"
                                             )
 
                                         if (
@@ -4220,7 +4220,7 @@ CRITICAL RULES:
                                                         usage, "total_tokens", "N/A"
                                                     )
                                                     print(
-                                                        f"🔄 Final Token Usage: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total"
+                                                        f"🔄 Tokens: {prompt_tokens} prompt + {completion_tokens} comp = {total_tokens} total"
                                                     )
 
                                                     # Calculate efficiency
