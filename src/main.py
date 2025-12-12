@@ -414,6 +414,12 @@ class PathSecurity:
         except OSError as e:
             raise SecurityError(f"Cannot access file: {e}")
 
+        # Security: Validate path using PathSecurity
+        try:
+            PathSecurity.validate_path(safe_path, current_dir)
+        except SecurityError as e:
+            raise SecurityError(f"Path security validation failed: {e}")
+
         # Check for binary files (basic detection)
         try:
             with open(safe_path, "rb") as f:
@@ -1212,7 +1218,7 @@ def trim_history(
     # Only trim if history exceeds the limit
     if len(history) > max_length:
         # Keep system message (index 0) + most recent messages
-        return [history[0]] + history[-(max_pairs * 2) :]
+        return [history[0]] + history[-(max_pairs * 2):]
 
     # Return unchanged if within limits
     return history
@@ -1911,7 +1917,7 @@ def show_vectordb():
                                     )
                         else:
                             print("  No documents found in collection")
-                    except Exception as e:  # type: ignore
+                    except Exception as e:
                         print(f"  Could not retrieve sample documents: {str(e)[:100]}")
                         print(
                             "  (This is normal for some document types or if the collection is empty)"
@@ -2228,7 +2234,7 @@ def handle_populate_command(dir_path: str):
 
                         total_chunks += len(all_documents)
                         all_documents = []  # Clear batch
-                    except Exception as e:  # type: ignore
+                    except Exception as e:
                         print(f"❌ Failed to add batch: {e}")
                         # Continue with next batch
 
@@ -2286,7 +2292,7 @@ def handle_populate_command(dir_path: str):
                     vectorstore.add_documents(all_documents)
 
                 total_chunks += len(all_documents)
-            except Exception as e:  # type: ignore
+            except Exception as e:
                 print(f"❌ Failed to add final batch: {e}")
 
         # Save and show final stats
@@ -3515,6 +3521,14 @@ def main():
             # Get user input with prompt
             user_input = input("You: ").strip()
 
+            # Security: Sanitize user input to prevent injection attacks
+            try:
+                user_input = InputSanitizer.sanitize_text(user_input)
+            except SecurityError as e:
+                print(f"Security Alert: {e}")
+                print("Please enter valid input without dangerous content.")
+                continue
+
             # Force tool usage for common requests that AI sometimes misses
             import time
 
@@ -4300,7 +4314,7 @@ CRITICAL RULES:
                     # No tool calls, use the initial response
                     response = initial_response.content or ""
 
-            except Exception as e:  # type: ignore
+            except Exception as e:
                 # Fallback to regular streaming if tool calling fails
                 logger.warning(
                     f"Tool calling failed, falling back to regular response: {e}"
