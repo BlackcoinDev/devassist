@@ -29,11 +29,13 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 
 ## 📖 Documentation
 
+- **[CLAUDE.md](CLAUDE.md)**: Developer guide with setup instructions and project guidelines
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Comprehensive system architecture, component diagrams, and technical implementation details
+- **[MANUAL.md](docs/MANUAL.md)**: User guide with command reference and usage examples
+- **[SEARCH.md](docs/SEARCH.md)**: Detailed search and RAG (Retrieval-Augmented Generation) documentation
 - **[ROADMAP.md](docs/ROADMAP.md)**: Future development plans including security enhancements, Docling integration, Pydantic-AI, LangGraph, and more
 - **[MIGRATION.md](docs/MIGRATION.md)**: Migration guide and version upgrade notes
 - **[AGENTS.md](AGENTS.md)**: Agent guidelines and architecture documentation
-- **[README.md](tools/README.md)**: Guide for AI tool calling capabilities
 
 ## 🏗️ Architecture
 
@@ -246,7 +248,7 @@ All Python dependencies are listed in `requirements.txt`. Key libraries include:
 - **Embeddings**: `langchain-ollama==1.0.0`, `langchain-text-splitters==1.0.0`
 - **Configuration**: `python-dotenv==1.2.1`, `pydantic==2.12.5`, `pydantic-settings==2.12.0`
 - **GUI**: `PyQt6==6.10.1`, `markdown==3.10`
-- **Document Processing**: `PyPDF2==3.0.1`, `python-docx==1.2.0`, `striprtf==0.0.29`, `ebooklib==0.20`, `openpyxl==3.1.5`
+- **Document Processing**: `docling==0.1.1` (unified processing), legacy packages kept for compatibility
 - **CLI Enhancement**: `rich==14.2.0`
 
 ### Development Dependencies (Optional)

@@ -274,9 +274,9 @@ When adding features:
 
 | File | Purpose | Lines |
 |------|---------|-------|
-| `src/main.py` | CLI app + shared backend logic | 4,542 |
+| `src/main.py` | CLI app + shared backend logic | 4,556 |
 | `src/gui.py` | PyQt6 GUI interface | 2,139 |
-| `launcher.py` | Interface selector + .env loader | 217 |
+| `launcher.py` | Interface selector + .env loader | 216 |
 | `tools/populate_codebase.py` | Bulk codebase import (production) | - |
 | `tests/conftest.py` | Test fixtures | - |
 | `pytest.ini` | Test configuration | - |
@@ -284,7 +284,7 @@ When adding features:
 ### Common Development Tasks
 
 **Adding a new slash command:**
-1. Add command handler to `process_command()` in `src/main.py`
+1. Add command handler to `handle_slash_command()` in `src/main.py` (line 1227)
 2. Update GUI command button handlers in `src/gui.py`
 3. Add to help text in both files
 4. Write unit tests in `tests/unit/test_main.py`

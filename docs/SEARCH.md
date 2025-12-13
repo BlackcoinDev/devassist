@@ -42,8 +42,9 @@ DevAssist uses **Retrieval-Augmented Generation (RAG)** to enhance AI responses 
 # Bulk import a codebase into the knowledge base
 /populate /path/to/your/project
 
-# Search what you've taught DevAssist
-/search Python programming fundamentals
+# Search what you've taught DevAssist (ask the AI, it will search automatically)
+You: "What do you know about Python programming fundamentals?"
+# AI autonomously calls search_knowledge tool and responds with context
 ```
 
 ---
@@ -314,6 +315,13 @@ User: "How does our system work?"
 
 Remember a single piece of information:
 
+**Note:** There is no `/search` slash command. To search your knowledge base:
+- Ask the AI a question and it autonomously calls the `search_knowledge` tool
+- Use `/context on` to ensure knowledge base is searched
+- Use `/context auto` (default) for smart searching
+
+#### Method 2: Via AI Autonomous Search
+
 ```bash
 /learn Python functions are first-class objects that can be passed as arguments
 ```
@@ -554,12 +562,12 @@ ChromaDB Collections:
 
 4. **Query doesn't match learned content**
    ```bash
-   # Good matches:
-   /search database (finds "PostgreSQL 15" docs)
-   /search authentication (finds auth system docs)
+   # Good queries (ask the AI):
+   "What database do we use?" (finds "PostgreSQL 15" docs)
+   "How do we handle authentication?" (finds auth system docs)
 
-   # Poor matches:
-   /search xyz (very specific, may not match)
+   # Poor queries:
+   "Tell me about xyz" (very specific, may not match learned content)
    ```
 
 ### Slow search responses
@@ -776,7 +784,7 @@ These are approximate timings for the ChromaDB query operation only (not includi
 
 - [CLAUDE.md](./CLAUDE.md) - Project overview and configuration
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - System design
-- [MANUAL.md](./MANUAL.md) - User guide (includes `/search`, `/learn`, `/context`)
+- [MANUAL.md](./MANUAL.md) - User guide (includes `/learn`, `/context`, `/populate`)
 - [ROADMAP.md](./ROADMAP.md) - Future features
 
 ---
@@ -792,8 +800,8 @@ These are approximate timings for the ChromaDB query operation only (not includi
 /context on
 /context off
 
-# Search knowledge base
-/search your query here
+# Search knowledge base (ask the AI - it autonomously calls search_knowledge)
+You: "What do you know about [topic]?"
 
 # Teach DevAssist
 /learn Important information to remember

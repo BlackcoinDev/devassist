@@ -7,7 +7,7 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 - ✅ Dual interfaces: Modern PyQt6 GUI and traditional CLI
 - ✅ AI learning system with ChromaDB v2 vector database
 - ✅ Document processing for 80+ file types
-- ✅ Places: Spaces system for isolated knowledge bases
+- ✅ Spaces: Spaces system for isolated knowledge bases
 - ✅ Document Processing: Unified processing via Docling
 - ✅ Web Ingestion: URL learning capability
 - ✅ Tool calling capabilities with 8 tools (including web search)
