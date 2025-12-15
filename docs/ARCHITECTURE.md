@@ -8,9 +8,9 @@ This document provides a comprehensive architectural overview of the AI Assistan
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   LM Studio     │    │ ChromaDB v2    │    │    Ollama       │
-│ (AI Brain)      │◄──►│ (Vector DB)    │◄──►│ (Embeddings)    │
-│ Port: 1234      │    │ Port: 8000     │    │ Port: 11434     │
+│   LM Studio     │    │ ChromaDB v2     │    │    Ollama       │
+│ (AI Brain)      │◄──►│ (Vector DB)     │◄──►│ (Embeddings)    │
+│ Port: 1234      │    │ Port: 8000      │    │ Port: 11434     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          ▲                       ▲                       ▲
          │                       │                       │
@@ -25,15 +25,15 @@ This document provides a comprehensive architectural overview of the AI Assistan
                 ┌────────────┴────────────┐
                 │                         │
         ┌─────────────────┐      ┌─────────────────┐
-        │     src/gui.py      │      │    src/main.py      │
+        │     src/gui.py  │      │    src/main.py  │
         │ (PyQt6 GUI)     │      │   (CLI App)     │
-        │  Markdown       │      │     v0.1.1       │
+        │  Markdown       │      │     v0.1.1      │
         │   Support       │      │   Learning AI   │
         └─────────────────┘      └─────────────────┘
                 │                         │
         ┌───────┴───────┐         ┌───────┴───────┐
-        │ initialize_  │         │  show_welcome │
-        │ application() │         │     ()       │
+        │ initialize_   │         │  show_welcome │
+        │ application() │         │     ()        │
         └───────────────┘         └───────────────┘
                 │                         │
                 └────────────┬────────────┘

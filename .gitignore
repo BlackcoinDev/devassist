@@ -262,7 +262,7 @@ tramp
 .\#*
 
 # Custom project files
-.space_settings.json
-langchain_venv/
+venv/
 AGENTS.md
-*.json
+CLAUDE.md
+.claude/

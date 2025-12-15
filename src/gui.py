@@ -138,7 +138,7 @@ try:
     MARKDOWN_AVAILABLE = True
 except ImportError:
     MARKDOWN_AVAILABLE = False
-    markdown = None  # type: ignore[assignment]
+    markdown = None
 
 # Backend availability will be determined at runtime
 BACKEND_AVAILABLE = False
@@ -163,7 +163,7 @@ class AIWorker(QThread):
     def run(self):
         try:
             # Import configuration and core functions
-            from src.main import (  # noqa: F401
+            from src.main import (
                 load_memory,
                 save_memory,
                 get_relevant_context,
@@ -172,10 +172,10 @@ class AIWorker(QThread):
                 trim_history,
                 CONTEXT_MODE,
                 LEARNING_MODE,
-                MODEL_NAME,  # type: ignore[assignment]
+                MODEL_NAME,
                 CURRENT_SPACE,
                 conversation_history,
-                CHROMA_HOST,  # type: ignore[assignment]
+                CHROMA_HOST,
                 CHROMA_PORT,
                 MAX_HISTORY_PAIRS,
                 VERBOSE_LOGGING,
@@ -194,7 +194,7 @@ class AIWorker(QThread):
                 )
                 return
 
-            current_llm = get_llm()  # type: ignore[possibly-unbound-variable]
+            current_llm = get_llm()
             if current_llm is None:
                 logger.error("AIWorker: LLM not available")
                 self.response_ready.emit(
@@ -209,7 +209,6 @@ class AIWorker(QThread):
             conversation_history.append(HumanMessage(content=self.user_input))
 
             # Get context if available
-            # type: ignore[possibly-unbound-variable]
             current_vectorstore = get_vectorstore()
             context = (
                 get_relevant_context(self.user_input) if current_vectorstore else ""
@@ -242,7 +241,7 @@ class AIWorker(QThread):
                 def run_mem0_add(text):
                     try:
                         if user_memory is not None:
-                            user_memory.add(text, user_id="default_user")  # type: ignore[attr-defined]
+                            user_memory.add(text, user_id="default_user")
                             if VERBOSE_LOGGING:
                                 logger.info(
                                     f"Mem0: Stored memory from GUI: '{text[:50]}...'"
@@ -1211,7 +1210,6 @@ class AIAssistantGUI(QMainWindow):
             collection_id = None
 
             # Try to get from vectorstore first
-            # type: ignore[possibly-unbound-variable]
             current_vectorstore = get_vectorstore()
             if (
                 current_vectorstore
@@ -1231,7 +1229,7 @@ class AIAssistantGUI(QMainWindow):
                         for coll in collections:
                             coll_id = coll.get("id")
                             if coll_id:
-                                count_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections/{coll_id}/count"  # noqa: E501
+                                count_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections/{coll_id}/count"
                                 count_response = requests.get(count_url, timeout=10)
                                 if count_response.status_code == 200:
                                     count = count_response.json()
@@ -1865,7 +1863,6 @@ class AIAssistantGUI(QMainWindow):
                     )
                     return
 
-                # type: ignore[possibly-unbound-variable]
                 current_vectorstore = get_vectorstore()
                 if not current_vectorstore:
                     self.chat_display.append(
@@ -1961,7 +1958,6 @@ class AIAssistantGUI(QMainWindow):
                     self.status_label.setText("Populating database...")
 
                     # Start population worker
-                    # type: ignore[possibly-unbound-variable]
                     current_vectorstore = get_vectorstore()
                     self.populate_worker = PopulateWorker(dir_path, current_vectorstore)
                     self.populate_worker.progress.connect(self.on_populate_progress)
@@ -2091,7 +2087,7 @@ Use Ctrl+C for immediate interruption.<br>
         cursor.movePosition(QTextCursor.MoveOperation.End)
         self.chat_display.setTextCursor(cursor)
 
-    def closeEvent(self, a0):  # type: ignore[override]
+    def closeEvent(self, a0):
         """Handle application close."""
         from src.main import save_memory
 

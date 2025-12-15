@@ -484,7 +484,7 @@ def populate_codebase(
     # Custom embeddings class to avoid invalid sampling parameters for embeddings
     class CustomOllamaEmbeddings(OllamaEmbeddings):
         @property
-        def _default_params(self) -> dict[str, Any]:  # noqa: unused property override
+        def _default_params(self) -> dict[str, Any]:
             """Get the default parameters for calling Ollama, excluding sampling params for embeddings."""
             return {
                 "num_ctx": self.num_ctx,

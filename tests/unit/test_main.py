@@ -48,7 +48,7 @@ from unittest.mock import MagicMock, patch, mock_open
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # Import functions to test - these are the core business logic functions
-from src.main import (  # noqa: F401
+from src.main import (
     get_space_collection_name,
     ensure_space_collection,
     list_spaces,

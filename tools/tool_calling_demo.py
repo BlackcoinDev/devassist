@@ -56,7 +56,7 @@ print("Test 1: Asking for current time")
 response = client.chat.completions.create(
     model="qwen3-vl-30b",
     messages=[{"role": "user", "content": "What time is it right now?"}],
-    tools=tools,  # type: ignore
+    tools=tools, 
 )
 
 print(f"Response: {response.choices[0].message}")
@@ -80,7 +80,7 @@ if response.choices[0].message.tool_calls:
 
     final_response = client.chat.completions.create(
         model="qwen3-vl-30b",
-        messages=messages,  # type: ignore
+        messages=messages,
     )
 
     print(f"Final response: {final_response.choices[0].message.content}")
@@ -112,7 +112,7 @@ read_tools = [
 response3 = client.chat.completions.create(
     model="qwen3-vl-30b",
     messages=[{"role": "user", "content": "read the README file"}],
-    tools=read_tools,  # type: ignore
+    tools=read_tools,
 )
 
 print(f"Response: {response3.choices[0].message}")

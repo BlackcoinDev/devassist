@@ -730,9 +730,9 @@ user_memory = None  # Personalized memory instance
 conversation_history: List[BaseMessage] = []
 
 # Connection pooling for external API calls
-import requests  # noqa: E402
-from requests.adapters import HTTPAdapter  # noqa: E402
-from urllib3.util.retry import Retry  # noqa: E402
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # Create a session with connection pooling and retries
 api_session = requests.Session()
@@ -1023,13 +1023,11 @@ def load_memory() -> List[BaseMessage]:
 conversation_history = load_memory()
 
 
-# vulture: noqa
 def get_llm():
     """Get the current LLM instance. Used by GUI to access initialized LLM."""
     return llm
 
 
-# vulture: noqa
 def get_vectorstore():
     """Get the current vectorstore instance. Used by GUI to access initialized vectorstore."""
     return vectorstore
@@ -2614,7 +2612,7 @@ def initialize_application():
         # embeddings
         class CustomOllamaEmbeddings(OllamaEmbeddings):
             @property
-            def _default_params(self) -> dict[str, Any]:  # noqa: unused property override
+            def _default_params(self) -> dict[str, Any]:
                 """Get the default parameters for calling Ollama, excluding sampling params for embeddings."""
                 return {
                     "num_ctx": self.num_ctx,
@@ -2757,7 +2755,7 @@ def initialize_application():
                     },
                 },
             }
-            user_memory = Memory.from_config(mem0_config)  # type: ignore[attr-defined]
+            user_memory = Memory.from_config(mem0_config)
             print("✅ Connected to Mem0 (User Personalized Memory)")
         except Exception as e:
             # Non-critical failure - continue without it
@@ -3713,7 +3711,7 @@ Focus on the most relevant information and provide insights or a direct answer i
                 def run_mem0_add(text):
                     try:
                         if user_memory is not None:
-                            user_memory.add(text, user_id="default_user")  # type: ignore[attr-defined]
+                            user_memory.add(text, user_id="default_user")
                             if VERBOSE_LOGGING:
                                 print(f"🧠 Mem0: Stored memory: '{text[:50]}...'")
                     except Exception as ex:
@@ -4342,7 +4340,7 @@ CRITICAL RULES:
                     console.print(Markdown(response))
                 else:
                     console.print(str(response))
-            except ImportError:  # type: ignore
+            except ImportError:
                 # Fallback to plain text if rich not available
                 print("AI Assistant:", response)
 
@@ -4443,8 +4441,8 @@ def execute_learn_url(url: str) -> dict:
         title = "Web Page"  # Docling might expose title, but safe default
         if hasattr(result.document, "title") and getattr(
             result.document, "title", None
-        ):  # type: ignore
-            title = getattr(result.document, "title")  # type: ignore
+        ):
+            title = getattr(result.document, "title")
 
         doc = Document(
             page_content=content,

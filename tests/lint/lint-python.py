@@ -117,7 +117,7 @@ def main():
 
     # 3. Autopep8 (code formatting check) - if available
     try:
-        import autopep8  # noqa: F401
+        import autopep8
 
         result = subprocess.run(
             "autopep8 --diff --max-line-length=150 "
@@ -137,7 +137,7 @@ def main():
 
     # 4. MyPy (type checking) - if available
     try:
-        import mypy  # noqa: F401
+        import mypy
 
         if not run_command(
             "mypy --ignore-missing-imports " + " ".join(f'"{f}"' for f in python_files),
@@ -149,7 +149,7 @@ def main():
 
     # 5. Vulture (dead code detection) - if available
     try:
-        import vulture  # noqa: F401
+        import vulture
 
         result = subprocess.run(
             "vulture " + " ".join(f'"{f}"' for f in python_files),
@@ -181,7 +181,7 @@ def main():
 
     # 6. Codespell (spell checking) - if available
     try:
-        import codespell_lib  # noqa: F401
+        import codespell_lib
 
         if not run_command(
             "codespell " + " ".join(f'"{f}"' for f in python_files),

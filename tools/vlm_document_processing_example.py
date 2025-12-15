@@ -95,14 +95,14 @@ class QwenDocumentProcessor:
                     "error": f"Document type not directly supported: {document_path}. Convert to image format first.",
                 }
 
-            messages = [HumanMessage(content=content)]  # type: ignore
+            messages = [HumanMessage(content=content)]
             response = self.llm.invoke(messages)
 
             response_content = response.content
             if isinstance(response_content, str):
-                content = response_content.strip()  # type: ignore
+                content = response_content.strip()
             else:
-                content = str(response_content)  # type: ignore
+                content = str(response_content)
 
             return {
                 "success": True,
@@ -158,7 +158,7 @@ Example format:
                     },
                 ]
 
-                messages = [HumanMessage(content=content)]  # type: ignore
+                messages = [HumanMessage(content=content)]
                 response = self.llm.invoke(messages)
 
                 # Parse the JSON response (in a real implementation, you'd validate this)
@@ -225,7 +225,7 @@ Provide a detailed structural analysis that could be used for document processin
                     },
                 ]
 
-                messages = [HumanMessage(content=content)]  # type: ignore
+                messages = [HumanMessage(content=content)]
                 response = self.llm.invoke(messages)
 
                 response_content = response.content
@@ -251,7 +251,7 @@ Provide a detailed structural analysis that could be used for document processin
 
     def process_document(
         self, file_path: str, extract_type: str
-    ) -> Dict[str, Any]:  # vulture: noqa
+    ) -> Dict[str, Any]:
         """
         Main document processing method that routes to appropriate extraction method.
 
@@ -280,7 +280,7 @@ Provide a detailed structural analysis that could be used for document processin
 
 # Example usage
 if __name__ == "__main__":
-    processor = QwenDocumentProcessor()  # noqa: F841 # vulture: noqa
+    processor = QwenDocumentProcessor()
 
     # Example: Process a document image
     # result = processor.process_document("document_page1.png", "text")

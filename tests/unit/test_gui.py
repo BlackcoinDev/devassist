@@ -159,7 +159,7 @@ class TestGUIConfiguration:
     def test_gui_constants_loaded(self):
         """Test that GUI constants are properly loaded."""
         # Test that the constants are accessible
-        from src.gui import (  # noqa: F401
+        from src.gui import (
             CONTEXT_MODE,
             LEARNING_MODE,
             MODEL_NAME,

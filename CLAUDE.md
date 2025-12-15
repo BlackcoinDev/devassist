@@ -117,7 +117,9 @@ Both GUI (`src/gui.py`) and CLI (`src/main.py`) MUST maintain complete feature p
 - GUI imports backend functions from `src/main.py`—no interface-specific logic paths
 
 **Testing checklist when making changes:**
+
 ```bash
+
 # ALWAYS test both interfaces (using uv run)
 uv run python launcher.py --cli  # Test CLI
 uv run python launcher.py --gui  # Test GUI
