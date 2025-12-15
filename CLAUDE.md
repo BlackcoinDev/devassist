@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 DevAssist (v0.1.1) is an AI-powered learning assistant and development tool that combines conversational AI with persistent knowledge management. It features dual interfaces (PyQt6 GUI and CLI), AI learning via ChromaDB vector database, document processing for 80+ file types, and 8 AI tools for file operations and knowledge management.
 
 **Core Technology Stack:**
+
 - Python 3.13.x (latest available, e.g., 3.13.11 or newer) (⚠️ Python 3.14 NOT compatible)
 - LangChain for AI orchestration
 - LM Studio (qwen3-vl-30b) for LLM
@@ -20,6 +21,7 @@ DevAssist (v0.1.1) is an AI-powered learning assistant and development tool that
 ### Development (Using `uv`)
 
 **Setup (one-time):**
+
 ```bash
 # Create virtual environment with latest Python 3.13.x
 uv venv venv --python 3.13  # Uses latest 3.13.x available on your system
@@ -30,6 +32,7 @@ uv pip install -r requirements.txt
 ```
 
 **Running the Application:**
+
 ```bash
 # GUI (default) - use uv run
 uv run python launcher.py
@@ -87,6 +90,7 @@ uv run codespell <file>                                       # Spelling
 ```
 
 **Key Patterns:**
+
 - Always prefix commands with `uv run` when using tools
 - Use `uv pip` for dependency management (install, uninstall, list)
 - Virtual environment must be activated for direct `python`/`pytest` calls
@@ -130,7 +134,7 @@ uv run pytest --cov=main --cov=launcher --cov-report=term-missing
 
 ### Data Flow
 
-```
+```text
 User Input → Interface (GUI/CLI)
           → initialize_application() (shared backend)
           → Space loading (space_settings.json)
@@ -177,6 +181,7 @@ cp .env.example .env
 ```
 
 Required variables include:
+
 - `LM_STUDIO_URL`, `LM_STUDIO_KEY`, `MODEL_NAME`
 - `CHROMA_HOST`, `CHROMA_PORT`
 - `OLLAMA_BASE_URL`, `EMBEDDING_MODEL`
@@ -197,7 +202,7 @@ DevAssist uses **Docling** for unified document processing (v0.1.1), replacing s
 
 ### Processing Pipeline
 
-```
+```text
 File Discovery → Content Extraction (Docling) → Text Chunking (1500 chars)
              → Embedding Generation (Ollama) → Vector Storage (ChromaDB)
              → Metadata Enrichment → Semantic Search Ready
@@ -252,7 +257,8 @@ The qwen3-vl-30b model can autonomously call these tools:
 - **Fixtures**: Use `conftest.py` fixtures for shared setup
 
 **Test organization:**
-```
+
+```text
 tests/
 ├── unit/              # 52 tests (26 main + 6 launcher + 20 tool tests)
 ├── integration/       # 26 tests (11 app + 15 tool calling)
@@ -286,6 +292,7 @@ When adding features:
 ### Common Development Tasks
 
 **Adding a new slash command:**
+
 1. Add command handler to `handle_slash_command()` in `src/main.py` (line 1227)
 2. Update GUI command button handlers in `src/gui.py`
 3. Add to help text in both files
@@ -293,6 +300,7 @@ When adding features:
 5. Test in both CLI and GUI modes
 
 **Adding a new AI tool:**
+
 1. Define tool function with proper typing and docstring
 2. Add to `enable_tools` list in tool initialization
 3. Create unit tests in `tests/unit/test_tools.py`
@@ -300,6 +308,7 @@ When adding features:
 5. Update this documentation
 
 **Modifying document processing:**
+
 1. Update Docling integration in processing pipeline
 2. Add new file type to `SUPPORTED_EXTENSIONS`
 3. Test with sample files
@@ -324,16 +333,19 @@ When adding features:
 ## Roadmap Highlights (Planned)
 
 **High Priority:**
+
 - SQLCipher encryption for conversation database
 - Secure API key storage with keyring
 - Address remaining 32 linting issues
 
 **Medium Priority:**
+
 - Performance optimizations (Redis caching, batch processing)
 - Advanced AI features (Pydantic-AI, LangGraph)
 - Enhanced web capabilities (Crawl4AI)
 
 **Future Vision:**
+
 - Multi-user support
 - Cloud deployment (Docker/Kubernetes)
 - Plugin system architecture
