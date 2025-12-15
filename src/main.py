@@ -416,6 +416,7 @@ class PathSecurity:
 
         # Security: Validate path using PathSecurity
         try:
+            current_dir = os.getcwd()
             PathSecurity.validate_path(safe_path, current_dir)
         except SecurityError as e:
             raise SecurityError(f"Path security validation failed: {e}")
