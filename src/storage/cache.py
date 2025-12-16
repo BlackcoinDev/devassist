@@ -1,0 +1,161 @@
+"""
+Caching utilities for DevAssist.
+
+This module provides embedding and query result caching to reduce
+redundant API calls and improve performance.
+"""
+
+import gc
+import json
+import os
+import logging
+from typing import Dict, List
+
+from src.core.config import get_config
+from src.core.context import get_context
+
+logger = logging.getLogger(__name__)
+
+
+def load_embedding_cache() -> Dict[str, List[float]]:
+    """
+    Load embedding cache from disk.
+
+    Returns:
+        Dictionary mapping text to embedding vectors
+
+    Side Effects:
+        Updates the embedding_cache in ApplicationContext
+    """
+    config = get_config()
+    ctx = get_context()
+
+    try:
+        if os.path.exists(config.embedding_cache_file):
+            with open(config.embedding_cache_file, "r") as f:
+                cache_data = json.load(f)
+            ctx.embedding_cache.update(cache_data)
+            logger.debug(f"Loaded {len(cache_data)} cached embeddings")
+            return cache_data
+    except Exception as e:
+        logger.warning(f"Failed to load embedding cache: {e}")
+
+    return {}
+
+
+def load_query_cache() -> Dict[str, List[str]]:
+    """
+    Load query result cache from disk.
+
+    Returns:
+        Dictionary mapping query keys to cached results
+
+    Side Effects:
+        Updates the query_cache in ApplicationContext
+    """
+    config = get_config()
+    ctx = get_context()
+
+    try:
+        if os.path.exists(config.query_cache_file):
+            with open(config.query_cache_file, "r") as f:
+                cache_data = json.load(f)
+            ctx.query_cache.update(cache_data)
+            logger.debug(f"Loaded {len(cache_data)} cached query results")
+            return cache_data
+    except Exception as e:
+        logger.warning(f"Failed to load query cache: {e}")
+
+    return {}
+
+
+def save_query_cache() -> None:
+    """
+    Save query result cache to disk.
+
+    Limits cache size to 500 most recent entries if it exceeds 1000.
+    """
+    config = get_config()
+    ctx = get_context()
+
+    try:
+        query_cache = ctx.query_cache
+
+        # Limit cache size
+        if len(query_cache) > 1000:
+            items = list(query_cache.items())
+            # Keep the 500 most recent items
+            query_cache.clear()
+            query_cache.update(dict(items[-500:]))
+
+        with open(config.query_cache_file, "w") as f:
+            json.dump(query_cache, f, separators=(",", ":"))
+
+        logger.debug(f"Saved {len(query_cache)} query cache entries")
+
+    except Exception as e:
+        logger.warning(f"Failed to save query cache: {e}")
+
+
+def save_embedding_cache() -> None:
+    """
+    Save embedding cache to disk.
+
+    Limits cache size to 500 most recent entries if it exceeds 1000.
+    """
+    config = get_config()
+    ctx = get_context()
+
+    try:
+        embedding_cache = ctx.embedding_cache
+
+        # Limit cache size
+        if len(embedding_cache) > 1000:
+            items = list(embedding_cache.items())
+            # Keep the 500 most recent items
+            embedding_cache.clear()
+            embedding_cache.update(dict(items[-500:]))
+
+        with open(config.embedding_cache_file, "w") as f:
+            json.dump(embedding_cache, f, separators=(",", ":"))
+
+        logger.debug(f"Saved {len(embedding_cache)} embedding cache entries")
+
+    except Exception as e:
+        logger.warning(f"Failed to save embedding cache: {e}")
+
+
+def cleanup_memory() -> None:
+    """
+    Force garbage collection to free memory.
+
+    Should be called periodically during long-running operations
+    to prevent memory buildup.
+    """
+    gc.collect()
+    logger.debug("Memory cleanup completed")
+
+
+def clear_all_caches() -> None:
+    """
+    Clear all caches in memory and on disk.
+
+    Useful for debugging or when cache data becomes stale.
+    """
+    config = get_config()
+    ctx = get_context()
+
+    # Clear in-memory caches
+    ctx.embedding_cache.clear()
+    ctx.query_cache.clear()
+
+    # Remove cache files
+    for cache_file in [config.embedding_cache_file, config.query_cache_file]:
+        try:
+            if os.path.exists(cache_file):
+                os.remove(cache_file)
+                logger.debug(f"Removed cache file: {cache_file}")
+        except Exception as e:
+            logger.warning(f"Failed to remove cache file {cache_file}: {e}")
+
+    logger.info("All caches cleared")

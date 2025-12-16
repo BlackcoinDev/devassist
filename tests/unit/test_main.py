@@ -95,14 +95,20 @@ class TestSpaceManagement(unittest.TestCase):
         """Test collection name for custom space."""
         assert get_space_collection_name("myspace") == "space_myspace"
 
-    @patch("src.main.vectorstore")
-    def test_ensure_space_collection_success(self, mock_vectorstore):
+    @patch("src.vectordb.spaces.get_context")
+    def test_ensure_space_collection_success(self, mock_get_context):
         """Test successful space collection ensuring."""
+        mock_ctx = MagicMock()
+        mock_ctx.vectorstore = MagicMock()  # vectorstore is available
+        mock_get_context.return_value = mock_ctx
         assert ensure_space_collection("test_space") is True
 
-    @patch("src.main.vectorstore", None)
-    def test_ensure_space_collection_failure(self):
+    @patch("src.vectordb.spaces.get_context")
+    def test_ensure_space_collection_failure(self, mock_get_context):
         """Test failed space collection ensuring."""
+        mock_ctx = MagicMock()
+        mock_ctx.vectorstore = None  # vectorstore not available
+        mock_get_context.return_value = mock_ctx
         result = ensure_space_collection("test_space")
         self.assertFalse(result)
 
@@ -150,18 +156,25 @@ class TestMemoryManagement(unittest.TestCase):
     - Database connection handling and error recovery
     """
 
-    @patch("src.main.DB_TYPE", "sqlite")
-    @patch("src.main.db_conn")
-    @patch("src.main.db_lock")
-    def test_load_memory_sqlite(self, mock_lock, mock_conn):
+    @patch("src.storage.memory.get_config")
+    @patch("src.storage.memory.get_context")
+    def test_load_memory_sqlite(self, mock_get_context, mock_get_config):
         """Test loading memory from SQLite."""
+        # Setup config mock
+        mock_config = MagicMock()
+        mock_config.db_type = "sqlite"
+        mock_get_config.return_value = mock_config
+
+        # Setup context mock with db connection
+        mock_ctx = MagicMock()
         mock_cursor = MagicMock()
-        mock_conn.cursor.return_value = mock_cursor
+        mock_ctx.db_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchall.return_value = [
             ("SystemMessage", "Test system message"),
             ("HumanMessage", "Test human message"),
             ("AIMessage", "Test AI message"),
         ]
+        mock_get_context.return_value = mock_ctx
 
         messages = load_memory()
         assert len(messages) == 3
@@ -169,13 +182,20 @@ class TestMemoryManagement(unittest.TestCase):
         assert isinstance(messages[1], HumanMessage)
         assert isinstance(messages[2], AIMessage)
 
-    @patch("src.main.DB_TYPE", "sqlite")
-    @patch("src.main.db_conn")
-    @patch("src.main.db_lock")
-    def test_save_memory_sqlite(self, mock_lock, mock_conn):
+    @patch("src.storage.memory.get_config")
+    @patch("src.storage.memory.get_context")
+    def test_save_memory_sqlite(self, mock_get_context, mock_get_config):
         """Test saving memory to SQLite."""
+        # Setup config mock
+        mock_config = MagicMock()
+        mock_config.db_type = "sqlite"
+        mock_get_config.return_value = mock_config
+
+        # Setup context mock with db connection
+        mock_ctx = MagicMock()
         mock_cursor = MagicMock()
-        mock_conn.cursor.return_value = mock_cursor
+        mock_ctx.db_conn.cursor.return_value = mock_cursor
+        mock_get_context.return_value = mock_ctx
 
         messages = [
             SystemMessage(content="Test system"),
@@ -188,7 +208,7 @@ class TestMemoryManagement(unittest.TestCase):
         # Verify database operations were called
         mock_cursor.execute.assert_called_once()  # DELETE operation
         mock_cursor.executemany.assert_called_once()  # INSERT operations
-        mock_conn.commit.assert_called_once()
+        mock_ctx.db_conn.commit.assert_called_once()
 
     def test_trim_history_no_trim(self):
         """Test trimming when history is within limits."""

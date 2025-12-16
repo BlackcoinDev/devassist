@@ -137,363 +137,21 @@ except ImportError:
     MEM0_AVAILABLE = False
 
 # =============================================================================
-# SECURITY MODULE
+# SECURITY MODULE (extracted to src/security/)
 # =============================================================================
 
-
-class SecurityError(Exception):
-    """Custom exception for security-related errors."""
-
-    pass
-
-
-class InputSanitizer:
-    """
-    Comprehensive input sanitization to prevent injection attacks and malicious content.
-
-    Features:
-    - SQL injection prevention
-    - Command injection prevention
-    - XSS prevention
-    - Malicious pattern detection
-    - Length validation
-    - Content filtering
-    """
-
-    MAX_INPUT_LENGTH = 10000  # 10KB limit
-    DANGEROUS_PATTERNS = [
-        # SQL injection patterns
-        r";\s*",
-        r"--",
-        r"\/\*",
-        r"\*\/",
-        r"DROP\s+TABLE",
-        r"DELETE\s+FROM",
-        r"INSERT\s+INTO",
-        r"UPDATE\s+.*SET",
-        r"UNION\s+SELECT",
-        # Command injection patterns
-        r"&&",
-        r"\|\|",
-        r";",
-        r"\$\(",
-        r"`",
-        r"\.\./",
-        r"<\(script\)",
-        r"javascript:",
-        # XSS patterns
-        r"<script>",
-        r"onerror=",
-        r"onload=",
-        r"javascript:",
-        r"vbscript:",
-        r"expression\(",
-        # Malicious content
-        r"__import__",
-        r"eval\(",
-        r"exec\(",
-        r"compile\(",
-        r"pickle\.load",
-        r"subprocess\.",
-        r"os\.system",
-    ]
-
-    @classmethod
-    def sanitize_text(cls, text: str) -> str:
-        """
-        Sanitize text input to prevent injection attacks.
-
-        Args:
-            text: Input text to sanitize
-
-        Returns:
-            str: Sanitized text
-
-        Raises:
-            SecurityError: If malicious content is detected
-        """
-        if not text:
-            return text
-
-        # Check length
-        if len(text) > cls.MAX_INPUT_LENGTH:
-            raise SecurityError(
-                f"Input too long: {len(text)} characters (max {cls.MAX_INPUT_LENGTH})"
-            )
-
-        # Check for dangerous patterns
-        text_lower = text.lower()
-        for pattern in cls.DANGEROUS_PATTERNS:
-            if re.search(pattern, text_lower):
-                raise SecurityError(f"Dangerous content detected: {pattern}")
-
-        # Normalize whitespace
-        text = " ".join(text.split())
-
-        # Remove excessive special characters
-        text = re.sub(r"[\x00-\x1F\x7F-\x9F]", "", text)  # Remove control characters
-
-        return text
-
-    @classmethod
-    def sanitize_filename(cls, filename: str) -> str:
-        """
-        Sanitize filename to prevent path traversal and invalid characters.
-
-        Args:
-            filename: Filename to sanitize
-
-        Returns:
-            str: Sanitized filename
-
-        Raises:
-            SecurityError: If filename is invalid
-        """
-        if not filename:
-            raise SecurityError("Empty filename")
-
-        # Remove path components
-        filename = os.path.basename(filename)
-
-        # Remove dangerous characters
-        safe_chars = (
-            "-_.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        )
-        safe_filename = "".join(c for c in filename if c in safe_chars)
-
-        if not safe_filename:
-            raise SecurityError("Invalid filename characters")
-
-        # Check length
-        if len(safe_filename) > 255:
-            raise SecurityError("Filename too long")
-
-        return safe_filename
-
-    @classmethod
-    def sanitize_url(cls, url: str) -> str:
-        """
-        Sanitize URL input to prevent malicious URLs.
-
-        Args:
-            url: URL to sanitize
-
-        Returns:
-            str: Sanitized URL
-
-        Raises:
-            SecurityError: If URL is malicious
-        """
-        if not url:
-            raise SecurityError("Empty URL")
-
-        # Check for dangerous protocols
-        dangerous_protocols = ["javascript:", "data:", "vbscript:", "file:"]
-        url_lower = url.lower()
-        for protocol in dangerous_protocols:
-            if url_lower.startswith(protocol):
-                raise SecurityError(f"Dangerous URL protocol: {protocol}")
-
-        # Validate URL structure
-        try:
-            from urllib.parse import urlparse
-
-            result = urlparse(url)
-            if not result.scheme or not result.netloc:
-                raise SecurityError("Invalid URL structure")
-        except Exception as e:
-            raise SecurityError(f"Invalid URL: {e}")
-
-        return url
-
-
-class PathSecurity:
-    """
-    Comprehensive path security validator to prevent path traversal attacks.
-
-    Features:
-    - Path traversal prevention
-    - Directory sandboxing
-    - File type validation
-    - Size limits
-    - Binary file detection
-    """
-
-    MAX_FILE_SIZE = 1024 * 1024  # 1MB limit
-    DANGEROUS_PATTERNS = [
-        "..",
-        "../",
-        "/../",
-        "\\..\\",
-        "~",
-        "/~",
-        "\\~",
-        "/etc/",
-        "/proc/",
-        "/dev/",
-        "C:\\",
-        "D:\\",
-        "E:\\",
-    ]
-
-    @classmethod
-    def validate_path(cls, user_path: str, base_dir: str | None = None) -> str:
-        """
-        Validate a user-provided path for security.
-
-        Args:
-            user_path: User-provided path
-            base_dir: Base directory for sandboxing (defaults to current directory)
-
-        Returns:
-            str: Validated absolute path
-
-        Raises:
-            SecurityError: If path is invalid or unsafe
-        """
-        if not user_path:
-            raise SecurityError("Empty path")
-
-        # Use current directory as base if not specified
-        if base_dir is None:
-            base_dir = os.getcwd()
-
-        # Convert to absolute path
-        try:
-            full_path = os.path.abspath(os.path.join(base_dir, user_path))
-        except (TypeError, ValueError) as e:
-            raise SecurityError(f"Invalid path: {e}")
-
-        # Check for path traversal attempts
-        if not full_path.startswith(base_dir):
-            raise SecurityError(f"Path traversal attempt: {user_path}")
-
-        # Check for dangerous patterns
-        path_lower = user_path.lower()
-        for pattern in cls.DANGEROUS_PATTERNS:
-            if pattern in path_lower:
-                raise SecurityError(f"Dangerous path pattern detected: {user_path}")
-
-        # Check if path exists (unless it's a new file for writing)
-        if not os.path.exists(full_path):
-            # For new files, check parent directory exists
-            parent_dir = os.path.dirname(full_path)
-            if parent_dir and not os.path.exists(parent_dir):
-                raise SecurityError(f"Parent directory doesn't exist: {parent_dir}")
-
-        return full_path
-
-    @classmethod
-    def validate_file_read(cls, file_path: str, base_dir: str | None = None) -> str:
-        """
-        Validate a file path for reading operations.
-
-        Args:
-            file_path: Path to file
-            base_dir: Base directory for sandboxing
-
-        Returns:
-            str: Validated file path
-
-        Raises:
-            SecurityError: If file cannot be read safely
-        """
-        safe_path = cls.validate_path(file_path, base_dir)
-
-        # Must be a file
-        if not os.path.isfile(safe_path):
-            raise SecurityError(f"Not a file: {file_path}")
-
-        # Check file size
-        try:
-            file_size = os.path.getsize(safe_path)
-            if file_size > cls.MAX_FILE_SIZE:
-                raise SecurityError(
-                    f"File too large: {file_size} bytes (max {cls.MAX_FILE_SIZE})"
-                )
-        except OSError as e:
-            raise SecurityError(f"Cannot access file: {e}")
-
-        # Security: Validate path using PathSecurity
-        try:
-            current_dir = os.getcwd()
-            PathSecurity.validate_path(safe_path, current_dir)
-        except SecurityError as e:
-            raise SecurityError(f"Path security validation failed: {e}")
-
-        # Check for binary files (basic detection)
-        try:
-            with open(safe_path, "rb") as f:
-                header = f.read(1024)
-                # Check for null bytes (common in binary files)
-                if b"\x00" in header:
-                    raise SecurityError("Binary file detected")
-        except Exception as e:
-            raise SecurityError(f"Cannot validate file content: {e}")
-
-        return safe_path
-
-    @classmethod
-    def validate_file_write(cls, file_path: str, base_dir: str | None = None) -> str:
-        """
-        Validate a file path for writing operations.
-
-        Args:
-            file_path: Path to file
-            base_dir: Base directory for sandboxing
-
-        Returns:
-            str: Validated file path
-
-        Raises:
-            SecurityError: If file cannot be written safely
-        """
-        safe_path = cls.validate_path(file_path, base_dir)
-
-        # For directories, ensure we're not trying to write to a directory
-        if os.path.exists(safe_path) and os.path.isdir(safe_path):
-            raise SecurityError(f"Cannot write to directory: {file_path}")
-
-        # Ensure parent directory exists
-        parent_dir = os.path.dirname(safe_path)
-        if parent_dir and not os.path.exists(parent_dir):
-            try:
-                os.makedirs(parent_dir, exist_ok=True)
-            except OSError as e:
-                raise SecurityError(f"Cannot create directory: {e}")
-
-        return safe_path
-
-    @classmethod
-    def validate_directory(
-        cls, directory_path: str, base_dir: str | None = None
-    ) -> str:
-        """
-        Validate a directory path.
-
-        Args:
-            directory_path: Path to directory
-            base_dir: Base directory for sandboxing
-
-        Returns:
-            str: Validated directory path
-
-        Raises:
-            SecurityError: If directory is invalid
-        """
-        safe_path = cls.validate_path(directory_path, base_dir)
-
-        # Must be a directory
-        if not os.path.isdir(safe_path):
-            raise SecurityError(f"Not a directory: {directory_path}")
-
-        return safe_path
-
-
-class DatabaseError(Exception):
-    """Custom exception for database-related errors."""
-
-    pass
+# Import security classes from dedicated module
+from src.security import (
+    SecurityError,
+    DatabaseError,
+    RateLimitError,
+    InputSanitizer,
+    PathSecurity,
+    RateLimiter,
+)
+
+# Note: SecureDatabase remains here temporarily as it depends on db_conn/db_lock
+# globals which will be moved to ApplicationContext in Phase 3
 
 
 class SecureDatabase:
@@ -505,6 +163,9 @@ class SecureDatabase:
     - Thread-safe operations with locking
     - Automatic connection management
     - Comprehensive error handling
+
+    Note: This class uses the ApplicationContext to access db_conn and db_lock.
+    The context must be initialized before using this class.
     """
 
     @staticmethod
@@ -526,6 +187,12 @@ class SecureDatabase:
         Raises:
             DatabaseError: If query execution fails
         """
+        # Import here to avoid circular import at module load time
+        from src.core.context import get_db_conn, get_db_lock
+
+        db_conn = get_db_conn()
+        db_lock = get_db_lock()
+
         if db_conn is None or db_lock is None:
             raise DatabaseError("Database connection not initialized")
 
@@ -552,185 +219,130 @@ class SecureDatabase:
                 return None
 
         except sqlite3.Error as e:
-            logger.error(f"Database query failed: {e}", exc_info=True)
+            # Logger may not be available yet, use logging module directly
+            import logging
+            logging.getLogger(__name__).error(f"Database query failed: {e}", exc_info=True)
             raise DatabaseError(f"Database operation failed: {e}") from e
         except Exception as e:
-            logger.error(f"Unexpected database error: {e}", exc_info=True)
+            import logging
+            logging.getLogger(__name__).error(f"Unexpected database error: {e}", exc_info=True)
             raise DatabaseError(f"Unexpected database error: {e}") from e
 
 
 # =============================================================================
-# LOGGING AND ENVIRONMENT SETUP
+# CONFIGURATION MODULE (extracted to src/core/config.py)
 # =============================================================================
 
-# Application version
-APP_VERSION = "0.1.0"
+# Import configuration from dedicated module
+from src.core.config import Config, get_config, get_logger, APP_VERSION
 
-# Configure structured logging for the entire application
-# - Level INFO: Shows informational messages, warnings, and errors
-# - Format includes timestamp, log level, and message
-# - Used throughout the app for debugging and monitoring
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+# Import application context (dependency injection)
+from src.core.context import (
+    ApplicationContext,
+    get_context,
+    set_context,
+    get_llm,
+    set_llm,
+    get_vectorstore,
+    set_vectorstore,
+    get_embeddings,
+    set_embeddings,
+    get_chroma_client,
+    set_chroma_client,
+    get_user_memory,
+    set_user_memory,
+    get_db_conn,
+    set_db_conn,
+    get_db_lock,
+    set_db_lock,
+    get_conversation_history,
+    set_conversation_history,
+    get_context_mode,
+    set_context_mode,
+    get_learning_mode,
+    set_learning_mode,
+    get_current_space,
+    set_current_space,
+    get_embedding_cache,
+    get_query_cache,
 )
-logger = logging.getLogger(__name__)
 
-# Suppress verbose HTTP logging from external libraries
-# This reduces noise during startup while keeping important messages
-logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("httpcore").setLevel(logging.WARNING)
-logging.getLogger("chromadb").setLevel(logging.WARNING)
-logging.getLogger("chromadb.telemetry").setLevel(logging.WARNING)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("openai").setLevel(logging.WARNING)
+# Setup logging
+logger = get_logger()
 
-# Load environment variables from .env file for configuration management
-# - Allows sensitive settings (API keys, URLs) to be stored securely
-# - Falls back to system environment variables if .env not available
-# - Essential for deployment flexibility and security
-try:
-    from dotenv import load_dotenv
-
-    load_dotenv()
-    # Note: Don't log here - launcher.py already prints this
-
-    # Set OpenMP workaround if configured
-    if os.getenv("KMP_DUPLICATE_LIB_OK") == "TRUE":
-        os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-        # Note: Don't log here - launcher.py already prints this
-
-except ImportError:
-    logger.warning(
-        "python-dotenv not available, using system environment variables only"
-    )
-
-# Suppress Pydantic V1 compatibility warnings for Python 3.14+
-# - LangChain-core uses Pydantic V1 internally but we're running Pydantic V2
-# - This warning doesn't affect functionality, just compatibility messaging
-# - Safe to suppress as the application works correctly
-warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality")
+# Load configuration (validates all required env vars)
+_config = get_config()
 
 # =============================================================================
-# APPLICATION CONFIGURATION
+# BACKWARDS-COMPATIBLE CONFIGURATION EXPORTS
 # =============================================================================
+# These module-level constants are kept for backwards compatibility
+# with existing code that imports them directly from main.py
 
-# Configuration is loaded from environment variables (.env file)
-# This section defines default values and configuration categories:
-# - LM Studio settings: API endpoint and authentication
-# - Memory settings: conversation persistence and limits
-# - Vector database: ChromaDB + Ollama embeddings configuration
-# - Database: SQLite storage for conversation memory
-
-# Core LLM Configuration - connects to LM Studio running locally
-LM_STUDIO_BASE_URL = os.getenv("LM_STUDIO_URL")  # LM Studio API endpoint
-if not LM_STUDIO_BASE_URL:
-    raise ValueError("LM_STUDIO_URL environment variable is required")
-assert LM_STUDIO_BASE_URL is not None, (
-    "LM_STUDIO_BASE_URL should not be None after validation"
-)
-
-LM_STUDIO_API_KEY = os.getenv("LM_STUDIO_KEY")  # API key for authentication
-if not LM_STUDIO_API_KEY:
-    raise ValueError("LM_STUDIO_KEY environment variable is required")
-assert LM_STUDIO_API_KEY is not None, (
-    "LM_STUDIO_API_KEY should not be None after validation"
-)
-
-# Model Configuration - try different models for better compliance
-MODEL_NAME = os.getenv("MODEL_NAME")  # Default model, can be changed
-if not MODEL_NAME:
-    raise ValueError("MODEL_NAME environment variable is required")
-# MODEL_NAME is validated above
-assert MODEL_NAME is not None, "MODEL_NAME should not be None after validation"
+# Core LLM Configuration
+LM_STUDIO_BASE_URL: str = _config.lm_studio_url
+LM_STUDIO_API_KEY: str = _config.lm_studio_key
+MODEL_NAME: str = _config.model_name
 
 # Conversation Memory Configuration
-max_history_pairs_str = os.getenv("MAX_HISTORY_PAIRS")
-if not max_history_pairs_str:
-    raise ValueError("MAX_HISTORY_PAIRS environment variable is required")
-MAX_HISTORY_PAIRS = int(
-    max_history_pairs_str
-)  # Maximum user-assistant message pairs to keep in memory
+MAX_HISTORY_PAIRS: int = _config.max_history_pairs
+TEMPERATURE: float = _config.temperature
+MAX_INPUT_LENGTH: int = _config.max_input_length
 
-temperature_str = os.getenv("TEMPERATURE")
-if not temperature_str:
-    raise ValueError("TEMPERATURE environment variable is required")
-TEMPERATURE = float(
-    temperature_str
-)  # LLM creativity/randomness (0.0 = deterministic, 1.0 = very creative)
+# Database Configuration
+DB_TYPE: str = _config.db_type
+DB_PATH: str = _config.db_path
 
-max_input_length_str = os.getenv("MAX_INPUT_LENGTH")
-if not max_input_length_str:
-    raise ValueError("MAX_INPUT_LENGTH environment variable is required")
-MAX_INPUT_LENGTH = int(
-    max_input_length_str
-)  # Maximum user input length to prevent memory issues
+# Verbose Logging Configuration
+VERBOSE_LOGGING: bool = _config.verbose_logging
+SHOW_LLM_REASONING: bool = _config.show_llm_reasoning
+SHOW_TOKEN_USAGE: bool = _config.show_token_usage
+SHOW_TOOL_DETAILS: bool = _config.show_tool_details
 
-# Database Configuration - for conversation memory storage
-db_type_str = os.getenv("DB_TYPE")
-if not db_type_str:
-    raise ValueError("DB_TYPE environment variable is required")
-DB_TYPE = db_type_str.lower()  # Storage type: 'json', 'sqlite', etc.
+# Vector Database Configuration
+CHROMA_HOST: str = _config.chroma_host
+CHROMA_PORT: int = _config.chroma_port
+OLLAMA_BASE_URL: str = _config.ollama_base_url
+EMBEDDING_MODEL: str = _config.embedding_model
 
-DB_PATH = os.getenv("DB_PATH")  # SQLite database file path
-if not DB_PATH:
-    raise ValueError("DB_PATH environment variable is required")
-# DB_PATH is validated above
-assert DB_PATH is not None, "DB_PATH should not be None after validation"
+# Cache file paths
+EMBEDDING_CACHE_FILE: str = _config.embedding_cache_file
+QUERY_CACHE_FILE: str = _config.query_cache_file
 
-# Verbose Logging Configuration - for detailed AI processing visibility
-VERBOSE_LOGGING = os.getenv("VERBOSE_LOGGING", "false").lower() == "true"
-SHOW_LLM_REASONING = os.getenv("SHOW_LLM_REASONING", "true").lower() == "true"
-SHOW_TOKEN_USAGE = os.getenv("SHOW_TOKEN_USAGE", "true").lower() == "true"
-SHOW_TOOL_DETAILS = os.getenv("SHOW_TOOL_DETAILS", "true").lower() == "true"
+# =============================================================================
+# RUNTIME STATE (now backed by ApplicationContext)
+# =============================================================================
 
-# Vector Database Configuration - for knowledge base and context retrieval
-CHROMA_HOST = os.getenv("CHROMA_HOST")  # ChromaDB server host
-if not CHROMA_HOST:
-    raise ValueError("CHROMA_HOST environment variable is required")
-# CHROMA_HOST is validated above
-assert CHROMA_HOST is not None, "CHROMA_HOST should not be None after validation"
+# Initialize the application context
+_ctx = get_context()
 
-chroma_port_str = os.getenv("CHROMA_PORT")
-if not chroma_port_str:
-    raise ValueError("CHROMA_PORT environment variable is required")
-CHROMA_PORT = int(chroma_port_str)  # ChromaDB server port
+# Backwards-compatible module-level variables
+# These are properties that delegate to the ApplicationContext
+# Note: For new code, prefer using get_context() or the accessor functions
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL")  # Ollama embeddings server
-if not OLLAMA_BASE_URL:
-    raise ValueError("OLLAMA_BASE_URL environment variable is required")
-# OLLAMA_BASE_URL is validated above
+# AI Behavior Settings - now backed by context
+# Use get_context_mode()/set_context_mode() for access
+CONTEXT_MODE = _ctx.context_mode
+LEARNING_MODE = _ctx.learning_mode
+CURRENT_SPACE = _ctx.current_space
 
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")  # Embedding model name
-if not EMBEDDING_MODEL:
-    raise ValueError("EMBEDDING_MODEL environment variable is required")
-# EMBEDDING_MODEL is validated above
+# Caches - now backed by context
+EMBEDDING_CACHE = _ctx.embedding_cache
+QUERY_CACHE = _ctx.query_cache
 
-# AI Behavior Settings - configurable via slash commands
-CONTEXT_MODE = (
-    "auto"  # "auto", "on", "off" - controls context integration from vector database
-)
-LEARNING_MODE = "normal"  # "normal", "strict", "off" - controls learning behavior
-# Current workspace/space for vector database operations (will be loaded
-# from settings)
-CURRENT_SPACE = "default"
+# Core services - now backed by context
+# Use get_llm()/set_llm() etc. for access
+llm = _ctx.llm
+vectorstore = _ctx.vectorstore
+embeddings = _ctx.embeddings
+chroma_client = _ctx.chroma_client
+user_memory = _ctx.user_memory
+conversation_history = _ctx.conversation_history
 
-# Embedding cache to reduce redundant API calls
-EMBEDDING_CACHE: Dict[str, List[float]] = {}
-EMBEDDING_CACHE_FILE = "embedding_cache.json"
+# =============================================================================
+# HTTP CLIENT SETUP
+# =============================================================================
 
-# Query result cache to avoid redundant vector searches
-QUERY_CACHE: Dict[str, List[str]] = {}
-QUERY_CACHE_FILE = "query_cache.json"
-
-# Placeholder variables for GUI imports (initialized during startup)
-llm = None
-vectorstore = None
-embeddings = None
-chroma_client = None
-user_memory = None  # Personalized memory instance
-conversation_history: List[BaseMessage] = []
-
-# Connection pooling for external API calls
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -747,337 +359,67 @@ api_session.mount("http://", adapter)
 api_session.mount("https://", adapter)
 
 # =============================================================================
-# SPACE MANAGEMENT FUNCTIONS
+# VECTORDB MODULE (extracted to src/vectordb/)
 # =============================================================================
 
-
-def get_space_collection_name(space_name: str) -> str:
-    """Get the collection name for a given space."""
-    if space_name == "default":
-        return "knowledge_base"  # Default space uses the traditional knowledge_base collection
-    return f"space_{space_name}"
-
-
-def ensure_space_collection(space_name: str) -> bool:
-    """Ensure a collection exists for the given space. Returns True if successful."""
-    if vectorstore is None:
-        return False
-
-    try:
-        # Check if collection exists by trying to get it
-        # ChromaDB will create it if it doesn't exist when we first add
-        # documents
-        return True
-    except Exception as e:
-        logger.error(f"Failed to ensure collection for space {space_name}: {e}")
-        return False
-
-
-def list_spaces() -> List[str]:
-    """List all available spaces (collections starting with 'space_')."""
-    try:
-        # Use ChromaDB API to list collections
-        list_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
-        response = api_session.get(list_url, timeout=10)
-
-        if response.status_code == 200:
-            collections = response.json()
-            spaces = ["default"]  # Always include default space
-            for coll in collections:
-                name = coll.get("name", "")
-                if name.startswith("space_"):
-                    space_name = name[6:]  # Remove "space_" prefix
-                    if space_name not in spaces:
-                        spaces.append(space_name)
-            return spaces
-        else:
-            logger.warning(f"Failed to list collections: HTTP {response.status_code}")
-            return ["default"]
-    except Exception as e:
-        logger.error(f"Error listing spaces: {e}")
-        return ["default"]
-
-
-def delete_space(space_name: str) -> bool:
-    """Delete a space and its collection. Returns True if successful."""
-    if space_name == "default":
-        return False
-
-    try:
-        from chromadb import HttpClient
-
-        assert CHROMA_HOST is not None, (
-            "CHROMA_HOST should not be None after validation"
-        )
-        client = HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
-        collection_name = get_space_collection_name(space_name)
-        client.delete_collection(collection_name)
-        return True
-    except Exception as e:
-        logger.error(f"Failed to delete space {space_name}: {e}")
-        return False
-
-
-def save_current_space():
-    """Save the current space to persistent storage."""
-    try:
-        import json
-
-        settings = {"current_space": CURRENT_SPACE}
-        with open("space_settings.json", "w") as f:
-            json.dump(settings, f, indent=2)
-    except Exception as e:
-        logger.warning(f"Failed to save space settings: {e}")
-
-
-def load_current_space() -> str:
-    """Load the current space from persistent storage."""
-    try:
-        import json
-
-        if os.path.exists("space_settings.json"):
-            with open("space_settings.json", "r") as f:
-                settings = json.load(f)
-                return settings.get("current_space", "default")
-    except Exception as e:
-        logger.warning(f"Failed to load space settings: {e}")
-    return "default"
-
-
-def switch_space(space_name: str) -> bool:
-    """Switch to a different space. Returns True if successful."""
-    global CURRENT_SPACE
-    if not ensure_space_collection(space_name):
-        return False
-    CURRENT_SPACE = space_name
-    save_current_space()  # Save the new current space
-    return True
-
+# Import space management and ChromaDB client from dedicated module
+from src.vectordb import (
+    ChromaDBClient,
+    get_chromadb_client,
+    get_space_collection_name,
+    ensure_space_collection,
+    list_spaces,
+    delete_space,
+    switch_space,
+    save_current_space,
+    load_current_space,
+)
 
 # =============================================================================
 # CACHING FUNCTIONS
 # =============================================================================
 
 
-def load_embedding_cache():
-    """Load embedding cache from disk."""
-    global EMBEDDING_CACHE
-    try:
-        if os.path.exists(EMBEDDING_CACHE_FILE):
-            with open(EMBEDDING_CACHE_FILE, "r") as f:
-                EMBEDDING_CACHE = json.load(f)
-            logger.debug(f"Loaded {len(EMBEDDING_CACHE)} cached embeddings")
-    except Exception as e:
-        logger.warning(f"Failed to load embedding cache: {e}")
-        EMBEDDING_CACHE = {}
+# =============================================================================
+# STORAGE MODULE (extracted to src/storage/)
+# =============================================================================
 
+# Import storage functions from dedicated module
+from src.storage import (
+    initialize_database,
+    load_memory,
+    save_memory,
+    trim_history,
+    load_embedding_cache,
+    load_query_cache,
+    save_query_cache,
+    cleanup_memory,
+)
 
-def load_query_cache():
-    """Load query result cache from disk."""
-    global QUERY_CACHE
-    try:
-        if os.path.exists(QUERY_CACHE_FILE):
-            with open(QUERY_CACHE_FILE, "r") as f:
-                QUERY_CACHE = json.load(f)
-            logger.debug(f"Loaded {len(QUERY_CACHE)} cached query results")
-    except Exception as e:
-        logger.warning(f"Failed to load query cache: {e}")
-        QUERY_CACHE = {}
-
-
-def save_query_cache():
-    """Save query result cache to disk."""
-    try:
-        global QUERY_CACHE
-        # Limit cache size
-        if len(QUERY_CACHE) > 1000:
-            items = list(QUERY_CACHE.items())
-            QUERY_CACHE = dict(items[-500:])
-        with open(QUERY_CACHE_FILE, "w") as f:
-            json.dump(QUERY_CACHE, f, separators=(",", ":"))
-    except Exception as e:
-        logger.warning(f"Failed to save query cache: {e}")
-
-
-# Initialize caches
+# Initialize database and caches at module load time
+initialize_database()
 load_embedding_cache()
 load_query_cache()
 
+# Load conversation history (now uses context-backed storage)
+_initial_history = load_memory()
+get_context().conversation_history = _initial_history
+conversation_history = get_context().conversation_history
 
-# Memory management: Clean up unused objects periodically
-def cleanup_memory():
-    """Force garbage collection to free memory."""
-    import gc
-
-    gc.collect()
-
-
-# Schedule periodic cleanup (every 100 operations)
-operation_count = 0
-
-# Database connection variables (initialized at module import time)
-db_conn: Optional[sqlite3.Connection] = None
-db_lock: Optional[threading.Lock] = None
-
-# Initialize SQLite database connection if configured
-if DB_TYPE == "sqlite":
-    try:
-        db_conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        db_lock = threading.Lock()
-
-        # Create conversations table if it doesn't exist
-        with db_lock:
-            cursor = db_conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS conversations (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    session_id TEXT NOT NULL,
-                    message_type TEXT NOT NULL,
-                    content TEXT NOT NULL,
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            db_conn.commit()
-        # Note: Don't log here - initialize_application will print status
-    except Exception as e:
-        logger.error(f"Failed to initialize SQLite database: {e}")
-        db_conn = None
-        db_lock = None
-
-# =============================================================================
-# CONVERSATION MEMORY MANAGEMENT
-# =============================================================================
-
-
-def load_memory() -> List[BaseMessage]:
-    """
-    Load conversation history from SQLite database.
-
-    This function enables conversation continuity across application restarts by:
-    1. Reading message history from SQLite database
-    2. Reconstructing LangChain message objects
-    3. Providing fallback for new conversations
-
-    Returns:
-        List of BaseMessage objects representing the conversation history
-
-    Message Types:
-    - SystemMessage: AI system prompts and context
-    - HumanMessage: User inputs and questions
-    - AIMessage: AI responses and answers
-
-    Used by:
-    - Global conversation_history initialization
-    - Called once at application startup
-    """
-    try:
-        if DB_TYPE == "sqlite" and db_conn and db_lock:
-            # Load from SQLite database with thread safety
-            with db_lock:
-                cursor = db_conn.cursor()
-                cursor.execute("""
-                    SELECT message_type, content FROM conversations
-                    WHERE session_id = 'default'
-                    ORDER BY timestamp ASC
-                """)
-                rows = cursor.fetchall()
-
-            if not rows:
-                logger.debug(
-                    "No conversation history found in database, starting fresh"
-                )
-                return [SystemMessage(content="Lets get some coding done..")]
-
-            # Reconstruct message objects from database rows
-            history: List[BaseMessage] = []
-            for msg_type, content in rows:
-                if msg_type == "SystemMessage":
-                    history.append(SystemMessage(content=content))
-                elif msg_type == "HumanMessage":
-                    history.append(HumanMessage(content=content))
-                elif msg_type == "AIMessage":
-                    history.append(AIMessage(content=content))
-                else:
-                    logger.warning(f"Unknown message type: {msg_type}, skipping")
-
-            logger.debug(f"Loaded {len(history)} messages from database")
-            return history
-
-        else:
-            # Database not available - return empty history for tests/development
-            logger.warning(
-                "SQLite database not available for loading conversation memory, using empty history"
-            )
-            return []
-
-    except Exception as e:
-        logger.warning(f"Failed to load memory: {e}, using empty history")
-        # Return empty list instead of raising error to allow tests to run
-        return []
-
-
-# Initialize global conversation history at module level
-# - Loaded once when module imports (with graceful fallback for tests)
-# - Persists throughout application lifetime
-# - Modified by main chat loop and commands
-
-conversation_history = load_memory()
+# Backwards-compatible exports for db_conn and db_lock
+# Tests may patch these, so we need to expose them at module level
+db_conn = get_context().db_conn
+db_lock = get_context().db_lock
 
 
 def get_llm():
     """Get the current LLM instance. Used by GUI to access initialized LLM."""
-    return llm
+    return get_context().llm
 
 
 def get_vectorstore():
     """Get the current vectorstore instance. Used by GUI to access initialized vectorstore."""
-    return vectorstore
-
-
-def save_memory(history: List[BaseMessage]) -> None:
-    """
-    Save conversation history to SQLite database.
-
-    Thread-safe SQLite database operations for persistent storage.
-
-    Args:
-        history: List of conversation messages to save
-    """
-    try:
-        if DB_TYPE == "sqlite" and db_conn and db_lock:
-            # Save to SQLite database with thread safety
-            with db_lock:
-                cursor = db_conn.cursor()
-
-                # Clear existing messages for this session
-                cursor.execute("DELETE FROM conversations WHERE session_id = 'default'")
-
-                # Prepare data for bulk insert
-                data_to_insert = [
-                    ("default", type(msg).__name__, msg.content) for msg in history
-                ]
-
-                # Use executemany for efficient bulk insertion
-                cursor.executemany(
-                    """
-                    INSERT INTO conversations (session_id, message_type, content)
-                    VALUES (?, ?, ?)
-                    """,
-                    data_to_insert,
-                )
-
-                db_conn.commit()
-                logger.debug(f"Saved {len(data_to_insert)} messages to database")
-
-        else:
-            # Database not available - this should not happen in normal
-            # operation
-            logger.error("SQLite database not available for saving conversation memory")
-            raise RuntimeError("Database required but not available")
-
-    except Exception as e:
-        logger.error(f"Failed to save memory: {e}")
-        raise  # Re-raise to ensure the error is not silently ignored
+    return get_context().vectorstore
 
 
 def get_relevant_context(
@@ -1178,49 +520,16 @@ def get_relevant_context(
 
 
 # =============================================================================
-# CONVERSATION MANAGEMENT FUNCTIONS
+# COMMANDS MODULE (registry infrastructure in src/commands/)
 # =============================================================================
 
+# Import command registry for future migration
+from src.commands import CommandRegistry
 
-def trim_history(
-    history: List[BaseMessage], max_pairs: int = MAX_HISTORY_PAIRS
-) -> List[BaseMessage]:
-    """
-    Trim conversation history to prevent memory bloat and API token limits.
-
-    LangChain sends full conversation history with each API call. Long conversations
-    can exceed token limits and slow down responses. This function maintains recent
-    context while preventing excessive memory usage.
-
-    Args:
-        history: Complete list of conversation messages
-        max_pairs: Maximum number of user-assistant exchange pairs to keep
-
-    Returns:
-        Trimmed history list containing system message + recent exchanges
-
-    Trimming Logic:
-    - Always keep the first message (system prompt)
-    - Keep the last (max_pairs * 2) messages (user + AI pairs)
-    - Total length = 1 + (max_pairs * 2)
-    - Example: max_pairs=10 -> keep system + 20 recent messages
-
-    Used by:
-    - Main chat loop after each AI response
-    - Ensures conversation stays within reasonable bounds
-    - Balances context retention with performance
-    """
-    # Calculate maximum allowed length: system message + (pairs * 2 messages
-    # per pair)
-    max_length = max_pairs * 2 + 1
-
-    # Only trim if history exceeds the limit
-    if len(history) > max_length:
-        # Keep system message (index 0) + most recent messages
-        return [history[0]] + history[-(max_pairs * 2):]
-
-    # Return unchanged if within limits
-    return history
+# Note: Command handlers remain in this file for now.
+# They can be incrementally migrated to src/commands/handlers/ using:
+#   @register_command("help", "Show available commands")
+#   def handle_help(args): ...
 
 
 def handle_slash_command(command: str) -> bool:
@@ -2848,6 +2157,18 @@ def chunk_text(content: str) -> List[str]:
     return text_splitter.split_text(content)
 
 
+# =============================================================================
+# TOOLS MODULE (registry infrastructure in src/tools/)
+# =============================================================================
+
+# Import tool registry for future migration
+from src.tools import ToolRegistry
+
+# Note: Tool executors remain in this file for now.
+# They can be incrementally migrated to src/tools/executors/ using:
+#   @register_tool("read_file", READ_FILE_DEFINITION)
+#   def execute_read_file(file_path: str) -> dict: ...
+
 # Tool definitions for qwen3-vl-30b function calling
 # All 6 tools tested and confirmed working with qwen3-vl-30b
 FILE_SYSTEM_TOOLS = [
@@ -3447,6 +2768,13 @@ def execute_parse_document(file_path: str, extract_type: str) -> dict:
 
     except Exception as e:
         return {"error": f"Document parsing failed: {str(e)}"}
+
+
+# =============================================================================
+# CHAT MODULE (infrastructure in src/chat/)
+# =============================================================================
+# Note: The main() function remains here but can be incrementally migrated
+# to src/chat/loop.py, src/chat/message_handler.py, etc.
 
 
 def main():
@@ -4477,79 +3805,6 @@ def execute_learn_url(url: str) -> dict:
 
 
 # =============================================================================
-# RATE LIMITING MODULE
+# RATE LIMITING MODULE (extracted to src/security/rate_limiter.py)
 # =============================================================================
-
-
-class RateLimitError(Exception):
-    """Custom exception for rate limiting violations."""
-
-    pass
-
-
-class RateLimiter:
-    """
-    Rate limiting to prevent abuse and brute force attacks.
-
-    Features:
-    - Request frequency tracking
-    - Exponential backoff
-    - Multiple limiter instances
-    - Thread-safe operations
-    """
-
-    def __init__(self, max_calls: int = 10, period_seconds: int = 60):
-        """
-        Initialize rate limiter.
-
-        Args:
-            max_calls: Maximum number of calls allowed
-            period_seconds: Time period for rate limiting
-        """
-        self.max_calls = max_calls
-        self.period = period_seconds
-        self.calls: list[float] = []
-        self.lock = threading.Lock()
-
-    def check(self) -> bool:
-        """
-        Check if operation is allowed under rate limits.
-
-        Returns:
-            bool: True if operation is allowed
-
-        Raises:
-            RateLimitError: If rate limit exceeded
-        """
-        with self.lock:
-            now = time.time()
-            # Remove old calls
-            self.calls = [t for t in self.calls if now - t < self.period]
-
-            if len(self.calls) >= self.max_calls:
-                oldest_call = min(self.calls)
-                wait_time = self.period - (now - oldest_call)
-                raise RateLimitError(
-                    f"Rate limit exceeded. Try again in {wait_time:.1f} seconds"
-                )
-
-            # Add current call
-            self.calls.append(now)
-            return True
-
-    def get_status(self) -> dict:
-        """
-        Get current rate limit status.
-
-        Returns:
-            dict: Status information
-        """
-        with self.lock:
-            now = time.time()
-            recent_calls = [t for t in self.calls if now - t < self.period]
-            return {
-                "calls_in_period": len(recent_calls),
-                "max_calls": self.max_calls,
-                "period_seconds": self.period,
-                "remaining": self.max_calls - len(recent_calls),
-            }
+# RateLimitError and RateLimiter are now imported from src.security

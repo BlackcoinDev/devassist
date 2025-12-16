@@ -70,14 +70,18 @@ class TestApplicationIntegration:
         """Test memory save/load persistence flow."""
         from src.main import save_memory
 
-        # Mock database connection and lock
-        mock_conn = MagicMock()
-        mock_lock = MagicMock()
+        # Mock database connection and lock via context
+        mock_ctx = MagicMock()
+        mock_cursor = MagicMock()
+        mock_ctx.db_conn.cursor.return_value = mock_cursor
+
+        # Mock config
+        mock_config = MagicMock()
+        mock_config.db_type = "sqlite"
 
         with (
-            patch("src.main.DB_TYPE", "sqlite"),
-            patch("src.main.db_conn", mock_conn),
-            patch("src.main.db_lock", mock_lock),
+            patch("src.storage.memory.get_config", return_value=mock_config),
+            patch("src.storage.memory.get_context", return_value=mock_ctx),
         ):
             # Test save
             from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
@@ -88,16 +92,12 @@ class TestApplicationIntegration:
                 AIMessage(content="Test AI"),
             ]
 
-            # Mock cursor for save
-            mock_cursor = MagicMock()
-            mock_conn.cursor.return_value = mock_cursor
-
             save_memory(test_messages)
 
             # Verify database operations were called
             mock_cursor.execute.assert_called_once()  # DELETE operation
             mock_cursor.executemany.assert_called_once()  # INSERT operations
-            mock_conn.commit.assert_called_once()
+            mock_ctx.db_conn.commit.assert_called_once()
 
     def test_space_management_integration(self):
         """Test space management integration."""
@@ -108,13 +108,15 @@ class TestApplicationIntegration:
         assert get_space_collection_name("workspace1") == "space_workspace1"
 
         # Test space switching (mocked)
+        # Now need to patch in the vectordb.spaces module
         with (
-            patch("src.main.ensure_space_collection", return_value=True),
-            patch("src.main.save_current_space"),
+            patch("src.vectordb.spaces.ensure_space_collection", return_value=True),
+            patch("src.vectordb.spaces.save_current_space"),
+            patch("src.vectordb.spaces.set_current_space"),
         ):
             result = switch_space("test_space")
             assert result is True
-            # Note: In real implementation, CURRENT_SPACE would change
+            # Note: In real implementation, current_space in context would change
 
     @patch("src.main.vectorstore")
     def test_context_retrieval_flow(self, mock_vectorstore):
