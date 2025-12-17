@@ -8,6 +8,8 @@ This module provides the AI tool system including:
 """
 
 from src.tools.registry import ToolRegistry, register_tool
+# Import executors to trigger registration
+from src.tools import executors  # noqa: F401
 
 __all__ = [
     "ToolRegistry",

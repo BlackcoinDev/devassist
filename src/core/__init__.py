@@ -39,6 +39,7 @@ from src.core.context import (
     get_embedding_cache,
     get_query_cache,
 )
+from src.core.context_utils import get_relevant_context, add_to_knowledge_base
 
 __all__ = [
     # Config
@@ -75,4 +76,7 @@ __all__ = [
     "set_current_space",
     "get_embedding_cache",
     "get_query_cache",
+    # Utilities
+    "get_relevant_context",
+    "add_to_knowledge_base",
 ]
