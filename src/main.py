@@ -526,6 +526,18 @@ def get_relevant_context(
 # Import command registry for future migration
 from src.commands import CommandRegistry
 
+# Import all command handlers to register them
+from src.commands.handlers import (
+    help_commands,
+    memory_commands,
+    database_commands,
+    learning_commands,
+    config_commands,
+    space_commands,
+    file_commands,
+    export_commands,
+)
+
 # Note: Command handlers remain in this file for now.
 # They can be incrementally migrated to src/commands/handlers/ using:
 #   @register_command("help", "Show available commands")

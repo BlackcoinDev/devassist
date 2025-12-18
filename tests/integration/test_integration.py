@@ -167,6 +167,12 @@ class TestCommandIntegration:
     def test_memory_command_integration(self, capsys):
         """Test memory command integration."""
         from src.main import handle_slash_command
+        from src.commands import CommandRegistry
+
+        # Ensure memory command is registered (might have been cleared by other tests)
+        if not CommandRegistry.has_command("memory"):
+            from src.commands.handlers.memory_commands import handle_memory
+            CommandRegistry.register("memory", "Show conversation history", category="memory")(handle_memory)
 
         # Mock conversation history to ensure consistent output
         from src.core.context import get_context
