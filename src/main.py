@@ -94,6 +94,73 @@ INITIALIZATION SEQUENCE:
 # =============================================================================
 
 # Core LangChain components for AI chat functionality
+from src.tools.executors.document_tools import execute_parse_document
+from src.tools import ToolRegistry
+from src.commands.handlers import (
+    help_commands,
+    memory_commands,
+    database_commands,
+    learning_commands,
+    config_commands,
+    space_commands,
+    file_commands,
+    export_commands,
+)
+from src.commands import CommandRegistry
+from src.storage import (
+    initialize_database,
+    load_memory,
+    save_memory,
+    trim_history,
+    load_embedding_cache,
+    load_query_cache,
+    save_query_cache,
+    cleanup_memory,
+)
+from src.vectordb import (
+    ChromaDBClient,
+    get_chromadb_client,
+    get_space_collection_name,
+    ensure_space_collection,
+    list_spaces,
+    delete_space,
+    switch_space,
+    save_current_space,
+    load_current_space,
+)
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
+import requests
+from src.core.context import (
+    ApplicationContext,
+    get_context,
+    set_context,
+    get_llm,
+    set_llm,
+    get_vectorstore,
+    set_vectorstore,
+    get_embeddings,
+    set_embeddings,
+    get_chroma_client,
+    set_chroma_client,
+    get_user_memory,
+    set_user_memory,
+    get_db_conn,
+    set_db_conn,
+    get_db_lock,
+    set_db_lock,
+    get_conversation_history,
+    set_conversation_history,
+    get_context_mode,
+    set_context_mode,
+    get_learning_mode,
+    set_learning_mode,
+    get_current_space,
+    set_current_space,
+    get_embedding_cache,
+    get_query_cache,
+)
+from src.core.config import Config, get_config, get_logger, APP_VERSION
 from langchain_openai import (
     ChatOpenAI,
 )  # Main LLM interface using OpenAI-compatible API
@@ -170,8 +237,10 @@ class SecureDatabase:
 
     @staticmethod
     def execute_query(
-        query: str, params: tuple | None = None, fetch: bool = True, commit: bool = True
-    ):
+            query: str,
+            params: tuple | None = None,
+            fetch: bool = True,
+            commit: bool = True):
         """
         Execute a parameterized SQL query safely.
 
@@ -221,11 +290,13 @@ class SecureDatabase:
         except sqlite3.Error as e:
             # Logger may not be available yet, use logging module directly
             import logging
-            logging.getLogger(__name__).error(f"Database query failed: {e}", exc_info=True)
+            logging.getLogger(__name__).error(
+                f"Database query failed: {e}", exc_info=True)
             raise DatabaseError(f"Database operation failed: {e}") from e
         except Exception as e:
             import logging
-            logging.getLogger(__name__).error(f"Unexpected database error: {e}", exc_info=True)
+            logging.getLogger(__name__).error(
+                f"Unexpected database error: {e}", exc_info=True)
             raise DatabaseError(f"Unexpected database error: {e}") from e
 
 
@@ -234,38 +305,8 @@ class SecureDatabase:
 # =============================================================================
 
 # Import configuration from dedicated module
-from src.core.config import Config, get_config, get_logger, APP_VERSION
 
 # Import application context (dependency injection)
-from src.core.context import (
-    ApplicationContext,
-    get_context,
-    set_context,
-    get_llm,
-    set_llm,
-    get_vectorstore,
-    set_vectorstore,
-    get_embeddings,
-    set_embeddings,
-    get_chroma_client,
-    set_chroma_client,
-    get_user_memory,
-    set_user_memory,
-    get_db_conn,
-    set_db_conn,
-    get_db_lock,
-    set_db_lock,
-    get_conversation_history,
-    set_conversation_history,
-    get_context_mode,
-    set_context_mode,
-    get_learning_mode,
-    set_learning_mode,
-    get_current_space,
-    set_current_space,
-    get_embedding_cache,
-    get_query_cache,
-)
 
 # Setup logging
 logger = get_logger()
@@ -343,9 +384,6 @@ conversation_history = _ctx.conversation_history
 # HTTP CLIENT SETUP
 # =============================================================================
 
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 # Create a session with connection pooling and retries
 api_session = requests.Session()
@@ -354,7 +392,10 @@ retry_strategy = Retry(
     backoff_factor=0.3,
     status_forcelist=[429, 500, 502, 503, 504],
 )
-adapter = HTTPAdapter(max_retries=retry_strategy, pool_connections=10, pool_maxsize=20)
+adapter = HTTPAdapter(
+    max_retries=retry_strategy,
+    pool_connections=10,
+    pool_maxsize=20)
 api_session.mount("http://", adapter)
 api_session.mount("https://", adapter)
 
@@ -363,17 +404,6 @@ api_session.mount("https://", adapter)
 # =============================================================================
 
 # Import space management and ChromaDB client from dedicated module
-from src.vectordb import (
-    ChromaDBClient,
-    get_chromadb_client,
-    get_space_collection_name,
-    ensure_space_collection,
-    list_spaces,
-    delete_space,
-    switch_space,
-    save_current_space,
-    load_current_space,
-)
 
 # =============================================================================
 # CACHING FUNCTIONS
@@ -385,16 +415,6 @@ from src.vectordb import (
 # =============================================================================
 
 # Import storage functions from dedicated module
-from src.storage import (
-    initialize_database,
-    load_memory,
-    save_memory,
-    trim_history,
-    load_embedding_cache,
-    load_query_cache,
-    save_query_cache,
-    cleanup_memory,
-)
 
 # Initialize database and caches at module load time
 initialize_database()
@@ -451,12 +471,14 @@ def get_relevant_context(
             # Use global embeddings variable (initialized during application
             # startup)
             if embeddings is None:
-                logger.warning("Embeddings not initialized for context retrieval")
+                logger.warning(
+                    "Embeddings not initialized for context retrieval")
                 return ""
 
             query_embedding = embeddings.embed_query(query)
         except (AttributeError, NameError, Exception) as e:
-            logger.warning(f"Embeddings not available for context retrieval: {e}")
+            logger.warning(
+                f"Embeddings not available for context retrieval: {e}")
             return ""
 
         # Find collection for the specified space
@@ -474,7 +496,8 @@ def get_relevant_context(
                         collection_id = coll.get("id")
                         break
         except Exception as e:
-            logger.warning(f"Error finding collection for space {space_name}: {e}")
+            logger.warning(
+                f"Error finding collection for space {space_name}: {e}")
 
         if not collection_id:
             logger.warning(f"Could not find collection for space {space_name}")
@@ -493,7 +516,8 @@ def get_relevant_context(
 
             # Extract documents from response
             docs = []
-            if "documents" in data and data["documents"] and len(data["documents"]) > 0:
+            if "documents" in data and data["documents"] and len(
+                    data["documents"]) > 0:
                 documents = data["documents"][0]  # First query result
                 for doc_content in documents:
                     docs.append(doc_content)
@@ -507,7 +531,8 @@ def get_relevant_context(
             if len(QUERY_CACHE) % 50 == 0:
                 save_query_cache()
 
-            context = "\n\n".join([f"From knowledge base:\n{doc}" for doc in docs])
+            context = "\n\n".join(
+                [f"From knowledge base:\n{doc}" for doc in docs])
             return f"\n\nRelevant context:\n{context}\n\n"
         else:
             print(f"ChromaDB query failed: {response.status_code}")
@@ -524,19 +549,8 @@ def get_relevant_context(
 # =============================================================================
 
 # Import command registry for future migration
-from src.commands import CommandRegistry
 
 # Import all command handlers to register them
-from src.commands.handlers import (
-    help_commands,
-    memory_commands,
-    database_commands,
-    learning_commands,
-    config_commands,
-    space_commands,
-    file_commands,
-    export_commands,
-)
 
 # Note: Command handlers remain in this file for now.
 # They can be incrementally migrated to src/commands/handlers/ using:
@@ -714,8 +728,7 @@ def handle_list_command(dir_path: str = ""):
 
             if not full_path.startswith(current_dir):
                 print(
-                    f"\n❌ Access denied: Cannot list directories outside current directory"
-                )
+                    f"\n❌ Access denied: Cannot list directories outside current directory")
                 print(f"Current directory: {current_dir}\n")
                 return
 
@@ -729,7 +742,11 @@ def handle_list_command(dir_path: str = ""):
 
             target_dir = full_path
 
-        print(f"\n📁 Directory: {os.path.relpath(target_dir, os.getcwd()) or '.'}")
+        print(
+            f"\n📁 Directory: {
+                os.path.relpath(
+                    target_dir,
+                    os.getcwd()) or '.'}")
         print("-" * 50)
 
         items = os.listdir(target_dir)
@@ -773,11 +790,14 @@ def show_memory():
         print("\n📝 No conversation history available.\n")
         return
 
-    print(f"\n📝 Conversation History ({len(conversation_history)} messages):\n")
+    print(
+        f"\n📝 Conversation History ({
+            len(conversation_history)} messages):\n")
     for i, msg in enumerate(conversation_history):
         msg_type = type(msg).__name__.replace("Message", "")
         content = str(msg.content)
-        content_preview = content[:100] + "..." if len(content) > 100 else content
+        content_preview = content[:100] + \
+            "..." if len(content) > 100 else content
         print(f"{i + 1:2d}. {msg_type}: {content_preview}")
     print()
 
@@ -795,7 +815,9 @@ def handle_clear_command() -> bool:
         # Add a new system message for the fresh start
         from langchain_core.messages import SystemMessage
 
-        conversation_history = [SystemMessage(content="Lets get some coding done..")]
+        conversation_history = [
+            SystemMessage(
+                content="Lets get some coding done..")]
         save_memory(conversation_history)
         return False
     else:
@@ -867,8 +889,7 @@ def handle_learn_command(content: str):
                         if create_response.status_code == 201:
                             collection_id = create_response.json().get("id")
                             logger.info(
-                                f"Created new collection for space {CURRENT_SPACE}: {collection_name}"
-                            )
+                                f"Created new collection for space {CURRENT_SPACE}: {collection_name}")
                         else:
                             logger.error(
                                 f"Failed to create collection: HTTP {
@@ -879,8 +900,7 @@ def handle_learn_command(content: str):
 
                 except Exception as e:
                     logger.error(
-                        f"Error managing collection for space {CURRENT_SPACE}: {e}"
-                    )
+                        f"Error managing collection for space {CURRENT_SPACE}: {e}")
                     raise
 
                 # Add document to the space's collection
@@ -907,8 +927,7 @@ def handle_learn_command(content: str):
 
                 if response.status_code == 201:
                     logger.info(
-                        f"Document added successfully to space {CURRENT_SPACE}: {doc_id}"
-                    )
+                        f"Document added successfully to space {CURRENT_SPACE}: {doc_id}")
                 else:
                     logger.error(
                         f"Failed to add document to space {CURRENT_SPACE}: {
@@ -978,13 +997,13 @@ def show_vectordb():
                         break
 
             if not collection_id:
-                print(f"❌ No collection found for current space '{CURRENT_SPACE}'")
+                print(
+                    f"❌ No collection found for current space '{CURRENT_SPACE}'")
                 print("The space may not have any documents yet.")
                 return
 
             logger.info(
-                f"Using collection for space {CURRENT_SPACE}: {collection_name} (ID: {collection_id})"
-            )
+                f"Using collection for space {CURRENT_SPACE}: {collection_name} (ID: {collection_id})")
 
             # Get collection statistics
             count_url = (
@@ -1009,9 +1028,11 @@ def show_vectordb():
                     try:
                         # Get metadata for statistics
                         chroma_client = vectorstore._client
-                        collection = chroma_client.get_collection(collection_name)
+                        collection = chroma_client.get_collection(
+                            collection_name)
                         results = collection.get(
-                            limit=min(chunk_count, 1000),  # Sample up to 1000 for stats
+                            # Sample up to 1000 for stats
+                            limit=min(chunk_count, 1000),
                             include=["metadatas"],
                         )
 
@@ -1028,7 +1049,8 @@ def show_vectordb():
                                     if "source" in metadata:
                                         sources.add(metadata["source"])
                                     if "content_type" in metadata:
-                                        content_types.add(metadata["content_type"])
+                                        content_types.add(
+                                            metadata["content_type"])
                                     if "added_at" in metadata:
                                         try:
                                             # Parse date
@@ -1040,13 +1062,16 @@ def show_vectordb():
                             print(f"   📄 Unique Sources: {len(sources)}")
                             if sources:
                                 print(
-                                    f"   🔗 Sources: {', '.join(list(sources)[:5])}{'...' if len(sources) > 5 else ''}"
-                                )
+                                    f"   🔗 Sources: {
+                                        ', '.join(
+                                            list(sources)[
+                                                :5])}{
+                                        '...' if len(sources) > 5 else ''}")
 
                             if content_types:
                                 print(
-                                    f"   📝 Content Types: {', '.join(content_types)}"
-                                )
+                                    f"   📝 Content Types: {
+                                        ', '.join(content_types)}")
 
                             if dates:
                                 try:
@@ -1059,29 +1084,31 @@ def show_vectordb():
                                         earliest = min(date_objs)
                                         latest = max(date_objs)
                                         print(
-                                            f"   📅 Date Range: {earliest.strftime('%Y-%m-%d')} to {latest.strftime('%Y-%m-%d')}"
-                                        )
+                                            f"   📅 Date Range: {
+                                                earliest.strftime('%Y-%m-%d')} to {
+                                                latest.strftime('%Y-%m-%d')}")
                                 except Exception:
                                     pass
 
                             # Show recent additions (last 3 by date)
                             # Show sample sources
                             sample_sources = []
-                            for metadata in metadatas[:5]:  # Check first 5 for examples
+                            # Check first 5 for examples
+                            for metadata in metadatas[:5]:
                                 if metadata and metadata.get("source"):
                                     sample_sources.append(
-                                        (
-                                            metadata.get("source"),
-                                            metadata.get("added_at", "unknown"),
-                                        )
-                                    )
+                                        (metadata.get("source"), metadata.get(
+                                            "added_at", "unknown"), ))
                                     if len(sample_sources) >= 3:
                                         break
 
                             if sample_sources:
                                 print(f"\n🕒 Sample Sources:")
-                                for i, (source, added_at) in enumerate(sample_sources):
-                                    print(f"   {i + 1}. {source} (added: {added_at})")
+                                for i, (source, added_at) in enumerate(
+                                        sample_sources):
+                                    print(
+                                        f"   {
+                                            i + 1}. {source} (added: {added_at})")
 
                         else:
                             print("\n📋 Statistics: Unable to retrieve metadata")
@@ -1091,10 +1118,11 @@ def show_vectordb():
                 else:
                     print(f"\n  No chunks found in the knowledge base.")
                     print(
-                        f"  Use /learn to add information or /populate to add codebases."
-                    )
+                        f"  Use /learn to add information or /populate to add codebases.")
             else:
-                print(f"Failed to retrieve chunks: HTTP {count_response.status_code}")
+                print(
+                    f"Failed to retrieve chunks: HTTP {
+                        count_response.status_code}")
                 print("Vector database connection may have issues.")
 
             print("--- End Vector Database ---")
@@ -1127,18 +1155,21 @@ def show_vectordb():
                         # Try to get sample documents using ChromaDB client
                         # directly
                         chroma_client = vectorstore._client
-                        collection = chroma_client.get_collection(collection_name)
+                        collection = chroma_client.get_collection(
+                            collection_name)
                         results = collection.get(
                             limit=3, include=["documents", "metadatas"]
                         )
 
                         if results and "documents" in results and results["documents"]:
                             docs = results["documents"]
-                            metadatas = results.get("metadatas") or [{}] * len(docs)
+                            metadatas = results.get("metadatas") or [
+                                {}] * len(docs)
 
                             # First 3 documents
                             for i, doc in enumerate(docs[:3]):
-                                metadata = metadatas[i] if i < len(metadatas) else {}
+                                metadata = metadatas[i] if i < len(
+                                    metadatas) else {}
                                 if isinstance(doc, str):
                                     # Clean up the preview - remove excessive
                                     # whitespace and binary-looking content
@@ -1184,7 +1215,10 @@ def show_vectordb():
                                         if metadata
                                         else "unknown"
                                     )
-                                    print(f"  {i + 1}. {source} (added: {added_at})")
+                                    print(
+                                        f"  {
+                                            i +
+                                            1}. {source} (added: {added_at})")
                                     print(f"      Preview: {preview}")
                                 else:
                                     print(
@@ -1193,7 +1227,10 @@ def show_vectordb():
                         else:
                             print("  No documents found in collection")
                     except Exception as e:
-                        print(f"  Could not retrieve sample documents: {str(e)[:100]}")
+                        print(
+                            f"  Could not retrieve sample documents: {
+                                str(e)[
+                                    :100]}")
                         print(
                             "  (This is normal for some document types or if the collection is empty)"
                         )
@@ -1222,7 +1259,8 @@ def show_mem0():
         memories = user_memory.get_all(user_id="default_user")
 
         if VERBOSE_LOGGING:
-            print(f"🧠 Mem0: Retrieved {len(memories.get('results', []))} memories")
+            print(
+                f"🧠 Mem0: Retrieved {len(memories.get('results', []))} memories")
 
         if not memories or not memories.get("results"):
             print("📊 No personalized memories stored yet.")
@@ -1275,7 +1313,8 @@ def handle_populate_command(dir_path: str):
 
     # Check if directory exists
     if not directory:
-        print("\nUsage: /populate /path/to/directory [--dry-run] [--direct-api]")
+        print(
+            "\nUsage: /populate /path/to/directory [--dry-run] [--direct-api]")
         print("Examples:")
         print("   /populate /Users/username/projects/myapp")
         print("   /populate src/ --dry-run")
@@ -1407,12 +1446,13 @@ def handle_populate_command(dir_path: str):
                 if file_path.suffix.lower() in [".pdf"]:
                     # For PDFs, extract text using document processing
                     try:
-                        parse_result = execute_parse_document(str(file_path), "text")
-                        if parse_result.get("success") and "content" in parse_result:
+                        parse_result = execute_parse_document(
+                            str(file_path), "text")
+                        if parse_result.get(
+                                "success") and "content" in parse_result:
                             content = parse_result["content"]
                             if not content or (
-                                content.startswith("[") and content.endswith("]")
-                            ):
+                                    content.startswith("[") and content.endswith("]")):
                                 # If no content or still a placeholder, skip
                                 # this file
                                 continue
@@ -1473,17 +1513,18 @@ def handle_populate_command(dir_path: str):
                             # Use direct ChromaDB API
                             # Ensure chroma_client is initialized
                             if chroma_client is None:
-                                chroma_client = HttpClient(
-                                    host=cast(str, CHROMA_HOST), port=CHROMA_PORT
-                                )
+                                chroma_client = HttpClient(host=cast(
+                                    str, CHROMA_HOST), port=CHROMA_PORT)
 
                             if chroma_client is None or embeddings is None:
                                 raise Exception(
                                     "ChromaDB client or embeddings not initialized"
                                 )
 
-                            collection_name = get_space_collection_name(CURRENT_SPACE)
-                            collection = chroma_client.get_collection(collection_name)
+                            collection_name = get_space_collection_name(
+                                CURRENT_SPACE)
+                            collection = chroma_client.get_collection(
+                                collection_name)
 
                             texts = [doc.page_content for doc in all_documents]
                             metadatas = [doc.metadata for doc in all_documents]
@@ -1535,14 +1576,17 @@ def handle_populate_command(dir_path: str):
                         )
 
                     if chroma_client is None or embeddings is None:
-                        raise Exception("ChromaDB client or embeddings not initialized")
+                        raise Exception(
+                            "ChromaDB client or embeddings not initialized")
 
                     collection_name = get_space_collection_name(CURRENT_SPACE)
                     try:
-                        collection = chroma_client.get_collection(collection_name)
+                        collection = chroma_client.get_collection(
+                            collection_name)
                     except Exception:
                         # Collection doesn't exist, create it
-                        collection = chroma_client.create_collection(collection_name)
+                        collection = chroma_client.create_collection(
+                            collection_name)
 
                     texts = [doc.page_content for doc in all_documents]
                     metadatas = [doc.metadata for doc in all_documents]
@@ -1586,9 +1630,8 @@ def handle_populate_command(dir_path: str):
 def show_model_info():
     """Show current model information."""
     print(f"\n🤖 Current Model: {MODEL_NAME}")
-    base_url_display = (
-        LM_STUDIO_BASE_URL.replace("/v1", "") if LM_STUDIO_BASE_URL else "unknown"
-    )
+    base_url_display = (LM_STUDIO_BASE_URL.replace(
+        "/v1", "") if LM_STUDIO_BASE_URL else "unknown")
     print(f"🌐 API Endpoint: http://{base_url_display}")
     print(f"🎯 Temperature: {TEMPERATURE}")
     print(f"📏 Max Input Length: {MAX_INPUT_LENGTH}")
@@ -1715,8 +1758,7 @@ def handle_space_command(cmd_args: str):
 
         # Confirm deletion
         confirm = input(
-            f"Are you sure you want to delete space '{target_space}' and all its data? (yes/no): "
-        )
+            f"Are you sure you want to delete space '{target_space}' and all its data? (yes/no): ")
         if confirm.lower() not in ["yes", "y"]:
             print("\n❌ Deletion cancelled\n")
             return
@@ -1801,9 +1843,13 @@ def handle_export_command(format_type: str = "json"):
                     elif msg_type == "AI":
                         f.write(f"## AI Response {i + 1}\n\n{content}\n\n")
                     elif msg_type == "System":
-                        f.write(f"### System Message {i + 1}\n\n*{content}*\n\n")
+                        f.write(
+                            f"### System Message {
+                                i + 1}\n\n*{content}*\n\n")
                     else:
-                        f.write(f"## {msg_type} Message {i + 1}\n\n{content}\n\n")
+                        f.write(
+                            f"## {msg_type} Message {
+                                i + 1}\n\n{content}\n\n")
 
                     f.write("---\n\n")
 
@@ -1870,7 +1916,9 @@ def initialize_application():
         from src.tools import ToolRegistry
         tool_definitions = ToolRegistry.get_definitions()
         llm = llm.bind_tools(tool_definitions)
-        print(f"✅ Connected to LLM: {MODEL_NAME} (with {len(tool_definitions)} tools)")
+        print(
+            f"✅ Connected to LLM: {MODEL_NAME} (with {
+                len(tool_definitions)} tools)")
     except Exception as e:
         print(f"❌ Failed to initialize LLM: {e}")
         print("Please ensure LM Studio is running and accessible.")
@@ -1902,7 +1950,11 @@ def initialize_application():
                 }
 
         # Connect to ChromaDB server
-        chroma_client = HttpClient(host=cast(str, CHROMA_HOST), port=CHROMA_PORT)
+        chroma_client = HttpClient(
+            host=cast(
+                str,
+                CHROMA_HOST),
+            port=CHROMA_PORT)
 
         # Initialize Ollama embeddings for text vectorization
         embeddings = CustomOllamaEmbeddings(
@@ -1915,7 +1967,8 @@ def initialize_application():
         # Attempt to connect to existing collection for current workspace
         # Collections are isolated per workspace for knowledge separation
         try:
-            chroma_client.get_collection(name=get_space_collection_name(CURRENT_SPACE))
+            chroma_client.get_collection(
+                name=get_space_collection_name(CURRENT_SPACE))
             # Collection exists - connect to it
             vectorstore = Chroma(
                 client=chroma_client,
@@ -1947,7 +2000,8 @@ def initialize_application():
     global db_conn, db_lock
     if DB_TYPE == "sqlite":
         try:
-            db_conn = sqlite3.connect(cast(str, DB_PATH), check_same_thread=False)
+            db_conn = sqlite3.connect(
+                cast(str, DB_PATH), check_same_thread=False)
             db_lock = threading.Lock()
 
             # Create conversations table if it doesn't exist
@@ -1982,7 +2036,8 @@ def initialize_application():
     # MEM0 INITIALIZATION (USER MEMORY)
     # ============================================================================
     # Mem0 uses both ChromaDB (vector storage for memories) and SQLite (history/metadata)
-    # This provides semantic search capabilities while maintaining change tracking
+    # This provides semantic search capabilities while maintaining change
+    # tracking
     global user_memory
     if MEM0_AVAILABLE:
         try:
@@ -2040,8 +2095,7 @@ def initialize_application():
         except Exception as e:
             # Non-critical failure - continue without it
             print(
-                f"⚠️ Failed to initialize Mem0: {e} (Continuing without personalization)"
-            )
+                f"⚠️ Failed to initialize Mem0: {e} (Continuing without personalization)")
             user_memory = None
 
     return True
@@ -2132,7 +2186,6 @@ def chunk_text(content: str) -> List[str]:
 # =============================================================================
 
 # Import tool registry for future migration
-from src.tools import ToolRegistry
 
 # Note: Tool executors remain in this file for now.
 # They can be incrementally migrated to src/tools/executors/ using:
@@ -2144,12 +2197,9 @@ from src.tools import ToolRegistry
 # =============================================================================
 # Tool definitions and executors have been moved to src/tools/executors/
 # Import ToolRegistry to access registered tools
-from src.tools import ToolRegistry
-from src.tools.executors.document_tools import execute_parse_document
 
 # Backwards compatibility for tests and main loop
 execute_tool_call = ToolRegistry.execute_tool_call
-
 
 
 # =============================================================================
@@ -2251,9 +2301,11 @@ def main():
                 # Extract search query
                 query = user_input.lower()
                 if "search the web for" in query:
-                    search_query = user_input.split("search the web for", 1)[1].strip()
+                    search_query = user_input.split(
+                        "search the web for", 1)[1].strip()
                 elif "web search for" in query:
-                    search_query = user_input.split("web search for", 1)[1].strip()
+                    search_query = user_input.split(
+                        "web search for", 1)[1].strip()
                 else:
                     search_query = (
                         user_input.replace("search the web", "")
@@ -2275,7 +2327,8 @@ def main():
 
                     # Add tool result to conversation for AI analysis
                     tool_message = f"Tool executed: {tool_result}"
-                    conversation_history.append(AIMessage(content=tool_message))
+                    conversation_history.append(
+                        AIMessage(content=tool_message))
 
                     # Generate AI analysis of the tool results
                     analysis_prompt = f"""
@@ -2295,8 +2348,8 @@ Focus on the most relevant information and provide insights or a direct answer i
 
                     if VERBOSE_LOGGING:
                         print(
-                            f"🤖 Generating analysis of {force_tool_call['name']} results..."
-                        )
+                            f"🤖 Generating analysis of {
+                                force_tool_call['name']} results...")
 
                     # Get AI analysis of the results
                     analysis_response = llm.invoke(analysis_messages)
@@ -2326,8 +2379,8 @@ Focus on the most relevant information and provide insights or a direct answer i
 
                     if VERBOSE_LOGGING:
                         print(
-                            f"✅ Forced tool executed and analyzed: {force_tool_call['name']}"
-                        )
+                            f"✅ Forced tool executed and analyzed: {
+                                force_tool_call['name']}")
                     continue  # Skip normal LLM processing for this input
                 except Exception as e:
                     error_msg = f"Error executing forced tool: {e}"
@@ -2349,7 +2402,8 @@ Focus on the most relevant information and provide insights or a direct answer i
 
             # Additional quit command check (belt and suspenders approach)
             # Handles edge cases where quit might be embedded in other text
-            if any(quit_cmd in user_input.lower() for quit_cmd in ["quit", "exit"]):
+            if any(quit_cmd in user_input.lower()
+                   for quit_cmd in ["quit", "exit"]):
                 save_memory(conversation_history)
                 print("\n👋 Goodbye! Your conversation has been saved.")
                 break
@@ -2367,8 +2421,7 @@ Focus on the most relevant information and provide insights or a direct answer i
             # Large inputs can cause token limit errors or memory problems
             if len(user_input) > MAX_INPUT_LENGTH:
                 print(
-                    f"\nError: Input exceeds maximum length of {MAX_INPUT_LENGTH} characters."
-                )
+                    f"\nError: Input exceeds maximum length of {MAX_INPUT_LENGTH} characters.")
                 continue
 
                 # /model - Display current model information
@@ -2391,10 +2444,13 @@ Focus on the most relevant information and provide insights or a direct answer i
             if user_memory:
                 try:
                     # Search for relevant user memories/preferences
-                    mem_results = user_memory.search(user_input, user_id="default_user")
+                    mem_results = user_memory.search(
+                        user_input, user_id="default_user")
 
                     mem_list = []
-                    if isinstance(mem_results, dict) and "results" in mem_results:
+                    if isinstance(
+                            mem_results,
+                            dict) and "results" in mem_results:
                         results = mem_results["results"]
                         if isinstance(results, list):
                             mem_list = [
@@ -2424,16 +2480,20 @@ Focus on the most relevant information and provide insights or a direct answer i
                         if user_memory is not None:
                             user_memory.add(text, user_id="default_user")
                             if VERBOSE_LOGGING:
-                                print(f"🧠 Mem0: Stored memory: '{text[:50]}...'")
+                                print(
+                                    f"🧠 Mem0: Stored memory: '{text[:50]}...'")
                     except Exception as ex:
                         # Only log Mem0 errors if verbose logging is enabled
-                        # This prevents spam from LM Studio compatibility issues
+                        # This prevents spam from LM Studio compatibility
+                        # issues
                         if VERBOSE_LOGGING:
                             logger.warning(f"Mem0 background add failed: {ex}")
                         # Silently continue - Mem0 failures are non-critical
 
                 # Run learning in background to not block chat
-                threading.Thread(target=run_mem0_add, args=(user_input,)).start()
+                threading.Thread(
+                    target=run_mem0_add, args=(
+                        user_input,)).start()
 
             # =============================================================================
             # ENHANCED PROMPT CONSTRUCTION
@@ -2449,9 +2509,8 @@ Focus on the most relevant information and provide insights or a direct answer i
             llm_context_limit = 20
             if len(conversation_history) > llm_context_limit:
                 # Preserves SystemMessage at [0] and appends recent history
-                enhanced_history = [conversation_history[0]] + conversation_history[
-                    -llm_context_limit:
-                ]
+                enhanced_history = [conversation_history[0]] + \
+                    conversation_history[-llm_context_limit:]
             else:
                 enhanced_history = conversation_history.copy()
 
@@ -2488,11 +2547,13 @@ CRITICAL RULES:
             if LEARNING_MODE == "off":
                 # Learning is completely disabled
                 context = ""
-                logger.debug("Learning mode is off - skipping context integration")
+                logger.debug(
+                    "Learning mode is off - skipping context integration")
             elif CONTEXT_MODE == "off":
                 # Context integration is disabled
                 context = ""
-                logger.debug("Context mode is off - skipping context integration")
+                logger.debug(
+                    "Context mode is off - skipping context integration")
             elif CONTEXT_MODE == "on" and context:
                 # Always include context when available
                 logger.debug(
@@ -2514,8 +2575,7 @@ CRITICAL RULES:
                 ]
 
                 is_learning_query = any(
-                    keyword in user_input.lower() for keyword in learning_keywords
-                )
+                    keyword in user_input.lower() for keyword in learning_keywords)
 
                 if is_learning_query:
                     logger.debug(
@@ -2523,8 +2583,7 @@ CRITICAL RULES:
                     )
                 else:
                     logger.debug(
-                        f"Auto mode - Regular query, skipping context integration"
-                    )
+                        f"Auto mode - Regular query, skipping context integration")
 
             # Apply context to enhanced history if available
             should_include_context = CONTEXT_MODE == "on" or (
@@ -2539,19 +2598,23 @@ CRITICAL RULES:
                 system_content += f" Use this context: {context}"
 
             # Replace the first system message if it exists, otherwise insert
-            if enhanced_history and isinstance(enhanced_history[0], SystemMessage):
+            if enhanced_history and isinstance(
+                    enhanced_history[0], SystemMessage):
                 enhanced_history[0] = SystemMessage(content=system_content)
             else:
-                enhanced_history.insert(0, SystemMessage(content=system_content))
+                enhanced_history.insert(
+                    0, SystemMessage(
+                        content=system_content))
             system_content = "Lets get some coding done.." + tool_instructions
             logger.debug(
-                f"After concatenation, system_content len: {len(system_content)}"
-            )
+                f"After concatenation, system_content len: {
+                    len(system_content)}")
             if context and should_include_context:
                 system_content += f" Use this context: {context}"
 
             # Replace the first system message if it exists, otherwise insert
-            if enhanced_history and isinstance(enhanced_history[0], SystemMessage):
+            if enhanced_history and isinstance(
+                    enhanced_history[0], SystemMessage):
                 logger.debug("Replacing existing system message")
                 enhanced_history[0] = SystemMessage(content=system_content)
                 logger.debug(
@@ -2559,7 +2622,9 @@ CRITICAL RULES:
                 )
             else:
                 logger.debug("Inserting new system message")
-                enhanced_history.insert(0, SystemMessage(content=system_content))
+                enhanced_history.insert(
+                    0, SystemMessage(
+                        content=system_content))
 
             logger.debug(
                 f"Final system message ({len(system_content)} chars): {
@@ -2596,7 +2661,9 @@ CRITICAL RULES:
                     import time  # Re-import in case not imported above
 
                     llm_duration = time.time() - llm_start_time
-                    print(f"⚡ Initial LLM call completed in {llm_duration:.2f}s")
+                    print(
+                        f"⚡ Initial LLM call completed in {
+                            llm_duration:.2f}s")
 
                 # Verbose logging of LLM response details
                 if VERBOSE_LOGGING:
@@ -2604,14 +2671,15 @@ CRITICAL RULES:
                     if hasattr(initial_response, "usage") and SHOW_TOKEN_USAGE:
                         usage = getattr(initial_response, "usage", None)
                         if usage:
-                            prompt_tokens = getattr(usage, "prompt_tokens", "N/A")
+                            prompt_tokens = getattr(
+                                usage, "prompt_tokens", "N/A")
                             completion_tokens = getattr(
                                 usage, "completion_tokens", "N/A"
                             )
-                            total_tokens = getattr(usage, "total_tokens", "N/A")
+                            total_tokens = getattr(
+                                usage, "total_tokens", "N/A")
                             print(
-                                f"🔄 Token Usage: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total"
-                            )
+                                f"🔄 Token Usage: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total")
 
                     # Log tool call information
                     has_tools = (
@@ -2631,7 +2699,8 @@ CRITICAL RULES:
                         hasattr(initial_response, "reasoning_content")
                         and SHOW_LLM_REASONING
                     ):
-                        reasoning = getattr(initial_response, "reasoning_content", "")
+                        reasoning = getattr(
+                            initial_response, "reasoning_content", "")
                         if reasoning and reasoning.strip():
                             reasoning_text = reasoning.strip()
                             print(
@@ -2640,8 +2709,10 @@ CRITICAL RULES:
 
                 logger.debug(f"LLM response type: {type(initial_response)}")
                 logger.debug(
-                    f"Has tool_calls attr: {hasattr(initial_response, 'tool_calls')}"
-                )
+                    f"Has tool_calls attr: {
+                        hasattr(
+                            initial_response,
+                            'tool_calls')}")
                 if hasattr(initial_response, "tool_calls"):
                     logger.debug(f"Tool calls: {initial_response.tool_calls}")
                     if VERBOSE_LOGGING and SHOW_TOOL_DETAILS:
@@ -2649,7 +2720,8 @@ CRITICAL RULES:
                             print(
                                 f"🔧 LLM Generated {len(initial_response.tool_calls)} Tool Call(s)"
                             )
-                            for i, tc in enumerate(initial_response.tool_calls):
+                            for i, tc in enumerate(
+                                    initial_response.tool_calls):
                                 tool_name = (
                                     tc.get("name", "unknown")
                                     if isinstance(tc, dict)
@@ -2681,15 +2753,19 @@ CRITICAL RULES:
 
                         if VERBOSE_LOGGING:
                             tool_duration = time.time() - tool_start_time
-                            print(f"⏱️  {tool_name} completed in {tool_duration:.2f}s")
+                            print(
+                                f"⏱️  {tool_name} completed in {
+                                    tool_duration:.2f}s")
 
                             # Log tool result status
                             if "error" in result:
                                 print(f"❌ Tool error: {result['error']}")
                             else:
                                 print(
-                                    f"✅ Tool success: {result.get('function_name', 'unknown')}"
-                                )
+                                    f"✅ Tool success: {
+                                        result.get(
+                                            'function_name',
+                                            'unknown')}")
 
                         tool_results.append(result)
 
@@ -2699,20 +2775,27 @@ CRITICAL RULES:
                         for result in tool_results:
                             # Debug: Log the actual result structure
                             if VERBOSE_LOGGING:
-                                print(f"DEBUG: Tool result keys: {list(result.keys())}")
+                                print(
+                                    f"DEBUG: Tool result keys: {
+                                        list(
+                                            result.keys())}")
                                 print(f"DEBUG: Tool result: {result}")
 
-                            # Check nested result structure (tools return {'result': {...}})
+                            # Check nested result structure (tools return
+                            # {'result': {...}})
                             actual_result = result.get("result", result)
 
                             if "error" in actual_result:
                                 # Show error clearly to user with full details
-                                error_msg = actual_result.get("error", "Unknown error")
-                                tool_message += f"- {result['function_name']}: ❌ ERROR - {error_msg}\n"
+                                error_msg = actual_result.get(
+                                    "error", "Unknown error")
+                                tool_message += f"- {
+                                    result['function_name']}: ❌ ERROR - {error_msg}\n"
                             elif (
                                 "success" in actual_result and actual_result["success"]
                             ):
-                                # Show success with additional info if available
+                                # Show success with additional info if
+                                # available
                                 tool_message += (
                                     f"- {result['function_name']}: ✅ SUCCESS"
                                 )
@@ -2721,26 +2804,28 @@ CRITICAL RULES:
                                         f" (file: {actual_result['file_path']})"
                                     )
                                 elif "size" in actual_result:
-                                    tool_message += f" ({actual_result['size']} bytes)"
+                                    tool_message += f" ({
+                                        actual_result['size']} bytes)"
                                 elif "result_count" in actual_result:
                                     tool_message += (
                                         f" ({actual_result['result_count']} results)"
                                     )
                                 tool_message += "\n"
                             else:
-                                # Generic result - check for success in different ways
+                                # Generic result - check for success in
+                                # different ways
                                 tool_message += (
                                     f"- {result['function_name']}: ℹ️ COMPLETED\n"
                                 )
 
                         enhanced_history.append(
                             AIMessage(
-                                content=initial_response.content or "Using tools..."
-                            )
-                        )
-                        enhanced_history.append(HumanMessage(content=tool_message))
+                                content=initial_response.content or "Using tools..."))
+                        enhanced_history.append(
+                            HumanMessage(content=tool_message))
 
-                        # Make follow-up call with tool results and error handling
+                        # Make follow-up call with tool results and error
+                        # handling
                         followup_start_time = None
                         try:
                             if VERBOSE_LOGGING:
@@ -2753,8 +2838,11 @@ CRITICAL RULES:
 
                                 # Log the tool results being used
                                 if VERBOSE_LOGGING:
-                                    print(f"📋 Using {len(tool_results)} tool results:")
-                                    for i, result in enumerate(tool_results, 1):
+                                    print(
+                                        f"📋 Using {
+                                            len(tool_results)} tool results:")
+                                    for i, result in enumerate(
+                                            tool_results, 1):
                                         func_name = result.get(
                                             "function_name", "unknown"
                                         )
@@ -2766,15 +2854,14 @@ CRITICAL RULES:
                                         print(f"   {i}. {func_name}: {status}")
 
                             # Check context length before calling LLM
-                            total_chars = sum(
-                                len(msg.content or "") for msg in enhanced_history
-                            )
+                            total_chars = sum(len(msg.content or "")
+                                              for msg in enhanced_history)
                             if VERBOSE_LOGGING:
                                 print(
-                                    f"📏 Follow-up context length: {total_chars} characters"
-                                )
+                                    f"📏 Follow-up context length: {total_chars} characters")
                                 if total_chars > 15000:
-                                    print("⚠️  Large context may impact performance")
+                                    print(
+                                        "⚠️  Large context may impact performance")
 
                             # Trim context if too long
                             if total_chars > 80000:
@@ -2801,13 +2888,15 @@ CRITICAL RULES:
                                 )
 
                                 if hasattr(final_response, "usage"):
-                                    usage = getattr(final_response, "usage", None)
+                                    usage = getattr(
+                                        final_response, "usage", None)
                                     if usage:
                                         print(
                                             f"🔄 Follow-up tokens: {getattr(usage, 'total_tokens', 'N/A')}"
                                         )
 
-                            # Check if follow-up response contains additional tool calls
+                            # Check if follow-up response contains additional
+                            # tool calls
                             if (
                                 hasattr(final_response, "tool_calls")
                                 and final_response.tool_calls
@@ -2816,21 +2905,29 @@ CRITICAL RULES:
                                 additional_tool_results = []
                                 for tool_call in final_response.tool_calls:
                                     tool_name = (
-                                        tool_call.get("name", "unknown")
-                                        if isinstance(tool_call, dict)
-                                        else getattr(tool_call, "name", "unknown")
-                                    )
-                                    print(f"🔧 Executing additional tool: {tool_name}")
+                                        tool_call.get(
+                                            "name",
+                                            "unknown") if isinstance(
+                                            tool_call,
+                                            dict) else getattr(
+                                            tool_call,
+                                            "name",
+                                            "unknown"))
+                                    print(
+                                        f"🔧 Executing additional tool: {tool_name}")
                                     result = execute_tool_call(tool_call)
                                     additional_tool_results.append(result)
 
-                                # Add additional tool results and make final call
+                                # Add additional tool results and make final
+                                # call
                                 if additional_tool_results:
                                     additional_tool_message = (
                                         "Additional tool execution results:\n"
                                     )
                                     for result in additional_tool_results:
-                                        additional_tool_message += f"- {result['function_name']}: {result['result']}\n"
+                                        additional_tool_message += f"- {
+                                            result['function_name']}: {
+                                            result['result']}\n"
 
                                     enhanced_history.append(
                                         AIMessage(
@@ -2838,11 +2935,11 @@ CRITICAL RULES:
                                             or "Executing additional tools..."
                                         )
                                     )
-                                    enhanced_history.append(
-                                        HumanMessage(content=additional_tool_message)
-                                    )
+                                    enhanced_history.append(HumanMessage(
+                                        content=additional_tool_message))
 
-                                    # Final response after all tools with basic error handling
+                                    # Final response after all tools with basic
+                                    # error handling
                                     try:
                                         final_start_time = None
                                         if VERBOSE_LOGGING:
@@ -2856,26 +2953,28 @@ CRITICAL RULES:
                                             # Log additional tool results
                                             if additional_tool_results:
                                                 print(
-                                                    f"📋 Using {len(additional_tool_results)} additional tool results"
-                                                )
+                                                    f"📋 Using {
+                                                        len(additional_tool_results)} additional tool results")
 
-                                        # Check context length before calling LLM
+                                        # Check context length before calling
+                                        # LLM
                                         total_chars = sum(
                                             len(msg.content or "")
                                             for msg in enhanced_history
                                         )
                                         if VERBOSE_LOGGING:
                                             print(
-                                                f"📏 Context length: {total_chars} characters"
-                                            )
+                                                f"📏 Context length: {total_chars} characters")
                                             if total_chars > 20000:
                                                 print(
                                                     "⚠️  Very large context may impact performance and quality"
                                                 )
 
-                                        # Trim context if too long (rough estimate: ~100k chars = ~25k tokens)
+                                        # Trim context if too long (rough
+                                        # estimate: ~100k chars = ~25k tokens)
                                         if total_chars > 80000:
-                                            # Keep system message and last few messages
+                                            # Keep system message and last few
+                                            # messages
                                             trimmed_history = []
                                             if enhanced_history and hasattr(
                                                 enhanced_history[0], "type"
@@ -2885,7 +2984,8 @@ CRITICAL RULES:
                                                     enhanced_history[0]
                                                 )
 
-                                            # Keep last 10 messages to preserve recent context
+                                            # Keep last 10 messages to preserve
+                                            # recent context
                                             trimmed_history.extend(
                                                 enhanced_history[-10:]
                                             )
@@ -2915,21 +3015,21 @@ CRITICAL RULES:
                                                 time.time() - final_start_time
                                             )
                                             print(
-                                                f"⚡ Final response generated in {final_duration:.2f}s"
-                                            )
+                                                f"⚡ Final response generated in {
+                                                    final_duration:.2f}s")
 
-                                            # Log final response characteristics
+                                            # Log final response
+                                            # characteristics
                                             response_text = (
-                                                final_final_response.content or ""
-                                            )
+                                                final_final_response.content or "")
                                             print(
-                                                f"💬 Response length: {len(response_text)} characters"
-                                            )
+                                                f"💬 Response length: {
+                                                    len(response_text)} characters")
 
-                                            if hasattr(final_final_response, "usage"):
+                                            if hasattr(
+                                                    final_final_response, "usage"):
                                                 usage = getattr(
-                                                    final_final_response, "usage", None
-                                                )
+                                                    final_final_response, "usage", None)
                                                 if usage:
                                                     prompt_tokens = getattr(
                                                         usage, "prompt_tokens", "N/A"
@@ -2943,8 +3043,7 @@ CRITICAL RULES:
                                                         usage, "total_tokens", "N/A"
                                                     )
                                                     print(
-                                                        f"🔄 Tokens: {prompt_tokens} prompt + {completion_tokens} comp = {total_tokens} total"
-                                                    )
+                                                        f"🔄 Tokens: {prompt_tokens} prompt + {completion_tokens} comp = {total_tokens} total")
 
                                                     # Calculate efficiency
                                                     if (
@@ -2956,8 +3055,8 @@ CRITICAL RULES:
                                                                 response_text
                                                             ) / int(total_tokens)
                                                             print(
-                                                                f"📊 Efficiency: {chars_per_token:.1f} characters per token"
-                                                            )
+                                                                f"📊 Efficiency: {
+                                                                    chars_per_token:.1f} characters per token")
                                                         except (
                                                             ValueError,
                                                             ZeroDivisionError,
@@ -2966,12 +3065,14 @@ CRITICAL RULES:
 
                                         response = final_final_response.content or ""
 
-                                        # Check if any tools had errors and highlight them
+                                        # Check if any tools had errors and
+                                        # highlight them
                                         if tool_results:
                                             tool_errors = []
                                             for r in tool_results:
                                                 # Check nested result structure
-                                                actual_result = r.get("result", r)
+                                                actual_result = r.get(
+                                                    "result", r)
                                                 if "error" in actual_result:
                                                     tool_errors.append(
                                                         (r, actual_result)
@@ -2982,40 +3083,39 @@ CRITICAL RULES:
                                                 and "error" not in response.lower()
                                             ):
                                                 response += (
-                                                    f"\n\n⚠️  Tool Errors Detected:\n"
-                                                )
+                                                    f"\n\n⚠️  Tool Errors Detected:\n")
                                                 for (
                                                     error_result,
                                                     actual_result,
                                                 ) in tool_errors:
                                                     error_msg = actual_result.get(
-                                                        "error", "Unknown error"
-                                                    )
-                                                    response += f"- {error_result['function_name']}: {error_msg}\n"
+                                                        "error", "Unknown error")
+                                                    response += f"- {
+                                                        error_result['function_name']}: {error_msg}\n"
 
                                     except Exception as e:
                                         logger.error(
-                                            f"Final LLM call failed after tool execution: {e}"
-                                        )
+                                            f"Final LLM call failed after tool execution: {e}")
                                         response = (
                                             f"I successfully executed the tools, but encountered an error "
                                             f"generating the final response: {str(e)}. The tool results are still available above."
                                         )
                                         if VERBOSE_LOGGING:
                                             print(
-                                                f"❌ Final response generation failed: {str(e)}"
-                                            )
+                                                f"❌ Final response generation failed: {
+                                                    str(e)}")
                                 else:
                                     response = final_response.content or ""
                             else:
-                                # No additional tool calls, use the follow-up response
+                                # No additional tool calls, use the follow-up
+                                # response
                                 response = final_response.content or ""
 
                         except Exception as e:
                             logger.error(
-                                f"Follow-up LLM call failed after tool execution: {e}"
-                            )
-                            response = f"I executed the tool successfully, but encountered an error generating the final response: {str(e)}"
+                                f"Follow-up LLM call failed after tool execution: {e}")
+                            response = f"I executed the tool successfully, but encountered an error generating the final response: {
+                                str(e)}"
                     else:
                         response = initial_response.content or ""
 
@@ -3026,8 +3126,7 @@ CRITICAL RULES:
             except Exception as e:
                 # Fallback to regular streaming if tool calling fails
                 logger.warning(
-                    f"Tool calling failed, falling back to regular response: {e}"
-                )
+                    f"Tool calling failed, falling back to regular response: {e}")
                 # Stream response tokens from LLM (fallback method)
                 for chunk in llm.stream(enhanced_history):
                     content = chunk.content
@@ -3076,7 +3175,8 @@ CRITICAL RULES:
         except ConnectionError as e:
             # Network connectivity issues - LM Studio server is unreachable
             logger.error(f"Connection error: {e}")
-            print(f"\n\nError: Cannot connect to LM Studio at {LM_STUDIO_BASE_URL}")
+            print(
+                f"\n\nError: Cannot connect to LM Studio at {LM_STUDIO_BASE_URL}")
             print("Please ensure LM Studio is running and accessible.\n")
             # Remove failed user message to prevent conversation corruption
             if conversation_history and isinstance(
@@ -3176,7 +3276,11 @@ def execute_learn_url(url: str) -> dict:
             if operation_count % 50 == 0:
                 cleanup_memory()
 
-            return {"success": True, "title": title, "url": url, "length": len(content)}
+            return {
+                "success": True,
+                "title": title,
+                "url": url,
+                "length": len(content)}
         else:
             return {"error": "Vector database not initialized"}
 
