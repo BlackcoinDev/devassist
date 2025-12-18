@@ -162,6 +162,7 @@ from src.core.context import (
 )
 from src.core.config import Config, get_config, get_logger, APP_VERSION
 from langchain_openai import ChatOpenAI
+from chromadb import HttpClient
 from langchain_core.messages import (
     HumanMessage,
     SystemMessage,
