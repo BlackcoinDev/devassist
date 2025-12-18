@@ -1,8 +1,8 @@
-# AI Assistant Chat Application v0.1.1 - Learning Edition
+# AI Assistant Chat Application v0.2.0 - Modular Architecture
 
 An advanced interactive AI chat assistant powered by LangChain, LM Studio, and ChromaDB vector database. Features comprehensive learning capabilities, multi-format document processing, robust error handling, and complete feature parity between GUI and CLI interfaces.
 
-## 🌟 Features v0.1.1
+## 🌟 Features v0.2.0
 
 - **🖥️ Modern GUI**: Beautiful PyQt6 interface with dark/light themes
 - **🧠 Learning AI**: Teach the AI new information via /learn command that persists across sessions
@@ -41,7 +41,7 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                            DevAssist v0.1.1                             │
+│                            DevAssist v0.2.0                             │
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │   ┌─────────────┐      ┌─────────────┐      ┌─────────────────────────┐  │
@@ -161,7 +161,7 @@ AI: The /populate command processes documents by:
 - Build custom knowledge bases for specific domains
 - Ask questions that combine learned information with document content
 
-### Core Components v0.1.1
+### Core Components v0.2.0
 
 1. **🖥️ GUI Interface**: Modern PyQt6 graphical interface with complete CLI command parity
 2. **💻 CLI Interface**: Traditional terminal interface with full functionality
@@ -797,65 +797,111 @@ This recursively scans directories and adds all code files to the ChromaDB vecto
 devassist/
 ├── launcher.py                # Unified launcher for GUI/CLI versions
 ├── src/
-│   ├── main.py                # CLI application with learning capabilities
-│   └── gui.py                 # PyQt6 graphical user interface
-├── tests/run_tests.py         # Test runner script
-├── requirements.txt           # Python dependencies
-├── pytest.ini                 # Pytest configuration
-├── mypy.ini                   # MyPy type checking configuration
-├── docs/
-│   ├── MIGRATION.md           # Migration guide and documentation
-│   └── ROADMAP.md             # Future development roadmap
-├── tools/
-│   ├── README.md                      # Guide for AI tool calling
-│   ├── populate_codebase.py          # Codebase population script for bulk import
-│   ├── docling_example.py            # Document processing with Docling
-│   ├── vlm_document_processing_example.py # VLM document processing examples
-│   ├── integrated_document_workflow.py # Integrated document workflow
-│   ├── enable_tools_example.py       # Tool enabling examples
-│   ├── tool_demo.py                  # Tool demonstration script
-│   ├── tool_calling_demo.py          # Tool calling demonstration
-│   └── check_mem0.py                 # Mem0 integration checking
+│   ├── __init__.py
+│   ├── main.py                # CLI interface + LLM initialization (3,175 lines)
+│   ├── gui.py                 # PyQt6 graphical user interface (2,135 lines)
+│   ├── core/                  # Application foundation
+│   │   ├── config.py          # Configuration management from .env
+│   │   ├── context.py         # ApplicationContext (dependency injection)
+│   │   └── context_utils.py   # Shared utility functions
+│   ├── storage/               # Persistence layer
+│   │   ├── database.py        # SQLite connection management
+│   │   ├── memory.py          # Conversation history persistence
+│   │   └── cache.py           # Embedding and query caching
+│   ├── security/              # Security enforcement
+│   │   ├── input_sanitizer.py # Input validation and sanitization
+│   │   ├── path_security.py   # Path traversal prevention
+│   │   ├── rate_limiter.py    # Request rate limiting
+│   │   └── exceptions.py      # Security exception classes
+│   ├── vectordb/              # Knowledge storage
+│   │   ├── client.py          # ChromaDB unified HTTP API client
+│   │   └── spaces.py          # Workspace/collection management
+│   ├── commands/              # Command system (plugin architecture)
+│   │   ├── registry.py        # CommandRegistry dispatcher
+│   │   └── handlers/          # Command handler modules
+│   │       ├── help_commands.py
+│   │       ├── config_commands.py
+│   │       ├── database_commands.py
+│   │       ├── memory_commands.py
+│   │       ├── learning_commands.py
+│   │       ├── space_commands.py
+│   │       ├── file_commands.py
+│   │       └── export_commands.py
+│   └── tools/                 # AI tool system (plugin architecture)
+│       ├── registry.py        # ToolRegistry dispatcher
+│       └── executors/         # AI tool executor modules
+│           ├── file_tools.py
+│           ├── knowledge_tools.py
+│           ├── document_tools.py
+│           └── web_tools.py
 ├── tests/
 │   ├── __init__.py            # Test package initialization
 │   ├── conftest.py            # Pytest fixtures and configuration
 │   ├── fixtures/              # Test fixtures directory
 │   ├── integration/           # Integration tests
-│   └── unit/                  # Unit tests
-├── tests/lint/                # Linting scripts
-│   ├── all-lint.py            # Comprehensive project linting
-│   └── lint-python.py         # Python-specific linting
+│   ├── unit/                  # Unit tests
+│   └── lint/                  # Linting scripts
+│       ├── all-lint.py        # Comprehensive project linting
+│       └── lint-python.py     # Python-specific linting
+├── tools/
+│   ├── README.md              # Guide for AI tool calling
+│   ├── populate_codebase.py  # Codebase population script for bulk import
+│   ├── docling_example.py    # Document processing with Docling
+│   └── ...                    # Other tool examples
+├── docs/
+│   ├── ARCHITECTURE.md        # System architecture documentation
+│   ├── MANUAL.md              # User guide
+│   ├── MIGRATION.md           # Migration guide and documentation
+│   ├── ROADMAP.md             # Future development roadmap
+│   └── SEARCH.md              # Search and RAG documentation
 ├── samples/
 │   ├── Blackcoin-POS-3.pdf                        # Sample PDF document
-│   ├── blackcoin-pos-protocol-v2-whitepaper.pdf   # Sample whitepaper
-│   └── blackcoin-pos-protocol-v3.1-whitepaper.pdf # Sample whitepaper v3.1
+│   └── ...                                        # Other sample files
+├── db/                        # Database files directory
+│   └── history.db             # SQLite database for persistent chat history
 ├── venv/                      # Python 3.13 virtual environment
-├── db/                         # Database files directory
-│   └── history.db              # SQLite database for persistent chat history
 ├── .env                       # Configuration (copy from .env.example)
 ├── .env.example               # Configuration template
+├── CLAUDE.md                  # Developer guide for Claude Code
 ├── AGENTS.md                  # Agent guidelines and architecture docs
+├── requirements.txt           # Python dependencies
+├── pytest.ini                 # Pytest configuration
+├── mypy.ini                   # MyPy type checking configuration
 ├── LICENSE                    # MIT License
 └── README.md                  # This file
 ```
 
 ### Key Files Explanation
 
-- **`src/main.py`**: Core application with chat loop, ChromaDB integration, and rich commands
-- **`src/gui.py`**: PyQt6-based graphical user interface with full CLI parity
-- **`launcher.py`**: Unified entry point for starting GUI or CLI modes
+**Core Application:**
+- **`src/main.py`** (3,175 lines): CLI interface and LLM initialization with chat loop
+- **`src/gui.py`** (2,135 lines): PyQt6-based graphical user interface with full CLI parity
+- **`launcher.py`** (216 lines): Unified entry point for starting GUI or CLI modes
+
+**Modular Architecture (v0.2.0):**
+- **`src/core/context.py`**: ApplicationContext dependency injection container—centralizes all application state
+- **`src/commands/registry.py`**: CommandRegistry dispatcher with self-registering plugin system
+- **`src/tools/registry.py`**: ToolRegistry dispatcher for AI tool auto-registration
+- **`src/vectordb/client.py`**: Unified ChromaDB HTTP API wrapper (eliminates 10+ duplicate API patterns)
+- **`src/storage/database.py`**: Thread-safe SQLite connection management
+- **`src/storage/memory.py`**: Conversation history persistence and trimming
+- **`src/storage/cache.py`**: Embedding and query result caching
+- **`src/security/input_sanitizer.py`**: SQL injection, XSS, command injection prevention
+
+**Tools & Documentation:**
 - **`tools/populate_codebase.py`**: Script to bulk-load codebases into ChromaDB vector database
 - **`docs/ROADMAP.md`**: Detailed future development plans and integrations
 - **`docs/MIGRATION.md`**: Guide for migrating between versions
-- **`tests/`**: Comprehensive test suite with unit and integration tests
+- **`docs/ARCHITECTURE.md`**: System architecture and plugin documentation
+- **`tests/`**: Comprehensive test suite (89 tests, 100% pass rate)
 - **`db/history.db`**: SQLite database for persistent chat history
-- **Remote ChromaDB**: Personalized user memory storage
 
 ### Adding New Features
 
-1. **New Commands**: Add to the slash command handler in `src/main.py`
-2. **Configuration**: Add environment variables to `.env` and code
-3. **Knowledge**: Use `/learn` command or use the `/populate` command
+1. **New Commands**: Create handler in `src/commands/handlers/` with `@CommandRegistry.register()` decorator
+2. **New Tools**: Create executor in `src/tools/executors/` with `@ToolRegistry.register()` decorator
+3. **Configuration**: Add environment variables to `.env` and `src/core/config.py`
+4. **Knowledge**: Use `/learn` command or `/populate` command to teach the AI
 
 ## 🐛 Troubleshooting
 

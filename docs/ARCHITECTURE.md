@@ -4,7 +4,7 @@ This document provides a comprehensive architectural overview of the AI Assistan
 
 ## 🏗️ System Architecture
 
-### High-Level Overview
+### High-Level Overview (v0.2.0 - Modular Architecture)
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -16,32 +16,40 @@ This document provides a comprehensive architectural overview of the AI Assistan
          │                       │                       │
          └───────────────────────┼───────────────────────┘
                                  │
-                    ┌─────────────────┐
-                    │  launcher.py    │
-                    │ (GUI/CLI)       │
-                    │   selector      │
-                    └─────────────────┘
-                             │
-                ┌────────────┴────────────┐
-                │                         │
-        ┌─────────────────┐      ┌─────────────────┐
-        │     src/gui.py  │      │    src/main.py  │
-        │ (PyQt6 GUI)     │      │   (CLI App)     │
-        │  Markdown       │      │     v0.1.1      │
-        │   Support       │      │   Learning AI   │
-        └─────────────────┘      └─────────────────┘
-                │                         │
-        ┌───────┴───────┐         ┌───────┴───────┐
-        │ initialize_   │         │  show_welcome │
-        │ application() │         │     ()        │
-        └───────────────┘         └───────────────┘
-                │                         │
-                └────────────┬────────────┘
-                             │
-                    ┌─────────────────┐
-                    │   SQLite DB     │
-                    │ (Chat Memory)   │
-                    └─────────────────┘
+                    ┌─────────────────────────┐
+                    │      launcher.py        │
+                    │    (GUI/CLI selector)   │
+                    │     loads .env          │
+                    └─────────────────────────┘
+                                 │
+                ┌────────────────┴────────────────┐
+                │                                 │
+        ┌───────────────┐              ┌─────────────────┐
+        │  src/gui.py   │              │  src/main.py    │
+        │  (PyQt6 GUI)  │              │  (CLI + init)   │
+        └───────┬───────┘              └────────┬────────┘
+                │                               │
+                └───────────┬───────────────────┘
+                            │
+                ┌───────────▼────────────┐
+                │ ApplicationContext     │ (Dependency Injection)
+                │  - llm, vectorstore    │
+                │  - db_conn, history    │
+                │  - config, caches      │
+                └───────────┬────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+  ┌─────▼──────┐    ┌──────▼───────┐   ┌──────▼────────┐
+  │ Commands   │    │    Tools     │   │   Storage     │
+  │ (Registry) │    │  (Registry)  │   │   (SQLite)    │
+  │ 8 handlers │    │  8 tools     │   │   (Memory)    │
+  └────────────┘    └──────────────┘   └───────────────┘
+        │                   │                   │
+  ┌─────▼──────┐    ┌──────▼───────┐   ┌──────▼────────┐
+  │  Security  │    │   VectorDB   │   │    Cache      │
+  │ Validators │    │  (ChromaDB)  │   │  (In-memory)  │
+  └────────────┘    └──────────────┘   └───────────────┘
 ```
 
 ### Data Flow
@@ -126,6 +134,141 @@ The system supports 80+ file types through unified processing:
 - **Paragraph-aware boundaries** for better retrieval
 - **Quality filtering** to skip low-value content
 - **Binary detection** with null byte analysis
+
+## 🔌 Plugin Architecture (v0.2.0)
+
+The modular architecture introduces self-registering plugin systems for commands and tools, eliminating the need for central configuration.
+
+### CommandRegistry Pattern
+
+Commands use a decorator-based auto-registration system:
+
+```python
+# In src/commands/handlers/utility_commands.py
+from src.commands.registry import CommandRegistry
+
+@CommandRegistry.register("mycommand", "Description", category="utility", aliases=["mc"])
+def handle_mycommand(args: str) -> None:
+    """Handle /mycommand - does something useful."""
+    print(f"Executing: {args}")
+```
+
+**How it works:**
+1. Decorator executes during module import
+2. Function auto-registers in CommandRegistry._commands dict
+3. Help text auto-generates from decorator metadata
+4. Dispatch via `CommandRegistry.dispatch(command, args)`
+5. No central configuration file needed
+
+**Benefits:**
+- Add commands without modifying core code
+- Help text stays in sync with implementation
+- Category-based organization
+- Alias support built-in
+
+### ToolRegistry Pattern
+
+AI tools use the same self-registration approach:
+
+```python
+# In src/tools/executors/utility_tools.py
+from src.tools.registry import ToolRegistry
+
+TOOL_DEFINITION = {
+    "type": "function",
+    "function": {
+        "name": "my_tool",
+        "description": "Does something useful",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "arg1": {"type": "string", "description": "Argument"}
+            },
+            "required": ["arg1"]
+        }
+    }
+}
+
+@ToolRegistry.register("my_tool", TOOL_DEFINITION)
+def execute_my_tool(arg1: str) -> Dict[str, Any]:
+    """Execute the tool."""
+    return {"success": True, "result": f"Executed with {arg1}"}
+```
+
+**How it works:**
+1. Tool definition follows OpenAI function calling format
+2. Decorator registers both definition and executor
+3. LLM receives definitions via `ToolRegistry.get_definitions()`
+4. AI calls tools autonomously during conversation
+5. Execution via `ToolRegistry.execute_tool_call(tool_call)`
+
+**Benefits:**
+- Tools auto-register on import
+- LLM automatically receives new tool definitions
+- Schema and implementation stay together
+- No manual binding required
+
+### ApplicationContext Pattern
+
+Centralized dependency injection replaces scattered globals:
+
+```python
+# In src/core/context.py
+from dataclasses import dataclass
+
+@dataclass
+class ApplicationContext:
+    llm: Optional[ChatOpenAI] = None
+    vectorstore: Optional[Chroma] = None
+    embeddings: Optional[OllamaEmbeddings] = None
+    db_conn: Optional[sqlite3.Connection] = None
+    conversation_history: List[BaseMessage] = field(default_factory=list)
+    # ... more services
+
+# Singleton accessor
+_context: Optional[ApplicationContext] = None
+
+def get_context() -> ApplicationContext:
+    global _context
+    if _context is None:
+        _context = ApplicationContext()
+    return _context
+```
+
+**Usage:**
+```python
+from src.core.context import get_context
+
+ctx = get_context()
+ctx.llm  # Access ChatOpenAI instance
+ctx.vectorstore  # Access Chroma instance
+ctx.conversation_history  # Access message history
+```
+
+**Benefits:**
+- All services accessible from single source
+- Easy mocking for tests
+- Thread-safe with proper locking
+- Clear dependency relationships
+
+### Module Organization
+
+```
+src/
+├── core/               # Foundation layer
+│   ├── config.py       # Configuration from .env
+│   ├── context.py      # ApplicationContext singleton
+│   └── context_utils.py # Utility functions
+├── commands/           # Command plugin system
+│   ├── registry.py     # CommandRegistry dispatcher
+│   └── handlers/       # Auto-registering handlers
+├── tools/              # Tool plugin system
+│   ├── registry.py     # ToolRegistry dispatcher
+│   └── executors/      # Auto-registering executors
+├── storage/            # Persistence layer
+├── security/           # Security enforcement
+└── vectordb/           # Knowledge storage
+```
 
 ## 🗄️ Database Architecture
 

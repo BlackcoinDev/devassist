@@ -38,6 +38,236 @@ This guide covers the currently implemented database backends and important migr
 - **ChromaDB failure**: `❌ ERROR: ChromaDB connection failed: [error]`
 - **Application exit**: Application will exit with code 1 if ChromaDB is unavailable
 
+---
+
+## 🔄 Migrating to v0.2.0: Modular Architecture
+
+### Overview of Changes
+
+Version 0.2.0 introduces a significant architectural refactoring, moving from a monolithic structure to a modular plugin-based architecture:
+
+- **main.py reduced**: From 4,556 lines to 3,175 lines (30% reduction)
+- **New modules created**: 8 focused modules with clear responsibilities
+- **Plugin systems**: CommandRegistry and ToolRegistry with self-registration
+- **Dependency injection**: ApplicationContext replaces scattered globals
+
+### Breaking Changes
+
+#### 1. Import Paths Changed
+
+**Before (v0.1.1):**
+```python
+from src.main import llm, vectorstore, embeddings, conversation_history
+from src.main import get_relevant_context, add_to_knowledge_base
+```
+
+**After (v0.2.0):**
+```python
+# Use ApplicationContext for all services
+from src.core.context import get_context
+
+ctx = get_context()
+llm = ctx.llm
+vectorstore = ctx.vectorstore
+embeddings = ctx.embeddings
+conversation_history = ctx.conversation_history
+
+# Import utilities from new modules
+from src.core.context_utils import get_relevant_context, add_to_knowledge_base
+from src.storage.database import initialize_database
+from src.storage.memory import load_memory, save_memory
+from src.vectordb.client import ChromaDBClient
+```
+
+#### 2. Command and Tool Registration
+
+**Before (v0.1.1):**
+```python
+# Commands hardcoded in handle_slash_command() function
+# Tools manually added to enable_tools list
+```
+
+**After (v0.2.0):**
+```python
+# Commands use decorator pattern
+from src.commands.registry import CommandRegistry
+
+@CommandRegistry.register("mycommand", "Description", category="utility")
+def handle_mycommand(args: str) -> None:
+    pass
+
+# Tools use decorator pattern
+from src.tools.registry import ToolRegistry
+
+@ToolRegistry.register("my_tool", TOOL_DEFINITION)
+def execute_my_tool(arg1: str) -> Dict[str, Any]:
+    return {"success": True}
+```
+
+#### 3. Configuration Access
+
+**Before (v0.1.1):**
+```python
+# Environment variables accessed directly via os.getenv()
+import os
+chroma_host = os.getenv("CHROMA_HOST")
+```
+
+**After (v0.2.0):**
+```python
+# Configuration centralized in Config dataclass
+from src.core.config import Config
+
+config = Config.load()
+chroma_host = config.chroma_host
+```
+
+### Migration Steps
+
+#### Step 1: Update Custom Code Imports
+
+If you have custom extensions or scripts that import from `src.main`, update them:
+
+```python
+# OLD
+from src.main import llm, vectorstore
+result = vectorstore.similarity_search(query)
+
+# NEW
+from src.core.context import get_context
+ctx = get_context()
+result = ctx.vectorstore.similarity_search(query)
+```
+
+#### Step 2: Migrate Custom Commands
+
+If you added custom slash commands to `handle_slash_command()`:
+
+1. Create a new handler file in `src/commands/handlers/custom_commands.py`
+2. Use the CommandRegistry decorator:
+
+```python
+from src.commands.registry import CommandRegistry
+
+@CommandRegistry.register("mycustom", "My custom command", category="custom")
+def handle_mycustom(args: str) -> None:
+    """Handle /mycustom command."""
+    print(f"Custom command executed: {args}")
+```
+
+3. The handler will auto-register when imported
+
+#### Step 3: Migrate Custom Tools
+
+If you added custom AI tools:
+
+1. Create executor in `src/tools/executors/custom_tools.py`
+2. Define tool schema and executor:
+
+```python
+from src.tools.registry import ToolRegistry
+from typing import Dict, Any
+
+MY_TOOL_DEF = {
+    "type": "function",
+    "function": {
+        "name": "my_custom_tool",
+        "description": "Custom tool",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "input": {"type": "string"}
+            },
+            "required": ["input"]
+        }
+    }
+}
+
+@ToolRegistry.register("my_custom_tool", MY_TOOL_DEF)
+def execute_my_custom_tool(input: str) -> Dict[str, Any]:
+    return {"success": True, "result": input}
+```
+
+#### Step 4: Update Test Code
+
+If you have custom tests:
+
+```python
+# OLD
+from src.main import llm, vectorstore
+
+def test_something():
+    assert llm is not None
+
+# NEW
+from src.core.context import get_context, reset_context
+
+def test_something():
+    ctx = get_context()
+    assert ctx.llm is not None
+
+def teardown():
+    reset_context()  # Clean up for next test
+```
+
+### Backwards Compatibility
+
+The following remain compatible:
+
+- ✅ **User-facing features**: All slash commands work identically
+- ✅ **GUI/CLI interfaces**: No changes to user experience
+- ✅ **Configuration**: `.env` format unchanged
+- ✅ **Database schema**: SQLite schema unchanged
+- ✅ **ChromaDB collections**: Vector data fully compatible
+- ✅ **Tool functionality**: All 8 tools work the same
+
+### What Still Works
+
+- All existing `.env` files
+- All existing ChromaDB collections
+- All existing conversation history in SQLite
+- All existing spaces and configurations
+- GUI and CLI interfaces (no user-facing changes)
+
+### Testing Your Migration
+
+After migrating, verify everything works:
+
+```bash
+# 1. Run tests with new module coverage
+uv run pytest --cov=src --cov=launcher --cov-report=term-missing
+
+# 2. Test both interfaces
+uv run python launcher.py --cli
+uv run python launcher.py --gui
+
+# 3. Verify slash commands work
+# In CLI: /help, /vectordb, /memory, /learn, etc.
+
+# 4. Check tool calling
+# Ask AI: "read the README file" (should use read_file tool)
+```
+
+### Getting Help
+
+If you encounter issues during migration:
+
+1. Check the [ARCHITECTURE.md](ARCHITECTURE.md) for new module structure
+2. See [CLAUDE.md](../CLAUDE.md) for development guidelines
+3. Review code examples in updated documentation
+4. Check error logs for specific import or module errors
+
+### Rollback Instructions
+
+If you need to rollback to v0.1.1:
+
+```bash
+git checkout tags/v0.1.1
+uv pip install -r requirements.txt
+```
+
+Note: No database migration is needed for rollback—data formats are compatible.
+
 ### New Tool Capabilities
 
 **MAJOR ENHANCEMENT**: v0.1.1 introduces **8 AI tools** that work together with the existing knowledge management system:

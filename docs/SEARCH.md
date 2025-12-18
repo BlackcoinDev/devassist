@@ -654,16 +654,24 @@ rm query_cache.json
 
 ### Core Functions
 
-| Function | Location | Purpose |
-|----------|----------|---------|
-| `get_relevant_context()` | src/main.py:1084 | Semantic search with caching |
-| `execute_search_knowledge()` | src/main.py:3330 | AI tool wrapper for searches |
-| `execute_web_search()` | src/main.py:3007 | DuckDuckGo web search |
-| `handle_context_command()` | src/main.py:2324 | Context mode control |
-| `load_query_cache()` | src/main.py:874 | Load cache from disk |
-| `save_query_cache()` | src/main.py:887 | Persist cache to disk |
-| `handle_learn_command()` | src/main.py:1531 | `/learn` command handler |
-| `handle_populate_command()` | src/main.py:1976 | `/populate` command handler |
+The DevAssist modular architecture organizes search functionality across several focused modules:
+
+| Function | Module Location | Purpose |
+|----------|-----------------|---------|
+| `get_relevant_context()` | `src/core/context_utils.py` | Semantic search with caching |
+| `execute_search_knowledge()` | `src/tools/executors/knowledge_tools.py` | AI tool for knowledge base searches |
+| `execute_web_search()` | `src/tools/executors/web_tools.py` | DuckDuckGo web search tool |
+| `handle_context_command()` | `src/commands/handlers/config_commands.py` | `/context` command handler |
+| `load_query_cache()` | `src/storage/cache.py` | Load search result cache from disk |
+| `save_query_cache()` | `src/storage/cache.py` | Persist search cache to disk |
+| `handle_learn_command()` | `src/commands/handlers/learning_commands.py` | `/learn` command handler |
+| `handle_populate_command()` | `src/commands/handlers/learning_commands.py` | `/populate` command handler |
+
+**Architecture Notes:**
+- **Commands** auto-register via `@CommandRegistry.register()` decorator
+- **Tools** auto-register via `@ToolRegistry.register()` decorator
+- Search functions integrate with `ApplicationContext` for accessing ChromaDB and embeddings
+- All search operations use the unified `ChromaDBClient` class (`src/vectordb/client.py`)
 
 ### Environment Variables
 

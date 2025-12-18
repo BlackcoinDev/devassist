@@ -280,11 +280,32 @@ When adding features:
 
 ### Critical Files
 
+**Core Application:**
+
 | File | Purpose | Lines |
 |------|---------|-------|
-| `src/main.py` | CLI app + shared backend logic | 4,556 |
-| `src/gui.py` | PyQt6 GUI interface | 2,139 |
+| `src/main.py` | CLI interface + LLM initialization | 3,175 |
+| `src/gui.py` | PyQt6 GUI interface | 2,135 |
 | `launcher.py` | Interface selector + .env loader | 216 |
+
+**Modular Architecture (v0.2.0):**
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `src/core/config.py` | Configuration management from .env | 296 |
+| `src/core/context.py` | ApplicationContext (dependency injection) | 272 |
+| `src/core/context_utils.py` | Shared utility functions | 291 |
+| `src/commands/registry.py` | Command dispatcher (plugin system) | ~150 |
+| `src/tools/registry.py` | AI tool dispatcher (plugin system) | ~150 |
+| `src/vectordb/client.py` | ChromaDB unified API client | 291 |
+| `src/storage/database.py` | SQLite connection management | 97 |
+| `src/storage/memory.py` | Conversation history persistence | 172 |
+| `src/storage/cache.py` | Embedding and query caching | 161 |
+
+**Tools & Testing:**
+
+| File | Purpose | Lines |
+|------|---------|-------|
 | `tools/populate_codebase.py` | Bulk codebase import (production) | - |
 | `tests/conftest.py` | Test fixtures | - |
 | `pytest.ini` | Test configuration | - |
@@ -293,19 +314,61 @@ When adding features:
 
 **Adding a new slash command:**
 
-1. Add command handler to `handle_slash_command()` in `src/main.py` (line 1227)
-2. Update GUI command button handlers in `src/gui.py`
-3. Add to help text in both files
-4. Write unit tests in `tests/unit/test_main.py`
-5. Test in both CLI and GUI modes
+1. Create handler function in `src/commands/handlers/[category]_commands.py` (choose appropriate category: help, config, database, memory, learning, space, file, export)
+2. Decorate with `@CommandRegistry.register("command_name", "Description", category="category", aliases=[])`
+3. Handler auto-registers on import—no central configuration needed
+4. Update GUI command button handlers in `src/gui.py` if adding a button
+5. Write unit tests in `tests/unit/test_commands.py`
+6. Test in both CLI and GUI modes
+
+**Example:**
+```python
+# In src/commands/handlers/utility_commands.py
+from src.commands.registry import CommandRegistry
+
+@CommandRegistry.register("mycommand", "Does something useful", category="utility")
+def handle_mycommand(args: str) -> None:
+    """Handle /mycommand - does something useful."""
+    print(f"Executing mycommand with args: {args}")
+```
 
 **Adding a new AI tool:**
 
-1. Define tool function with proper typing and docstring
-2. Add to `enable_tools` list in tool initialization
-3. Create unit tests in `tests/unit/test_tools.py`
-4. Create integration tests in `tests/integration/test_tool_calling.py`
-5. Update this documentation
+1. Create executor function in `src/tools/executors/[category]_tools.py` (choose: file_tools, knowledge_tools, document_tools, web_tools)
+2. Define OpenAI function calling schema in `TOOL_DEFINITION` dictionary
+3. Decorate with `@ToolRegistry.register("tool_name", TOOL_DEFINITION)`
+4. Executor auto-registers on import and LLM automatically receives tool definition
+5. Create unit tests in `tests/unit/test_tools.py`
+6. Create integration tests in `tests/integration/test_tool_calling.py`
+7. Update this documentation
+
+**Example:**
+```python
+# In src/tools/executors/utility_tools.py
+from src.tools.registry import ToolRegistry
+from typing import Dict, Any
+
+MY_TOOL_DEFINITION = {
+    "type": "function",
+    "function": {
+        "name": "my_tool",
+        "description": "Does something useful",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "arg1": {"type": "string", "description": "First argument"}
+            },
+            "required": ["arg1"]
+        }
+    }
+}
+
+@ToolRegistry.register("my_tool", MY_TOOL_DEFINITION)
+def execute_my_tool(arg1: str) -> Dict[str, Any]:
+    """Execute my_tool with arg1."""
+    result = f"Tool executed with: {arg1}"
+    return {"success": True, "result": result}
+```
 
 **Modifying document processing:**
 
