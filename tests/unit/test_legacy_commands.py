@@ -92,6 +92,18 @@ class TestLegacyFileHandlers:
         assert "Permission denied" in output
 
     @patch('builtins.print')
+    @patch('src.commands.handlers.legacy_commands.execute_write_file')
+    def test_handle_write_command_exception(self, mock_execute, mock_print):
+        """Test writing to a file with exception."""
+        mock_execute.side_effect = Exception("Disk full")
+        
+        handle_write_command("test.txt:Hello World")
+        
+        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        assert "Error:" in output
+        assert "Disk full" in output
+
+    @patch('builtins.print')
     def test_handle_write_command_empty_content(self, mock_print):
         """Test writing with empty content."""
         handle_write_command("test.txt:")
@@ -140,6 +152,18 @@ class TestLegacyFileHandlers:
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Error:" in output
         assert "Directory not found" in output
+
+    @patch('builtins.print')
+    @patch('src.commands.handlers.legacy_commands.execute_list_directory')
+    def test_handle_list_command_exception(self, mock_execute, mock_print):
+        """Test listing directory with exception."""
+        mock_execute.side_effect = Exception("Directory access error")
+        
+        handle_list_command("problematic_dir")
+        
+        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        assert "Error listing directory" in output
+        assert "Directory access error" in output
 
     @patch('builtins.print')
     @patch('src.commands.handlers.legacy_commands.execute_list_directory')

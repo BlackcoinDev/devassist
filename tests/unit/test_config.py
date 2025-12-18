@@ -92,3 +92,153 @@ class TestConfigLoading:
             c2 = get_config()
             assert c1 is c2
             assert c1.model_name == 'qwen3-vl-30b'
+
+
+class TestConfigProxy:
+    """Test backwards compatibility config proxy."""
+
+    def test_config_proxy_properties(self):
+        """Test all ConfigProxy properties."""
+        with patch.dict(os.environ, {
+            'LM_STUDIO_URL': 'http://localhost:1234',
+            'LM_STUDIO_KEY': 'test-key',
+            'MODEL_NAME': 'test-model',
+            'MAX_HISTORY_PAIRS': '15',
+            'TEMPERATURE': '0.8',
+            'MAX_INPUT_LENGTH': '8192',
+            'DB_TYPE': 'sqlite',
+            'DB_PATH': 'custom.db',
+            'CHROMA_HOST': '192.168.1.1',
+            'CHROMA_PORT': '9000',
+            'OLLAMA_BASE_URL': 'http://localhost:11434',
+            'EMBEDDING_MODEL': 'test-embedding',
+            'VERBOSE_LOGGING': 'true',
+            'SHOW_LLM_REASONING': 'false',
+            'SHOW_TOKEN_USAGE': 'true',
+            'SHOW_TOOL_DETAILS': 'false'
+        }):
+            from src.core import config as config_mod
+            config_mod._config = None  # Reset singleton
+
+            from src.core.config import config_proxy
+
+            # Test all proxy properties
+            assert config_proxy.LM_STUDIO_BASE_URL == 'http://localhost:1234'
+            assert config_proxy.LM_STUDIO_API_KEY == 'test-key'
+            assert config_proxy.MODEL_NAME == 'test-model'
+            assert config_proxy.MAX_HISTORY_PAIRS == 15
+            assert config_proxy.TEMPERATURE == 0.8
+            assert config_proxy.MAX_INPUT_LENGTH == 8192
+            assert config_proxy.DB_TYPE == 'sqlite'
+            assert config_proxy.DB_PATH == 'custom.db'
+            assert config_proxy.CHROMA_HOST == '192.168.1.1'
+            assert config_proxy.CHROMA_PORT == 9000
+            assert config_proxy.OLLAMA_BASE_URL == 'http://localhost:11434'
+            assert config_proxy.EMBEDDING_MODEL == 'test-embedding'
+            assert config_proxy.VERBOSE_LOGGING is True
+            assert config_proxy.SHOW_LLM_REASONING is False
+            assert config_proxy.SHOW_TOKEN_USAGE is True
+            assert config_proxy.SHOW_TOOL_DETAILS is False
+
+
+class TestConfigEdgeCases:
+    """Test edge cases and error handling."""
+
+    def test_lazy_config_attr_function(self):
+        """Test the _lazy_config_attr helper function."""
+        from src.core.config import _lazy_config_attr
+
+        with patch.dict(os.environ, {
+            'LM_STUDIO_URL': 'http://localhost:1234',
+            'LM_STUDIO_KEY': 'test-key',
+            'MODEL_NAME': 'test-model',
+            'MAX_HISTORY_PAIRS': '10',
+            'TEMPERATURE': '0.7',
+            'MAX_INPUT_LENGTH': '4096',
+            'DB_TYPE': 'sqlite',
+            'DB_PATH': 'test.db',
+            'CHROMA_HOST': 'localhost',
+            'CHROMA_PORT': '8000',
+            'OLLAMA_BASE_URL': 'http://localhost:11434',
+            'EMBEDDING_MODEL': 'test-embedding'
+        }):
+            from src.core import config as config_mod
+            config_mod._config = None  # Reset singleton
+
+            # Create a lazy property
+            lazy_prop = _lazy_config_attr('model_name')
+
+            # It should be a property object
+            assert isinstance(lazy_prop, property)
+
+    def test_dotenv_import_error_handling(self):
+        """Test handling when python-dotenv is not available."""
+        import sys
+
+        # Save original dotenv module if present
+        dotenv_module = sys.modules.get('dotenv')
+
+        try:
+            # Remove dotenv from modules
+            if 'dotenv' in sys.modules:
+                del sys.modules['dotenv']
+
+            # Mock the import to raise ImportError
+            import builtins
+            real_import = builtins.__import__
+
+            def mock_import(name, *args, **kwargs):
+                if name == 'dotenv':
+                    raise ImportError("No module named 'dotenv'")
+                return real_import(name, *args, **kwargs)
+
+            with patch("builtins.__import__", side_effect=mock_import):
+                # Reload the config module to trigger the ImportError path
+                import importlib
+                from src.core import config as config_mod
+                importlib.reload(config_mod)
+
+                # The module should still load, just without dotenv support
+                assert config_mod is not None
+
+        finally:
+            # Restore original dotenv module
+            if dotenv_module:
+                sys.modules['dotenv'] = dotenv_module
+
+    def test_kmp_duplicate_lib_workaround(self):
+        """Test KMP_DUPLICATE_LIB_OK environment variable handling."""
+        import sys
+
+        # Save original KMP_DUPLICATE_LIB_OK value
+        original_kmp_value = os.environ.get('KMP_DUPLICATE_LIB_OK')
+
+        try:
+            # Test when KMP_DUPLICATE_LIB_OK is set to TRUE
+            with patch.dict(os.environ, {'KMP_DUPLICATE_LIB_OK': 'TRUE'}):
+                # Reload the config module to trigger the KMP handling
+                import importlib
+                from src.core import config as config_mod
+                importlib.reload(config_mod)
+
+                # KMP_DUPLICATE_LIB_OK should be set in environment
+                assert os.environ.get('KMP_DUPLICATE_LIB_OK') == 'TRUE'
+
+            # Test when KMP_DUPLICATE_LIB_OK is not set
+            with patch.dict(os.environ, {}, clear=True):
+                # Remove KMP_DUPLICATE_LIB_OK if it was set
+                if 'KMP_DUPLICATE_LIB_OK' in os.environ:
+                    del os.environ['KMP_DUPLICATE_LIB_OK']
+
+                # Reload the config module
+                importlib.reload(config_mod)
+
+                # KMP_DUPLICATE_LIB_OK should not be set
+                assert os.environ.get('KMP_DUPLICATE_LIB_OK') is None
+
+        finally:
+            # Restore original KMP_DUPLICATE_LIB_OK value
+            if original_kmp_value:
+                os.environ['KMP_DUPLICATE_LIB_OK'] = original_kmp_value
+            elif 'KMP_DUPLICATE_LIB_OK' in os.environ:
+                del os.environ['KMP_DUPLICATE_LIB_OK']

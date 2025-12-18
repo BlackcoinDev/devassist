@@ -128,3 +128,154 @@ class TestChromaDBClient:
         client1 = get_chromadb_client()
         client2 = get_chromadb_client()
         assert client1 is client2
+
+    @responses.activate
+    def test_list_collections_api_failure(self):
+        """Test list_collections error handling."""
+        responses.add(responses.GET, self.coll_url, status=500)
+        
+        collections = self.client.list_collections()
+        assert collections == []
+
+    @responses.activate
+    def test_list_collections_exception(self):
+        """Test list_collections exception handling."""
+        responses.add(responses.GET, self.coll_url, body=Exception("Network error"))
+        
+        collections = self.client.list_collections()
+        assert collections == []
+
+    @responses.activate
+    def test_create_collection_failure(self):
+        """Test create_collection error handling."""
+        responses.add(responses.POST, self.coll_url, status=500)
+        
+        coll_id = self.client.create_collection("new-coll")
+        assert coll_id is None
+
+    @responses.activate
+    def test_create_collection_exception(self):
+        """Test create_collection exception handling."""
+        responses.add(responses.POST, self.coll_url, body=Exception("Network error"))
+        
+        coll_id = self.client.create_collection("new-coll")
+        assert coll_id is None
+
+    @responses.activate
+    def test_delete_collection_failure(self):
+        """Test delete_collection error handling."""
+        del_url = f"{self.coll_url}/target-coll"
+        responses.add(responses.DELETE, del_url, status=500)
+        
+        success = self.client.delete_collection("target-coll")
+        assert success is False
+
+    @responses.activate
+    def test_delete_collection_exception(self):
+        """Test delete_collection exception handling."""
+        del_url = f"{self.coll_url}/target-coll"
+        responses.add(responses.DELETE, del_url, body=Exception("Network error"))
+        
+        success = self.client.delete_collection("target-coll")
+        assert success is False
+
+    @responses.activate
+    def test_query_collection_failure(self):
+        """Test query_collection error handling."""
+        query_url = f"{self.coll_url}/coll-id/query"
+        responses.add(responses.POST, query_url, status=500)
+        
+        docs, meta = self.client.query_collection("coll-id", [0.1, 0.2])
+        assert docs == []
+        assert meta == []
+
+    @responses.activate
+    def test_query_collection_exception(self):
+        """Test query_collection exception handling."""
+        query_url = f"{self.coll_url}/coll-id/query"
+        responses.add(responses.POST, query_url, body=Exception("Network error"))
+        
+        docs, meta = self.client.query_collection("coll-id", [0.1, 0.2])
+        assert docs == []
+        assert meta == []
+
+    @responses.activate
+    def test_add_documents_failure(self):
+        """Test add_documents error handling."""
+        add_url = f"{self.coll_url}/coll-id/add"
+        responses.add(responses.POST, add_url, status=500)
+        
+        success = self.client.add_documents(
+            collection_id="coll-id",
+            documents=["text"],
+            embeddings=[[0.1, 0.2]],
+            metadatas=[{"src": "test"}]
+        )
+        assert success is False
+
+    @responses.activate
+    def test_add_documents_exception(self):
+        """Test add_documents exception handling."""
+        add_url = f"{self.coll_url}/coll-id/add"
+        responses.add(responses.POST, add_url, body=Exception("Network error"))
+        
+        success = self.client.add_documents(
+            collection_id="coll-id",
+            documents=["text"],
+            embeddings=[[0.1, 0.2]],
+            metadatas=[{"src": "test"}]
+        )
+        assert success is False
+
+    @responses.activate
+    def test_get_collection_count_failure(self):
+        """Test get_collection_count error handling."""
+        count_url = f"{self.coll_url}/coll-id/count"
+        responses.add(responses.GET, count_url, status=500)
+        
+        count = self.client.get_collection_count("coll-id")
+        assert count == 0
+
+    @responses.activate
+    def test_get_collection_count_exception(self):
+        """Test get_collection_count exception handling."""
+        count_url = f"{self.coll_url}/coll-id/count"
+        responses.add(responses.GET, count_url, body=Exception("Network error"))
+        
+        count = self.client.get_collection_count("coll-id")
+        assert count == 0
+
+    @responses.activate
+    def test_query_collection_empty_response(self):
+        """Test query_collection with empty response."""
+        query_url = f"{self.coll_url}/coll-id/query"
+        responses.add(responses.POST, query_url, json={}, status=200)
+        
+        docs, meta = self.client.query_collection("coll-id", [0.1, 0.2])
+        assert docs == []
+        assert meta == []
+
+    @responses.activate
+    def test_query_collection_missing_fields(self):
+        """Test query_collection with missing fields in response."""
+        query_url = f"{self.coll_url}/coll-id/query"
+        responses.add(responses.POST, query_url, json={"other_field": "value"}, status=200)
+        
+        docs, meta = self.client.query_collection("coll-id", [0.1, 0.2])
+        assert docs == []
+        assert meta == []
+
+    @responses.activate
+    def test_add_documents_without_optional_fields(self):
+        """Test add_documents without optional fields."""
+        add_url = f"{self.coll_url}/coll-id/add"
+        responses.add(responses.POST, add_url, status=201)
+        
+        success = self.client.add_documents(
+            collection_id="coll-id",
+            documents=["text"],
+            embeddings=[[0.1, 0.2]],
+            metadatas=None,
+            ids=None
+        )
+        assert success is True

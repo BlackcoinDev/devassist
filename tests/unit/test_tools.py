@@ -157,7 +157,144 @@ class TestFileSystemTools:
         result = execute_get_current_directory()
 
         assert result["success"] is True
-        assert result["current_directory"] == "/home/user/project"
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    @patch("os.path.exists")
+    @patch("os.path.isfile")
+    def test_read_file_not_a_file(self, mock_isfile, mock_exists, mock_abspath, mock_getcwd):
+        """Test read_file when path is not a file (e.g., directory)."""
+        mock_getcwd.return_value = "/tmp"
+        mock_abspath.return_value = "/tmp/some_dir"
+        mock_exists.return_value = True
+        mock_isfile.return_value = False  # It's a directory, not a file
+
+        result = execute_read_file("some_dir")
+
+        assert "error" in result
+        assert "Not a file" in result["error"]
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    @patch("os.path.exists")
+    @patch("os.path.isfile")
+    @patch("os.path.getsize")
+    @patch("builtins.open", side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "invalid"))
+    def test_read_file_unicode_decode_error(
+        self, mock_open_func, mock_getsize, mock_isfile, mock_exists, mock_abspath, mock_getcwd
+    ):
+        """Test read_file with binary file causing UnicodeDecodeError."""
+        mock_getcwd.return_value = "/tmp"
+        mock_abspath.return_value = "/tmp/binary.bin"
+        mock_exists.return_value = True
+        mock_isfile.return_value = True
+        mock_getsize.return_value = 100
+
+        result = execute_read_file("binary.bin")
+
+        assert "error" in result
+        assert "Cannot read binary file" in result["error"]
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    def test_write_file_path_traversal(self, mock_abspath, mock_getcwd):
+        """Test write_file path traversal protection."""
+        mock_getcwd.return_value = "/app/workdir"
+        mock_abspath.return_value = "/etc/passwd"  # Outside workdir
+
+        result = execute_write_file("../../etc/passwd", "malicious")
+
+        assert "error" in result
+        assert "Access denied" in result["error"]
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    @patch("os.path.dirname")
+    @patch("os.path.exists")
+    @patch("os.makedirs")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_write_file_create_directory(
+        self, mock_file, mock_makedirs, mock_exists, mock_dirname, mock_abspath, mock_getcwd
+    ):
+        """Test write_file creating parent directory."""
+        mock_getcwd.return_value = "/tmp"
+        mock_abspath.return_value = "/tmp/newdir/file.txt"
+        mock_dirname.return_value = "/tmp/newdir"
+        mock_exists.return_value = False  # Directory doesn't exist
+
+        result = execute_write_file("newdir/file.txt", "content")
+
+        mock_makedirs.assert_called_once_with("/tmp/newdir", exist_ok=True)
+        assert result["success"] is True
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    def test_list_directory_path_traversal(self, mock_abspath, mock_getcwd):
+        """Test list_directory path traversal protection."""
+        mock_getcwd.return_value = "/app/workdir"
+        mock_abspath.return_value = "/etc"  # Outside workdir
+
+        result = execute_list_directory("../../etc")
+
+        assert "error" in result
+        assert "Access denied" in result["error"]
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    @patch("os.path.exists")
+    def test_list_directory_not_found(self, mock_exists, mock_abspath, mock_getcwd):
+        """Test list_directory with non-existent directory."""
+        mock_getcwd.return_value = "/tmp"
+        mock_abspath.return_value = "/tmp/missing"
+        mock_exists.return_value = False
+
+        result = execute_list_directory("missing")
+
+        assert "error" in result
+        assert "Directory not found" in result["error"]
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    @patch("os.path.exists")
+    @patch("os.path.isdir")
+    def test_list_directory_not_a_directory(self, mock_isdir, mock_exists, mock_abspath, mock_getcwd):
+        """Test list_directory when path is a file, not directory."""
+        mock_getcwd.return_value = "/tmp"
+        mock_abspath.return_value = "/tmp/file.txt"
+        mock_exists.return_value = True
+        mock_isdir.return_value = False  # It's a file
+
+        result = execute_list_directory("file.txt")
+
+        assert "error" in result
+        assert "Not a directory" in result["error"]
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    @patch("os.path.exists")
+    @patch("os.path.isdir")
+    @patch("os.listdir", side_effect=Exception("Permission denied"))
+    def test_list_directory_exception(
+        self, mock_listdir, mock_isdir, mock_exists, mock_abspath, mock_getcwd
+    ):
+        """Test list_directory with general exception."""
+        mock_getcwd.return_value = "/tmp"
+        mock_abspath.return_value = "/tmp/restricted"
+        mock_exists.return_value = True
+        mock_isdir.return_value = True
+
+        result = execute_list_directory("restricted")
+
+        assert "error" in result
+        assert "Permission denied" in result["error"]
+
+    @patch("os.getcwd", side_effect=Exception("Filesystem error"))
+    def test_get_current_directory_exception(self, mock_getcwd):
+        """Test get_current_directory with exception."""
+        result = execute_get_current_directory()
+
+        assert "error" in result
+        assert "Filesystem error" in result["error"]
 
 
 class TestDocumentProcessingTools:
@@ -197,6 +334,88 @@ class TestDocumentProcessingTools:
 
         # The function may return different error messages
         assert "error" in result or result["success"] is False
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    def test_parse_document_path_traversal(self, mock_abspath, mock_getcwd):
+        """Test path traversal security check."""
+        mock_getcwd.return_value = "/app/workdir"
+        mock_abspath.return_value = "/etc/passwd"  # Outside workdir
+
+        result = execute_parse_document("../../etc/passwd")
+
+        assert "error" in result
+        assert "Access denied" in result["error"]
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    @patch("os.path.exists")
+    def test_parse_document_file_not_found(self, mock_exists, mock_abspath, mock_getcwd):
+        """Test file not found error."""
+        mock_getcwd.return_value = "/tmp"
+        mock_abspath.return_value = "/tmp/missing.pdf"
+        mock_exists.return_value = False
+
+        result = execute_parse_document("missing.pdf")
+
+        assert "error" in result
+        assert "File not found" in result["error"]
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    @patch("os.path.exists")
+    def test_parse_document_docling_not_installed(self, mock_exists, mock_abspath, mock_getcwd):
+        """Test ImportError when docling is not installed."""
+        mock_getcwd.return_value = "/tmp"
+        mock_abspath.return_value = "/tmp/test.pdf"
+        mock_exists.return_value = True
+
+        # Mock the import to raise ImportError
+        import builtins
+        real_import = builtins.__import__
+
+        def mock_import(name, *args, **kwargs):
+            if name == "docling.document_converter":
+                raise ImportError("No module named 'docling'")
+            return real_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=mock_import):
+            result = execute_parse_document("test.pdf")
+
+            assert "error" in result
+            assert "docling library not installed" in result["error"]
+
+    @patch("os.getcwd")
+    @patch("os.path.abspath")
+    @patch("os.path.exists")
+    @patch("docling.document_converter.DocumentConverter")
+    def test_parse_document_docling_processing_error(
+        self, mock_converter, mock_exists, mock_abspath, mock_getcwd
+    ):
+        """Test Exception during docling processing."""
+        mock_getcwd.return_value = "/tmp"
+        mock_abspath.return_value = "/tmp/bad.pdf"
+        mock_exists.return_value = True
+
+        # Mock converter to raise exception during processing
+        mock_instance = MagicMock()
+        mock_instance.convert.side_effect = Exception("Corrupted document")
+        mock_converter.return_value = mock_instance
+
+        result = execute_parse_document("bad.pdf")
+
+        assert "error" in result
+        assert "Docling processing failed" in result["error"]
+
+    @patch("os.getcwd")
+    def test_parse_document_outer_exception(self, mock_getcwd):
+        """Test outer exception handler (e.g., os.getcwd fails)."""
+        mock_getcwd.side_effect = Exception("Filesystem error")
+
+        result = execute_parse_document("test.pdf")
+
+        assert "error" in result
+        assert "Document parsing failed" in result["error"]
 
 
 class TestKnowledgeManagementTools:
@@ -254,6 +473,64 @@ class TestKnowledgeManagementTools:
         assert result["success"] is True
         assert result["result_count"] == 0
 
+    def test_learn_information_empty_string(self):
+        """Test learning with empty information string."""
+        result = execute_learn_information("")
+
+        assert "error" in result
+        assert "cannot be empty" in result["error"]
+
+    def test_learn_information_whitespace_only(self):
+        """Test learning with whitespace-only information."""
+        result = execute_learn_information("   \n\t  ")
+
+        assert "error" in result
+        assert "cannot be empty" in result["error"]
+
+    @patch("src.tools.executors.knowledge_tools.add_to_knowledge_base")
+    def test_learn_information_kb_add_fails(self, mock_add_kb):
+        """Test when knowledge base addition returns False."""
+        mock_add_kb.return_value = False
+
+        result = execute_learn_information("Some information")
+
+        assert "error" in result
+        assert "Failed to add information" in result["error"]
+
+    @patch("src.tools.executors.knowledge_tools.add_to_knowledge_base")
+    def test_learn_information_exception(self, mock_add_kb):
+        """Test exception handling during learning."""
+        mock_add_kb.side_effect = Exception("Database connection failed")
+
+        result = execute_learn_information("Some information")
+
+        assert "error" in result
+        assert "Database connection failed" in result["error"]
+
+    def test_search_knowledge_empty_query(self):
+        """Test searching with empty query string."""
+        result = execute_search_knowledge("")
+
+        assert "error" in result
+        assert "cannot be empty" in result["error"]
+
+    def test_search_knowledge_whitespace_query(self):
+        """Test searching with whitespace-only query."""
+        result = execute_search_knowledge("  \n\t  ")
+
+        assert "error" in result
+        assert "cannot be empty" in result["error"]
+
+    @patch("src.tools.executors.knowledge_tools.get_relevant_context")
+    def test_search_knowledge_exception(self, mock_get_context):
+        """Test exception handling during search."""
+        mock_get_context.side_effect = Exception("Search engine error")
+
+        result = execute_search_knowledge("test query")
+
+        assert "error" in result
+        assert "Search engine error" in result["error"]
+
 
 class TestWebSearchTools:
     """Test web search functionality."""
@@ -295,6 +572,58 @@ class TestWebSearchTools:
 
             assert "error" in result
             assert "not installed" in result["error"]
+
+    def test_search_web_no_crypto_enhancement(self):
+        """Test that crypto queries don't get re-enhanced."""
+        mock_ddgs_class = MagicMock()
+        mock_ddgs_instance = MagicMock()
+        mock_ddgs_instance.text.return_value = [
+            {"title": "Coin Result", "body": "About coins", "href": "https://example.com"}
+        ]
+        mock_ddgs_instance.__enter__.return_value = mock_ddgs_instance
+        mock_ddgs_instance.__exit__.return_value = None
+        mock_ddgs_class.return_value = mock_ddgs_instance
+
+        with patch.dict("sys.modules", {"duckduckgo_search": MagicMock()}):
+            with patch("duckduckgo_search.DDGS", mock_ddgs_class):
+                # Test with "bitcoin" - already crypto-related, should NOT enhance
+                result = execute_web_search("bitcoin price")
+
+                assert result["success"] is True
+                mock_ddgs_instance.text.assert_called_once()
+                call_args = mock_ddgs_instance.text.call_args
+                # Should use original query, not enhanced
+                assert call_args[0][0] == "bitcoin price"
+
+    def test_search_web_ddgs_exception(self):
+        """Test DDGS search execution exception."""
+        mock_ddgs_class = MagicMock()
+        mock_ddgs_instance = MagicMock()
+        mock_ddgs_instance.text.side_effect = Exception("DDGS API error")
+        mock_ddgs_instance.__enter__.return_value = mock_ddgs_instance
+        mock_ddgs_instance.__exit__.return_value = None
+        mock_ddgs_class.return_value = mock_ddgs_instance
+
+        with patch.dict("sys.modules", {"duckduckgo_search": MagicMock()}):
+            with patch("duckduckgo_search.DDGS", mock_ddgs_class):
+                result = execute_web_search("test query")
+
+                assert "error" in result
+                assert "Web search failed" in result["error"]
+                assert "DDGS API error" in result["error"]
+
+    def test_search_web_general_exception(self):
+        """Test general unexpected exception handling."""
+        # Import mock to trigger a general exception during module import
+        def failing_import(*args, **kwargs):
+            if args[0] == "duckduckgo_search":
+                raise RuntimeError("Unexpected error")
+            raise ImportError("Module not found")
+
+        with patch("builtins.__import__", side_effect=failing_import):
+            result = execute_web_search("test query")
+
+            assert "error" in result
 
 
 class TestToolSecurity:

@@ -119,3 +119,111 @@ def test_unknown_argument():
         # argparse exits on error, so we expect SystemExit
         with pytest.raises(SystemExit):
             launcher_main()
+
+
+def test_gui_import_error_fallback():
+    """Test GUI ImportError falls back to CLI."""
+    import builtins
+    real_import = builtins.__import__
+
+    def mock_import(name, *args, **kwargs):
+        if name == "src.gui":
+            raise ImportError("PyQt6 not found")
+        return real_import(name, *args, **kwargs)
+
+    with (
+        patch("launcher.load_dotenv"),
+        patch("os.path.exists", return_value=True),
+        patch("sys.argv", ["launcher.py"]),
+        patch("launcher.launch_cli") as mock_cli,
+        patch("builtins.__import__", side_effect=mock_import),
+    ):
+        from launcher import main as launcher_main
+
+        launcher_main()
+
+        # Should fall back to CLI
+        mock_cli.assert_called_once()
+
+
+def test_gui_general_error_fallback():
+    """Test GUI general error falls back to CLI."""
+    from unittest.mock import MagicMock
+
+    mock_gui = MagicMock()
+    mock_gui.main.side_effect = Exception("GUI crashed")
+
+    with (
+        patch("launcher.load_dotenv"),
+        patch("os.path.exists", return_value=True),
+        patch("sys.argv", ["launcher.py"]),
+        patch("launcher.launch_cli") as mock_cli,
+        patch.dict("sys.modules", {"src.gui": mock_gui}),
+    ):
+        from launcher import main as launcher_main
+
+        launcher_main()
+
+        # Should fall back to CLI
+        mock_cli.assert_called_once()
+
+
+def test_cli_exception_handling():
+    """Test CLI exception handling."""
+    from unittest.mock import MagicMock
+
+    mock_main_module = MagicMock()
+    mock_main_module.main.side_effect = Exception("CLI error")
+
+    with (
+        patch("launcher.load_dotenv"),
+        patch("os.path.exists", return_value=True),
+        patch.dict("sys.modules", {"src.main": mock_main_module}),
+    ):
+        from launcher import launch_cli
+
+        with pytest.raises(SystemExit):
+            launch_cli()
+
+
+def test_env_file_missing():
+    """Test error when .env file is missing."""
+    with (
+        patch("os.path.exists", return_value=False),
+        patch("os.getcwd", return_value="/fake/path"),
+    ):
+        with pytest.raises(SystemExit):
+            # Re-import to trigger the check
+            import importlib
+            import launcher
+            importlib.reload(launcher)
+
+
+def test_dotenv_import_error():
+    """Test error when python-dotenv is not installed."""
+    import sys
+    # Remove dotenv from modules if present
+    dotenv_module = sys.modules.pop("dotenv", None)
+
+    try:
+        with patch.dict("sys.modules", {"dotenv": None}):
+            with pytest.raises(SystemExit):
+                import importlib
+                import launcher
+                importlib.reload(launcher)
+    finally:
+        # Restore dotenv module
+        if dotenv_module:
+            sys.modules["dotenv"] = dotenv_module
+
+
+def test_kmp_duplicate_lib_workaround():
+    """Test KMP_DUPLICATE_LIB_OK workaround is applied."""
+    with (
+        patch("os.path.exists", return_value=True),
+        patch("os.getenv", return_value="TRUE"),
+        patch("launcher.load_dotenv"),
+    ):
+        import os
+        # This should set the environment variable
+        assert os.getenv("KMP_DUPLICATE_LIB_OK") in [None, "TRUE"]

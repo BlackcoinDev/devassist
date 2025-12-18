@@ -125,5 +125,77 @@ class TestSpaceSwitching:
         """Test fallback when no settings file exists."""
         if os.path.exists("space_settings.json"):
             os.remove("space_settings.json")
-            
+
         assert load_current_space() == "default"
+
+    def test_save_current_space_exception(self):
+        """Test exception handling in save_current_space."""
+        ctx = get_context()
+        ctx.current_space = "test_space"
+
+        with patch("builtins.open", side_effect=Exception("Write error")):
+            # Should not raise, just log warning
+            save_current_space()  # No assertion, just verifying it doesn't crash
+
+    def test_load_current_space_exception(self):
+        """Test exception handling in load_current_space."""
+        with open("space_settings.json", "w") as f:
+            f.write("invalid json{")
+
+        # Should return default on parse error
+        result = load_current_space()
+        assert result == "default"
+
+
+class TestSpaceErrors:
+    """Test error handling in space operations."""
+
+    def setup_method(self):
+        """Set up test environment."""
+        reset_context()
+
+    def teardown_method(self):
+        """Clean up test environment."""
+        if os.path.exists("space_settings.json"):
+            os.remove("space_settings.json")
+        reset_context()
+
+    def test_ensure_space_collection_no_vectorstore(self):
+        """Test ensure_space_collection when vectorstore is None."""
+        from src.vectordb.spaces import ensure_space_collection
+
+        ctx = get_context()
+        ctx.vectorstore = None
+
+        result = ensure_space_collection("test")
+        assert result is False
+
+    def test_list_spaces_exception(self):
+        """Test list_spaces with client exception."""
+        with patch('src.vectordb.spaces.get_chromadb_client') as mock_get_client:
+            mock_client = mock_get_client.return_value
+            mock_client.list_collections.side_effect = Exception("Connection error")
+
+            spaces = list_spaces()
+
+            # Should return default on error
+            assert spaces == ["default"]
+
+    def test_delete_space_exception(self):
+        """Test delete_space with client exception."""
+        with patch('src.vectordb.spaces.get_chromadb_client') as mock_get_client:
+            mock_client = mock_get_client.return_value
+            mock_client.delete_collection.side_effect = Exception("Delete failed")
+
+            result = delete_space("project_x")
+
+            assert result is False
+
+    def test_switch_space_ensure_fails(self):
+        """Test switch_space when ensure_space_collection fails."""
+        ctx = get_context()
+        ctx.vectorstore = None  # This will make ensure_space_collection fail
+
+        result = switch_space("test_space")
+
+        assert result is False
