@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """
-AI Assistant Chat Application v0.1.1 - Learning Edition
+AI Assistant Chat Application v0.2.0 - Learning Edition
 
 CORE SYSTEM OVERVIEW:
 ====================
@@ -2144,7 +2144,7 @@ from src.tools import ToolRegistry
 
 def main():
     """
-    Main chat loop v0.1.1 - Core interactive interface with AI tool calling.
+    Main chat loop v0.2.0 - Core interactive interface with AI tool calling.
 
     This function implements the primary user interaction loop featuring:
     1. AI tool calling with qwen3-vl-30b (8 autonomous tools supported)

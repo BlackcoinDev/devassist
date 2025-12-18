@@ -2,11 +2,11 @@
 
 This guide covers the currently implemented database backends and important migration information for the AI Assistant application.
 
-## ⚠️ Breaking Changes in v0.1.1
+## ⚠️ Breaking Changes in v0.2.0
 
 ### Configuration Requirements
 
-**IMPORTANT**: Starting with v0.1.1, the application requires a `.env` file and no longer uses hardcoded defaults.
+**IMPORTANT**: Starting with v0.2.0, the application requires a `.env` file and no longer uses hardcoded defaults.
 
 #### What Changed
 - **Before**: Application worked with or without `.env`, used hardcoded fallbacks, ChromaDB was optional
@@ -55,7 +55,7 @@ Version 0.2.0 introduces a significant architectural refactoring, moving from a 
 
 #### 1. Import Paths Changed
 
-**Before (v0.1.1):**
+**Before (v0.2.0):**
 ```python
 from src.main import llm, vectorstore, embeddings, conversation_history
 from src.main import get_relevant_context, add_to_knowledge_base
@@ -81,7 +81,7 @@ from src.vectordb.client import ChromaDBClient
 
 #### 2. Command and Tool Registration
 
-**Before (v0.1.1):**
+**Before (v0.2.0):**
 ```python
 # Commands hardcoded in handle_slash_command() function
 # Tools manually added to enable_tools list
@@ -106,7 +106,7 @@ def execute_my_tool(arg1: str) -> Dict[str, Any]:
 
 #### 3. Configuration Access
 
-**Before (v0.1.1):**
+**Before (v0.2.0):**
 ```python
 # Environment variables accessed directly via os.getenv()
 import os
@@ -259,10 +259,10 @@ If you encounter issues during migration:
 
 ### Rollback Instructions
 
-If you need to rollback to v0.1.1:
+If you need to rollback to v0.2.0:
 
 ```bash
-git checkout tags/v0.1.1
+git checkout tags/v0.2.0
 uv pip install -r requirements.txt
 ```
 
@@ -270,7 +270,7 @@ Note: No database migration is needed for rollback—data formats are compatible
 
 ### New Tool Capabilities
 
-**MAJOR ENHANCEMENT**: v0.1.1 introduces **8 AI tools** that work together with the existing knowledge management system:
+**MAJOR ENHANCEMENT**: v0.2.0 introduces **8 AI tools** that work together with the existing knowledge management system:
 
 #### Tool Integration Architecture
 

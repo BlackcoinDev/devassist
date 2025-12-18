@@ -1,4 +1,4 @@
-# AI Assistant Test Suite v0.1.1
+# AI Assistant Test Suite v0.2.0
 
 ## 📋 Overview
 
@@ -140,7 +140,7 @@ uv run python tests/lint/all-lint.py
 
 ## 📊 Test Results Summary
 
-### Current Status (v0.1.1)
+### Current Status (v0.2.0)
 - **Total Tests**: 89 (79 active + 10 GUI)
 - **Test Categories**:
   - Unit Tests: 52 tests (26 main + 6 launcher + 20 tools)

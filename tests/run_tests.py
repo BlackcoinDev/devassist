@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """
-Test runner for AI Assistant v0.1.1
+Test runner for AI Assistant v0.2.0
 
 This script provides a convenient way to run the complete test suite
 for the AI Assistant application. It automatically uses pytest if available,
@@ -61,7 +61,7 @@ def run_tests():
     Returns:
         int: Exit code (0 for success, non-zero for failure)
     """
-    print("AI Assistant v0.1.1 - Test Suite")
+    print("AI Assistant v0.2.0 - Test Suite")
     print("=" * 40)
     print("Running comprehensive test suite...")
     print()

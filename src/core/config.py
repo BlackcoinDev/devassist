@@ -42,7 +42,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 # Application version
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.2.0"
 
 
 def _setup_logging() -> logging.Logger:

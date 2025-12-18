@@ -831,4 +831,4 @@ You: "What do you know about [topic]?"
 ---
 
 **Last Updated:** December 2024
-**Version:** DevAssist v0.1.1
+**Version:** DevAssist v0.2.0

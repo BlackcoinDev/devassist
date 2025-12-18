@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 """
-AI Assistant GUI Application v0.1.1 - PyQt6 Graphical Interface
+AI Assistant GUI Application v0.2.0 - PyQt6 Graphical Interface
 
 GRAPHICAL USER INTERFACE for the intelligent AI assistant system, providing a modern,
 user-friendly alternative to the command-line interface with identical functionality.
@@ -419,7 +419,7 @@ class PopulateWorker(QThread):
 
 class AIAssistantGUI(QMainWindow):
     """
-    Main GUI Window for AI Assistant v0.1.1
+    Main GUI Window for AI Assistant v0.2.0
 
     This class implements the complete PyQt6-based graphical interface for the AI assistant,
     providing a modern, user-friendly alternative to the CLI with identical functionality.
@@ -496,7 +496,7 @@ class AIAssistantGUI(QMainWindow):
 
     def init_ui(self):
         """Initialize the user interface."""
-        self.setWindowTitle("AI Assistant v0.1.1 - Learning Edition")
+        self.setWindowTitle("AI Assistant v0.2.0 - Learning Edition")
         self.setGeometry(100, 100, 1000, 700)
 
         # Create central widget
@@ -2107,7 +2107,7 @@ def main():
 
     # Set application properties
     app.setApplicationName("AI Assistant")
-    app.setApplicationVersion("0.1.1")
+    app.setApplicationVersion("0.2.0")
     app.setOrganizationName("Blackcoin Development")
 
     # Initialize backend components (same as CLI)

@@ -293,7 +293,7 @@ python tests/lint/lint-python.py
 - **✅ Feature Parity**: GUI and CLI have identical functionality
 - **✅ Logging**: Comprehensive logging across both interfaces
 
-## 🔧 Required Services v0.1.1
+## 🔧 Required Services v0.2.0
 
 1. **LM Studio** (Port 1234) - **REQUIRED**:
      ```bash
@@ -401,7 +401,7 @@ python tests/lint/lint-python.py
 
 3. **The application will fail to start** without a properly configured `.env` file.
 
-### Required Settings v0.1.1
+### Required Settings v0.2.0
 
 All variables in `.env.example` are **required** - there are no defaults:
 
@@ -525,7 +525,7 @@ The application includes a modern PyQt6-based graphical interface with:
 ### GUI Layout
 ```
 ┌─────────────────────────────────────────────────┐
-│ AI Assistant v0.1.1 - Learning Edition            │
+│ AI Assistant v0.2.0 - Learning Edition            │
 ├─────────────────────────────┬───────────────────┤
 │ Chat Display Area           │ Status: Ready     │
 │ ┌─────────────────────────┐ │ Model: qwen3-vl-30b │
@@ -564,7 +564,7 @@ uv run python launcher.py --gui  # Explicit GUI launch
 
 ```
 ============================================================
-      AI Assistant Chat Interface v0.1.1
+      AI Assistant Chat Interface v0.2.0
 ============================================================
 📍 Python: 3.13.11 | Model: qwen3-vl-30b
 🔗 LM Studio: http://192.168.0.203:1234/v1
@@ -589,7 +589,7 @@ You: quit
 👋 Goodbye! Your conversation has been saved.
 ```
 
-### Slash Commands v0.1.1
+### Slash Commands v0.2.0
 
 | Command | Description | Example |
 |---------|-------------|---------|
@@ -687,7 +687,7 @@ AI Assistant: [comprehensive analysis based on file content]
 - Educational purposes
 - Development and testing
 
-### Learning & Knowledge Features v0.1.1
+### Learning & Knowledge Features v0.2.0
 
 **Teach the AI anything:**
 ```bash

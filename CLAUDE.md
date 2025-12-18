@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-DevAssist (v0.1.1) is an AI-powered learning assistant and development tool that combines conversational AI with persistent knowledge management. It features dual interfaces (PyQt6 GUI and CLI), AI learning via ChromaDB vector database, document processing for 80+ file types, and 8 AI tools for file operations and knowledge management.
+DevAssist (v0.2.0) is an AI-powered learning assistant and development tool that combines conversational AI with persistent knowledge management. It features dual interfaces (PyQt6 GUI and CLI), AI learning via ChromaDB vector database, document processing for 80+ file types, and 8 AI tools for file operations and knowledge management.
 
 **Core Technology Stack:**
 
@@ -192,7 +192,7 @@ Required variables include:
 
 ### Unified Docling Processing
 
-DevAssist uses **Docling** for unified document processing (v0.1.1), replacing separate libraries:
+DevAssist uses **Docling** for unified document processing (v0.2.0), replacing separate libraries:
 
 - **Supported formats**: PDF, DOCX, XLSX, RTF, EPUB, HTML, images, plus 80+ code file types
 - **Benefits**: Single API, layout preservation, high-fidelity extraction
@@ -380,7 +380,7 @@ def execute_my_tool(arg1: str) -> Dict[str, Any]:
 
 ## Known Issues & Constraints
 
-### Current Limitations (v0.1.1)
+### Current Limitations (v0.2.0)
 
 - **Python 3.14**: Not compatible yet—use Python 3.13.x (latest available)
 - **GUI Tests**: Skipped by default (10 tests) to prevent PyQt6 segfaults
