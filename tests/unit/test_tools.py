@@ -13,7 +13,7 @@ Tests for all 8 AI tools with proper mocking and isolation:
 - search_web: DuckDuckGo web search
 """
 
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, mock_open, MagicMock, Mock
 
 # Import tool functions from modular architecture (v0.2.0)
 from src.tools.executors.file_tools import (
@@ -202,28 +202,39 @@ class TestDocumentProcessingTools:
 class TestKnowledgeManagementTools:
     """Test knowledge base operations."""
 
-    @patch("src.main.vectorstore")
-    def test_learn_information_success(self, mock_vectorstore):
+    @patch("src.core.context_utils.get_context")
+    def test_learn_information_success(self, mock_get_context):
         """Test successful information learning."""
+        # Mock context with vectorstore
+        mock_context = Mock()
+        mock_vectorstore = Mock()
         mock_vectorstore.add_texts.return_value = ["doc_id_1"]
+        mock_context.vectorstore = mock_vectorstore
+        mock_get_context.return_value = mock_context
 
         result = execute_learn_information("Python is a programming language")
 
         assert result["success"] is True
         assert result["learned"] is True
 
-    @patch("src.main.vectorstore")
-    def test_learn_information_failure(self, mock_vectorstore):
-        """Test learning information failure."""
+    @patch("src.core.context_utils.get_context")
+    def test_learn_information_failure(self, mock_get_context):
+        """Test learning information with fallback behavior."""
+        # Mock context with vectorstore that fails
+        mock_context = Mock()
+        mock_vectorstore = Mock()
         mock_vectorstore.add_texts.side_effect = Exception("Storage error")
+        mock_context.vectorstore = mock_vectorstore
+        mock_get_context.return_value = mock_context
 
         result = execute_learn_information("test info")
 
-        # The function may still return success even if vectorstore fails
-        # due to fallback behavior
-        assert isinstance(result, dict)
+        # The function has fallback behavior - it should still succeed
+        # because it tries multiple methods
+        assert result["success"] is True
+        assert result["learned"] is True
 
-    @patch("src.main.get_relevant_context")
+    @patch("src.tools.executors.knowledge_tools.get_relevant_context")
     def test_search_knowledge_success(self, mock_get_context):
         """Test successful knowledge search."""
         mock_get_context.return_value = ["Python info", "More Python info"]
@@ -249,14 +260,19 @@ class TestWebSearchTools:
 
     def test_search_web_success(self):
         """Test successful web search."""
-        mock_ddgs = MagicMock()
-        mock_ddgs.return_value.__enter__.return_value = mock_ddgs.return_value
-        mock_ddgs.return_value.text.return_value = [
+        # Mock the duckduckgo_search module properly
+        mock_ddgs_class = MagicMock()
+        mock_ddgs_instance = MagicMock()
+        mock_ddgs_instance.text.return_value = [
             {"title": "Test Result", "body": "Test content", "href": "https://test.com"}
         ]
+        # Mock the context manager behavior
+        mock_ddgs_instance.__enter__.return_value = mock_ddgs_instance
+        mock_ddgs_instance.__exit__.return_value = None
+        mock_ddgs_class.return_value = mock_ddgs_instance
 
-        with patch.dict("sys.modules", {"ddgs": MagicMock()}):
-            with patch("ddgs.DDGS", mock_ddgs):
+        with patch.dict("sys.modules", {"duckduckgo_search": MagicMock()}):
+            with patch("duckduckgo_search.DDGS", mock_ddgs_class):
                 result = execute_web_search("test query")
 
                 assert result["success"] is True
@@ -265,8 +281,8 @@ class TestWebSearchTools:
 
     def test_search_web_failure(self):
         """Test web search failure."""
-        with patch.dict("sys.modules", {"ddgs": MagicMock()}):
-            with patch("ddgs.DDGS", side_effect=Exception("Network error")):
+        with patch.dict("sys.modules", {"duckduckgo_search": MagicMock()}):
+            with patch("duckduckgo_search.DDGS", side_effect=Exception("Network error")):
                 result = execute_web_search("test query")
 
                 assert "error" in result

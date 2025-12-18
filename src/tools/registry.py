@@ -137,9 +137,10 @@ class ToolRegistry:
         Get all tool definitions for LLM binding.
 
         Returns:
-            List of OpenAI function definitions
+            List of OpenAI function definitions (deep copies to prevent modification)
         """
-        return list(cls._definitions.values())
+        import copy
+        return [copy.deepcopy(definition) for definition in cls._definitions.values()]
 
     @classmethod
     def get_tool_names(cls) -> List[str]:

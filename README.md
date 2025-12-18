@@ -893,7 +893,7 @@ devassist/
 - **`docs/ROADMAP.md`**: Detailed future development plans and integrations
 - **`docs/MIGRATION.md`**: Guide for migrating between versions
 - **`docs/ARCHITECTURE.md`**: System architecture and plugin documentation
-- **`tests/`**: Comprehensive test suite (89 tests, 100% pass rate)
+- **`tests/`**: Test suite (137 tests defined, 101 passing, see tests/README.md for status)
 - **`db/history.db`**: SQLite database for persistent chat history
 
 ### Adding New Features
@@ -978,7 +978,7 @@ uv run python src/main.py
 - **Response Time**: Depends on LM Studio model size and hardware
 - **Storage**: Vector database grows with learned knowledge
 - **Token Limits**: Large conversations may hit LLM token limits
-- **Test Execution**: 89 tests execute in ~20 seconds (excellent performance)
+- **Test Execution**: 101 passing tests execute in ~20-25 seconds (see tests/README.md)
 - **Code Quality**: Good overall with some linting issues to address
 
 ## 🚀 Deployment Options

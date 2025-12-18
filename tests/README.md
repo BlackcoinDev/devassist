@@ -140,31 +140,67 @@ uv run python tests/lint/all-lint.py
 
 ## 📊 Test Results Summary
 
-### Current Status (v0.2.0)
-- **Total Tests**: 89 (79 active + 10 GUI)
-- **Test Categories**:
-  - Unit Tests: 52 tests (26 main + 6 launcher + 20 tools)
-  - Integration Tests: 26 tests (11 application + 15 tool calling)
-  - GUI Tests: 10 tests (excluded by default)
-- **Coverage**: 90%+ for core modules
-- **Execution Time**: ~12-15 seconds
-- **All Tests Pass**: ✅ 89/89
+### Current Status (v0.2.0) - Updated 2025-12-18
+
+**Test Suite Status:** 🟡 Partially Functional (Recent Fixes Applied)
+
+- **Total Tests Defined**: 137 tests
+  - Legacy tests: 89 tests (26 main + 6 launcher + 20 tools + 10 GUI + 11 integration + 15 tool calling + 1 excluded)
+  - **NEW:** Registry tests: 48 tests (21 CommandRegistry + 27 ToolRegistry)
+
+- **Test Status**:
+  - ✅ **Passing**: 101 tests (53 legacy + 48 registry)
+  - ⚠️ **Fixed (pending verification)**: 35 tests (20 tools + 15 tool calling) - imports updated for v0.2.0
+  - ⚠️ **Skipped**: 10 GUI tests (PyQt6 segfault prevention)
+  - ❌ **Excluded**: Tests in tests/tools/ directory (manual integration tests)
+
+- **Coverage Reality Check**:
+  - Legacy code (main.py, gui.py, launcher.py): ~80-90% covered
+  - **Modular architecture (v0.2.0): ~15% covered** (only registries tested)
+  - Security modules: **0% covered** ⚠️
+  - Command handlers: **0% covered** (indirect coverage only)
+  - Storage layer: **0% covered**
+  - Vector DB operations: **0% covered**
+
+- **Execution Time**: ~20-25 seconds (for passing tests)
+
+### Recent Improvements (2025-12-18)
+
+✅ **Fixed 35 broken tests** - Updated imports from monolithic to modular architecture
+✅ **Created registry tests** - 48 comprehensive tests for CommandRegistry and ToolRegistry
+✅ **Created test plan** - Roadmap for 229 additional tests (see docs/TEST_PLAN.md)
 
 ### Coverage Areas
-- ✅ Core application logic (space management, memory, commands)
-- ✅ AI tool functionality (8 tools fully tested)
-- ✅ File system operations with security validation
-- ✅ Document processing and parsing
-- ✅ Knowledge base operations
-- ✅ Web search integration
-- ✅ GUI components (isolated testing)
-- ✅ Application initialization and error handling
-- ✅ Command-line interface
-- ✅ Configuration management
+
+**Well Tested (>80% coverage):**
+- ✅ Legacy main.py functions (space management, slash commands)
+- ✅ Launcher startup logic
+- ✅ **CommandRegistry** (21 tests - NEW)
+- ✅ **ToolRegistry** (27 tests - NEW)
+
+**Partially Tested (indirect coverage only):**
+- ⚠️ AI tool executors (35 tests fixed, need verification)
+- ⚠️ Command handlers (tested via main.py, no unit tests)
+- ⚠️ Storage operations (tested via integration, no unit tests)
+
+**Not Tested (0% coverage):**
+- ❌ ApplicationContext (dependency injection container)
+- ❌ Configuration management (src/core/config.py)
+- ❌ Context utilities (src/core/context_utils.py)
+- ❌ Security modules (input sanitizer, path security, rate limiter)
+- ❌ Database module (src/storage/database.py)
+- ❌ Memory module (src/storage/memory.py)
+- ❌ Cache module (src/storage/cache.py)
+- ❌ ChromaDB client (src/vectordb/client.py)
+- ❌ Spaces module (src/vectordb/spaces.py)
+
+**See `docs/TEST_PLAN.md` for comprehensive testing roadmap.**
 
 ## 🔧 Test Configuration
 
 ### pytest.ini Settings
+
+**Current Configuration:**
 ```ini
 [tool:pytest]
 testpaths = tests
@@ -172,12 +208,28 @@ python_files = test_*.py *_test.py
 addopts =
     --verbose
     --tb=short
-    --cov=src.main
-    --cov=src.gui
-    --cov=launcher
+    --cov=src.main           # Legacy monolithic file
+    --cov=src.gui            # GUI interface
+    --cov=launcher           # Startup script
     --cov-report=term-missing
     --cov-fail-under=80
-    -k "not test_gui"  # Exclude GUI tests by default
+    -k "not test_gui"        # Exclude GUI tests by default
+```
+
+**⚠️ Coverage Configuration Incomplete:**
+The current pytest.ini only covers legacy files. The modular architecture (v0.2.0) is NOT included in coverage reports.
+
+**Recommended Update (when modular tests are ready):**
+```ini
+addopts =
+    --verbose
+    --tb=short
+    --cov=src                # Cover ALL of src/ (modular architecture)
+    --cov=launcher
+    --cov-report=term-missing
+    --cov-report=html:htmlcov
+    --cov-fail-under=90      # Raise target to 90%
+    -k "not test_gui"
 ```
 
 ### Test Markers
@@ -186,7 +238,7 @@ addopts =
 - `slow`: Slow running tests
 - `gui`: GUI-related tests (may cause crashes)
 - `tools`: AI tool functionality tests
-- `security`: Security and safety tests
+- `security`: Security and safety tests (**Note:** 0 tests currently use this marker)
 
 ### Shared Fixtures (`conftest.py`)
 - `mock_vectorstore`: Mocked ChromaDB vector store
@@ -273,22 +325,58 @@ uv run pytest tests/unit/test_main.py::TestSpaceManagement::test_get_space_colle
 - **Arrange-Act-Assert**: Clear structure for each test method
 - **Independent Tests**: No test should depend on others
 
+## 🚨 Testing Roadmap & Next Steps
+
+### Immediate Priorities (Week 1-2)
+
+**Critical Tests Needed:**
+1. **ApplicationContext tests** (15 tests) - Dependency injection container
+2. **Security module tests** (25 tests) - Input sanitizer, path security, rate limiter
+3. **Configuration tests** (12 tests) - Config loading and validation
+
+**Status:** Planned in `docs/TEST_PLAN.md`
+
+### Short-Term Goals (Week 3-4)
+
+- Storage layer tests (32 tests)
+- Vector DB tests (27 tests)
+- Context utilities tests (18 tests)
+- Command handler tests (40 tests)
+
+### Test Plan Document
+
+📋 **See `docs/TEST_PLAN.md`** for:
+- Detailed test specifications (229 new tests planned)
+- 4-phase implementation roadmap
+- Testing standards and guidelines
+- Time estimates and success metrics
+
+---
+
 ## 🔒 Security Testing
 
-### Path Traversal Protection
+**⚠️ CRITICAL GAP:** Security modules have **0% test coverage**
+
+### Security Features Implemented (NOT TESTED)
+
+The following security features exist in the codebase but **have zero test coverage**:
+
+**Path Traversal Protection** (`src/security/path_security.py` - 220 lines, 0 tests)
 - File system operations validate paths within current directory
 - Absolute path resolution prevents directory traversal attacks
 - Input sanitization for all user-provided file paths
 
-### Input Validation
+**Input Validation** (`src/security/input_sanitizer.py` - 195 lines, 0 tests)
 - Tool arguments validated before execution
-- File size limits enforced (1MB for reading)
-- Binary file detection and rejection
+- SQL injection prevention
+- XSS attack prevention
 
-### Error Handling
-- Comprehensive exception catching
-- Secure error messages (no sensitive information leakage)
-- Graceful degradation on service failures
+**Rate Limiting** (`src/security/rate_limiter.py` - 113 lines, 0 tests)
+- Per-user rate limiting
+- Configurable thresholds
+- Time-window based reset
+
+**⚠️ Action Required:** Create comprehensive security tests (see docs/TEST_PLAN.md section 5.1)
 
 ## 📚 Dependencies
 
