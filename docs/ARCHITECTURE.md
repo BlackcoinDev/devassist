@@ -1,12 +1,13 @@
 # AI Assistant Architecture
 
-This document provides a comprehensive architectural overview of the AI Assistant application, serving as a reference for all other documentation files.
+This document provides a comprehensive architectural overview of the AI Assistant
+application, serving as a reference for all other documentation files.
 
 ## 🏗️ System Architecture
 
 ### High-Level Overview (v0.2.0 - Modular Architecture)
 
-```
+```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   LM Studio     │    │ ChromaDB v2     │    │    Ollama       │
 │ (AI Brain)      │◄──►│ (Vector DB)     │◄──►│ (Embeddings)    │
@@ -55,8 +56,6 @@ This document provides a comprehensive architectural overview of the AI Assistan
   │ Legacy Commands    │ (15 handlers - being migrated)
   │ (src/commands/handlers/legacy_commands.py)
   └────────────────────┘
-```
-
 ### Data Flow
 
 1. **Interface Selection** → `launcher.py` chooses GUI or CLI

@@ -22,11 +22,11 @@
 # SOFTWARE.
 
 """
-All Linting Script v0.2.0
+All Linting Script v0.3.0
 Runs comprehensive linting checks on all code types in the project.
 
-Dependencies: autopep8, flake8, mypy, vulture, codespell, shellcheck
-Install with: pip install autopep8 flake8 mypy vulture codespell && brew install shellcheck
+Dependencies: autopep8, flake8, mypy, vulture, codespell, shellcheck, pymarkdownlnt
+Install with: pip install autopep8 flake8 mypy vulture codespell pymarkdownlnt && brew install shellcheck
 """
 
 import os
@@ -57,7 +57,7 @@ def main():
     """
     Main linting orchestrator that runs comprehensive checks across the entire project.
 
-    Executes Python linting, shell script validation, configuration checks,
+    Executes Python linting, Markdown linting, shell script validation, configuration checks,
     and project structure validation in sequence.
     """
     print("🔧 All Code Linting v0.2.0")
@@ -138,6 +138,11 @@ def main():
         else:
             print(f"❌ {file} missing")
             all_passed = False
+
+    # 3. Markdown linting
+    print("\n📄 Markdown Files:")
+    if not run_command("python tests/lint/lint-markdown.py", "Markdown linting"):
+        all_passed = False
 
     # 4. Project structure check
     print("\n📁 Project Structure:")
