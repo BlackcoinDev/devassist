@@ -551,6 +551,35 @@ def get_relevant_context(
 # Import command registry for future migration
 
 # Import all command handlers to register them
+from src.commands.handlers import (
+    help_commands,
+    memory_commands,
+    database_commands,
+    learning_commands,
+    config_commands,
+    space_commands,
+    file_commands,
+    export_commands,
+)
+
+# Import legacy command handlers (will be migrated to new system)
+from src.commands.handlers.legacy_commands import (
+    handle_read_command,
+    handle_write_command,
+    handle_list_command,
+    handle_pwd_command,
+    show_memory,
+    handle_clear_command,
+    handle_learn_command,
+    show_vectordb,
+    show_mem0,
+    handle_populate_command,
+    show_model_info,
+    handle_context_command,
+    handle_learning_command,
+    handle_space_command,
+    handle_export_command,
+)
 
 # Note: Command handlers remain in this file for now.
 # They can be incrementally migrated to src/commands/handlers/ using:

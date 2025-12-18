@@ -27,6 +27,32 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 - **🛡️ Error Handling**: Robust error handling with graceful degradation
 - **✅ Type Safety**: Full MyPy type checking with comprehensive linting
 
+## 📋 Recent Refactoring (v0.2.0)
+
+### 🏗️ Modular Architecture Improvements
+
+**Command System Refactoring:**
+- ✅ **Extracted 15 legacy command handlers** to `src/commands/handlers/legacy_commands.py`
+- ✅ **Reduced main.py complexity** by separating legacy functionality
+- ✅ **Maintained 100% backward compatibility** - all existing commands work unchanged
+- ✅ **All 226 tests still passing** - no functionality lost
+
+**New Module Structure:**
+```
+src/commands/handlers/
+├── help_commands.py        # New command system
+├── memory_commands.py     # New command system
+├── database_commands.py   # New command system
+├── learning_commands.py   # New command system
+├── config_commands.py     # New command system
+├── space_commands.py      # New command system
+├── file_commands.py       # New command system
+├── export_commands.py     # New command system
+└── legacy_commands.py     # 15 legacy handlers (23KB)
+```
+
+**Migration Path:** Legacy commands will be gradually migrated to use `@CommandRegistry.register()` decorators for consistency with the new command system.
+
 ## 📖 Documentation
 
 - **[CLAUDE.md](CLAUDE.md)**: Developer guide with setup instructions and project guidelines

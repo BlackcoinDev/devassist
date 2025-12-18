@@ -44,12 +44,17 @@ This document provides a comprehensive architectural overview of the AI Assistan
   │ Commands   │    │    Tools     │   │   Storage     │
   │ (Registry) │    │  (Registry)  │   │   (SQLite)    │
   │ 8 handlers │    │  8 tools     │   │   (Memory)    │
-  └────────────┘    └──────────────┘   └───────────────┘
+  └─────┬──────┘    └──────┬───────┘   └──────┬────────┘
         │                   │                   │
   ┌─────▼──────┐    ┌──────▼───────┐   ┌──────▼────────┐
   │  Security  │    │   VectorDB   │   │    Cache      │
   │ Validators │    │  (ChromaDB)  │   │  (In-memory)  │
   └────────────┘    └──────────────┘   └───────────────┘
+        │
+  ┌─────▼──────────────┐
+  │ Legacy Commands    │ (15 handlers - being migrated)
+  │ (src/commands/handlers/legacy_commands.py)
+  └────────────────────┘
 ```
 
 ### Data Flow
@@ -262,6 +267,15 @@ src/
 ├── commands/           # Command plugin system
 │   ├── registry.py     # CommandRegistry dispatcher
 │   └── handlers/       # Auto-registering handlers
+│       ├── help_commands.py
+│       ├── memory_commands.py
+│       ├── database_commands.py
+│       ├── learning_commands.py
+│       ├── config_commands.py
+│       ├── space_commands.py
+│       ├── file_commands.py
+│       ├── export_commands.py
+│       └── legacy_commands.py  # 15 legacy handlers (being migrated)
 ├── tools/              # Tool plugin system
 │   ├── registry.py     # ToolRegistry dispatcher
 │   └── executors/      # Auto-registering executors
