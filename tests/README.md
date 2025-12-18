@@ -11,11 +11,21 @@ The `fix-markdown.py` script can automatically fix these common issues:
 ### ✅ Auto-Fixable Rules
 
 | Rule | Description | Example Fix |
-|------|-------------|-------------|
+| ------ | ------------- | ------------- |
 | **MD022** | Headings should be surrounded by blank lines | Adds blank lines around headings |
+| **MD030** | Spaces after list markers should be consistent | Standardizes to 1 space after `-`, `*`, `+` |
 | **MD031** | Code blocks should be surrounded by blank lines | Adds blank lines around code blocks |
+| **MD032** | Lists should be surrounded by blank lines | Adds blank lines around lists |
 | **MD040** | Fenced code blocks should have language specified | Adds `text` language to unspecified code blocks |
+| **MD047** | Files should end with single trailing newline | Adds missing newline character |
 | **MD013** | Line length should be ≤ 80 characters | Wraps long lines (basic wrapping) |
+
+### ⚠️ Partially Auto-Fixable Rules
+
+| Rule | Description | Notes |
+| ------ | ------------- | ------- |
+| **MD005** | Inconsistent indentation for list items | Complex nested list structures |
+| **MD025** | Multiple top-level headings (single H1) | Document structure decision |
 
 ## ❌ Manual-Fix Required Rules
 
@@ -48,6 +58,134 @@ These rules require manual fixing due to their complexity:
 1. Calculate maximum width needed for each column
 2. Pad all cells in each column to the same width
 3. Ensure pipes are at identical character positions in every row
+
+### 📋 MD030 - Spaces After List Markers
+
+**Issue**: Inconsistent spaces after list markers (`-`, `*`, `+`).
+
+**Why Manual Fix Required**:
+- Mixed list styles in documents
+- Context-dependent formatting decisions
+- May require document-wide consistency changes
+- Affects visual hierarchy and readability
+
+**Example**:
+```markdown
+❌ Before:
+- Item one
+-   Item two  ❌ (extra spaces)
+- Item three
+
+✅ After:
+- Item one
+- Item two   ✅ (consistent 1 space)
+- Item three
+```
+
+### 📋 MD032 - Lists Should Be Surrounded by Blank Lines
+
+**Issue**: Lists not properly separated from surrounding content.
+
+**Why Manual Fix Required**:
+- Context-dependent spacing decisions
+- May affect document flow and readability
+- Complex interactions with other elements
+- Requires semantic understanding of content structure
+
+**Example**:
+```markdown
+❌ Before:
+This is a paragraph.
+- List item one  ❌ (no blank line before)
+- List item two
+This is another paragraph.  ❌ (no blank line after)
+
+✅ After:
+This is a paragraph.
+
+- List item one  ✅ (blank line before)
+- List item two
+
+This is another paragraph.  ✅ (blank line after)
+```
+
+### 📋 MD005 - Inconsistent Indentation for List Items
+
+**Issue**: List items at the same level have inconsistent indentation.
+
+**Why Manual Fix Required**:
+- Complex nested list structures
+- Context-dependent indentation decisions
+- May require restructuring of content hierarchy
+- Affects visual organization and readability
+
+**Example**:
+```markdown
+❌ Before:
+- Item 1
+  - Nested item  ❌ (inconsistent indentation)
+- Item 2
+    - Another nested  ❌ (different indentation)
+
+✅ After:
+- Item 1
+  - Nested item  ✅ (consistent 2-space indent)
+- Item 2
+  - Another nested  ✅ (consistent 2-space indent)
+```
+
+### 📋 MD025 - Multiple Top-Level Headings (Single H1)
+
+**Issue**: Multiple H1 (#) headings in the same document.
+
+**Why Manual Fix Required**:
+- Document structure and hierarchy decisions
+- Semantic meaning of top-level headings
+- May require content reorganization
+- Affects document outline and navigation
+
+**Example**:
+```markdown
+❌ Before:
+# First Heading  ❌ (first H1)
+
+Content here...
+
+# Second Heading  ❌ (second H1 - violates single-title rule)
+
+More content...
+
+✅ After:
+# Main Title  ✅ (single H1)
+
+## First Section  ✅ (use H2 for sections)
+
+Content here...
+
+## Second Section  ✅ (use H2 for sections)
+
+More content...
+```
+
+### 📋 MD047 - Files Should End with Single Trailing Newline
+
+**Issue**: Files missing final newline character.
+
+**Why Manual Fix Required**:
+- File-level operation requiring file system access
+- May affect multiple files simultaneously
+- Risk of unintended file modifications
+- Best handled by version control or editor settings
+
+**Example**:
+```markdown
+❌ Before:
+Content here...❌ (no newline at end)
+
+✅ After:
+Content here...
+✅ (ends with newline)
+```
 
 ### 📋 MD036 - Emphasis Used Instead of Headings
 
@@ -180,12 +318,14 @@ python tests/lint/lint-markdown.py docs/
 
 **Current Distribution** (as of last check):
 - **MD013** (Line length): 50 issues - Can be partially auto-fixed
-- **MD030** (List spacing): 48 issues - Can be partially auto-fixed
+- **MD030** (List spacing): 48 issues - **Manual fix required**
 - **MD036** (Emphasis): 11 issues - **Manual fix required**
 - **MD031** (Code blocks): 9 issues - Can be auto-fixed
 - **MD004** (List style): 8 issues - **Manual fix required**
 - **MD032** (List blanks): 6 issues - Can be partially auto-fixed
 - **MD029** (Ordered lists): 3 issues - **Manual fix required**
+- **MD025** (Multiple H1): 0 issues - **Manual fix required** (document structure)
+- **MD005** (List indent): 0 issues - **Manual fix required** (complex nesting)
 - **MD047** (Newlines): 2 issues - Can be auto-fixed
 - **MD026** (Headings): 2 issues - Can be auto-fixed
 - **MD024** (Duplicates): 1 issue - **Manual fix required**

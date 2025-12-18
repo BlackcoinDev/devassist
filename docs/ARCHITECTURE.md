@@ -117,6 +117,7 @@ The Spaces system provides isolated workspaces with separate knowledge bases:
 - **Safety**: Switching spaces completely changes what the AI "knows"
 
 **Commands:**
+
 - `/space list` - Show all spaces
 - `/space switch <name>` - Create or switch to a space
 - `/space delete <name>` - Delete a space
@@ -172,6 +173,7 @@ def handle_mycommand(args: str) -> None:
 ```
 
 **How it works:**
+
 1. Decorator executes during module import
 2. Function auto-registers in CommandRegistry._commands dict
 3. Help text auto-generates from decorator metadata
@@ -179,6 +181,7 @@ def handle_mycommand(args: str) -> None:
 5. No central configuration file needed
 
 **Benefits:**
+
 - Add commands without modifying core code
 - Help text stays in sync with implementation
 - Category-based organization
@@ -215,6 +218,7 @@ def execute_my_tool(arg1: str) -> Dict[str, Any]:
 ```
 
 **How it works:**
+
 1. Tool definition follows OpenAI function calling format
 2. Decorator registers both definition and executor
 3. LLM receives definitions via `ToolRegistry.get_definitions()`
@@ -222,6 +226,7 @@ def execute_my_tool(arg1: str) -> Dict[str, Any]:
 5. Execution via `ToolRegistry.execute_tool_call(tool_call)`
 
 **Benefits:**
+
 - Tools auto-register on import
 - LLM automatically receives new tool definitions
 - Schema and implementation stay together
@@ -530,7 +535,7 @@ ollama serve
 ## 📋 Key Features Matrix
 
 | Feature | Status | Description |
-|---------|--------|-------------|
+| --------- | -------- | ------------- |
 | Dual Interfaces | ✅ | GUI (PyQt6) and CLI with full feature parity |
 | AI Learning System | ✅ | ChromaDB v2 vector database integration |
 | Document Processing | ✅ | 80+ file types with unified processing |

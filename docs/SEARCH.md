@@ -650,6 +650,8 @@ ChromaDB Collections:
    ```
 
 4. **Ollama not running** (embedding generation slow)
+
+
    ```bash
    # Terminal 3: Start Ollama
    ollama serve
@@ -657,9 +659,12 @@ ChromaDB Collections:
 
 ### LLM doesn't use the context
 
+
 **Problem:** Context found but AI doesn't incorporate it.
 
 **Diagnosis:**
+
+
 
 ```bash
 # Check if context is being retrieved
@@ -667,9 +672,10 @@ ChromaDB Collections:
 /search "your question"  # Manually search
 
 # If results appear but AI ignores them, try:
-# - Rephrase question (more specific)
-# - Clear cache: rm query_cache.json
-# - Check LEARNING_MODE with /learning command
+#   Rephrase question (more specific)
+#   Clear cache: rm query_cache.json
+#   Check LEARNING_MODE with /learning command
+
 
 ```text
 

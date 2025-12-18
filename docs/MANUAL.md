@@ -7,6 +7,7 @@ its agentic tool usage, autonomous learning, and workspace management.
 ## 🌟 Core Philosophy
 
 This AI Assistant is designed to be **Local, Private, and Agency-Driven**.
+
 - **Local**: It runs on your machine using local models (via LM Studio/Ollama) or API keys you control.
 - **Private**: Your conversations are stored locally in SQLite. Learned knowledge and memories are stored securely on your ChromaDB server.
 - **Agency-Driven**: The AI isn't just a chatbot; it has "hands" (tools) to read files, browse the web, and manage its own memory.

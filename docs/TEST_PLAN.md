@@ -15,6 +15,7 @@ architecture (v0.2.0). The modular refactoring extracted ~2,995 lines of code
 into 37 focused modules, but currently has 0% test coverage for new components.
 
 **Current Test Status:**
+
 - **Total Tests:** 256 (collected)
 - **Passing:** 256 passed (including Phase 5 unit test expansion)
 - **Broken:** 0 tests
