@@ -15,17 +15,19 @@ Tests for all 8 AI tools with proper mocking and isolation:
 
 from unittest.mock import patch, mock_open, MagicMock
 
-# Import tool functions
-from src.main import (
+# Import tool functions from modular architecture (v0.2.0)
+from src.tools.executors.file_tools import (
     execute_read_file,
     execute_write_file,
     execute_list_directory,
     execute_get_current_directory,
-    execute_parse_document,
+)
+from src.tools.executors.document_tools import execute_parse_document
+from src.tools.executors.knowledge_tools import (
     execute_learn_information,
     execute_search_knowledge,
-    execute_web_search,
 )
+from src.tools.executors.web_tools import execute_web_search
 
 
 class TestFileSystemTools:

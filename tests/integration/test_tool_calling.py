@@ -11,7 +11,8 @@ Tests the integration between LLM and tool execution:
 
 from unittest.mock import patch, MagicMock
 
-from src.main import execute_tool_call
+# Import from modular architecture (v0.2.0)
+from src.tools.registry import ToolRegistry
 
 
 class TestToolCallExecution:
@@ -25,10 +26,10 @@ class TestToolCallExecution:
             "args": {"file_path": "test.txt"},
         }
 
-        with patch("src.main.execute_read_file") as mock_execute:
+        with patch("src.tools.executors.file_tools.execute_read_file") as mock_execute:
             mock_execute.return_value = {"success": True, "content": "test content"}
 
-            result = execute_tool_call(tool_call)
+            result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "read_file"
             assert result["result"]["success"] is True
@@ -42,10 +43,10 @@ class TestToolCallExecution:
             "args": {"file_path": "output.txt", "content": "new content"},
         }
 
-        with patch("src.main.execute_write_file") as mock_execute:
+        with patch("src.tools.executors.file_tools.execute_write_file") as mock_execute:
             mock_execute.return_value = {"success": True, "size": 11}
 
-            result = execute_tool_call(tool_call)
+            result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "write_file"
             assert result["result"]["success"] is True
@@ -59,10 +60,10 @@ class TestToolCallExecution:
             "args": {"directory_path": "/tmp"},
         }
 
-        with patch("src.main.execute_list_directory") as mock_execute:
+        with patch("src.tools.executors.file_tools.execute_list_directory") as mock_execute:
             mock_execute.return_value = {"success": True, "total_items": 5}
 
-            result = execute_tool_call(tool_call)
+            result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "list_directory"
             assert result["result"]["success"] is True
@@ -72,13 +73,13 @@ class TestToolCallExecution:
         """Test executing get_current_directory tool call."""
         tool_call = {"id": "test_cwd", "name": "get_current_directory", "args": {}}
 
-        with patch("src.main.execute_get_current_directory") as mock_execute:
+        with patch("src.tools.executors.file_tools.execute_get_current_directory") as mock_execute:
             mock_execute.return_value = {
                 "success": True,
                 "current_directory": "/home/user",
             }
 
-            result = execute_tool_call(tool_call)
+            result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "get_current_directory"
             assert result["result"]["success"] is True
@@ -92,10 +93,10 @@ class TestToolCallExecution:
             "args": {"file_path": "document.pdf", "extract_type": "text"},
         }
 
-        with patch("src.main.execute_parse_document") as mock_execute:
+        with patch("src.tools.executors.document_tools.execute_parse_document") as mock_execute:
             mock_execute.return_value = {"success": True, "content": "parsed content"}
 
-            result = execute_tool_call(tool_call)
+            result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "parse_document"
             assert result["result"]["success"] is True
@@ -112,10 +113,10 @@ class TestToolCallExecution:
             },
         }
 
-        with patch("src.main.execute_learn_information") as mock_execute:
+        with patch("src.tools.executors.knowledge_tools.execute_learn_information") as mock_execute:
             mock_execute.return_value = {"success": True, "learned": True}
 
-            result = execute_tool_call(tool_call)
+            result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "learn_information"
             assert result["result"]["success"] is True
@@ -131,10 +132,10 @@ class TestToolCallExecution:
             "args": {"query": "Python basics", "limit": 3},
         }
 
-        with patch("src.main.execute_search_knowledge") as mock_execute:
+        with patch("src.tools.executors.knowledge_tools.execute_search_knowledge") as mock_execute:
             mock_execute.return_value = {"success": True, "result_count": 2}
 
-            result = execute_tool_call(tool_call)
+            result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "search_knowledge"
             assert result["result"]["success"] is True
@@ -148,10 +149,10 @@ class TestToolCallExecution:
             "args": {"query": "latest AI news"},
         }
 
-        with patch("src.main.execute_web_search") as mock_execute:
+        with patch("src.tools.executors.web_tools.execute_web_search") as mock_execute:
             mock_execute.return_value = {"success": True, "result_count": 5}
 
-            result = execute_tool_call(tool_call)
+            result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "search_web"
             assert result["result"]["success"] is True
@@ -161,7 +162,7 @@ class TestToolCallExecution:
         """Test executing unknown tool."""
         tool_call = {"id": "test_unknown", "name": "unknown_tool", "args": {}}
 
-        result = execute_tool_call(tool_call)
+        result = ToolRegistry.execute_tool_call(tool_call)
 
         assert result["function_name"] == "unknown_tool"
         assert "error" in result["result"]
@@ -180,10 +181,10 @@ class TestToolCallExecution:
             "args": {"file_path": "test.txt"},
         }
 
-        with patch("src.main.execute_read_file") as mock_execute:
+        with patch("src.tools.executors.file_tools.execute_read_file") as mock_execute:
             mock_execute.side_effect = Exception("Tool execution failed")
 
-            result = execute_tool_call(tool_call)
+            result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "read_file"
             assert "error" in result["result"]
@@ -213,7 +214,7 @@ class TestToolCallIntegration:
         mock_llm.invoke.return_value = mock_response
 
         # Mock tool execution
-        with patch("src.main.execute_read_file") as mock_execute:
+        with patch("src.tools.executors.file_tools.execute_read_file") as mock_execute:
             mock_execute.return_value = {"success": True, "content": "README content"}
 
             # This would be tested in a full conversation integration test
@@ -227,12 +228,12 @@ class TestToolCallIntegration:
             {"id": "call_2", "name": "read_file", "args": {"file_path": "file2.txt"}},
         ]
 
-        with patch("src.main.execute_read_file") as mock_execute:
+        with patch("src.tools.executors.file_tools.execute_read_file") as mock_execute:
             mock_execute.return_value = {"success": True, "content": "content"}
 
             results = []
             for tool_call in tool_calls:
-                result = execute_tool_call(tool_call)
+                result = ToolRegistry.execute_tool_call(tool_call)
                 results.append(result)
 
             assert len(results) == 2
@@ -252,7 +253,7 @@ class TestToolSecurityIntegration:
             "args": {},  # Missing file_path
         }
 
-        result = execute_tool_call(tool_call)
+        result = ToolRegistry.execute_tool_call(tool_call)
 
         # Should still attempt execution, but tool function should handle missing args
         assert result["function_name"] == "read_file"
@@ -266,7 +267,7 @@ class TestToolSecurityIntegration:
             "args": {"query": 123, "limit": "not_a_number"},  # Wrong types
         }
 
-        result = execute_tool_call(tool_call)
+        result = ToolRegistry.execute_tool_call(tool_call)
 
         # Should handle gracefully without crashing
         assert result["function_name"] == "search_knowledge"
