@@ -199,8 +199,9 @@ class TestToolCallExecution:
 
         result = ToolRegistry.execute_tool_call(tool_call)
 
-        assert result["success"] is True
-        assert "test.txt" in result["content"]
+        assert result["function_name"] == "read_file"
+        assert result["result"]["success"] is True
+        assert "test.txt" in result["result"]["content"]
 
     def test_execute_tool_call_with_object(self):
         """Test execute_tool_call with object-based tool call."""
@@ -210,7 +211,8 @@ class TestToolCallExecution:
 
         result = ToolRegistry.execute_tool_call(tool_call)
 
-        assert result["success"] is True
+        assert result["function_name"] == "read_file"
+        assert result["result"]["success"] is True
 
     def test_execute_tool_call_with_string_args(self):
         """Test execute_tool_call with JSON string arguments."""
@@ -221,7 +223,8 @@ class TestToolCallExecution:
 
         result = ToolRegistry.execute_tool_call(tool_call)
 
-        assert result["success"] is True
+        assert result["function_name"] == "read_file"
+        assert result["result"]["success"] is True
 
     def test_execute_tool_call_with_invalid_json(self):
         """Test execute_tool_call with invalid JSON in args."""
@@ -232,8 +235,9 @@ class TestToolCallExecution:
 
         result = ToolRegistry.execute_tool_call(tool_call)
 
-        assert "error" in result
-        assert "Invalid JSON" in result["error"]
+        assert result["function_name"] == "unknown"
+        assert "error" in result["result"]
+        assert "Invalid JSON" in result["result"]["error"]
 
     def test_execute_tool_call_with_none_args(self):
         """Test execute_tool_call with None args (uses empty dict)."""
@@ -245,7 +249,8 @@ class TestToolCallExecution:
 
         result = ToolRegistry.execute_tool_call(tool_call)
 
-        assert result["result"] == "success"
+        assert result["function_name"] == "no_args_tool"
+        assert result["result"]["result"] == "success"
 
     def test_execute_tool_call_with_exception(self):
         """Test execute_tool_call error handling."""
@@ -254,7 +259,8 @@ class TestToolCallExecution:
         with patch("src.tools.registry.logger") as mock_logger:
             result = ToolRegistry.execute_tool_call(tool_call)
 
-            assert "error" in result
+            assert result["function_name"] == "invalid"
+            assert "error" in result["result"]
 
 
 class TestDefinitionManagement:

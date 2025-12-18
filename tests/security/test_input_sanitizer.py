@@ -10,87 +10,79 @@ Tests cover:
 """
 
 import pytest
-from src.security.input_sanitizer import sanitize_input, detect_sql_injection
+from src.security.input_sanitizer import InputSanitizer
+from src.security.exceptions import SecurityError
 
 
 class TestInputSanitization:
     """Test input sanitization functionality."""
 
-    def test_sanitize_removes_dangerous_chars(self):
-        """Test removal of dangerous characters like <, >, &, etc."""
-        dangerous_input = "<script>alert('xss')</script>&malicious"
-        sanitized = sanitize_input(dangerous_input)
+    def test_sanitize_rejects_dangerous_content(self):
+        """Test that dangerous patterns raise SecurityError."""
+        dangerous_patterns = [
+            "<script>alert('xss')</script>",
+            "DROP TABLE users;",
+            "SELECT * FROM users; --",
+            "eval('print(\"hack\")')",
+            "javascript:alert(1)",
+            "../../etc/passwd"
+        ]
         
-        assert "<script>" not in sanitized
-        assert "</script>" not in sanitized
-        assert "&" not in sanitized
+        for pattern in dangerous_patterns:
+            with pytest.raises(SecurityError):
+                InputSanitizer.sanitize_text(pattern)
 
     def test_sanitize_preserves_safe_input(self):
         """Test that normal text is preserved."""
-        safe_input = "Hello, this is safe text!"
-        sanitized = sanitize_input(safe_input)
+        safe_inputs = [
+            "Hello, this is safe text!",
+            "Normal query about python",
+            "User input with some (parentheses) and [brackets]",
+            "Email: user@example.com"
+        ]
         
-        assert sanitized == safe_input
+        for safe_input in safe_inputs:
+            sanitized = InputSanitizer.sanitize_text(safe_input)
+            assert sanitized == safe_input
 
     def test_sanitize_handles_unicode(self):
         """Test Unicode character support."""
         unicode_input = "Hello 世界 🌍"
-        sanitized = sanitize_input(unicode_input)
+        sanitized = InputSanitizer.sanitize_text(unicode_input)
         
         assert sanitized == unicode_input
 
-    def test_sanitize_empty_input(self):
-        """Test handling of empty strings."""
-        empty_input = ""
-        sanitized = sanitize_input(empty_input)
+    def test_sanitize_handles_empty_input(self):
+        """Test handling of None and empty strings."""
+        assert InputSanitizer.sanitize_text("") == ""
+        assert InputSanitizer.sanitize_text(None) is None
+
+    def test_sanitize_length_limit(self):
+        """Test that extremely long input is rejected."""
+        long_input = "a" * 20000 # Double the limit
+        with pytest.raises(SecurityError) as excinfo:
+            InputSanitizer.sanitize_text(long_input)
+        assert "Input too long" in str(excinfo.value)
+
+    def test_sanitize_filename(self):
+        """Test filename sanitization."""
+        assert InputSanitizer.sanitize_filename("test.txt") == "test.txt"
+        assert InputSanitizer.sanitize_filename("../dangerous.txt") == "dangerous.txt"
+        assert InputSanitizer.sanitize_filename("bad*char?.txt") == "badchar.txt"
         
-        assert sanitized == ""
+        with pytest.raises(SecurityError):
+            InputSanitizer.sanitize_filename("")
 
-    def test_sanitize_long_input(self):
-        """Test handling of large inputs."""
-        long_input = "a" * 10000
-        sanitized = sanitize_input(long_input)
+    def test_sanitize_url(self):
+        """Test URL sanitization."""
+        assert InputSanitizer.sanitize_url("https://example.com") == "https://example.com"
+        assert InputSanitizer.sanitize_url("http://localhost:8080/path?q=1") == "http://localhost:8080/path?q=1"
         
-        assert len(sanitized) == 10000
-
-
-class TestSQLInjectionPrevention:
-    """Test SQL injection detection and prevention."""
-
-    def test_detect_sql_injection(self):
-        """Test detection of SQL injection keywords."""
-        sql_injection = "SELECT * FROM users WHERE '1'='1'"
-        is_sql = detect_sql_injection(sql_injection)
+        with pytest.raises(SecurityError):
+            InputSanitizer.sanitize_url("javascript:alert(1)")
         
-        assert is_sql is True
-
-    def test_sanitize_sql_input(self):
-        """Test sanitization of SQL-dangerous input."""
-        sql_input = "DROP TABLE users;--"
-        sanitized = sanitize_input(sql_input)
+        with pytest.raises(SecurityError):
+            InputSanitizer.sanitize_url("file:///etc/passwd")
         
-        # Should remove or escape dangerous SQL
-        assert "DROP TABLE" not in sanitized
-        assert "--" not in sanitized
-
-    def test_parameterized_query_support(self):
-        """Test that parameterized queries are safe."""
-        safe_query = "SELECT * FROM users WHERE id = ?"
-        is_sql = detect_sql_injection(safe_query)
-        
-        # Parameterized queries should be considered safe
-        assert is_sql is False
-
-    def test_detect_union_attack(self):
-        """Test detection of UNION attacks."""
-        union_attack = "' UNION SELECT username, password FROM users--"
-        is_sql = detect_sql_injection(union_attack)
-        
-        assert is_sql is True
-
-    def test_detect_comment_attack(self):
-        """Test detection of SQL comment attacks."""
-        comment_attack = "admin'-- comment"
-        is_sql = detect_sql_injection(comment_attack)
-        
-        assert is_sql is True
+        with pytest.raises(SecurityError):
+            InputSanitizer.sanitize_url("not a url")

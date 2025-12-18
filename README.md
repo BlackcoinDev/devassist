@@ -614,7 +614,7 @@ You: quit
 
 ### AI Tool Integration
 
-**7 AI Tools Available** (qwen3-vl-30b can call these autonomously):
+**8 AI Tools Available** (qwen3-vl-30b can call these autonomously):
 
 | Tool | Function | Use Case |
 |------|----------|----------|

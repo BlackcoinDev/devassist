@@ -4,92 +4,71 @@ Test suite for Path Security (src/security/path_security.py).
 
 Tests cover:
 - Path traversal prevention
-- Path validation and sanitization
-- Symbolic link handling
-- Absolute path restrictions
+- Path validation and sandboxing
+- File read/write validation
+- Directory validation
 """
 
+import os
 import pytest
-from src.security.path_security import (
-    validate_file_path, 
-    detect_path_traversal,
-    resolve_symlinks,
-    prevent_absolute_path_access
-)
+from src.security.path_security import PathSecurity
+from src.security.exceptions import SecurityError
 
 
-class TestPathTraversalPrevention:
-    """Test path traversal detection and prevention."""
+class TestPathSecurity:
+    """Test path security functionality."""
 
-    def test_detect_path_traversal(self):
-        """Test detection of ../ path traversal attacks."""
-        malicious_path = "../../../etc/passwd"
-        is_traversal = detect_path_traversal(malicious_path)
+    def test_validate_path_success(self):
+        """Test validation of safe paths."""
+        current_dir = os.getcwd()
+        # Relative path
+        safe_path = PathSecurity.validate_path("README.md")
+        assert safe_path == os.path.abspath(os.path.join(current_dir, "README.md"))
         
-        assert is_traversal is True
+        # Another relative path
+        safe_path = PathSecurity.validate_path("src/main.py")
+        assert safe_path == os.path.abspath(os.path.join(current_dir, "src/main.py"))
 
-    def test_validate_safe_path(self):
-        """Test that safe paths are allowed."""
-        safe_path = "documents/report.txt"
-        is_valid = validate_file_path(safe_path, "/base/dir")
+    def test_validate_path_traversal_prevention(self):
+        """Test prevention of path traversal attacks."""
+        traversal_paths = [
+            "../../etc/passwd",
+            "../secret.txt",
+            "/etc/passwd",
+            "~/.ssh/id_rsa"
+        ]
         
-        assert is_valid is True
+        for path in traversal_paths:
+            with pytest.raises(SecurityError) as excinfo:
+                PathSecurity.validate_path(path)
+            assert "Path traversal attempt" in str(excinfo.value) or "Dangerous path pattern" in str(excinfo.value)
 
-    def test_resolve_symlinks(self):
-        """Test handling of symbolic links."""
-        # This test would need actual filesystem setup
-        # For now, just test the function exists and doesn't crash
-        result = resolve_symlinks("/some/path")
-        assert result is not None
+    def test_validate_file_read_limits(self):
+        """Test file read validation with size limits."""
+        # This assumes README.md is < 1MB
+        safe_path = PathSecurity.validate_file_read("README.md")
+        assert "README.md" in safe_path
 
-    def test_prevent_absolute_path_access(self):
-        """Test restriction to base directory."""
-        absolute_path = "/etc/passwd"
-        is_allowed = prevent_absolute_path_access(absolute_path, "/base/dir")
+    def test_validate_file_read_missing_file(self):
+        """Test that missing files are rejected for read."""
+        with pytest.raises(SecurityError):
+            PathSecurity.validate_file_read("nonexistent_file_xyz.txt")
+
+    def test_validate_directory_check(self):
+        """Test directory validation."""
+        safe_dir = PathSecurity.validate_directory("src")
+        assert "src" in safe_dir
         
-        assert is_allowed is False
+        with pytest.raises(SecurityError):
+            PathSecurity.validate_directory("README.md") # Not a directory
 
-    def test_prevent_home_directory_access(self):
-        """Test blocking of home directory access."""
-        home_path = "~/secrets.txt"
-        is_allowed = prevent_absolute_path_access(home_path, "/base/dir")
-        
-        assert is_allowed is False
+    def test_validate_file_write(self):
+        """Test write validation."""
+        safe_path = PathSecurity.validate_file_write("new_output.txt")
+        assert "new_output.txt" in safe_path
 
-
-class TestPathValidation:
-    """Test path validation functionality."""
-
-    def test_validate_file_exists(self):
-        """Test checking file existence."""
-        # Mock filesystem would be needed for real testing
-        # This just tests the function signature
-        try:
-            result = validate_file_path("test.txt", "/base")
-            assert isinstance(result, bool)
-        except Exception:
-            # Expected to fail without real filesystem
-            pass
-
-    def test_validate_file_readable(self):
-        """Test checking read permissions."""
-        # Would need real filesystem testing
-        pass
-
-    def test_validate_file_writable(self):
-        """Test checking write permissions."""
-        # Would need real filesystem testing
-        pass
-
-    def test_validate_path_length(self):
-        """Test enforcement of path length limits."""
-        long_path = "a" * 1000
-        is_valid = validate_file_path(long_path, "/base")
-        
-        # Should handle long paths gracefully
-        assert isinstance(is_valid, bool)
-
-    def test_validate_file_extension(self):
-        """Test whitelisting of file extensions."""
-        # Would need implementation of extension checking
-        pass
+    def test_dangerous_patterns(self):
+        """Test that specific dangerous patterns are caught."""
+        for pattern in PathSecurity.DANGEROUS_PATTERNS:
+            with pytest.raises(SecurityError):
+                PathSecurity.validate_path(pattern)

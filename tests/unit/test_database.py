@@ -82,7 +82,7 @@ class TestDatabaseConnection:
 
     def test_initialize_database_unsupported_type(self):
         """Test behavior when an unsupported database type is configured."""
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch('src.storage.database.get_config') as mock_get_config:
             mock_config = MagicMock()
             mock_config.db_type = "postgres"  # Unsupported
             mock_get_config.return_value = mock_config

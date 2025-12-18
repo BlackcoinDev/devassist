@@ -46,7 +46,7 @@ class TestEmbeddingCache:
         with open(self.temp_file.name, 'w') as f:
             json.dump(data, f)
 
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch('src.storage.cache.get_config') as mock_get_config:
             mock_config = MagicMock()
             mock_config.embedding_cache_file = self.temp_file.name
             mock_get_config.return_value = mock_config
@@ -63,7 +63,7 @@ class TestEmbeddingCache:
         # Create 1100 entries
         ctx.embedding_cache = {f"text_{i}": [0.1] * 3 for i in range(1100)}
 
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch('src.storage.cache.get_config') as mock_get_config:
             mock_config = MagicMock()
             mock_config.embedding_cache_file = self.temp_file.name
             mock_get_config.return_value = mock_config
@@ -99,7 +99,7 @@ class TestQueryCache:
         with open(self.temp_file.name, 'w') as f:
             json.dump(data, f)
 
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch('src.storage.cache.get_config') as mock_get_config:
             mock_config = MagicMock()
             mock_config.query_cache_file = self.temp_file.name
             mock_get_config.return_value = mock_config
@@ -131,7 +131,7 @@ class TestCacheManagement:
         ctx.embedding_cache = {"a": [1]}
         ctx.query_cache = {"b": ["c"]}
 
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch('src.storage.cache.get_config') as mock_get_config:
             mock_config = MagicMock()
             mock_config.embedding_cache_file = emb_file.name
             mock_config.query_cache_file = query_file.name

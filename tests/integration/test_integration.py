@@ -169,12 +169,14 @@ class TestCommandIntegration:
         from src.main import handle_slash_command
 
         # Mock conversation history to ensure consistent output
-        with patch("src.main.conversation_history", []):
-            result = handle_slash_command("/memory")
-            assert result is True
+        from src.core.context import get_context
+        get_context().conversation_history = []
+        
+        result = handle_slash_command("/memory")
+        assert result is True
 
-            captured = capsys.readouterr()
-            assert "No conversation history" in captured.out
+        captured = capsys.readouterr()
+        assert "No conversation history" in captured.out
 
     @patch("src.main.conversation_history", [])
     @patch("src.main.save_memory")

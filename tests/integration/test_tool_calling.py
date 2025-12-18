@@ -12,11 +12,27 @@ Tests the integration between LLM and tool execution:
 from unittest.mock import patch, MagicMock
 
 # Import from modular architecture (v0.2.0)
-from src.tools.registry import ToolRegistry
+from src.tools import ToolRegistry, executors
+import importlib
+import src.tools.executors.file_tools
+import src.tools.executors.knowledge_tools
+import src.tools.executors.document_tools
+import src.tools.executors.web_tools
 
+def ensure_tools_registered():
+    """Ensure tools are registered before tests run, re-registering if needed."""
+    # We must reload these modules because other tests might have cleared the registry
+    importlib.reload(src.tools.executors.file_tools)
+    importlib.reload(src.tools.executors.knowledge_tools)
+    importlib.reload(src.tools.executors.document_tools)
+    importlib.reload(src.tools.executors.web_tools)
 
 class TestToolCallExecution:
     """Test tool call execution and routing."""
+
+    def setup_method(self):
+        """Set up tests by ensuring tools are registered."""
+        ensure_tools_registered()
 
     def test_execute_read_file_tool(self):
         """Test executing read_file tool call."""
@@ -26,14 +42,13 @@ class TestToolCallExecution:
             "args": {"file_path": "test.txt"},
         }
 
-        with patch("src.tools.executors.file_tools.execute_read_file") as mock_execute:
-            mock_execute.return_value = {"success": True, "content": "test content"}
-
+        mock_execute = MagicMock(return_value={"success": True, "content": "test content"})
+        with patch.dict(ToolRegistry._tools, {"read_file": mock_execute}):
             result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "read_file"
             assert result["result"]["success"] is True
-            mock_execute.assert_called_once_with("test.txt")
+            mock_execute.assert_called_once_with(file_path="test.txt")
 
     def test_execute_write_file_tool(self):
         """Test executing write_file tool call."""
@@ -43,14 +58,13 @@ class TestToolCallExecution:
             "args": {"file_path": "output.txt", "content": "new content"},
         }
 
-        with patch("src.tools.executors.file_tools.execute_write_file") as mock_execute:
-            mock_execute.return_value = {"success": True, "size": 11}
-
+        mock_execute = MagicMock(return_value={"success": True, "size": 11})
+        with patch.dict(ToolRegistry._tools, {"write_file": mock_execute}):
             result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "write_file"
             assert result["result"]["success"] is True
-            mock_execute.assert_called_once_with("output.txt", "new content")
+            mock_execute.assert_called_once_with(file_path="output.txt", content="new content")
 
     def test_execute_list_directory_tool(self):
         """Test executing list_directory tool call."""
@@ -60,25 +74,20 @@ class TestToolCallExecution:
             "args": {"directory_path": "/tmp"},
         }
 
-        with patch("src.tools.executors.file_tools.execute_list_directory") as mock_execute:
-            mock_execute.return_value = {"success": True, "total_items": 5}
-
+        mock_execute = MagicMock(return_value={"success": True, "total_items": 5})
+        with patch.dict(ToolRegistry._tools, {"list_directory": mock_execute}):
             result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "list_directory"
             assert result["result"]["success"] is True
-            mock_execute.assert_called_once_with("/tmp")
+            mock_execute.assert_called_once_with(directory_path="/tmp")
 
     def test_execute_get_current_directory_tool(self):
         """Test executing get_current_directory tool call."""
         tool_call = {"id": "test_cwd", "name": "get_current_directory", "args": {}}
 
-        with patch("src.tools.executors.file_tools.execute_get_current_directory") as mock_execute:
-            mock_execute.return_value = {
-                "success": True,
-                "current_directory": "/home/user",
-            }
-
+        mock_execute = MagicMock(return_value={"success": True, "current_directory": "/home/user"})
+        with patch.dict(ToolRegistry._tools, {"get_current_directory": mock_execute}):
             result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "get_current_directory"
@@ -93,14 +102,13 @@ class TestToolCallExecution:
             "args": {"file_path": "document.pdf", "extract_type": "text"},
         }
 
-        with patch("src.tools.executors.document_tools.execute_parse_document") as mock_execute:
-            mock_execute.return_value = {"success": True, "content": "parsed content"}
-
+        mock_execute = MagicMock(return_value={"success": True, "content": "parsed content"})
+        with patch.dict(ToolRegistry._tools, {"parse_document": mock_execute}):
             result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "parse_document"
             assert result["result"]["success"] is True
-            mock_execute.assert_called_once_with("document.pdf", "text")
+            mock_execute.assert_called_once_with(file_path="document.pdf", extract_type="text")
 
     def test_execute_learn_information_tool(self):
         """Test executing learn_information tool call."""
@@ -109,20 +117,16 @@ class TestToolCallExecution:
             "name": "learn_information",
             "args": {
                 "information": "Python is great",
-                "metadata": {"topic": "programming"},
             },
         }
 
-        with patch("src.tools.executors.knowledge_tools.execute_learn_information") as mock_execute:
-            mock_execute.return_value = {"success": True, "learned": True}
-
+        mock_execute = MagicMock(return_value={"success": True, "learned": True})
+        with patch.dict(ToolRegistry._tools, {"learn_information": mock_execute}):
             result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "learn_information"
             assert result["result"]["success"] is True
-            mock_execute.assert_called_once_with(
-                "Python is great", {"topic": "programming"}
-            )
+            mock_execute.assert_called_once_with(information="Python is great")
 
     def test_execute_search_knowledge_tool(self):
         """Test executing search_knowledge tool call."""
@@ -132,14 +136,13 @@ class TestToolCallExecution:
             "args": {"query": "Python basics", "limit": 3},
         }
 
-        with patch("src.tools.executors.knowledge_tools.execute_search_knowledge") as mock_execute:
-            mock_execute.return_value = {"success": True, "result_count": 2}
-
+        mock_execute = MagicMock(return_value={"success": True, "result_count": 2})
+        with patch.dict(ToolRegistry._tools, {"search_knowledge": mock_execute}):
             result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "search_knowledge"
             assert result["result"]["success"] is True
-            mock_execute.assert_called_once_with("Python basics", 3)
+            mock_execute.assert_called_once_with(query="Python basics", limit=3)
 
     def test_execute_search_web_tool(self):
         """Test executing search_web tool call."""
@@ -149,14 +152,13 @@ class TestToolCallExecution:
             "args": {"query": "latest AI news"},
         }
 
-        with patch("src.tools.executors.web_tools.execute_web_search") as mock_execute:
-            mock_execute.return_value = {"success": True, "result_count": 5}
-
+        mock_execute = MagicMock(return_value={"success": True, "result_count": 5})
+        with patch.dict(ToolRegistry._tools, {"search_web": mock_execute}):
             result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "search_web"
             assert result["result"]["success"] is True
-            mock_execute.assert_called_once_with("latest AI news")
+            mock_execute.assert_called_once_with(query="latest AI news")
 
     def test_execute_unknown_tool(self):
         """Test executing unknown tool."""
@@ -181,9 +183,8 @@ class TestToolCallExecution:
             "args": {"file_path": "test.txt"},
         }
 
-        with patch("src.tools.executors.file_tools.execute_read_file") as mock_execute:
-            mock_execute.side_effect = Exception("Tool execution failed")
-
+        mock_execute = MagicMock(side_effect=Exception("Tool execution failed"))
+        with patch.dict(ToolRegistry._tools, {"read_file": mock_execute}):
             result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "read_file"
@@ -228,9 +229,8 @@ class TestToolCallIntegration:
             {"id": "call_2", "name": "read_file", "args": {"file_path": "file2.txt"}},
         ]
 
-        with patch("src.tools.executors.file_tools.execute_read_file") as mock_execute:
-            mock_execute.return_value = {"success": True, "content": "content"}
-
+        mock_execute = MagicMock(return_value={"success": True, "content": "content"})
+        with patch.dict(ToolRegistry._tools, {"read_file": mock_execute}):
             results = []
             for tool_call in tool_calls:
                 result = ToolRegistry.execute_tool_call(tool_call)

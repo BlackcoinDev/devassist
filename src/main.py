@@ -2132,6 +2132,11 @@ from src.tools import ToolRegistry
 # =============================================================================
 # Tool definitions and executors have been moved to src/tools/executors/
 # Import ToolRegistry to access registered tools
+from src.tools import ToolRegistry
+from src.tools.executors.document_tools import execute_parse_document
+
+# Backwards compatibility for tests and main loop
+execute_tool_call = ToolRegistry.execute_tool_call
 
 
 

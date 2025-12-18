@@ -39,6 +39,8 @@ from src.vectordb import get_space_collection_name
 
 logger = logging.getLogger(__name__)
 
+from src.core.context_utils import _get_api_session
+
 # =============================================================================
 # COMMAND HANDLERS
 # =============================================================================
@@ -53,12 +55,15 @@ def handle_vectordb(args: List[str]) -> None:
     Shows collection statistics, chunk count, unique sources, and content insights
     from the ChromaDB vector database. Provides insights into the AI's knowledge base.
     """
-    if vectorstore is None:
+    ctx = get_context()
+    config = get_config()
+
+    if ctx.vectorstore is None:
         print("\n❌ Vector database not available.\n")
         return
 
     # Initialize variables that may be used in error handling
-    collection_name = get_space_collection_name(CURRENT_SPACE)
+    collection_name = get_space_collection_name(ctx.current_space)
     collection_id = None
 
     try:
@@ -69,7 +74,8 @@ def handle_vectordb(args: List[str]) -> None:
             # Find collection for current space
             # collection_name and collection_id are already initialized above
 
-            list_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
+            list_url = f"http://{config.chroma_host}:{config.chroma_port}/api/v2/tenants/default_tenant/databases/default_database/collections"
+            api_session = _get_api_session()
             list_response = api_session.get(list_url, timeout=10)
 
             if list_response.status_code == 200:
@@ -80,17 +86,17 @@ def handle_vectordb(args: List[str]) -> None:
                         break
 
             if not collection_id:
-                print(f"❌ No collection found for current space '{CURRENT_SPACE}'")
+                print(f"❌ No collection found for current space '{ctx.current_space}'")
                 print("The space may not have any documents yet.")
                 return
 
             logger.info(
-                f"Using collection for space {CURRENT_SPACE}: {collection_name} (ID: {collection_id})"
+                f"Using collection for space {ctx.current_space}: {collection_name} (ID: {collection_id})"
             )
 
             # Get collection statistics
             count_url = (
-                f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/"
+                f"http://{config.chroma_host}:{config.chroma_port}/api/v2/"
                 f"tenants/default_tenant/databases/default_database/"
                 f"collections/{collection_id}/count"
             )
@@ -105,12 +111,12 @@ def handle_vectordb(args: List[str]) -> None:
                 )
                 print(f"📊 Collection: {collection_name}")
                 print(f"📈 Chunks: {chunk_count}")
-                print(f"🏢 Space: {CURRENT_SPACE}")
+                print(f"🏢 Space: {ctx.current_space}")
 
                 if chunk_count > 0:
                     try:
                         # Get metadata for statistics
-                        chroma_client = vectorstore._client
+                        chroma_client = ctx.vectorstore._client
                         collection = chroma_client.get_collection(collection_name)
                         results = collection.get(
                             limit=min(chunk_count, 1000),  # Sample up to 1000 for stats
@@ -206,7 +212,7 @@ def handle_vectordb(args: List[str]) -> None:
 
             # Get collection statistics instead of all documents
             count_url = (
-                f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/"
+                f"http://{config.chroma_host}:{config.chroma_port}/api/v2/"
                 f"tenants/default_tenant/databases/default_database/"
                 f"collections/{collection_id}/count"
             )
@@ -221,14 +227,14 @@ def handle_vectordb(args: List[str]) -> None:
                 )
                 print(f"📊 Collection: {collection_name}")
                 print(f"📈 Documents: {count}")
-                print(f"🏢 Space: {CURRENT_SPACE}")
+                print(f"🏢 Space: {ctx.current_space}")
 
                 if count > 0:
                     print("\n📄 Sample Documents:")
                     try:
                         # Try to get sample documents using ChromaDB client
                         # directly
-                        chroma_client = vectorstore._client
+                        chroma_client = ctx.vectorstore._client
                         collection = chroma_client.get_collection(collection_name)
                         results = collection.get(
                             limit=3, include=["documents", "metadatas"]

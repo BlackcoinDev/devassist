@@ -99,7 +99,7 @@ class PathSecurity:
         # Check for dangerous patterns
         path_lower = user_path.lower()
         for pattern in cls.DANGEROUS_PATTERNS:
-            if pattern in path_lower:
+            if pattern.lower() in path_lower:
                 raise SecurityError(f"Dangerous path pattern detected: {user_path}")
 
         # Check if path exists (unless it's a new file for writing)

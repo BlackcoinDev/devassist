@@ -159,7 +159,7 @@ class TestHistoryTrimming:
         """Test that trim_history uses the default limit from config."""
         history = [SystemMessage(content="S")] + [HumanMessage(content="H")] * 20
         
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch('src.storage.memory.get_config') as mock_get_config:
             mock_config = MagicMock()
             mock_config.max_history_pairs = 5
             mock_get_config.return_value = mock_config

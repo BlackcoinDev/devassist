@@ -111,7 +111,7 @@ class ToolRegistry:
             tool_call: LangChain tool call object with name and args
 
         Returns:
-            Tool result dictionary
+            Dictionary containing 'function_name' and 'result'
         """
         try:
             name = tool_call.get("name") if isinstance(tool_call, dict) else tool_call.name
@@ -123,13 +123,23 @@ class ToolRegistry:
             else:
                 args = args_raw or {}
 
-            return cls.execute(name, args)
+            result = cls.execute(name, args)
+            return {
+                "function_name": name,
+                "result": result
+            }
 
         except json.JSONDecodeError as e:
-            return {"error": f"Invalid JSON arguments: {e}"}
+            return {
+                "function_name": "unknown",
+                "result": {"error": f"Invalid JSON arguments: {e}"}
+            }
         except Exception as e:
             logger.error(f"Error processing tool call: {e}")
-            return {"error": str(e)}
+            return {
+                "function_name": "unknown",
+                "result": {"error": str(e)}
+            }
 
     @classmethod
     def get_definitions(cls) -> List[Dict]:

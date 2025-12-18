@@ -45,6 +45,7 @@ All tests use proper mocking to isolate functionality and avoid external depende
 
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
+from src.core.context import get_context, reset_context
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # Import functions to test - these are the core business logic functions
@@ -114,30 +115,26 @@ class TestSpaceManagement(unittest.TestCase):
 
 
 class TestCaching(unittest.TestCase):
-    """Test caching functions.
+    """Test caching functions."""
 
-    Tests the performance optimization features:
-    - Embedding cache loading and validation
-    - Memory cleanup operations
-    - Cache persistence across sessions
-    """
+    def setUp(self):
+        reset_context()
 
-    @patch("src.main.os.path.exists")
-    @patch("builtins.open", new_callable=mock_open, read_data='{"test": [1, 2, 3]}')
-    @patch("src.main.json.load")
+    @patch("src.storage.cache.os.path.exists")
+    @patch("src.storage.cache.open", new_callable=mock_open, read_data='{"test": [1, 2, 3]}')
+    @patch("src.storage.cache.json.load")
     def test_load_embedding_cache(self, mock_json_load, mock_file, mock_exists):
         """Test loading embedding cache."""
         mock_exists.return_value = True
         mock_json_load.return_value = {"test": [1, 2, 3]}
 
         # Reset global cache
-        import src.main as main
-
-        main.EMBEDDING_CACHE.clear()
+        ctx = get_context()
+        ctx.embedding_cache.clear()
 
         load_embedding_cache()
-        assert len(main.EMBEDDING_CACHE) > 0
-        mock_file.assert_called_once()  # Verify file was opened
+        assert len(ctx.embedding_cache) > 0
+        mock_file.assert_called_once()
 
     def test_cleanup_memory(self):
         """Test memory cleanup function."""
@@ -250,6 +247,14 @@ class TestSlashCommands(unittest.TestCase):
     - Unknown command error responses
     - Command output formatting and user feedback
     """
+
+    def setUp(self):
+        """Ensure commands are registered."""
+        reset_context()
+        import importlib
+        import src.commands.handlers.help_commands
+        importlib.reload(src.commands.handlers.help_commands)
+        # We only really need help for the help test
 
     def test_handle_slash_command_help(self):
         # Capture stdout
