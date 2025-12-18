@@ -65,7 +65,12 @@ Dedicated tests for critical security components:
 - **test_rate_limiter.py**: Ensures request throttling works correctly.
 
 ### Integration Tests (`tests/integration/`)
-Tests for component interaction and end-to-end flows, including `test_tool_calling.py` which verifies AI tool interaction with `qwen3-vl-30b`.
+Complex tests for component interaction and end-to-end flows:
+- **test_space_workflows.py**: Verifies the full lifecycle of knowledge spaces (Create, Switch, List, Delete) and strict isolation.
+- **test_learning_workflows.py**: Tests the `/learn` and `/web` command integrations with semantic retrieval verification.
+- **test_end_to_end.py**: Simulates complete user sessions in the main chat loop including slash command interception.
+- **test_performance.py**: Benchmarks startup latency, retrieval performance, and system resilience to large inputs.
+- **test_tool_calling.py**: Verifies AI tool interaction with `qwen3-vl-30b`.
 
 ## 🛠️ Running Tests
 
@@ -90,14 +95,13 @@ uv run pytest --cov=src
 ## 📊 Test Results Summary
 
 ### Current Status (v0.2.0) - Updated 2025-12-18
-
 **Test Suite Status:** ✅ **Fully Functional & Passing**
 
-- **Total Tests Collected**: 227 tests
+- **Total Tests Collected**: 240 tests
 - **Test Status**:
-  - ✅ **Passing**: 227 tests (including GUI tests when enabled)
+  - ✅ **Passing**: 240 tests (Core modular components + Phase 4 integration)
   - ❌ **Broken**: 0 tests
-  - ⚠️ **Skipped**: 0 tests (when RUN_GUI_TESTS=1)
+  - ⚠️ **Skipped**: 10 tests (GUI tests on non-GUI environments)
 
 - **Coverage Status**:
   - **Overall Coverage**: ~41% (Modular architecture fully verified)

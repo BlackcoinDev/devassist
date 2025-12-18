@@ -161,9 +161,7 @@ from src.core.context import (
     get_query_cache,
 )
 from src.core.config import Config, get_config, get_logger, APP_VERSION
-from langchain_openai import (
-    ChatOpenAI,
-)  # Main LLM interface using OpenAI-compatible API
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import (
     HumanMessage,
     SystemMessage,
@@ -1157,7 +1155,14 @@ def show_vectordb():
             print("--- End Vector Database ---")
 
         except Exception as e:
-            print(f"❌ Error displaying vector database: {str(e)}")
+            print(f"❌ An error occurred: {e}")
+            print(f"DEBUG: Exception type: {type(e)}")
+            # The original instruction included 'break' and 'continue' here,
+            # but they are only valid inside loops.
+            # To maintain syntactical correctness as per instructions,
+            # these statements are omitted as this block is not within a loop.
+            # If this exception block was part of a loop, 'break' or 'continue'
+            # would be placed here.
 
             # Get collection statistics instead of all documents
             count_url = (
@@ -1890,87 +1895,40 @@ def handle_export_command(format_type: str = "json"):
         print(f"\n❌ Failed to export conversation: {e}\n")
 
 
-def initialize_application():
-    """
-    Initialize all application components required for operation.
-
-    This critical function sets up the complete AI assistant infrastructure:
-    1. LLM Connection: Establishes qwen3-vl-30b connection via LM Studio with tool calling enabled
-    2. Vector Database: Connects to ChromaDB v2 server for persistent knowledge storage
-    3. Embeddings: Initializes qwen3-embedding via Ollama for semantic vectorization
-    4. Memory: Loads conversation history from SQLite database
-    5. Tool Binding: Attaches 8 AI tools to LLM for autonomous execution
-
-    The initialization sequence ensures all components work together:
-    - Tool calling requires LLM + proper tool definitions
-    - Knowledge storage requires ChromaDB + embeddings
-    - Context retrieval requires vector database + semantic search
-    - Memory persistence requires SQLite + proper schema
-
-    Args:
-        None (uses global environment variables)
-
-    Returns:
-        bool: True if all components initialized successfully, False if any critical component failed
-
-    Raises:
-        SystemExit: If critical components (LLM, ChromaDB) cannot be initialized
-
-    Global Variables Modified:
-        llm: ChatOpenAI instance with tool calling bound
-        vectorstore: ChromaDB vector store for knowledge
-        embeddings: Ollama embeddings for vectorization
-        conversation_history: List of loaded conversation messages
-    """
-    global llm, vectorstore, embeddings, chroma_client
-
-    # ============================================================================
-    # LLM INITIALIZATION
-    # ============================================================================
-    # Connect to LM Studio running locally for AI chat capabilities
-    # LM Studio provides OpenAI-compatible API for local LLM inference
+def initialize_llm():
+    """Initialize LLM with tool calling support."""
+    global llm
     try:
+        from pydantic import SecretStr
+        
         llm = ChatOpenAI(
-            # Local LM Studio server endpoint
             base_url=cast(str, LM_STUDIO_BASE_URL),
-            api_key=SecretStr(
-                cast(str, LM_STUDIO_API_KEY)
-            ),  # API authentication (usually "lm-studio")
-            # Model name (e.g., "qwen3-vl-30b")
+            api_key=SecretStr(cast(str, LM_STUDIO_API_KEY)),
             model=cast(str, MODEL_NAME),
-            temperature=TEMPERATURE,  # Response creativity (0.0-1.0)
+            temperature=TEMPERATURE,
         )
-        # Bind tools to the LLM for function calling support
-        # Import ToolRegistry to get registered tool definitions
         from src.tools import ToolRegistry
         tool_definitions = ToolRegistry.get_definitions()
         llm = llm.bind_tools(tool_definitions)
-        print(
-            f"✅ Connected to LLM: {MODEL_NAME} (with {
-                len(tool_definitions)} tools)")
+        print(f"✅ Connected to LLM: {MODEL_NAME} (with {len(tool_definitions)} tools)")
+        get_context().llm = llm
+        return True
     except Exception as e:
         print(f"❌ Failed to initialize LLM: {e}")
-        print("Please ensure LM Studio is running and accessible.")
         return False
 
-    # ============================================================================
-    # VECTOR DATABASE INITIALIZATION
-    # ============================================================================
-    # Set up ChromaDB vector database for persistent knowledge storage
-    # Uses Ollama embeddings for semantic text processing
+def initialize_vectordb():
+    """Initialize ChromaDB and embeddings."""
+    global vectorstore, embeddings, chroma_client
     try:
-        # Import vector database components
         from chromadb import HttpClient
         from langchain_chroma import Chroma
         from langchain_ollama import OllamaEmbeddings
         from typing import Any
 
-        # Custom embeddings class to avoid invalid sampling parameters for
-        # embeddings
         class CustomOllamaEmbeddings(OllamaEmbeddings):
             @property
             def _default_params(self) -> dict[str, Any]:
-                """Get the default parameters for calling Ollama, excluding sampling params for embeddings."""
                 return {
                     "num_ctx": self.num_ctx,
                     "num_gpu": self.num_gpu,
@@ -1978,154 +1936,106 @@ def initialize_application():
                     "keep_alive": self.keep_alive,
                 }
 
-        # Connect to ChromaDB server
-        chroma_client = HttpClient(
-            host=cast(
-                str,
-                CHROMA_HOST),
-            port=CHROMA_PORT)
-
-        # Initialize Ollama embeddings for text vectorization
+        chroma_client = HttpClient(host=cast(str, CHROMA_HOST), port=CHROMA_PORT)
         embeddings = CustomOllamaEmbeddings(
-            model=cast(
-                str, EMBEDDING_MODEL
-            ),  # Embedding model (e.g., "qwen3-embedding:latest")
-            base_url=cast(str, OLLAMA_BASE_URL),  # Ollama server endpoint
+            model=cast(str, EMBEDDING_MODEL),
+            base_url=cast(str, OLLAMA_BASE_URL),
         )
 
-        # Attempt to connect to existing collection for current workspace
-        # Collections are isolated per workspace for knowledge separation
-        try:
-            chroma_client.get_collection(
-                name=get_space_collection_name(CURRENT_SPACE))
-            # Collection exists - connect to it
-            vectorstore = Chroma(
-                client=chroma_client,
-                collection_name=get_space_collection_name(CURRENT_SPACE),
-                embedding_function=embeddings,
-            )
-            print("✅ Connected to vector database (existing collection)")
-        except Exception:
-            # Collection doesn't exist - create new one for this workspace
-            vectorstore = Chroma(
-                client=chroma_client,
-                collection_name=get_space_collection_name(CURRENT_SPACE),
-                embedding_function=embeddings,
-            )
-            print("✅ Connected to vector database (new collection)")
-
+        from src.vectordb.spaces import get_space_collection_name
+        coll_name = get_space_collection_name(CURRENT_SPACE)
+        
+        vectorstore = Chroma(
+            client=chroma_client,
+            collection_name=coll_name,
+            embedding_function=embeddings,
+        )
+        print(f"✅ Connected to vector database ({coll_name})")
+        
+        # Update context
+        ctx = get_context()
+        ctx.vectorstore = vectorstore
+        ctx.embeddings = embeddings
+        ctx.chroma_client = chroma_client
+        return True
     except Exception as e:
-        print(f"❌ ERROR: ChromaDB connection failed: {e}")
-        print(
-            "ChromaDB is required for learning features (/learn and /populate commands)."
-        )
-        print("Please ensure ChromaDB v2 server is running and accessible.")
-        sys.exit(1)
+        print(f"❌ ChromaDB connection failed: {e}")
+        return False
 
-    # ============================================================================
-    # DATABASE INITIALIZATION
-    # ============================================================================
-    # Set up SQLite database connection for conversation memory storage
-    global db_conn, db_lock
-    if DB_TYPE == "sqlite":
-        try:
-            db_conn = sqlite3.connect(
-                cast(str, DB_PATH), check_same_thread=False)
-            db_lock = threading.Lock()
-
-            # Create conversations table if it doesn't exist
-            with db_lock:
-                cursor = db_conn.cursor()
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS conversations (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        session_id TEXT NOT NULL,
-                        message_type TEXT NOT NULL,
-                        content TEXT NOT NULL,
-                        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
-                db_conn.commit()
-
-            print("✅ Connected to SQLite database for conversation memory")
-        except Exception as e:
-            print(f"❌ Failed to initialize SQLite database: {e}")
-            print("Falling back to JSON file storage")
-            db_conn = None
-            db_lock = None
-
-    # ============================================================================
-    # CONVERSATION MEMORY LOADING
-    # ============================================================================
-    # Load previous conversation history from SQLite database
-    # This provides continuity across application sessions
-    conversation_history[:] = load_memory()
-
-    # ============================================================================
-    # MEM0 INITIALIZATION (USER MEMORY)
-    # ============================================================================
-    # Mem0 uses both ChromaDB (vector storage for memories) and SQLite (history/metadata)
-    # This provides semantic search capabilities while maintaining change
-    # tracking
+def initialize_user_memory():
+    """Initialize Mem0 personalization."""
     global user_memory
-    if MEM0_AVAILABLE:
-        try:
-            # Configure Mem0 to use Local Stack (LM Studio + Ollama + Chroma)
-            # This ensures privacy by keeping all data local
-            mem0_config = {
-                "llm": {
-                    # Use the LM Studio provider config so we can pass a
-                    # provider-specific response format without editing
-                    # site-packages. LMStudioConfig accepts
-                    # `lmstudio_base_url` and `lmstudio_response_format`.
-                    "provider": "lmstudio",
-                    "config": {
-                        "model": MODEL_NAME,
-                        "lmstudio_base_url": LM_STUDIO_BASE_URL,
-                        "api_key": LM_STUDIO_API_KEY,
-                        "temperature": 0.1,
-                        # Provide a permissive json_schema so mem0's
-                        # internal calls that previously used
-                        # `{"type": "json_object"}` are accepted by
-                        # LM Studio / OpenAI clients which require
-                        # `json_schema` or `text`.
-                        "lmstudio_response_format": {
-                            "type": "json_schema",
-                            "json_schema": {
-                                # LM Studio / OpenAI structured output expects
-                                # a `schema` key inside `json_schema` whose
-                                # value is the actual JSON Schema object.
-                                "schema": {
-                                    "type": "object",
-                                    "additionalProperties": True,
-                                }
-                            },
+    if not MEM0_AVAILABLE:
+        return True
+    try:
+        from mem0 import Memory
+        mem0_config = {
+            "llm": {
+                "provider": "lmstudio",
+                "config": {
+                    "model": MODEL_NAME,
+                    "lmstudio_base_url": LM_STUDIO_BASE_URL,
+                    "api_key": LM_STUDIO_API_KEY,
+                    "temperature": 0.1,
+                    "lmstudio_response_format": {
+                        "type": "json_schema",
+                        "json_schema": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": True,
+                            }
                         },
                     },
                 },
-                "embedder": {
-                    "provider": "ollama",
-                    "config": {
-                        "model": EMBEDDING_MODEL,
-                        "ollama_base_url": OLLAMA_BASE_URL,
-                    },
+            },
+            "embedder": {
+                "provider": "ollama",
+                "config": {
+                    "model": EMBEDDING_MODEL,
+                    "ollama_base_url": OLLAMA_BASE_URL,
                 },
-                "vector_store": {
-                    "provider": "chroma",
-                    "config": {
-                        "collection_name": "mem0_user_prefs",
-                        "host": CHROMA_HOST,
-                        "port": CHROMA_PORT,
-                    },
+            },
+            "vector_store": {
+                "provider": "chroma",
+                "config": {
+                    "collection_name": "mem0_user_prefs",
+                    "host": CHROMA_HOST,
+                    "port": CHROMA_PORT,
                 },
-            }
-            user_memory = Memory.from_config(mem0_config)
-            print("✅ Connected to Mem0 (User Personalized Memory)")
-        except Exception as e:
-            # Non-critical failure - continue without it
-            print(
-                f"⚠️ Failed to initialize Mem0: {e} (Continuing without personalization)")
-            user_memory = None
+            },
+        }
+        user_memory = Memory.from_config(mem0_config)
+        get_context().user_memory = user_memory
+        print("✅ Connected to Mem0 (User Personalized Memory)")
+        return True
+    except Exception as e:
+        print(f"⚠️ Failed to initialize Mem0: {e}")
+        return False
+
+def initialize_application():
+    """
+    Initialize all application components required for operation.
+    """
+    if not initialize_llm():
+        return False
+    
+    if not initialize_vectordb():
+        # ChromaDB is critical for learning, but maybe not for basic chat?
+        # The original code exited on failure.
+        sys.exit(1)
+
+    # Database initialization (uses storage module)
+    from src.storage.database import initialize_database
+    db_conn, db_lock = initialize_database()
+    if not db_conn:
+        print("Falling back to non-persistent mode")
+
+    # Load conversation history
+    conversation_history[:] = load_memory()
+    get_context().conversation_history = conversation_history
+
+    # Personalization
+    initialize_user_memory()
 
     return True
 
@@ -2302,6 +2212,11 @@ def main():
     # Initialize application components
     if not initialize_application():
         return  # Exit if initialization failed
+
+    # Access context and sync history reference
+    # This ensures the module-level reference points to the current context's list
+    global conversation_history
+    conversation_history = get_context().conversation_history
 
     # Main interaction loop - runs until user quits
     while True:

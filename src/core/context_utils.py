@@ -37,7 +37,7 @@ import requests
 from langchain_core.documents import Document
 from src.core.config import get_config
 from src.core.context import get_context
-from src.vectordb import get_space_collection_name
+
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +114,7 @@ def get_relevant_context(
             return ""
 
         # Find collection for the specified space
+        from src.vectordb.spaces import get_space_collection_name
         collection_id = None
         collection_name = get_space_collection_name(space_name)
 
@@ -218,6 +219,7 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
             embedding_vector = embeddings_result[0]
 
             # Get collection for current space
+            from src.vectordb.spaces import get_space_collection_name
             collection_name = get_space_collection_name(ctx.current_space)
             collection_id = None
 
