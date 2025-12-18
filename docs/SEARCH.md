@@ -1,6 +1,9 @@
 # Search and RAG (Retrieval-Augmented Generation) in DevAssist
 
-DevAssist uses **Retrieval-Augmented Generation (RAG)** to enhance AI responses with relevant knowledge from your learned documents. This document explains how the search system works, how to control it, and how to maximize its effectiveness.
+DevAssist uses **Retrieval-Augmented Generation (RAG)** to enhance AI responses
+with relevant knowledge from your learned documents. This document explains how
+the search system works, how to control it, and how to maximize its
+effectiveness.
 
 ## Table of Contents
 
@@ -31,7 +34,8 @@ DevAssist uses **Retrieval-Augmented Generation (RAG)** to enhance AI responses 
 
 # Disable context searching
 /context off
-```
+
+```text
 
 ### Teaching DevAssist
 
@@ -45,7 +49,8 @@ DevAssist uses **Retrieval-Augmented Generation (RAG)** to enhance AI responses 
 # Search what you've taught DevAssist (ask the AI, it will search automatically)
 You: "What do you know about Python programming fundamentals?"
 # AI autonomously calls search_knowledge tool and responds with context
-```
+
+```text
 
 ---
 
@@ -81,7 +86,8 @@ DevAssist uses **semantic search** (not keyword search):
 
 ### Component Overview
 
-```
+```text
+
 User Query
     ↓
 [1] AI Decision Layer
@@ -105,11 +111,13 @@ User Query
     • Appends to AI's context window
     ↓
 AI Response (using context + general knowledge)
-```
+
+```text
 
 ### Storage Architecture (Three-Tier System)
 
-```
+```text
+
 SQLite (history.db)
 ├─ Purpose: Conversation history storage
 ├─ Query speed: ~1ms (transactional)
@@ -126,6 +134,7 @@ In-Memory Cache (QUERY_CACHE)
 ├─ Query speed: <1ms (instant)
 ├─ Capacity: Last 500-1000 queries
 └─ Persistence: query_cache.json
+
 ```
 
 ---
@@ -150,6 +159,7 @@ def get_relevant_context(
     # 4. Query with embeddings (cosine similarity)
     # 5. Cache results for future use
     # 6. Return formatted context string
+
 ```
 
 **When it's called:**
@@ -158,7 +168,8 @@ def get_relevant_context(
 - Never when `context_mode == "off"`
 
 **Example flow:**
-```
+
+```text
 User: "What are the performance best practices?"
        ↓
 Context: on → get_relevant_context("What are the performance best practices?")
@@ -171,6 +182,7 @@ ChromaDB search finds:
   - "Profile before optimizing"
        ↓
 AI response: "Based on your knowledge base: [context]. Additionally..."
+
 ```
 
 ### 2. **Web Search (Knowledge from Internet)**
@@ -184,7 +196,8 @@ def execute_web_search(query: str) -> dict:
     # 1. Enhance query if needed (e.g., add "cryptocurrency" context)
     # 2. Call DuckDuckGo API (max 10 results)
     # 3. Return raw results with title, link, snippet
-```
+
+```text
 
 **When it's called:**
 - AI autonomously decides based on query type
@@ -192,10 +205,13 @@ def execute_web_search(query: str) -> dict:
 - Not subject to context mode (independent tool)
 
 **Example:**
-```
+
+```text
+
 User: "What's the latest in AI?"
 AI decides: This needs current info → calls search_web()
 Result: Latest news articles from internet
+
 ```
 
 ### 3. **AI Tool: search_knowledge()**
@@ -208,6 +224,7 @@ Wrapper tool that AI can call explicitly:
 def execute_search_knowledge(query: str, limit: int = 5) -> dict:
     # Calls get_relevant_context() with configurable limit
     # Returns structured result: {success, query, results, result_count}
+
 ```
 
 **When AI calls it:**
@@ -219,13 +236,14 @@ def execute_search_knowledge(query: str, limit: int = 5) -> dict:
 
 ## Context Modes
 
-DevAssist has three context modes that control when knowledge base search happens:
+DevAssist has three context modes that control when knowledge base search
+happens:
 
 ### Mode: `auto` (Default) ⭐ Recommended
 
 AI intelligently decides when to search:
 
-```
+```text
 User: "What's 2+2?"
 → AI: No context needed, responds "4" (instant)
 
@@ -234,7 +252,8 @@ User: "How does our authentication work?"
 
 User: "What's the capital of France?"
 → AI: No context needed (general knowledge), responds "Paris"
-```
+
+```text
 
 **Advantages:**
 - Fastest response times (avoids unnecessary searches)
@@ -242,20 +261,23 @@ User: "What's the capital of France?"
 - Best accuracy (AI knows when context helps)
 
 **Enable:**
+
 ```bash
 /context auto
+
 ```
 
 ### Mode: `on` (Always Search)
 
 Always includes knowledge base context with every query:
 
-```
+```text
 User: "What's 2+2?"
 → Searches knowledge base (slower)
 → Returns context if found, else empty
 → AI responds "4 (from math docs)" or just "4"
-```
+
+```text
 
 **Advantages:**
 - Ensures all learned info is considered
@@ -266,19 +288,22 @@ User: "What's 2+2?"
 - May include irrelevant context
 
 **Enable:**
+
 ```bash
 /context on
+
 ```
 
 ### Mode: `off` (Never Search)
 
 Never searches knowledge base:
 
-```
+```text
 User: "How does our system work?"
 → No search
 → AI responds using only general knowledge
-```
+
+```text
 
 **Advantages:**
 - Fastest (no embedding/search overhead)
@@ -289,9 +314,11 @@ User: "How does our system work?"
 - Can't access learned documents
 
 **Enable:**
+
 ```bash
 /context off
-```
+
+```text
 
 ### Checking Current Mode
 
@@ -303,6 +330,7 @@ User: "How does our system work?"
 # - auto: AI decides when to include context
 # - on: Always include available context
 # - off: Never include context from knowledge base
+
 ```
 
 ---
@@ -324,7 +352,8 @@ Remember a single piece of information:
 
 ```bash
 /learn Python functions are first-class objects that can be passed as arguments
-```
+
+```text
 
 **What happens:**
 1. Text is converted to embedding (vector)
@@ -340,15 +369,19 @@ Remember a single piece of information:
 - Best practices
 
 **Example session:**
+
 ```bash
 You: /learn Our database uses PostgreSQL 15 with connection pooling enabled
 
-DevAssist: ✅ Learned: "Our database uses PostgreSQL 15 with connection pooling enabled"
+DevAssist: ✅ Learned: "Our database uses PostgreSQL 15 with connection pooling
+enabled"
 
 [Later...]
 
 You: What database do we use?
-DevAssist: Based on what you've taught me, you use PostgreSQL 15 with connection pooling enabled.
+DevAssist: Based on what you've taught me, you use PostgreSQL 15 with connection
+pooling enabled.
+
 ```
 
 #### Method 2: `/populate` Command
@@ -367,6 +400,7 @@ Bulk import an entire codebase:
 
 # Real-world example
 /populate ~/projects/myapp --clear
+
 ```
 
 **Process:**
@@ -384,7 +418,8 @@ Bulk import an entire codebase:
 - `--clear`: Delete existing collection before repopulating
 
 **Progress:**
-```
+
+```text
 🔍 Starting codebase population from: /Users/user/projects/myapp
 🔧 Using direct ChromaDB API for optimal reliability and performance
 This may take some time for large codebases...
@@ -393,6 +428,7 @@ Processing files...
 ✅ 342 files processed
 ✅ 1,847 chunks created and embedded
 ✅ Successfully added to knowledge base
+
 ```
 
 **Performance:**
@@ -402,7 +438,8 @@ Processing files...
 
 ### Document Learning (AI Tool)
 
-The `learn_information()` AI tool allows the model to autonomously save information:
+The `learn_information()` AI tool allows the model to autonomously save
+information:
 
 ```bash
 You: Remember that we migrated from MySQL to PostgreSQL last month
@@ -413,7 +450,9 @@ DevAssist: [Calls learn_information tool]
 [Later...]
 
 You: When did we switch databases?
-DevAssist: Based on what I've learned, you migrated from MySQL to PostgreSQL last month.
+DevAssist: Based on what I've learned, you migrated from MySQL to PostgreSQL
+last month.
+
 ```
 
 ---
@@ -432,13 +471,15 @@ DevAssist uses **two-level caching** for maximum performance:
 - Lookup time: <1ms (instant)
 
 **Example:**
+
 ```bash
 User: "Tell me about Python"
 → Search → 50ms delay → AI responds
 
 User: "Tell me about Python" [again]
 → Cache hit → <1ms → AI responds instantly
-```
+
+```text
 
 #### Level 2: Disk Cache (query_cache.json)
 
@@ -449,27 +490,34 @@ User: "Tell me about Python" [again]
 - Limited to 1000 entries (newest kept)
 
 **Files:**
-```
+
+```text
+
 devassist/
 ├── query_cache.json          # Search result cache
 └── embedding_cache.json      # Document embedding cache
-```
+
+```text
 
 ### Cache Management
 
 **View cache stats:**
+
 ```bash
 # Check cache size (in code debug mode)
 # QUERY_CACHE contains {space}:{query}:{k} → [results]
-```
+
+```text
 
 **Clear cache (if needed):**
+
 ```bash
 # Remove query_cache.json to reset
 rm query_cache.json
 
 # Or just clear space-specific cache by changing space
 /space myspace
+
 ```
 
 ### Optimization Tips
@@ -514,7 +562,8 @@ You: /populate ~/projects/projectB
 You: "How do we handle authentication?"
 → Searches projectB knowledge base only
 → projectA docs are ignored
-```
+
+```text
 
 **Benefits:**
 - Isolate knowledge by project
@@ -523,12 +572,15 @@ You: "How do we handle authentication?"
 - Easy project switching
 
 **Collections:**
-```
+
+```text
+
 ChromaDB Collections:
 ├── knowledge_base (default space)
 ├── space_projectA
 ├── space_projectB
 └── space_research
+
 ```
 
 ---
@@ -601,13 +653,14 @@ ChromaDB Collections:
    ```bash
    # Terminal 3: Start Ollama
    ollama serve
-   ```
+   ```text
 
 ### LLM doesn't use the context
 
 **Problem:** Context found but AI doesn't incorporate it.
 
 **Diagnosis:**
+
 ```bash
 # Check if context is being retrieved
 /context on     # Force context for every query
@@ -617,13 +670,15 @@ ChromaDB Collections:
 # - Rephrase question (more specific)
 # - Clear cache: rm query_cache.json
 # - Check LEARNING_MODE with /learning command
-```
+
+```text
 
 ### ChromaDB connection errors
 
 **Problem:** "Failed to retrieve context: Connection error"
 
 **Debugging:**
+
 ```bash
 # Check if ChromaDB server is running
 curl http://192.168.0.204:8000/api/heartbeat
@@ -633,6 +688,7 @@ chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
 
 # Check .env configuration
 cat .env | grep CHROMA
+
 ```
 
 ### Cache growing too large
@@ -640,12 +696,14 @@ cat .env | grep CHROMA
 **Problem:** `query_cache.json` becomes huge (slow startup).
 
 **Solution:**
+
 ```bash
 # Automatically managed (max 1000 entries)
 # If needed, clear:
 rm query_cache.json
 
 # App will recreate on next search
+
 ```
 
 ---
@@ -654,7 +712,8 @@ rm query_cache.json
 
 ### Core Functions
 
-The DevAssist modular architecture organizes search functionality across several focused modules:
+The DevAssist modular architecture organizes search functionality across several
+focused modules:
 
 | Function | Module Location | Purpose |
 |----------|-----------------|---------|
@@ -692,15 +751,18 @@ MODEL_NAME=qwen3-vl-30b
 MAX_HISTORY_PAIRS=50
 TEMPERATURE=0.7
 MAX_INPUT_LENGTH=2000
-```
+
+```text
 
 ### Cache Files
 
-```
+```text
+
 devassist/
 ├── query_cache.json          # Search result cache
 │                             # Format: {space:query:k: [results]}
 └── embedding_cache.json      # Document embedding cache
+
 ```
 
 ---
@@ -729,7 +791,9 @@ devassist/
 
 ## Performance Benchmarks
 
-**Note:** These are estimated timings based on typical operation patterns. Actual performance depends on hardware, model size, network conditions, and knowledge base size.
+**Note:** These are estimated timings based on typical operation patterns.
+Actual performance depends on hardware, model size, network conditions, and
+knowledge base size.
 
 ### Response Times (Context Modes)
 
@@ -737,7 +801,7 @@ Based on official expectations (CLAUDE.md):
 - **LLM base response time**: 2-5 seconds
 - **Search operations**: Additional overhead varies by knowledge base size
 
-```
+```text
 Context Mode: off
 └─ Pure LLM response: ~2-5 seconds
 
@@ -751,11 +815,13 @@ Context Mode: on (always search)
 Cache Hit (repeat query with cached search)
 └─ Search step: <1ms (instant cache lookup)
 └─ Total response: ~2-5 seconds (LLM dominates timing)
+
 ```
 
 ### Search Operation Timing
 
-These are approximate timings for the ChromaDB query operation only (not including LLM response time):
+These are approximate timings for the ChromaDB query operation only (not
+including LLM response time):
 
 | Knowledge Base Size | Search Time | Embedding Generation |
 |-------------------|------------|---------------------|
@@ -826,6 +892,7 @@ You: "What do you know about [topic]?"
 # Check learning mode
 /learning
 /learning normal
+
 ```
 
 ---

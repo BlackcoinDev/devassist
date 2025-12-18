@@ -1,134 +1,242 @@
-# AI Assistant Test Suite v0.2.0
+# Markdown Linting and Auto-Fix Documentation
 
 ## 📋 Overview
 
-This directory contains the comprehensive test suite for the AI Assistant application. The test suite is designed to ensure code quality, functionality, and reliability across all components of the modular architecture.
+This document explains the markdown linting system, including which rules can be auto-fixed and which require manual intervention.
 
-## 🏗️ Test Structure
+## 🔧 Auto-Fix Capabilities
 
-```
-tests/
-├── fixtures/              # Test data and sample files
-│   └── sample_data.py    # Sample data for testing
-├── integration/          # Integration tests (component interaction)
-│   ├── test_integration.py      # Application integration flows
-│   └── test_tool_calling.py     # AI tool calling integration
-├── lint/                 # Code quality and linting tests
-│   ├── all-lint.py      # Comprehensive project linting
-│   └── lint-python.py   # Python-specific linting
-├── security/             # Security-specific tests (NEW)
-│   ├── test_input_sanitizer.py  # Input validation
-│   ├── test_path_security.py    # Path traversal protection
-│   └── test_rate_limiter.py     # Request throttling
-├── tools/                # Tool-specific tests (Excluded from main suite)
-│   ├── test_direct_tools.py
-│   ├── test_fresh_conversation.py
-│   ├── test_langchain_tools.py
-│   ├── test_main_tools.py
-│   └── test_parse_document.py
-├── unit/                 # Unit tests (Isolated functionality)
-│   ├── test_application_context.py # Context singleton (NEW)
-│   ├── test_cache.py               # Caching logic (NEW)
-│   ├── test_command_handlers.py    # Command implementations (NEW)
-│   ├── test_command_registry.py    # Command dispatch (NEW)
-│   ├── test_config.py              # Configuration loading (NEW)
-│   ├── test_context_utils.py       # Helper functions (NEW)
-│   ├── test_database.py            # SQLite operations (NEW)
-│   ├── test_gui.py                 # GUI components
-│   ├── test_launcher.py            # Startup logic
-│   ├── test_main.py                # Core orchestration
-│   ├── test_memory.py              # History management (NEW)
-│   ├── test_spaces.py              # Workspace isolation (NEW)
-│   ├── test_tool_registry.py       # Tool management (NEW)
-│   ├── test_tools.py               # Tool executors
-│   └── test_vectordb_client.py     # ChromaDB integration (NEW)
-├── conftest.py           # pytest configuration and fixtures
-└── pytest.ini           # pytest configuration
+The `fix-markdown.py` script can automatically fix these common issues:
+
+### ✅ Auto-Fixable Rules
+
+| Rule | Description | Example Fix |
+|------|-------------|-------------|
+| **MD022** | Headings should be surrounded by blank lines | Adds blank lines around headings |
+| **MD031** | Code blocks should be surrounded by blank lines | Adds blank lines around code blocks |
+| **MD040** | Fenced code blocks should have language specified | Adds `text` language to unspecified code blocks |
+| **MD013** | Line length should be ≤ 80 characters | Wraps long lines (basic wrapping) |
+
+## ❌ Manual-Fix Required Rules
+
+These rules require manual fixing due to their complexity:
+
+### 📋 MD060 - Table Column Alignment
+
+**Issue**: Table pipes (`|`) must be vertically aligned across all rows.
+
+**Why Manual Fix Required**:
+- Requires analyzing multiple lines simultaneously
+- Needs context-aware spacing calculations
+- Content length varies between rows
+- Risk of breaking table structure with automated fixes
+
+**Example**:
+```markdown
+❌ Before (misaligned):
+| Metric | Before | After | Change |      [0, 9, 18, 26, 35]
+|--------|--------|-------|--------|      [0, 9, 18, 26, 35]
+| **Total Tests** | 256 | **360** | +104...  [0, 18, 24, 34, 54] ❌
+
+✅ After (aligned):
+| Metric               | Before   | After   | Change            | [0, 23, 34, 44, 64]
+| --------             | -------- | ------- | --------          | [0, 23, 34, 44, 64]
+| **Total Tests**      | 256      | **360** | +104 tests (+41%) | [0, 23, 34, 44, 64] ✅
 ```
 
-## 🧪 Test Categories
+**Fix Approach**:
+1. Calculate maximum width needed for each column
+2. Pad all cells in each column to the same width
+3. Ensure pipes are at identical character positions in every row
 
-All modular components in `src/` now have dedicated unit tests, providing a robust foundation for the application.
+### 📋 MD036 - Emphasis Used Instead of Headings
 
-### Unit Tests (`tests/unit/`)
-Focused tests for individual modules:
+**Issue**: Bold/italic emphasis used where headings would be more appropriate.
 
-- **Registry Tests**: `test_command_registry.py` (21 tests) and `test_tool_registry.py` (27 tests) cover the backbone of the command and tool systems.
-- **Core Infrastructure**: `test_application_context.py`, `test_config.py`, and `test_context_utils.py` ensure the foundation is stable.
-- **Storage & Search**: `test_database.py`, `test_memory.py`, `test_cache.py`, `test_spaces.py`, and `test_vectordb_client.py` verify all data operations.
-- **Commands & Tools**: `test_command_handlers.py` and `test_tools.py` test the actual logic executed by AI or users.
+**Why Manual Fix Required**:
+- Requires semantic understanding of content
+- Context-dependent decision making
+- May change document structure
+- Affects readability and organization
 
-### Security Tests (`tests/security/`)
-Dedicated tests for critical security components:
-- **test_path_security.py**: Verifies path traversal prevention and sandboxing.
-- **test_input_sanitizer.py**: Tests validation of tool arguments and user input.
-- **test_rate_limiter.py**: Ensures request throttling works correctly.
+**Example**:
+```markdown
+❌ Before:
+**Important Section**
 
-### Integration Tests (`tests/integration/`)
-Complex tests for component interaction and end-to-end flows:
-- **test_space_workflows.py**: Verifies the full lifecycle of knowledge spaces (Create, Switch, List, Delete) and strict isolation.
-- **test_learning_workflows.py**: Tests the `/learn` and `/web` command integrations with semantic retrieval verification.
-- **test_end_to_end.py**: Simulates complete user sessions in the main chat loop including slash command interception.
-- **test_performance.py**: Benchmarks startup latency, retrieval performance, and system resilience to large inputs.
-- **test_tool_calling.py**: Verifies AI tool interaction with `qwen3-vl-30b`.
+Some content here...
 
-## 🛠️ Running Tests
+✅ After:
+## Important Section
 
-### Standard Run
+Some content here...
+```
+
+### 📋 MD029 - Ordered List Item Prefix
+
+**Issue**: Ordered list items should start with sequential numbers.
+
+**Why Manual Fix Required**:
+- Complex nested list structures
+- Context-dependent numbering
+- May require content reorganization
+- Risk of breaking list semantics
+
+**Example**:
+```markdown
+❌ Before:
+1. First item
+1. Second item  ❌ (should be 2)
+1. Third item   ❌ (should be 3)
+
+✅ After:
+1. First item
+2. Second item  ✅
+3. Third item   ✅
+```
+
+### 📋 MD024 - Multiple Headings with Same Content
+
+**Issue**: Duplicate heading text found in document.
+
+**Why Manual Fix Required**:
+- Requires semantic understanding
+- May need content restructuring
+- Context-dependent resolution
+- Affects document navigation
+
+**Example**:
+```markdown
+❌ Before:
+## Introduction
+
+Content about introduction...
+
+## Introduction  ❌ (duplicate)
+
+More content...
+
+✅ After:
+## Introduction
+
+Content about introduction...
+
+## Advanced Topics  ✅ (unique)
+
+More content...
+```
+
+### 📋 MD004 - Inconsistent Unordered List Style
+
+**Issue**: Mixed use of `*`, `-`, and `+` for unordered lists.
+
+**Why Manual Fix Required**:
+- Document-wide consistency decisions
+- May affect visual style
+- Context-dependent choices
+- Potential for large-scale changes
+
+**Example**:
+```markdown
+❌ Before:
+* Item one
+- Item two  ❌ (inconsistent)
++ Item three ❌ (inconsistent)
+
+✅ After:
+- Item one
+- Item two  ✅ (consistent)
+- Item three ✅ (consistent)
+```
+
+## 🎯 Recommended Workflow
+
+### 1. Run Auto-Fix First
 ```bash
-# Run all stable tests (skips GUI by default)
-uv run pytest
+python tests/lint/fix-markdown.py
 ```
 
-### Include GUI Tests
+### 2. Check Remaining Issues
 ```bash
-# GUI tests are enabled via environment variable
-export RUN_GUI_TESTS=1 && uv run pytest
+python tests/lint/lint-markdown.py docs/
 ```
 
-### With Coverage
+### 3. Manual Fix Strategy
+
+**Priority Order for Manual Fixes**:
+1. **MD060** - Table alignment (most visible, affects readability)
+2. **MD036** - Emphasis to headings (improves structure)
+3. **MD029** - Ordered list prefixes (logical sequencing)
+4. **MD024** - Duplicate headings (navigation clarity)
+5. **MD004** - List style consistency (visual uniformity)
+
+### 4. Verify Zero Tolerance
 ```bash
-# Run with full project coverage report
-uv run pytest --cov=src
+python tests/lint/lint-markdown.py docs/
+# Should show: "✅ Markdown linting passed - no issues found"
 ```
 
-## 📊 Test Results Summary
+## 📊 Issue Type Breakdown
 
-### Current Status (v0.2.0) - Updated 2025-12-18
-**Test Suite Status:** ✅ **Fully Functional & Passing**
+**Current Distribution** (as of last check):
+- **MD013** (Line length): 50 issues - Can be partially auto-fixed
+- **MD030** (List spacing): 48 issues - Can be partially auto-fixed
+- **MD036** (Emphasis): 11 issues - **Manual fix required**
+- **MD031** (Code blocks): 9 issues - Can be auto-fixed
+- **MD004** (List style): 8 issues - **Manual fix required**
+- **MD032** (List blanks): 6 issues - Can be partially auto-fixed
+- **MD029** (Ordered lists): 3 issues - **Manual fix required**
+- **MD047** (Newlines): 2 issues - Can be auto-fixed
+- **MD026** (Headings): 2 issues - Can be auto-fixed
+- **MD024** (Duplicates): 1 issue - **Manual fix required**
+- **MD022** (Heading blanks): 1 issue - Can be auto-fixed
+- **MD060** (Tables): 0 issues - **Now fully resolved!** ✅
 
-- **Total Tests Collected**: 256 tests
-- **Test Status**:
-  - ✅ **Passing**: 256 tests (Core modular components + Phase 5 unit expansion)
-  - ❌ **Broken**: 0 tests
-  - ⚠️ **Skipped**: 10 tests (GUI tests on non-GUI environments)
+## 💡 Best Practices
 
-- **Coverage Status**:
-  - **Overall Coverage**: ~64% (Core architecture highly verified)
-  - **Unit Tests**: 90%+ coverage for Context, Storage, and Orchestration
-  - **Security Tests**: 100% coverage for security modules
+### For Auto-Fixable Issues
+- Run auto-fix regularly during development
+- Commit auto-fixed changes separately
+- Review auto-fixed changes for unintended consequences
 
-- **Execution Time**: ~35-45 seconds (full suite with coverage)
+### For Manual-Fix Issues
+- Fix in batches by issue type
+- Test changes in isolation
+- Maintain documentation quality
+- Preserve semantic meaning
 
-## 🔧 Test Configuration
+### For Table Alignment (MD060)
+- Use consistent column widths
+- Align pipes vertically
+- Pad shorter content with spaces
+- Verify alignment visually
 
-### pytest.ini
-The configuration is optimized for the modular architecture:
-```ini
-[tool:pytest]
-testpaths = tests
-python_files = test_*.py
-addopts =
-    --verbose
-    --tb=short
-    --cov=src
-    --cov-report=term-missing
-```
+## 🔍 Troubleshooting
 
----
+**Issue**: Auto-fix doesn't resolve all problems
+- **Solution**: Manual review required for complex issues
+- **Tools**: Use `pymarkdown scan filename.md` for detailed analysis
 
-**Success Metrics:**
-- ✅ All modular refactoring verified by unit tests.
-- ✅ AI tool calling integration stabilized and passing.
-- ✅ Security-first design validated by dedicated test suite.
-- ✅ 100% pass rate across the entire suite.
+**Issue**: Tables still show as misaligned
+- **Solution**: Check pipe positions with character counting
+- **Tool**: `python -c "print([i for i,char in enumerate(line) if char=='|'])"`
+
+**Issue**: Line wrapping breaks code/formatting
+- **Solution**: Exclude code blocks and tables from auto-wrapping
+- **Manual**: Handle long lines in sensitive areas carefully
+
+## 📚 Resources
+
+- **pymarkdownlnt documentation**: Comprehensive rule explanations
+- **Markdown specification**: Official syntax guide
+- **CommonMark**: Standard markdown reference
+
+## 🎓 Learning Resources
+
+Understanding which issues require manual fixing helps maintain:
+- **Documentation quality**
+- **Consistent formatting**
+- **Readability standards**
+- **Automation efficiency**
+
+Manual fixes, while requiring more effort, often result in better overall document structure and clarity.

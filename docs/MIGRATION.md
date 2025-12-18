@@ -1,18 +1,22 @@
 # Migration and Database Guide
 
-This guide covers the currently implemented database backends and important migration information for the AI Assistant application.
+This guide covers the currently implemented database backends and important
+migration information for the AI Assistant application.
 
 ## ⚠️ Breaking Changes in v0.2.0
 
 ### Configuration Requirements
 
-**IMPORTANT**: Starting with v0.2.0, the application requires a `.env` file and no longer uses hardcoded defaults.
+**IMPORTANT**: Starting with v0.2.0, the application requires a `.env` file and
+no longer uses hardcoded defaults.
 
 #### What Changed
+
 - **Before**: Application worked with or without `.env`, used hardcoded fallbacks, ChromaDB was optional
 - **After**: Application **requires** `.env` file, **no hardcoded defaults exist**, **ChromaDB is mandatory** for learning features
 
 #### Migration Steps
+
 1. **Copy configuration template**:
    ```bash
    cp .env.example .env
@@ -33,6 +37,7 @@ This guide covers the currently implemented database backends and important migr
    - Modify CI/CD pipelines to provide environment variables
 
 #### Error Messages
+
 - **Missing `.env`**: `❌ ERROR: No .env file found!`
 - **Missing variables**: `❌ ERROR: [VARIABLE_NAME] environment variable is required`
 - **ChromaDB failure**: `❌ ERROR: ChromaDB connection failed: [error]`
@@ -44,7 +49,8 @@ This guide covers the currently implemented database backends and important migr
 
 ### Overview of Changes
 
-Version 0.2.0 introduces a significant architectural refactoring, moving from a monolithic structure to a modular plugin-based architecture:
+Version 0.2.0 introduces a significant architectural refactoring, moving from a
+monolithic structure to a modular plugin-based architecture:
 
 - **main.py reduced**: From 4,556 lines to 3,175 lines (30% reduction)
 - **New modules created**: 8 focused modules with clear responsibilities
@@ -56,12 +62,15 @@ Version 0.2.0 introduces a significant architectural refactoring, moving from a 
 #### 1. Import Paths Changed
 
 **Before (v0.2.0):**
+
 ```python
 from src.main import llm, vectorstore, embeddings, conversation_history
 from src.main import get_relevant_context, add_to_knowledge_base
-```
+
+```text
 
 **After (v0.2.0):**
+
 ```python
 # Use ApplicationContext for all services
 from src.core.context import get_context
@@ -77,17 +86,21 @@ from src.core.context_utils import get_relevant_context, add_to_knowledge_base
 from src.storage.database import initialize_database
 from src.storage.memory import load_memory, save_memory
 from src.vectordb.client import ChromaDBClient
-```
+
+```text
 
 #### 2. Command and Tool Registration
 
 **Before (v0.2.0):**
+
 ```python
 # Commands hardcoded in handle_slash_command() function
 # Tools manually added to enable_tools list
-```
+
+```text
 
 **After (v0.2.0):**
+
 ```python
 # Commands use decorator pattern
 from src.commands.registry import CommandRegistry
@@ -102,31 +115,37 @@ from src.tools.registry import ToolRegistry
 @ToolRegistry.register("my_tool", TOOL_DEFINITION)
 def execute_my_tool(arg1: str) -> Dict[str, Any]:
     return {"success": True}
-```
+
+```text
 
 #### 3. Configuration Access
 
 **Before (v0.2.0):**
+
 ```python
 # Environment variables accessed directly via os.getenv()
 import os
 chroma_host = os.getenv("CHROMA_HOST")
-```
+
+```text
 
 **After (v0.2.0):**
+
 ```python
 # Configuration centralized in Config dataclass
 from src.core.config import Config
 
 config = Config.load()
 chroma_host = config.chroma_host
+
 ```
 
 ### Migration Steps
 
 #### Step 1: Update Custom Code Imports
 
-If you have custom extensions or scripts that import from `src.main`, update them:
+If you have custom extensions or scripts that import from `src.main`, update
+them:
 
 ```python
 # OLD
@@ -137,6 +156,7 @@ result = vectorstore.similarity_search(query)
 from src.core.context import get_context
 ctx = get_context()
 result = ctx.vectorstore.similarity_search(query)
+
 ```
 
 #### Step 2: Migrate Custom Commands
@@ -153,6 +173,7 @@ from src.commands.registry import CommandRegistry
 def handle_mycustom(args: str) -> None:
     """Handle /mycustom command."""
     print(f"Custom command executed: {args}")
+
 ```
 
 3. The handler will auto-register when imported
@@ -186,7 +207,8 @@ MY_TOOL_DEF = {
 @ToolRegistry.register("my_custom_tool", MY_TOOL_DEF)
 def execute_my_custom_tool(input: str) -> Dict[str, Any]:
     return {"success": True, "result": input}
-```
+
+```text
 
 #### Step 4: Update Test Code
 
@@ -208,6 +230,7 @@ def test_something():
 
 def teardown():
     reset_context()  # Clean up for next test
+
 ```
 
 ### Backwards Compatibility
@@ -246,7 +269,8 @@ uv run python launcher.py --gui
 
 # 4. Check tool calling
 # Ask AI: "read the README file" (should use read_file tool)
-```
+
+```text
 
 ### Getting Help
 
@@ -264,25 +288,31 @@ If you need to rollback to v0.2.0:
 ```bash
 git checkout tags/v0.2.0
 uv pip install -r requirements.txt
+
 ```
 
 Note: No database migration is needed for rollback—data formats are compatible.
 
 ### New Tool Capabilities
 
-**MAJOR ENHANCEMENT**: v0.2.0 introduces **8 AI tools** that work together with the existing knowledge management system:
+**MAJOR ENHANCEMENT**: v0.2.0 introduces **8 AI tools** that work together with
+the existing knowledge management system:
 
 #### Tool Integration Architecture
 
-For detailed tool integration architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For detailed tool integration architecture, see
+[ARCHITECTURE.md](ARCHITECTURE.md).
 
 #### Tool Result Handling & AI Usage
 
 **Tool Result Lifecycle:**
 1. **Execution**: AI calls tool → Tool runs → Returns structured result
-2. **Storage**: Results stored in conversation memory (Python variables, not files)
-3. **Integration**: Results formatted and added to conversation history as HumanMessage
-4. **Processing**: Results become part of LLM's thinking context for response generation
+2. **Storage**: Results stored in conversation memory (Python variables, not
+files)
+3. **Integration**: Results formatted and added to conversation history as
+HumanMessage
+4. **Processing**: Results become part of LLM's thinking context for response
+generation
 5. **Response**: AI uses tool data to craft informed, accurate responses
 6. **Persistence**: Results saved in SQLite conversation history
 
@@ -293,15 +323,18 @@ For detailed tool integration architecture, see [ARCHITECTURE.md](ARCHITECTURE.m
 - **No File Storage**: Results exist only in memory/conversation during session
 
 #### Available Tools
+
 1. **`read_file()`** - Read file contents (tested & working with qwen3-vl-30b)
 2. **`write_file()`** - Create/modify files (ready)
 3. **`list_directory()`** - Browse directories (ready)
 4. **`get_current_directory()`** - Show current path (tested & working)
-5. **`parse_document()`** - Extract text/tables/forms/layout from documents (ready)
+5. **`parse_document()`** - Extract text/tables/forms/layout from documents
+(ready)
 6. **`learn_information()`** - Store in knowledge base (ready)
 7. **`search_knowledge()`** - Query learned information (ready)
 
 #### Tool Ecosystem Benefits
+
 - **Document Intelligence**: qwen3-vl-30b's multimodal capabilities for OCR, table extraction, form analysis
 - **Knowledge Synthesis**: Tools work together to build comprehensive understanding
 - **Result Integration**: Tool outputs seamlessly feed into AI response generation
@@ -310,12 +343,17 @@ For detailed tool integration architecture, see [ARCHITECTURE.md](ARCHITECTURE.m
 - **Semantic Search**: Vector-based retrieval of learned information and document content
 
 #### Migration for Tool Usage
-1. **No additional configuration needed** - tools use existing ChromaDB/Ollama setup
+
+1. **No additional configuration needed** - tools use existing ChromaDB/Ollama
+setup
 2. **Tools are automatically available** in both GUI and CLI interfaces
-3. **Natural language triggers** - AI recognizes intent and calls appropriate tools
-4. **Fallback to manual commands** - all tools accessible via slash commands if needed
+3. **Natural language triggers** - AI recognizes intent and calls appropriate
+tools
+4. **Fallback to manual commands** - all tools accessible via slash commands if
+needed
 
 #### Required Environment Variables
+
 ```bash
 # LM Studio Configuration
 LM_STUDIO_URL=http://192.168.0.203:1234/v1    # Your LM Studio endpoint
@@ -341,11 +379,13 @@ DB_PATH=db/history.db                         # SQLite database path
 
 # System Configuration
 KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
-```
+
+```text
 
 ## 🗄️ Database Implementation
 
-For comprehensive database architecture details, please refer to the [ARCHITECTURE.md](ARCHITECTURE.md) document.
+For comprehensive database architecture details, please refer to the
+[ARCHITECTURE.md](ARCHITECTURE.md) document.
 
 ### SQLite (Recommended)
 
@@ -357,13 +397,16 @@ For comprehensive database architecture details, please refer to the [ARCHITECTU
 - File-based - easy backup and portability
 - Built-in encryption support with SQLCipher
 
-**Complete Schema Design and Implementation:** See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed SQLite schema, Python implementation, and encryption setup.
+**Complete Schema Design and Implementation:** See
+[ARCHITECTURE.md](ARCHITECTURE.md) for detailed SQLite schema, Python
+implementation, and encryption setup.
 
 
 
 ## 🔐 Security Considerations
 
-For comprehensive security architecture details, please refer to the [ARCHITECTURE.md](ARCHITECTURE.md) document.
+For comprehensive security architecture details, please refer to the
+[ARCHITECTURE.md](ARCHITECTURE.md) document.
 
 ### Encryption Strategies
 
@@ -383,11 +426,14 @@ For comprehensive security architecture details, please refer to the [ARCHITECTU
 - Session-based permissions
 - Secure data separation
 
-**Complete Security Implementation:** See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed encryption strategies, access control mechanisms, and security best practices.
+**Complete Security Implementation:** See [ARCHITECTURE.md](ARCHITECTURE.md) for
+detailed encryption strategies, access control mechanisms, and security best
+practices.
 
 ## 📊 Performance Optimization
 
-For comprehensive performance architecture details, please refer to the [ARCHITECTURE.md](ARCHITECTURE.md) document.
+For comprehensive performance architecture details, please refer to the
+[ARCHITECTURE.md](ARCHITECTURE.md) document.
 
 ### Indexing Strategies
 
@@ -406,11 +452,14 @@ For comprehensive performance architecture details, please refer to the [ARCHITE
 - Time-based filtering for recent messages
 - Optimized query patterns for common operations
 
-**Complete Performance Implementation:** See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed indexing strategies, query optimization techniques, and performance best practices.
+**Complete Performance Implementation:** See [ARCHITECTURE.md](ARCHITECTURE.md)
+for detailed indexing strategies, query optimization techniques, and performance
+best practices.
 
 ## 🔄 Migration Strategies
 
 ### From JSON to Database
+
 ```python
 def migrate_json_to_database(json_file: str, db_store):
     """Migrate existing JSON conversations to database"""
@@ -433,25 +482,30 @@ def migrate_json_to_database(json_file: str, db_store):
 
     # Backup original file
     shutil.move(json_file, f"{json_file}.backup")
-```
+
+```text
 
 ### Data Validation
+
 ```python
 def validate_migration(source_count: int, target_count: int) -> bool:
     """Validate that migration preserved all data"""
     if source_count != target_count:
-        logger.error(f"Migration count mismatch: {source_count} -> {target_count}")
+        logger.error(f"Migration count mismatch: {source_count} ->
+{target_count}")
         return False
 
     # Additional checksum validation
     # Compare content hashes between source and target
 
     return True
-```
+
+```text
 
 ## 📈 Monitoring & Analytics
 
 ### Usage Statistics
+
 ```sql
 -- Conversation statistics
 SELECT
@@ -473,17 +527,25 @@ SELECT
 FROM conversations
 WHERE user_id IS NOT NULL
 GROUP BY user_id;
-```
+
+```text
 
 ### Performance Metrics
+
 ```python
-def log_query_performance(query_name: str, start_time: float, result_count: int):
+def log_query_performance(query_name: str, start_time: float, result_count:
+int):
     """Log query performance for monitoring"""
     duration = time.time() - start_time
-    logger.info(f"Query '{query_name}' took {duration:.3f}s, returned {result_count} results")
+    logger.info(f"Query '{query_name}' took {duration:.3f}s, returned
+{result_count} results")
 
     # Could send to monitoring system
-    # metrics_client.histogram('db_query_duration', duration, tags={'query': query_name})
+    # metrics_client.histogram('db_query_duration', duration, tags={'query':
+query_name})
+
 ```
 
-This guide provides a comprehensive foundation for implementing various database backends for conversation memory storage, with security, performance, and scalability considerations.
+This guide provides a comprehensive foundation for implementing various database
+backends for conversation memory storage, with security, performance, and
+scalability considerations.

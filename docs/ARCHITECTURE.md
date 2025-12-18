@@ -1,6 +1,7 @@
 # AI Assistant Architecture
 
-This document provides a comprehensive architectural overview of the AI Assistant
+This document provides a comprehensive architectural overview of the AI
+Assistant
 application, serving as a reference for all other documentation files.
 
 ## 🏗️ System Architecture
@@ -59,15 +60,19 @@ application, serving as a reference for all other documentation files.
 ### Data Flow
 
 1. **Interface Selection** → `launcher.py` chooses GUI or CLI
-2. **Application Initialization** → `initialize_application()` sets up LLM and vector database
+2. **Application Initialization** → `initialize_application()` sets up LLM and
+vector database
 3. **Space Loading** → Load last used workspace from `space_settings.json`
 4. **Welcome Display** → `show_welcome()` shows interface and current space info
-5. **User Teaching** → `/learn` commands add knowledge to current space's collection
+5. **User Teaching** → `/learn` commands add knowledge to current space's
+collection
 6. **Code Ingestion** → `/populate` bulk imports codebases to current space
 7. **Text Chunking** → `chunk_text()` processes content for vector storage
 8. **Query Processing** → User asks questions via GUI or CLI
-9. **Context Retrieval** → Current space's ChromaDB collection provides relevant learned information
-10. **AI Enhancement** → LM Studio generates responses with space-specific learned context
+9. **Context Retrieval** → Current space's ChromaDB collection provides relevant
+learned information
+10. **AI Enhancement** → LM Studio generates responses with space-specific
+learned context
 11. **Memory Persistence** → SQLite saves conversation history
 12. **Space Persistence** → Current space setting saved to `space_settings.json`
 13. **Knowledge Growth** → AI learns continuously within current space
@@ -90,11 +95,17 @@ The AI has access to 8 powerful tools for various operations:
 | `search_web()` | Search the internet using DuckDuckGo | ✅ Ready |
 
 **Tool Integration Architecture:**
-```
-User Query → AI (qwen3-vl-30b) → Tool Selection → Execution → Result Integration → AI Response
-     ↓              ↓                      ↓            ↓              ↓              ↓
-File System    Multimodal Analysis     Secure        Structured     Conversation     Contextual
-Operations     & Understanding        Execution      Data Output    Context         Responses
+
+```text
+User Query → AI (qwen3-vl-30b) → Tool Selection → Execution → Result Integration
+→ AI Response
+     ↓              ↓                      ↓            ↓              ↓        
+     ↓
+File System    Multimodal Analysis     Secure        Structured     Conversation
+    Contextual
+Operations     & Understanding        Execution      Data Output    Context     
+   Responses
+
 ```
 
 ### 2. Spaces System
@@ -141,7 +152,8 @@ The system supports 80+ file types through unified processing:
 
 ## 🔌 Plugin Architecture (v0.2.0)
 
-The modular architecture introduces self-registering plugin systems for commands and tools, eliminating the need for central configuration.
+The modular architecture introduces self-registering plugin systems for commands
+and tools, eliminating the need for central configuration.
 
 ### CommandRegistry Pattern
 
@@ -151,10 +163,12 @@ Commands use a decorator-based auto-registration system:
 # In src/commands/handlers/utility_commands.py
 from src.commands.registry import CommandRegistry
 
-@CommandRegistry.register("mycommand", "Description", category="utility", aliases=["mc"])
+@CommandRegistry.register("mycommand", "Description", category="utility",
+aliases=["mc"])
 def handle_mycommand(args: str) -> None:
     """Handle /mycommand - does something useful."""
     print(f"Executing: {args}")
+
 ```
 
 **How it works:**
@@ -197,6 +211,7 @@ TOOL_DEFINITION = {
 def execute_my_tool(arg1: str) -> Dict[str, Any]:
     """Execute the tool."""
     return {"success": True, "result": f"Executed with {arg1}"}
+
 ```
 
 **How it works:**
@@ -237,9 +252,11 @@ def get_context() -> ApplicationContext:
     if _context is None:
         _context = ApplicationContext()
     return _context
-```
+
+```text
 
 **Usage:**
+
 ```python
 from src.core.context import get_context
 
@@ -247,7 +264,8 @@ ctx = get_context()
 ctx.llm  # Access ChatOpenAI instance
 ctx.vectorstore  # Access Chroma instance
 ctx.conversation_history  # Access message history
-```
+
+```text
 
 **Benefits:**
 - All services accessible from single source
@@ -257,7 +275,8 @@ ctx.conversation_history  # Access message history
 
 ### Module Organization
 
-```
+```text
+
 src/
 ├── core/               # Foundation layer
 │   ├── config.py       # Configuration from .env
@@ -281,7 +300,8 @@ src/
 ├── storage/            # Persistence layer
 ├── security/           # Security enforcement
 └── vectordb/           # Knowledge storage
-```
+
+```text
 
 ## 🗄️ Database Architecture
 
@@ -293,7 +313,8 @@ CREATE TABLE conversations (
     id TEXT PRIMARY KEY,
     session_id TEXT NOT NULL,
     user_id TEXT,
-    message_type TEXT NOT NULL CHECK (message_type IN ('system', 'human', 'ai')),
+    message_type TEXT NOT NULL CHECK (message_type IN ('system', 'human',
+'ai')),
     content TEXT NOT NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     metadata TEXT, -- JSON string
@@ -317,7 +338,8 @@ CREATE TABLE sessions (
     last_message_at DATETIME,
     message_count INTEGER DEFAULT 0
 );
-```
+
+```text
 
 ### ChromaDB v2 Architecture
 
@@ -355,19 +377,23 @@ DB_PATH=db/history.db                         # SQLite database path
 
 # System Configuration
 KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
-```
+
+```text
 
 ## 🛡️ Security Architecture
 
 ### Encryption Strategies
 
 #### Database-Level Encryption
+
 ```python
 # SQLCipher for SQLite
 conn.execute(f"PRAGMA key='{encryption_key}'")
-```
+
+```text
 
 #### Application-Level Encryption
+
 ```python
 from cryptography.fernet import Fernet
 
@@ -380,7 +406,8 @@ class EncryptedStore:
 
     def decrypt_content(self, encrypted_content: str) -> str:
         return self.cipher.decrypt(encrypted_content.encode()).decode()
-```
+
+```text
 
 ### Access Control
 
@@ -395,18 +422,22 @@ def get_user_conversations(user_id: str, session_id: str = None):
         params.append(session_id)
 
     return db.execute(query, params)
-```
+
+```text
 
 ## 🧪 Testing Architecture
 
 ### Test Suite Overview
+
 - **Unit Tests**: 171 tests covering individual modules
 - **Integration Tests**: 40 tests covering component interactions
 - **Security Tests**: 25 tests covering security modules
 - **Total**: 240+ tests with 90%+ coverage target
 
 ### Test Component Integration
-```
+
+```text
+
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                            Testing Architecture                          │
 ├──────────────────────────────────────────────────────────────────────────┤
@@ -425,9 +456,11 @@ def get_user_conversations(user_id: str, session_id: str = None):
 │                    └─────────────────────┘                               │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
-```
+
+```text
 
 ### Test Categories
+
 - **Unit Tests**: Isolated module testing with mock dependencies
 - **Integration Tests**: Component interaction and workflow testing
 - **Security Tests**: Path validation, input sanitization, rate limiting
@@ -443,9 +476,11 @@ CREATE INDEX idx_session_timestamp ON conversations(session_id, timestamp DESC);
 CREATE INDEX idx_content_length ON conversations(LENGTH(content));
 
 -- PostgreSQL
-CREATE INDEX CONCURRENTLY idx_content_fts ON conversations USING gin(to_tsvector('english', content));
+CREATE INDEX CONCURRENTLY idx_content_fts ON conversations USING
+gin(to_tsvector('english', content));
 CREATE INDEX CONCURRENTLY idx_metadata ON conversations USING gin(metadata);
-```
+
+```text
 
 ### Query Optimization
 
@@ -467,7 +502,8 @@ def get_recent_messages(session_id: str, hours: int = 24):
         WHERE session_id = ? AND timestamp > datetime('now', '-{} hours')
         ORDER BY timestamp DESC
     '''.format(hours), (session_id,))
-```
+
+```text
 
 ## 🔄 Integration Points
 
@@ -488,6 +524,7 @@ chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
 
 # Terminal 3: Ollama
 ollama serve
+
 ```
 
 ## 📋 Key Features Matrix
@@ -525,4 +562,5 @@ For more detailed information, refer to:
 - **ROADMAP.md**: Future development plans and feature timeline
 - **AGENTS.md**: Comprehensive agent documentation and technical details
 
-This architecture document serves as the canonical reference for the system's design and components.
+This architecture document serves as the canonical reference for the system's
+design and components.

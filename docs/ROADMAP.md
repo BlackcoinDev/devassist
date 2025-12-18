@@ -1,6 +1,8 @@
 # Roadmap
 
-This document outlines the future development roadmap for the Blackcoin DevAssist application, a LangChain-based AI learning assistant with GUI/CLI interfaces.
+This document outlines the future development roadmap for the Blackcoin
+DevAssist application, a LangChain-based AI learning assistant with GUI/CLI
+interfaces.
 
 ## Current Status (v0.2.0)
 
@@ -20,6 +22,7 @@ This document outlines the future development roadmap for the Blackcoin DevAssis
 ## Planned Integrations and Features
 
 ### 1. Enhanced Security
+
 **Priority**: High  
 **Status**: Planned  
 
@@ -40,6 +43,7 @@ For current security architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   3. Add key rotation mechanisms
 
 ### 2. Unified Document Processing with Docling
+
 **Priority**: Medium
 **Status**: ✅ Completed (v0.2.0)
 
@@ -47,13 +51,18 @@ For current security architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 - **How Docling Replaces Other Libraries**: Docling provides a single, powerful library that handles PDF, DOCX, RTF, EPUB, XLSX, HTML, and other formats with a consistent API. It can extract text, tables, images, and metadata from various document types, reducing the need for separate libraries like PyPDF2 (for PDFs), python-docx (for Word docs), striprtf (for RTF), ebooklib (for EPUB), and openpyxl (for Excel). This simplifies dependencies, improves maintainability, and offers better performance and accuracy for complex documents.
 - **Integration Steps**:
   1. ✅ Install Docling (`uv pip install docling`)
-  2. ✅ Refactor `document_processing_example.py` to use Docling's unified DocumentConverter
-  3. ✅ Update `populate_codebase.py` to leverage Docling for all supported formats
-  4. ✅ Gradually remove redundant libraries (PyPDF2, python-docx, striprtf, ebooklib, openpyxl) after testing
-  5. ✅ Test extraction quality and add support for additional formats like .odt, .mobi
+  2. ✅ Refactor `document_processing_example.py` to use Docling's unified
+DocumentConverter
+  3. ✅ Update `populate_codebase.py` to leverage Docling for all supported
+formats
+  4. ✅ Gradually remove redundant libraries (PyPDF2, python-docx, striprtf,
+ebooklib, openpyxl) after testing
+  5. ✅ Test extraction quality and add support for additional formats like .odt,
+.mobi
 - **Benefits**: Fewer dependencies, unified codebase, enhanced document understanding with layout preservation
 
 ### 3. Advanced AI Model Support
+
 **Priority**: Medium  
 **Status**: Planned  
 
@@ -71,6 +80,7 @@ For current security architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   3. Handle model loading/unloading gracefully
 
 ### 4. Performance Optimizations
+
 **Priority**: Medium  
 **Status**: Planned  
 
@@ -99,6 +109,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   3. Handle memory constraints for large batches
 
 ### 5. Multi-User Support
+
 **Priority**: Low  
 **Status**: Planned  
 
@@ -110,6 +121,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   4. Add user management UI
 
 ### 6. Cloud Deployment Options
+
 **Priority**: Low  
 **Status**: Planned  
 
@@ -127,6 +139,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   3. Add health checks and monitoring
 
 ### 7. Advanced GUI Features
+
 **Priority**: Medium  
 **Status**: Planned  
 
@@ -143,6 +156,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   3. Create example plugins
 
 ### 8. Monitoring and Analytics
+
 **Priority**: Low  
 **Status**: Planned  
 
@@ -150,7 +164,8 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 - **Integration Steps**:
   1. Install devlog library (`pip install devlog`)
   2. Replace standard logging with devlog in main.py, launcher.py, gui.py
-  3. Configure structured JSON logging with context for AI interactions and errors
+  3. Configure structured JSON logging with context for AI interactions and
+errors
   4. Add log filtering and analysis tools
 - **Benefits**: Improved log readability, better error tracking, enhanced debugging capabilities
 
@@ -161,6 +176,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   3. Ensure privacy compliance
 
 ### 9. Internationalization (i18n)
+
 **Priority**: Low  
 **Status**: Planned  
 
@@ -171,6 +187,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   3. Create translation files
 
 ### 10. Backup and Recovery
+
 **Priority**: High  
 **Status**: Planned  
 
@@ -181,6 +198,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   3. Update documentation with backup procedures
 
 ### 11. Pydantic-AI Integration
+
 **Priority**: Medium  
 **Status**: Planned  
 
@@ -196,6 +214,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 - **Benefits**: Improved type safety, better error handling, more structured AI workflows
 
 ### 12. Arcade Agent Authorization
+
 **Priority**: Medium  
 **Status**: Planned  
 
@@ -210,6 +229,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 - **Benefits**: Enhanced security, controlled agent actions, compliance with access policies
 
 ### 13. Crawl4AI Integration
+
 **Priority**: Medium  
 **Status**: Planned  
 
@@ -224,6 +244,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 - **Benefits**: Access to vast online knowledge, dynamic content updates, improved AI responses with current information
 
 ### 14. Mem0 AI Integration
+
 **Priority**: Medium
 **Status**: ✅ Completed (v0.2.0)  
 
@@ -238,6 +259,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 - **Benefits**: Improved long-term memory, better personalized responses, enhanced user experience
 
 ### 15. LangGraph Integration
+
 **Priority**: Medium  
 **Status**: Planned  
 
@@ -254,41 +276,52 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 ## Future Vision and Use Cases
 
 ### Project Evolution Analysis
-Based on the current state (v0.2.0 with GUI/CLI, AI learning, document processing, and tool calling) and the roadmap (security, performance, AI enhancements, multi-user support), the project can evolve into a comprehensive AI-powered development platform. The core strengths lie in its modular architecture, local AI integration, and extensible tool system.
+
+Based on the current state (v0.2.0 with GUI/CLI, AI learning, document
+processing, and tool calling) and the roadmap (security, performance, AI
+enhancements, multi-user support), the project can evolve into a comprehensive
+AI-powered development platform. The core strengths lie in its modular
+architecture, local AI integration, and extensible tool system.
 
 ### Potential Use Cases
 
 #### 1. Individual Developer Assistant
+
 - **Current Fit**: Already supports code generation, explanation, and learning
 - **Future Enhancement**: With roadmap integrations (Pydantic-AI, LangGraph), it can become a full IDE companion with advanced code analysis, refactoring suggestions, and project management
 - **Target Users**: Solo developers, students, hobbyists
 - **Monetization**: Freemium model with premium AI models
 
 #### 2. Team Knowledge Management Platform
+
 - **Current Fit**: Spaces system for isolated knowledge bases
 - **Future Enhancement**: Multi-user support, Crawl4AI for web ingestion, Mem0 for shared memory
 - **Target Users**: Development teams, research groups
 - **Use Case**: Centralized knowledge base with AI-powered search and summarization
 
 #### 3. Educational AI Tutor
+
 - **Current Fit**: Learning capabilities, document processing
 - **Future Enhancement**: Internationalization, advanced AI models, structured learning paths
 - **Target Users**: Students, educators, training programs
 - **Use Case**: Interactive coding education with personalized learning
 
 #### 4. Enterprise Code Review and Quality Assurance
+
 - **Current Fit**: Document processing for codebases
 - **Future Enhancement**: DeepCode integration, Arcade authorization, automated testing
 - **Target Users**: Enterprises, open-source projects
 - **Use Case**: Automated code review, security scanning, compliance checking
 
 #### 5. API and Integration Hub
+
 - **Current Fit**: Tool calling system
 - **Future Enhancement**: FastAPI integration, cloud deployment
 - **Target Users**: Developers building AI applications
 - **Use Case**: Backend service for AI-powered applications, providing standardized AI interactions
 
 #### 6. Research and Content Creation Assistant
+
 - **Current Fit**: Document processing, web capabilities (planned)
 - **Future Enhancement**: Crawl4AI, advanced AI models
 - **Target Users**: Researchers, content creators, journalists
@@ -297,21 +330,25 @@ Based on the current state (v0.2.0 with GUI/CLI, AI learning, document processin
 ### Strategic Directions
 
 #### Short-term (6-12 months)
+
 - Focus on stability and user experience improvements
 - Complete security and performance enhancements
 - Expand document processing capabilities
 
 #### Medium-term (1-2 years)
+
 - Multi-user and team features
 - Advanced AI integrations (Pydantic-AI, LangGraph)
 - Cloud deployment options
 
 #### Long-term (2+ years)
+
 - Enterprise features and integrations
 - API ecosystem development
 - Specialized versions for different domains (education, enterprise, research)
 
 ### Key Success Factors
+
 - Maintain local-first approach for privacy
 - Keep modular architecture for extensibility
 - Focus on developer experience and productivity
@@ -319,29 +356,35 @@ Based on the current state (v0.2.0 with GUI/CLI, AI learning, document processin
 - Ensure ethical AI usage and transparency
 
 ### Risks and Challenges
+
 - AI model dependency and API costs
 - Competition from established platforms
 - Balancing features with simplicity
 - Security and privacy concerns in multi-user scenarios
 - Keeping up with rapidly evolving AI landscape
 
-This vision positions the project as a versatile, privacy-focused AI development platform that can grow from a personal assistant to an enterprise-grade solution while maintaining its core values of accessibility and extensibility.
+This vision positions the project as a versatile, privacy-focused AI development
+platform that can grow from a personal assistant to an enterprise-grade solution
+while maintaining its core values of accessibility and extensibility.
 
 ## Implementation Guidelines
 
 ### Code Quality Standards
+
 - Maintain MyPy type safety
 - Follow PEP 8 style guidelines
 - Update tests for new features
 - Run linting before commits
 
 ### Testing Strategy
+
 - Unit tests for new components
 - Integration tests for service interactions
 - GUI tests (where possible)
 - Performance benchmarks
 
 ### Documentation Updates
+
 - Update AGENTS.md with new features
 - Add API documentation for new integrations
 - Update README.md with setup instructions
@@ -356,6 +399,7 @@ When implementing new features:
 5. Run full test suite
 
 ### 16. Code Quality & Testing Infrastructure Overhaul
+
 **Priority**: High
 **Status**: ✅ Completed (v0.2.0) - Modularization Achieved
 
@@ -366,7 +410,8 @@ When implementing new features:
   - ✅ Implemented ToolRegistry plugin system (4 executor modules)
   - ✅ Introduced ApplicationContext dependency injection pattern
   - ✅ Created unified ChromaDBClient (eliminated 10+ duplicate API patterns)
-  - ✅ Organized code into core/, storage/, security/, vectordb/, commands/, tools/
+  - ✅ Organized code into core/, storage/, security/, vectordb/, commands/,
+tools/
   - ✅ Achieved clear separation of concerns with layered architecture
 
 - **Code Quality Improvements**:
@@ -384,7 +429,9 @@ When implementing new features:
   - ✅ Improved test fixtures and mocking strategies
 
 - **Tool Testing Implementation**:
-  - ✅ Unit tests for all 8 AI tools (read_file, write_file, list_directory, get_current_directory, parse_document, learn_information, search_knowledge, search_web)
+  - ✅ Unit tests for all 8 AI tools (read_file, write_file, list_directory,
+get_current_directory, parse_document, learn_information, search_knowledge,
+search_web)
   - ✅ Integration tests for tool calling through LLM interface
   - ✅ Security and error handling validation
   - ✅ Mock external dependencies (filesystem, web APIs, databases)
@@ -406,7 +453,8 @@ When implementing new features:
 ⚠️ 8. Fix remaining linting issues (planned)
 ✅ 9. Update AGENTS.md with new testing standards
 
-**Benefits**: Clean, maintainable codebase with comprehensive test coverage, reliable tool functionality, and automated quality assurance.
+**Benefits**: Clean, maintainable codebase with comprehensive test coverage,
+reliable tool functionality, and automated quality assurance.
 
 **Current Status**:
 - ✅ 89 tests total (79 active + 10 GUI)
@@ -422,4 +470,5 @@ When implementing new features:
 - **Q3 2025**: Advanced AI features and GUI improvements
 - **Q4 2025**: Multi-user support and cloud deployment
 
-This roadmap is subject to change based on community feedback and development priorities.
+This roadmap is subject to change based on community feedback and development
+priorities.

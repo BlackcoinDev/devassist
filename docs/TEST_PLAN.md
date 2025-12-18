@@ -9,7 +9,8 @@
 
 ## Executive Summary
 
-This document outlines the comprehensive testing strategy for DevAssist's modular
+This document outlines the comprehensive testing strategy for DevAssist's
+modular
 architecture (v0.2.0). The modular refactoring extracted ~2,995 lines of code
 into 37 focused modules, but currently has 0% test coverage for new components.
 
@@ -33,7 +34,8 @@ into 37 focused modules, but currently has 0% test coverage for new components.
 **Status:** ✅ 15+ tests | **Priority:** P0 (CRITICAL)
 **Target:** 15 tests | **Estimated Time:** 2-3 hours
 
-The ApplicationContext is the dependency injection container that all modules depend on.
+The ApplicationContext is the dependency injection container that all modules
+depend on.
 
 #### Test File: `tests/unit/test_application_context.py`
 
@@ -212,6 +214,7 @@ class TestConfigCommands:
 
     def test_config_error_handling():
         """Test error handling for invalid configs."""
+
 ```
 
 ---
@@ -419,7 +422,8 @@ Security modules are critical and currently have ZERO tests.
 **Status:** ⚠️ 35 tests exist but BROKEN (now fixed) | **Priority:** P2 (MEDIUM)
 **Target:** Verify existing tests work | **Estimated Time:** 1 hour
 
-Existing tests in `test_tools.py` and `test_tool_calling.py` cover tool executors,
+Existing tests in `test_tools.py` and `test_tool_calling.py` cover tool
+executors,
 but imports were broken.
 
 **Action Items:**
@@ -477,7 +481,8 @@ tests/
 │   └── test_query_performance.py        # NEW (5 tests)
 │
 └── conftest.py                     # Shared fixtures
-```
+
+```text
 
 ### 7.2 Test Count Projection
 
@@ -572,7 +577,8 @@ def test_<action>_<condition>_<expected_result>():
     def test_execute_tool_with_missing_args_returns_error():
         '''Test that executing tool with missing args returns error.'''
     """
-```
+
+```text
 
 ### 9.2 Test Structure (AAA Pattern)
 
@@ -588,6 +594,7 @@ def test_example():
     # Assert - Verify expected behavior
     assert result is True
     mock_handler.assert_called_once()
+
 ```
 
 ### 9.3 Mocking Strategy
@@ -623,7 +630,8 @@ def test_example():
 | Tool Executors | 85% | 90% | ✅ **97-100%** (3/4 executors at 100%) |
 | Utilities | 85% | 90% | ✅ **87-100%** (context_utils.py 87%, client.py 95%) |
 
-**Overall Achievement:** ✅ **20/28 modules (71%) ≥90% coverage** (Target: 24/28 = 86%)
+**Overall Achievement:** ✅ **20/28 modules (71%) ≥90% coverage** (Target: 24/28
+= 86%)
 
 ---
 
@@ -639,7 +647,8 @@ uv run pytest tests/security/    # Security tests (~5s)
 
 # CI/CD pipeline
 uv run pytest --cov=src --cov-report=html --cov-fail-under=90
-```
+
+```text
 
 ### 10.2 Pre-commit Hooks
 
@@ -655,6 +664,7 @@ uv run python tests/lint/lint-python.py
 
 # Check coverage
 uv run pytest --cov=src --cov-fail-under=85 -q
+
 ```
 
 ### 10.3 CI/CD Requirements
@@ -839,6 +849,7 @@ class TestFeatureGroup:
         # Act & Assert
         with pytest.raises(ValueError):
             self.instance.method(invalid_input)
+
 ```
 
 ---
