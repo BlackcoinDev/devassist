@@ -569,9 +569,9 @@ class TableAligner:
         if not rows:
             return table_lines
 
-        # Calculate max CHARACTER width per column (for pipe alignment)
-        # VSCode MD060 expects pipes at same CHARACTER positions, not visual width
-        col_widths = table_utils.calculate_column_widths(rows, use_visual_width=False)
+        # Calculate max VISUAL width per column (for proper emoji/Unicode alignment)
+        # Use visual width to ensure proper alignment of emoji content
+        col_widths = table_utils.calculate_column_widths(rows, use_visual_width=True)
         num_cols = len(col_widths)
 
         # Rebuild aligned table
@@ -589,7 +589,7 @@ class TableAligner:
                     # Preserve separator pattern - pad with dashes
                     cells.append(cell.ljust(col_widths[col_idx], "-"))
                 else:
-                    # Left-justify content - pad with spaces to character width
+                    # Left-justify content - pad with spaces to visual width
                     cells.append(cell.ljust(col_widths[col_idx]))
 
             aligned.append("| " + " | ".join(cells) + " |")

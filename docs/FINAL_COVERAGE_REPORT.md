@@ -23,13 +23,13 @@ coverage!**
 
 | # | Module                   | Before | After    | Tests Added | Status |
 | - | ------------------------ | ------ | -------- | ----------- | ------ |
-| 1 | `launcher.py`            | 45%    | **98%**  | +6          | ✅      |
-| 2 | `web_tools.py`           | 86%    | **97%**  | +3          | ✅      |
-| 3 | `memory_commands.py`     | 88%    | **100%** | +6          | ✅      |
-| 4 | `knowledge_tools.py`     | 80%    | **100%** | +7          | ✅      |
-| 5 | `learning_commands.py`   | 84%    | **100%** | +4          | ✅      |
-| 6 | **`config_commands.py`** | 84%    | **100%** | +8          | ✅      |
-| 7 | **`document_tools.py`**  | 71%    | **100%** | +5          | ✅      |
+| 1 | `launcher.py`            | 45%    | **98%**  | +6          | ✅     |
+| 2 | `web_tools.py`           | 86%    | **97%**  | +3          | ✅     |
+| 3 | `memory_commands.py`     | 88%    | **100%** | +6          | ✅     |
+| 4 | `knowledge_tools.py`     | 80%    | **100%** | +7          | ✅     |
+| 5 | `learning_commands.py`   | 84%    | **100%** | +4          | ✅     |
+| 6 | **`config_commands.py`** | 84%    | **100%** | +8          | ✅     |
+| 7 | **`document_tools.py`**  | 71%    | **100%** | +5          | ✅     |
 
 ---
 
@@ -309,15 +309,15 @@ if not has_crypto and ("coin" in query.lower()):
 
 ## 📊 Coverage by Category
 
-| Category                | Modules | Avg Coverage | Status       |
+| Category                | Modules | Avg Coverage | Status      |
 | ----------------------- | ------- | ------------ | ------------ |
-| **Core Infrastructure** | 4       | 96%          | ✅ Excellent  |
-| **Security**            | 4       | 85%          | ✅ Good       |
-| **Storage**             | 3       | 81%          | ⚠️ Moderate  |
-| **Vector DB**           | 3       | 79%          | ⚠️ Moderate  |
-| **Command Handlers**    | 9       | 73%          | ⚠️ Moderate  |
-| **Tool Executors**      | 4       | 95%          | ✅ Excellent  |
-| **Other**               | 3       | 66%          | ⚠️ Moderate  |
+| **Core Infrastructure** | 4       | 96%          | ✅ Excellent |
+| **Security**            | 4       | 85%          | ✅ Good      |
+| **Storage**             | 3       | 81%          | ⚠️ Moderate |
+| **Vector DB**           | 3       | 79%          | ⚠️ Moderate |
+| **Command Handlers**    | 9       | 73%          | ⚠️ Moderate |
+| **Tool Executors**      | 4       | 95%          | ✅ Excellent |
+| **Other**               | 3       | 66%          | ⚠️ Moderate |
 
 ---
 

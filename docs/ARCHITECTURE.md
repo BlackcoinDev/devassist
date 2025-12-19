@@ -92,16 +92,16 @@ learned context
 
 The AI has access to 8 powerful tools for various operations:
 
-| Tool Name                   | Description                                          | Status              |
+| Tool Name                   | Description                                          | Status             |
 | --------------------------- | ---------------------------------------------------- | ------------------- |
-| `read_file()`               | Read file contents                                   | ✅ Tested & Working  |
-| `write_file()`              | Create/modify files                                  | ✅ Ready             |
-| `list_directory()`          | Browse directories                                   | ✅ Ready             |
-| `get_current_directory()`   | Show current path                                    | ✅ Tested & Working  |
-| `parse_document()`          | Extract text/tables/forms/layout from documents      | ✅ Ready             |
-| `learn_information()`       | Store in knowledge base                              | ✅ Ready             |
-| `search_knowledge()`        | Query learned information                            | ✅ Ready             |
-| `search_web()`              | Search the internet using DuckDuckGo                 | ✅ Ready             |
+| `read_file()`               | Read file contents                                   | ✅ Tested & Working |
+| `write_file()`              | Create/modify files                                  | ✅ Ready            |
+| `list_directory()`          | Browse directories                                   | ✅ Ready            |
+| `get_current_directory()`   | Show current path                                    | ✅ Tested & Working |
+| `parse_document()`          | Extract text/tables/forms/layout from documents      | ✅ Ready            |
+| `learn_information()`       | Store in knowledge base                              | ✅ Ready            |
+| `search_knowledge()`        | Query learned information                            | ✅ Ready            |
+| `search_web()`              | Search the internet using DuckDuckGo                 | ✅ Ready            |
 
 **Tool Integration Architecture:**
 
@@ -557,23 +557,22 @@ chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
 # Terminal 3: Ollama
 
 ollama serve
-```
 
 ## 📋 Key Features Matrix
 
-| Feature              | Status  | Description                                                   |
+| Feature              | Status | Description                                                   |
 | -------------------- | ------- | ------------------------------------------------------------- |
-| Dual Interfaces      | ✅       | GUI (PyQt6) and CLI with full feature parity                  |
-| AI Learning System   | ✅       | ChromaDB v2 vector database integration                       |
-| Document Processing  | ✅       | 80+ file types with unified processing                        |
-| Spaces System        | ✅       | Isolated workspaces with separate knowledge bases             |
-| Tool Calling         | ✅       | 8 AI tools for file operations and knowledge management       |
-| Memory Persistence   | ✅       | SQLite database for conversation history                      |
-| Markdown Support     | ✅       | Rich text rendering in GUI                                    |
-| Web Ingestion        | ✅       | URL learning capability via `/web` command                    |
-| Personalized Memory  | ✅       | Mem0 for user preference tracking                             |
-| Smart Chunking       | ✅       | 1500-char chunks with paragraph-aware boundaries              |
-| Quality Filtering    | ✅       | Automatic filtering of binary files and low-value content     |
+| Dual Interfaces      | ✅      | GUI (PyQt6) and CLI with full feature parity                  |
+| AI Learning System   | ✅      | ChromaDB v2 vector database integration                       |
+| Document Processing  | ✅      | 80+ file types with unified processing                        |
+| Spaces System        | ✅      | Isolated workspaces with separate knowledge bases             |
+| Tool Calling         | ✅      | 8 AI tools for file operations and knowledge management       |
+| Memory Persistence   | ✅      | SQLite database for conversation history                      |
+| Markdown Support     | ✅      | Rich text rendering in GUI                                    |
+| Web Ingestion        | ✅      | URL learning capability via `/web` command                    |
+| Personalized Memory  | ✅      | Mem0 for user preference tracking                             |
+| Smart Chunking       | ✅      | 1500-char chunks with paragraph-aware boundaries              |
+| Quality Filtering    | ✅      | Automatic filtering of binary files and low-value content     |
 
 ## 🎯 Design Principles
 

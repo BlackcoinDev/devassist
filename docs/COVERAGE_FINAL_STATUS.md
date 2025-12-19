@@ -23,8 +23,8 @@ coverage!
 
 ## ✅ 11 New Modules Boosted to ≥90% Coverage
 
-| #  | Module                 | Before | After    | Improvement | Status   |
-| -- | ---------------------- | ------ | -------- | ----------- | -------- |
+| #  | Module                 | Before | After    | Improvement | Status    |
+| -- | ---------------------- | ------ | -------- | ----------- | --------  |
 | 1  | `launcher.py`          | 45%    | **98%**  | +53%        | ⭐        |
 | 2  | `web_tools.py`         | 86%    | **97%**  | +11%        | ⭐        |
 | 3  | `memory_commands.py`   | 88%    | **100%** | +12%        | 🏆        |
@@ -43,7 +43,7 @@ coverage!
 
 | Module                  | Before | After   | Improvement | Status                      |
 | ----------------------- | ------ | ------- | ----------- | --------------------------- |
-| `path_security.py`      | 19%    | **91%** | +72%        | 🚀 Massive improvement       |
+| `path_security.py`      | 19%    | **91%** | +72%        | 🚀 Massive improvement      |
 | `context_utils.py`      | 71%    | **87%** | +16%        | ⬆️ Substantial gain         |
 | `legacy_commands.py`    | 85%    | **86%** | +1%         | ⬆️ Incremental progress     |
 

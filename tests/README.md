@@ -11,15 +11,15 @@ The `fix-markdown.py` script can automatically fix these common issues:
 
 ### ✅ Auto-Fixable Rules
 
-| Rule       | Description                                        | Example Fix                                     |
+| Rule       | Description                                       | Example Fix                                     |
 | ---------- | -------------------------------------------------- | ----------------------------------------------- |
-| **MD022**  | Headings should be surrounded by blank lines       | Adds blank lines around headings                |
-| **MD030**  | Spaces after list markers should be consistent     | Standardizes to 1 space after `-`, `*`, `+`     |
-| **MD031**  | Code blocks should be surrounded by blank lines    | Adds blank lines around code blocks             |
-| **MD032**  | Lists should be surrounded by blank lines          | Adds blank lines around lists                   |
-| **MD040**  | Fenced code blocks should have language specified  | Adds `text` language to unspecified code blocks |
-| **MD047**  | Files should end with single trailing newline      | Adds missing newline character                  |
-| **MD013**  | Line length should be ≤ 80 characters              | Wraps long lines (basic wrapping)               |
+| **MD022**  | Headings should be surrounded by blank lines      | Adds blank lines around headings                |
+| **MD030**  | Spaces after list markers should be consistent    | Standardizes to 1 space after `-`, `*`, `+`     |
+| **MD031**  | Code blocks should be surrounded by blank lines   | Adds blank lines around code blocks             |
+| **MD032**  | Lists should be surrounded by blank lines         | Adds blank lines around lists                   |
+| **MD040**  | Fenced code blocks should have language specified | Adds `text` language to unspecified code blocks |
+| **MD047**  | Files should end with single trailing newline     | Adds missing newline character                  |
+| **MD013**  | Line length should be ≤ 80 characters             | Wraps long lines (basic wrapping)               |
 
 ### ⚠️ Partially Auto-Fixable Rules
 
@@ -47,13 +47,13 @@ These rules require manual fixing due to their complexity:
 
 ```markdown
 ❌ Before (misaligned):
-| Metric          | Before   | After   | Change                         | [0, 9, 18, 26, 35] |
+| Metric          | Before   | After   | Change                        | [0, 9, 18, 26, 35] |
 | --------------- | -------- | ------- | ------------------------------ | [0, 9, 18, 26, 35] |
 | **Total Tests** | 256      | **360** | +104...  [0, 18, 24, 34, 54] ❌ | ------------------ |
 
 ✅ After (aligned):
-| Metric          | Before   | After   | Change            | [0, 23, 34, 44, 64]   |
-| --------------- | -------- | ------- | ----------------- | [0, 23, 34, 44, 64]   |
+| Metric          | Before   | After   | Change            | [0, 23, 34, 44, 64]  |
+| --------------- | -------- | ------- | ----------------- | [0, 23, 34, 44, 64]  |
 | **Total Tests** | 256      | **360** | +104 tests (+41%) | [0, 23, 34, 44, 64] ✅ |
 
 **Fix Approach**:
@@ -368,7 +368,6 @@ python tests/lint/lint-markdown.py docs/
 python tests/lint/lint-markdown.py docs/
 
 # Should show: "✅ Markdown linting passed - no issues found"
-```
 
 ## 📊 Issue Type Breakdown
 

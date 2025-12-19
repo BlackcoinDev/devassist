@@ -83,13 +83,13 @@ You: "What do you know about Python programming fundamentals?"
 
 DevAssist uses **semantic search** (not keyword search):
 
-| Aspect                                 | Semantic Search (DevAssist)                                          | Keyword Search                  |
-| -------------------------------------- | -------------------------------------------------------------------- | ------------------------------- |
-| **How it works**                       | Converts text to embeddings (vector numbers), finds similar meanings | Looks for exact text matches    |
-| **Query**: "How to write Python code"  | Finds docs about "programming in Python" ✅                           | Misses it (no keyword match) ❌  |
-| **Intelligence**                       | Understands context and meaning                                      | Simple pattern matching         |
-| **Flexibility**                        | High—finds related concepts                                          | Low—needs exact words           |
-| **Speed**                              | Medium (embedding generation)                                        | Very fast                       |
+| Aspect                                 | Semantic Search (DevAssist)                                        | Keyword Search                |
+| -------------------------------------- | ------------------------------------------------------------------- | ------------------------------ |
+| **How it works**                       | Converts text to embeddings (vector numbers), finds similar meanings| Looks for exact text matches  |
+| **Query**: "How to write Python code"  | Finds docs about "programming in Python" ✅                         | Misses it (no keyword match) ❌|
+| **Intelligence**                       | Understands context and meaning                                    | Simple pattern matching       |
+| **Flexibility**                        | High—finds related concepts                                        | Low—needs exact words         |
+| **Speed**                              | Medium (embedding generation)                                      | Very fast                     |
 
 ---
 

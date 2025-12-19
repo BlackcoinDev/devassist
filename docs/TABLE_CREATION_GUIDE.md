@@ -57,9 +57,9 @@ rows
 | **Total Tests** | 256      | **360** | +104 tests (+41%) | [0, 23, 34, 44, 64] |
 
 ❌ INCORRECT (MD060 Violation):
-| Metric          | Before   | After   | Change                                       | [0, 9, 18, 26, 35] |
+| Metric          | Before   | After   | Change                                      | [0, 9, 18, 26, 35] |
 | --------------- | -------- | ------- | -------------------------------------------- | [0, 9, 18, 26, 35] |
-| **Total Tests** | 256      | **360** | +104...  [0, 18, 24, 34, 54] ❌ (misaligned)  | ------------------ |
+| **Total Tests** | 256      | **360** | +104...  [0, 18, 24, 34, 54] ❌ (misaligned) | ------------------ |
 
 ## 📋 Table Creation Guidelines
 
@@ -380,10 +380,10 @@ rows = [
 **Output**:
 
 ```markdown
-| Component          | Status        | Version  |
+| Component          | Status       | Version  |
 | ------------------ | ------------- | -------- |
-| Core Engine        | ✅ Active      | v2.1.0   |
-| VectorDB Client    | ✅ Active      | v1.5.2   |
+| Core Engine        | ✅ Active     | v2.1.0   |
+| VectorDB Client    | ✅ Active     | v1.5.2   |
 | Legacy Commands    | ⚠️ Deprecated | v0.9.8   |
 
 ```text
@@ -405,12 +405,11 @@ rows = [
 **Output**:
 
 ```markdown
-| Metric          | Current | Target | Progress                     | Status      |
-| --------------- | ------- | ------ | ---------------------------- | ----------- |
-| Test Coverage   | 53%     | 90%    | ▰▰▰▰▰▱▱▱▱ 53%                | ✅ On Track  |
-| Documentation   | 85%     | 100%   | ▰▰▰▰▰▰▰▰▰▱ 85%               | ✅ On Track  |
-| Performance     | 95%     | 95%    | ▰▰▰▰▰▰▰▰▰▰ 95%               | ✅ Complete  |
-```
+| Metric          | Current | Target | Progress                    | Status     |
+| --------------- | ------- | ------ | ---------------------------- | --------- |
+| Test Coverage   | 53%     | 90%    | ▰▰▰▰▰▱▱▱▱ 53%               | ✅ On Track|
+| Documentation   | 85%     | 100%   | ▰▰▰▰▰▰▰▰▰▱ 85%              | ✅ On Track|
+| Performance     | 95%     | 95%    | ▰▰▰▰▰▰▰▰▰▰ 95%              | ✅ Complete|
 
 ## 🔍 Troubleshooting
 

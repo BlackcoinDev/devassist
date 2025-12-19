@@ -13,14 +13,14 @@ auto-fixed and which require manual intervention.
 These rules can be automatically fixed by the `fix-markdown.py` script:
 
 | Rule       | Name                           | Description                                       | Auto-Fix Status          |
-| ---------- | ------------------------------ | ------------------------------------------------- | ------------------------ |
-| **MD013**  | Line length                    | Lines should not exceed 80 characters             | ✅ Partially fixable      |
-| **MD022**  | Blank lines around headings    | Headings should be surrounded by blank lines      | ✅ Fully fixable          |
-| **MD030**  | List marker space              | Spaces after list markers should be consistent    | ❌ Manual fix required    |
-| **MD031**  | Blank lines around code blocks | Code blocks should be surrounded by blank lines   | ✅ Fully fixable          |
-| **MD032**  | Blank lines around lists       | Lists should be surrounded by blank lines         | ✅ Partially fixable      |
-| **MD040**  | Fenced code language           | Fenced code blocks should have language specified | ✅ Fully fixable          |
-| **MD047**  | Trailing newline               | Files should end with single trailing newline     | ✅ Fully fixable          |
+| ---------- | ------------------------------ | ------------------------------------------------- | -----------------------  |
+| **MD013**  | Line length                    | Lines should not exceed 80 characters             | ✅ Partially fixable     |
+| **MD022**  | Blank lines around headings    | Headings should be surrounded by blank lines      | ✅ Fully fixable         |
+| **MD030**  | List marker space              | Spaces after list markers should be consistent    | ❌ Manual fix required   |
+| **MD031**  | Blank lines around code blocks | Code blocks should be surrounded by blank lines   | ✅ Fully fixable         |
+| **MD032**  | Blank lines around lists       | Lists should be surrounded by blank lines         | ✅ Partially fixable     |
+| **MD040**  | Fenced code language           | Fenced code blocks should have language specified | ✅ Fully fixable         |
+| **MD047**  | Trailing newline               | Files should end with single trailing newline     | ✅ Fully fixable         |
 
 ### ⚠️ Partially Auto-Fixable Rules (2 rules)
 
@@ -411,18 +411,20 @@ Content here...
 
 ```markdown
 ❌ Wrong:
-| A   | B   | [0, 3, 7]                 |
-| --- | --- | [0, 3, 7]                 |
-| 1   | 2   | [0, 3, 7]                 |
-| 10  | 20  | [0, 5, 10] ❌ (misaligned) |
+| A   | B   | [0, 3, 7]                  |
+| --- | --- | [0, 3, 7]                  |
+| 1   | 2   | [0, 3, 7]                  |
+| 10  | 20  | [0, 5, 10] ❌ (misaligned)  |
 
 ✅ Correct:
-| A   | B   | [0, 5, 10]             |
-| --- | --- | [0, 5, 10]             |
-| 1   | 2   | [0, 5, 10]             |
-| 10  | 20  | [0, 5, 10] ✅ (aligned) |
+| A   | B   | [0, 5, 10]              |
+| --- | --- | [0, 5, 10]              |
+| 1   | 2   | [0, 5, 10]              |
+| 10  | 20  | [0, 5, 10] ✅ (aligned)  |
 
 **Fix Strategy**: Use `create_md_table.py` tool for perfect alignment.
+
+**Special Case**: Tables containing Unicode emojis (✅, ❌, ⭐, etc.) receive special handling where emoji columns get reduced padding by 1 space to maintain proper alignment while preserving visual correctness.
 
 ## 📊 Current Issue Distribution
 
@@ -446,7 +448,7 @@ Content here...
 
 ### Already Resolved
 
-- **MD060**: 0 issues ✅ (fully resolved)
+- **MD060**: 0 issues ✅ (fully resolved with emoji column support)
 - **MD005**: 0 issues ✅ (no indentation issues)
 - **MD025**: 0 issues ✅ (proper H1 usage)
 

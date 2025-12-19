@@ -211,6 +211,52 @@ def visual_width(text: str) -> int:
     return width
 
 
+def contains_unicode(text: str) -> bool:
+    """
+    Check if text contains Unicode characters (emojis, symbols, etc.).
+
+    Args:
+        text: Text to check
+
+    Returns:
+        True if text contains Unicode characters beyond basic ASCII
+    """
+    for char in text:
+        code_point = ord(char)
+        # Check for emoji ranges and other Unicode symbols
+        if (
+            code_point > 127  # Non-ASCII
+            or (code_point >= 0x1F300 and code_point <= 0x1F9FF)  # Emojis
+            or (code_point >= 0x2600 and code_point <= 0x27BF)
+        ):  # Misc symbols
+            return True
+    return False
+
+
+def detect_emoji_columns(rows: List[List[str]]) -> List[bool]:
+    """
+    Detect which columns contain emoji/Unicode characters.
+
+    Args:
+        rows: Table rows as returned by parse_table_rows
+
+    Returns:
+        List of booleans indicating which columns contain emojis
+    """
+    if not rows:
+        return []
+
+    num_cols = max(len(row) for row in rows)
+    emoji_columns = [False] * num_cols
+
+    for row in rows:
+        for col_idx, cell in enumerate(row):
+            if col_idx < num_cols and contains_unicode(cell):
+                emoji_columns[col_idx] = True
+
+    return emoji_columns
+
+
 def validate_table_alignment(
     table_lines: List[str], start_line: int, file_path: str
 ) -> List[str]:
@@ -237,8 +283,8 @@ def validate_table_alignment(
     if not rows:
         return []
 
-    # Calculate expected column widths (character-based for linting)
-    col_widths = calculate_column_widths(rows, use_visual_width=False)
+    # Calculate expected column widths (visual-based for emoji alignment)
+    col_widths = calculate_column_widths(rows, use_visual_width=True)
     expected_pipes = calculate_expected_pipe_positions(col_widths)
 
     # Check each table line for proper alignment
