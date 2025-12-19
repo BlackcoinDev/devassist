@@ -26,6 +26,7 @@ no longer uses hardcoded defaults.
 
    ```bash
    cp .env.example .env
+   ```
 
 2. **Configure all required variables**:
    - All variables in `.env.example` are mandatory
