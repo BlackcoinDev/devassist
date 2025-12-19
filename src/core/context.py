@@ -240,7 +240,7 @@ def get_db_lock() -> Optional[threading.Lock]:
     return get_context().db_lock
 
 
-def set_db_lock(value: threading.Lock) -> None:
+def set_db_lock(value: Optional[threading.Lock]) -> None:
     """Set the database lock in context."""
     get_context().db_lock = value
 

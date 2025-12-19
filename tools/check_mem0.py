@@ -106,8 +106,9 @@ def check_mem0():
                     found = True
         elif isinstance(results, list):
             for r in results:
-                if "Magenta" in r.get("memory", "") or "#FF00FF" in r.get("memory", ""):
-                    found = True
+                if isinstance(r, dict):
+                    if "Magenta" in r.get("memory", "") or "#FF00FF" in r.get("memory", ""):
+                        found = True
 
         if found:
             print("✅ Verified: Retrieved specific fact from memory.")

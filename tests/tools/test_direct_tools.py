@@ -78,8 +78,8 @@ messages = [
 print("Testing with direct OpenAI API...")
 response = client.chat.completions.create(
     model="qwen3-vl-30b",
-    messages=messages,
-    tools=tools,
+    messages=messages,  # type: ignore[arg-type]
+    tools=tools,  # type: ignore[arg-type]
 )
 
 print(f"Response: {response.choices[0].message}")

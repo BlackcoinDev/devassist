@@ -81,7 +81,7 @@ def execute_web_search(query: str, max_results: int = 10) -> Dict[str, Any]:
         Dict with success status and search results
     """
     try:
-        from duckduckgo_search import DDGS
+        from duckduckgo_search import DDGS  # type: ignore[import-untyped]
 
         print(f"🌍 Searching web for: '{query}'")
 

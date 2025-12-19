@@ -379,6 +379,9 @@ chroma_client = _ctx.chroma_client
 user_memory = _ctx.user_memory
 conversation_history = _ctx.conversation_history
 
+# Operation counter for periodic cleanup
+operation_count = 0
+
 # =============================================================================
 # HTTP CLIENT SETUP
 # =============================================================================
@@ -1066,6 +1069,8 @@ def show_vectordb():
 
                         if results and "metadatas" in results and results["metadatas"]:
                             metadatas = results["metadatas"]
+                            if metadatas is None:
+                                metadatas = []
 
                             # Analyze metadata for insights
                             sources = set()
@@ -1198,6 +1203,8 @@ def show_vectordb():
 
                         if results and "documents" in results and results["documents"]:
                             docs = results["documents"]
+                            if docs is None:
+                                docs = []
                             metadatas = results.get("metadatas") or [
                                 {}] * len(docs)
 
@@ -1575,7 +1582,7 @@ def handle_populate_command(dir_path: str):
 
                             collection.add(
                                 documents=texts,
-                                embeddings=embeddings_list,
+                                embeddings=embeddings_list,  # type: ignore[arg-type]
                                 metadatas=metadatas,
                                 ids=ids,
                             )
@@ -1637,7 +1644,7 @@ def handle_populate_command(dir_path: str):
 
                     collection.add(
                         documents=texts,
-                        embeddings=embeddings_list,
+                        embeddings=embeddings_list,  # type: ignore[arg-type]
                         metadatas=metadatas,
                         ids=ids,
                     )
@@ -2032,7 +2039,7 @@ def initialize_application():
         print("Falling back to non-persistent mode")
 
     # Load conversation history
-    conversation_history[:] = load_memory()
+    conversation_history[:] = load_memory()  # type: ignore[assignment]
     get_context().conversation_history = conversation_history
 
     # Personalization
@@ -2149,7 +2156,7 @@ execute_tool_call = ToolRegistry.execute_tool_call
 # to src/chat/loop.py, src/chat/message_handler.py, etc.
 
 
-def main():
+def main():  # type: ignore[reportGeneralTypeIssues]
     """
     Main chat loop v0.2.0 - Core interactive interface with AI tool calling.
 

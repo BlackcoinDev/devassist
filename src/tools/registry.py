@@ -117,6 +117,12 @@ class ToolRegistry:
             name = tool_call.get("name") if isinstance(tool_call, dict) else tool_call.name
             args_raw = tool_call.get("args") if isinstance(tool_call, dict) else tool_call.args
 
+            if name is None:
+                return {
+                    "function_name": "unknown",
+                    "result": {"error": "Tool call missing 'name' field"}
+                }
+
             # Parse args if string
             if isinstance(args_raw, str):
                 args = json.loads(args_raw)

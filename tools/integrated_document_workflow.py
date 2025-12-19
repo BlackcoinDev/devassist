@@ -28,13 +28,13 @@ the embedding and ChromaDB knowledge management system.
 """
 
 import sys
-from src.main import (
-    execute_parse_document,
+sys.path.append(".")
+
+from src.tools.executors.document_tools import execute_parse_document
+from src.tools.executors.knowledge_tools import (
     execute_learn_information,
     execute_search_knowledge,
 )
-
-sys.path.append(".")
 
 
 def demonstrate_integrated_workflow():

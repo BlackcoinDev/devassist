@@ -117,6 +117,7 @@ def get_relevant_context(
         from src.vectordb.spaces import get_space_collection_name
         collection_id = None
         collection_name = get_space_collection_name(space_name)
+        api_session = None
 
         # Try to find the collection by name
         try:
@@ -134,6 +135,10 @@ def get_relevant_context(
 
         if not collection_id:
             logger.warning(f"Could not find collection for space {space_name}")
+            return ""
+
+        if api_session is None:
+            logger.warning("API session not initialized for context retrieval")
             return ""
 
         # ChromaDB v2 API endpoint for querying
@@ -192,6 +197,10 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
     # Check if vector database is available
     if ctx.vectorstore is None:
         logger.error("Vector database not available for learning")
+        return False
+
+    if ctx.embeddings is None:
+        logger.error("Embeddings not available for learning")
         return False
 
     if not content:

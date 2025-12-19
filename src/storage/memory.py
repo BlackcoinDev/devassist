@@ -28,7 +28,7 @@ to the SQLite database, as well as history trimming to prevent memory bloat.
 """
 
 import logging
-from typing import List
+from typing import List, Optional, Sequence
 
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage
 
@@ -104,7 +104,7 @@ def load_memory() -> List[BaseMessage]:
         return []
 
 
-def save_memory(history: List[BaseMessage]) -> None:
+def save_memory(history: Sequence[BaseMessage]) -> None:
     """
     Save conversation history to SQLite database.
 
@@ -156,7 +156,7 @@ def save_memory(history: List[BaseMessage]) -> None:
 
 
 def trim_history(
-    history: List[BaseMessage], max_pairs: int = None
+    history: Sequence[BaseMessage], max_pairs: Optional[int] = None
 ) -> List[BaseMessage]:
     """
     Trim conversation history to prevent memory bloat and API token limits.
@@ -188,7 +188,7 @@ def trim_history(
     # Only trim if history exceeds the limit
     if len(history) > max_length:
         # Keep system message (index 0) + most recent messages
-        return [history[0]] + history[-(max_pairs * 2):]
+        return [history[0]] + list(history[-(max_pairs * 2):])
 
     # Return unchanged if within limits
-    return history
+    return list(history)

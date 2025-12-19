@@ -65,6 +65,7 @@ def handle_vectordb(args: List[str]) -> None:
     # Initialize variables that may be used in error handling
     collection_name = get_space_collection_name(ctx.current_space)
     collection_id = None
+    api_session = None
 
     try:
         print("\n--- Vector Database Contents ---")
@@ -209,6 +210,9 @@ def handle_vectordb(args: List[str]) -> None:
 
         except Exception as e:
             print(f"❌ Error displaying vector database: {str(e)}")
+
+            if api_session is None:
+                return
 
             # Get collection statistics instead of all documents
             count_url = (

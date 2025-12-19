@@ -139,6 +139,7 @@ class TestDatabaseOperations:
             mock_get_config.return_value = mock_config
 
             conn, _ = initialize_database()
+            assert conn is not None
             cursor = conn.cursor()
             cursor.execute("PRAGMA table_info(conversations)")
             columns = [info[1] for info in cursor.fetchall()]
