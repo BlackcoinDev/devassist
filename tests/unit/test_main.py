@@ -66,7 +66,6 @@ from src.main import (
     get_relevant_context,
     trim_history,
     handle_slash_command,
-    show_help,
     handle_clear_command,
     handle_learn_command,
     show_vectordb,

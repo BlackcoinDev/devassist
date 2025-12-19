@@ -14,7 +14,7 @@ import pytest
 import os
 import tempfile
 from unittest.mock import Mock, patch, MagicMock
-from src.storage.database import initialize_database, get_database_connection, close_database
+from src.storage.database import initialize_database, get_database_connection
 from src.core.context import get_context, reset_context
 
 
@@ -29,7 +29,9 @@ class TestDatabaseConnection:
 
     def teardown_method(self):
         """Clean up test environment."""
-        close_database()
+        ctx = get_context()
+        if ctx.db_conn is not None:
+            ctx.db_conn.close()
         if os.path.exists(self.temp_db.name):
             os.remove(self.temp_db.name)
         reset_context()
@@ -103,32 +105,12 @@ class TestDatabaseOperations:
 
     def teardown_method(self):
         """Clean up test environment."""
-        close_database()
+        ctx = get_context()
+        if ctx.db_conn is not None:
+            ctx.db_conn.close()
         if os.path.exists(self.temp_db.name):
             os.remove(self.temp_db.name)
         reset_context()
-
-    def test_close_database_cleans_up_properly(self):
-        """Test that close_database closes connection and clears context."""
-        with patch('src.core.config.get_config') as mock_get_config:
-            mock_config = MagicMock()
-            mock_config.db_type = "sqlite"
-            mock_config.db_path = self.temp_db.name
-            mock_get_config.return_value = mock_config
-
-            initialize_database()
-            ctx = get_context()
-            assert ctx.db_conn is not None
-
-            close_database()
-            assert ctx.db_conn is None
-            assert ctx.db_lock is None
-
-    def test_close_database_handles_none_gracefully(self):
-        """Test that close_database works even if no connection exists."""
-        reset_context()
-        # Should not raise exception
-        close_database()
 
     def test_schema_columns(self):
         """Verify the conversations table has the expected columns."""

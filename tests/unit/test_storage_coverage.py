@@ -8,9 +8,10 @@ import sqlite3
 from unittest.mock import Mock, patch, MagicMock
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
-from src.storage.database import initialize_database, close_database
+from src.storage.database import initialize_database
 from src.storage.memory import load_memory, save_memory
 from src.core.context import get_context, set_context, reset_context, ApplicationContext
+
 
 class TestDatabaseCoverage:
     """Test coverage gaps in database.py."""
@@ -22,24 +23,12 @@ class TestDatabaseCoverage:
     def test_initialize_database_failure(self, mock_connect):
         """Test database initialization failure handling."""
         mock_connect.side_effect = sqlite3.Error("Connection failed")
-        
+
         conn, lock = initialize_database()
-        
+
         assert conn is None
         assert lock is None
 
-    def test_close_database_failure(self):
-        """Test database closure failure handling."""
-        ctx = get_context()
-        mock_conn = Mock()
-        mock_conn.close.side_effect = Exception("Close failed")
-        ctx.db_conn = mock_conn
-        
-        # Should log warning but not raise
-        close_database()
-        
-        # Verify cleanup happened despite error
-        assert get_context().db_conn is None
 
 class TestMemoryCoverage:
     """Test coverage gaps in memory.py."""

@@ -119,34 +119,6 @@ def save_query_cache() -> None:
         logger.warning(f"Failed to save query cache: {e}")
 
 
-def save_embedding_cache() -> None:
-    """
-    Save embedding cache to disk.
-
-    Limits cache size to 500 most recent entries if it exceeds 1000.
-    """
-    config = get_config()
-    ctx = get_context()
-
-    try:
-        embedding_cache = ctx.embedding_cache
-
-        # Limit cache size
-        if len(embedding_cache) > 1000:
-            items = list(embedding_cache.items())
-            # Keep the 500 most recent items
-            embedding_cache.clear()
-            embedding_cache.update(dict(items[-500:]))
-
-        with open(config.embedding_cache_file, "w") as f:
-            json.dump(embedding_cache, f, separators=(",", ":"))
-
-        logger.debug(f"Saved {len(embedding_cache)} embedding cache entries")
-
-    except Exception as e:
-        logger.warning(f"Failed to save embedding cache: {e}")
-
-
 def cleanup_memory() -> None:
     """
     Force garbage collection to free memory.
@@ -156,28 +128,3 @@ def cleanup_memory() -> None:
     """
     gc.collect()
     logger.debug("Memory cleanup completed")
-
-
-def clear_all_caches() -> None:
-    """
-    Clear all caches in memory and on disk.
-
-    Useful for debugging or when cache data becomes stale.
-    """
-    config = get_config()
-    ctx = get_context()
-
-    # Clear in-memory caches
-    ctx.embedding_cache.clear()
-    ctx.query_cache.clear()
-
-    # Remove cache files
-    for cache_file in [config.embedding_cache_file, config.query_cache_file]:
-        try:
-            if os.path.exists(cache_file):
-                os.remove(cache_file)
-                logger.debug(f"Removed cache file: {cache_file}")
-        except Exception as e:
-            logger.warning(f"Failed to remove cache file {cache_file}: {e}")
-
-    logger.info("All caches cleared")

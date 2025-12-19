@@ -305,9 +305,3 @@ def get_chromadb_client() -> ChromaDBClient:
     if _client is None:
         _client = ChromaDBClient()
     return _client
-
-
-def reset_chromadb_client() -> None:
-    """Reset the ChromaDB client singleton. Useful for testing."""
-    global _client
-    _client = None

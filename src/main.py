@@ -216,89 +216,6 @@ from src.security import (
     RateLimiter,
 )
 
-# Note: SecureDatabase remains here temporarily as it depends on db_conn/db_lock
-# globals which will be moved to ApplicationContext in Phase 3
-
-
-class SecureDatabase:
-    """
-    Secure database wrapper that prevents SQL injection and provides thread-safe operations.
-
-    Features:
-    - Parameterized queries only (no string interpolation)
-    - Thread-safe operations with locking
-    - Automatic connection management
-    - Comprehensive error handling
-
-    Note: This class uses the ApplicationContext to access db_conn and db_lock.
-    The context must be initialized before using this class.
-    """
-
-    @staticmethod
-    def execute_query(
-            query: str,
-            params: tuple | None = None,
-            fetch: bool = True,
-            commit: bool = True):
-        """
-        Execute a parameterized SQL query safely.
-
-        Args:
-            query: SQL query with ? placeholders
-            params: Tuple of parameters for the query
-            fetch: Whether to fetch results (for SELECT queries)
-            commit: Whether to commit the transaction
-
-        Returns:
-            Query results if fetch=True, None otherwise
-
-        Raises:
-            DatabaseError: If query execution fails
-        """
-        # Import here to avoid circular import at module load time
-        from src.core.context import get_db_conn, get_db_lock
-
-        db_conn = get_db_conn()
-        db_lock = get_db_lock()
-
-        if db_conn is None or db_lock is None:
-            raise DatabaseError("Database connection not initialized")
-
-        try:
-            with db_lock:
-                cursor = db_conn.cursor()
-
-                # Execute with parameters to prevent SQL injection
-                if params:
-                    cursor.execute(query, params)
-                else:
-                    cursor.execute(query)
-
-                # Commit for write operations
-                if commit and not query.strip().upper().startswith(
-                    ("SELECT", "PRAGMA")
-                ):
-                    db_conn.commit()
-
-                # Return results for SELECT queries
-                if fetch and query.strip().upper().startswith("SELECT"):
-                    return cursor.fetchall()
-
-                return None
-
-        except sqlite3.Error as e:
-            # Logger may not be available yet, use logging module directly
-            import logging
-            logging.getLogger(__name__).error(
-                f"Database query failed: {e}", exc_info=True)
-            raise DatabaseError(f"Database operation failed: {e}") from e
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).error(
-                f"Unexpected database error: {e}", exc_info=True)
-            raise DatabaseError(f"Unexpected database error: {e}") from e
-
-
 # =============================================================================
 # CONFIGURATION MODULE (extracted to src/core/config.py)
 # =============================================================================
@@ -329,10 +246,6 @@ MAX_HISTORY_PAIRS: int = _config.max_history_pairs
 TEMPERATURE: float = _config.temperature
 MAX_INPUT_LENGTH: int = _config.max_input_length
 
-# Database Configuration
-DB_TYPE: str = _config.db_type
-DB_PATH: str = _config.db_path
-
 # Verbose Logging Configuration
 VERBOSE_LOGGING: bool = _config.verbose_logging
 SHOW_LLM_REASONING: bool = _config.show_llm_reasoning
@@ -344,10 +257,6 @@ CHROMA_HOST: str = _config.chroma_host
 CHROMA_PORT: int = _config.chroma_port
 OLLAMA_BASE_URL: str = _config.ollama_base_url
 EMBEDDING_MODEL: str = _config.embedding_model
-
-# Cache file paths
-EMBEDDING_CACHE_FILE: str = _config.embedding_cache_file
-QUERY_CACHE_FILE: str = _config.query_cache_file
 
 # =============================================================================
 # RUNTIME STATE (now backed by ApplicationContext)
@@ -367,7 +276,6 @@ LEARNING_MODE = _ctx.learning_mode
 CURRENT_SPACE = _ctx.current_space
 
 # Caches - now backed by context
-EMBEDDING_CACHE = _ctx.embedding_cache
 QUERY_CACHE = _ctx.query_cache
 
 # Core services - now backed by context
@@ -620,37 +528,6 @@ def handle_slash_command(command: str) -> bool:
         print("Type /help for available commands\n")
 
     return True
-
-
-def show_help():
-    """Display available commands."""
-    print("\n--- Available Commands ---")
-    print("/memory       - Show conversation history")
-    print("/vectordb     - Show vector database contents")
-    print("/mem0         - Show personalized memory contents")
-    print("/model        - Show current model information")
-    print("/space <cmd>  - Space/workspace management (list/create/switch/delete)")
-    print("/context <mode> - Control context integration (auto/on/off)")
-    print("/learning <mode> - Control learning behavior (normal/strict/off)")
-    print("/populate <path> - Add code files from directory to vector DB")
-    print("/clear        - Clear conversation history")
-    print("/learn <text> - Add information to knowledge base")
-    print("/web <url>    - Learn content from a webpage")
-    print("/export <fmt> - Export conversation (json/markdown)")
-    print("/read <file>  - Read file contents")
-    print("/write <file> - Write content to file")
-    print("/list [dir]   - List directory contents")
-    print("/pwd          - Show current directory")
-    print("/help         - Show this help message")
-    print("")
-    print("Regular commands (no slash needed):")
-    print("quit    - Exit the application")
-    print("exit    - Exit the application")
-    print("q       - Exit the application")
-    print("")
-    print("Note: Quit commands work after AI finishes responding.")
-    print("Use Ctrl+C for immediate interruption.")
-    print("--- End Help ---\n")
 
 
 def handle_read_command(file_path: str):

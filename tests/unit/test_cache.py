@@ -15,11 +15,9 @@ import json
 import tempfile
 from unittest.mock import Mock, patch, MagicMock
 from src.storage.cache import (
-    load_embedding_cache, 
-    load_query_cache, 
-    save_embedding_cache, 
-    save_query_cache, 
-    clear_all_caches,
+    load_embedding_cache,
+    load_query_cache,
+    save_query_cache,
     cleanup_memory
 )
 from src.core.context import get_context, reset_context
@@ -85,62 +83,6 @@ class TestEmbeddingCache:
 
             assert loaded == {}
             assert ctx.embedding_cache == {}
-
-    def test_save_embedding_cache_limits_size(self):
-        """Test that saving embeddings enforces the 1000 entry limit."""
-        ctx = get_context()
-        # Create 1100 entries
-        ctx.embedding_cache = {f"text_{i}": [0.1] * 3 for i in range(1100)}
-
-        with patch('src.storage.cache.get_config') as mock_get_config:
-            mock_config = MagicMock()
-            mock_config.embedding_cache_file = self.temp_file.name
-            mock_get_config.return_value = mock_config
-
-            save_embedding_cache()
-            
-            # Verify file contains only 500 entries (as per logic in cache.py)
-            with open(self.temp_file.name, 'r') as f:
-                saved_data = json.load(f)
-            
-            assert len(saved_data) == 500
-            assert len(ctx.embedding_cache) == 500
-
-    def test_save_embedding_cache_no_limit_needed(self):
-        """Test that saving embeddings doesn't limit when under 1000 entries."""
-        ctx = get_context()
-        # Create 500 entries (under limit)
-        ctx.embedding_cache = {f"text_{i}": [0.1] * 3 for i in range(500)}
-
-        with patch('src.storage.cache.get_config') as mock_get_config:
-            mock_config = MagicMock()
-            mock_config.embedding_cache_file = self.temp_file.name
-            mock_get_config.return_value = mock_config
-
-            save_embedding_cache()
-            
-            # Verify file contains all 500 entries
-            with open(self.temp_file.name, 'r') as f:
-                saved_data = json.load(f)
-            
-            assert len(saved_data) == 500
-            assert len(ctx.embedding_cache) == 500
-
-    def test_save_embedding_cache_write_error(self):
-        """Test saving embeddings when write fails."""
-        ctx = get_context()
-        ctx.embedding_cache = {"test": [0.1, 0.2]}
-
-        with patch('src.storage.cache.get_config') as mock_get_config:
-            mock_config = MagicMock()
-            mock_config.embedding_cache_file = "/invalid/path/file.json"
-            mock_get_config.return_value = mock_config
-
-            # Should not raise exception, just log warning
-            save_embedding_cache()
-            
-            # Cache should still be intact
-            assert len(ctx.embedding_cache) == 1
 
 
 class TestQueryCache:
@@ -225,57 +167,6 @@ class TestCacheManagement:
         with patch('gc.collect') as mock_collect:
             cleanup_memory()
             assert mock_collect.called
-
-    def test_clear_all_caches(self):
-        """Test clearing all in-memory and disk caches."""
-        emb_file = tempfile.NamedTemporaryFile(delete=False)
-        query_file = tempfile.NamedTemporaryFile(delete=False)
-        emb_file.close()
-        query_file.close()
-
-        ctx = get_context()
-        ctx.embedding_cache = {"a": [1]}
-        ctx.query_cache = {"b": ["c"]}
-
-        with patch('src.storage.cache.get_config') as mock_get_config:
-            mock_config = MagicMock()
-            mock_config.embedding_cache_file = emb_file.name
-            mock_config.query_cache_file = query_file.name
-            mock_get_config.return_value = mock_config
-
-            clear_all_caches()
-
-            assert len(ctx.embedding_cache) == 0
-            assert len(ctx.query_cache) == 0
-            assert not os.path.exists(emb_file.name)
-            assert not os.path.exists(query_file.name)
-
-    def test_clear_all_caches_file_removal_error(self):
-        """Test clearing caches when file removal fails."""
-        # Create files that can't be removed (simulate permission error)
-        emb_file = tempfile.NamedTemporaryFile(delete=False)
-        query_file = tempfile.NamedTemporaryFile(delete=False)
-        emb_file.close()
-        query_file.close()
-
-        ctx = get_context()
-        ctx.embedding_cache = {"a": [1]}
-        ctx.query_cache = {"b": ["c"]}
-
-        with patch('src.storage.cache.get_config') as mock_get_config:
-            mock_config = MagicMock()
-            mock_config.embedding_cache_file = emb_file.name
-            mock_config.query_cache_file = query_file.name
-            mock_get_config.return_value = mock_config
-
-            # Mock os.remove to raise exception
-            with patch('os.remove', side_effect=OSError("Permission denied")):
-                clear_all_caches()
-
-            # In-memory caches should still be cleared
-            assert len(ctx.embedding_cache) == 0
-            assert len(ctx.query_cache) == 0
-            # Files should still exist (cleanup in teardown)
 
     def test_save_query_cache_limits_size(self):
         """Test that saving query cache enforces the 1000 entry limit."""

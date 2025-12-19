@@ -101,19 +101,3 @@ def get_database_connection() -> Tuple[Optional[sqlite3.Connection], Optional[th
     return ctx.db_conn, ctx.db_lock
 
 
-def close_database() -> None:
-    """
-    Close the database connection.
-
-    Should be called during application shutdown.
-    """
-    ctx = get_context()
-    if ctx.db_conn is not None:
-        try:
-            ctx.db_conn.close()
-            logger.debug("Database connection closed")
-        except Exception as e:
-            logger.warning(f"Error closing database: {e}")
-        finally:
-            set_db_conn(None)
-            set_db_lock(None)

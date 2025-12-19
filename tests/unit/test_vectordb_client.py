@@ -12,7 +12,7 @@ Tests cover:
 import pytest
 import responses
 from unittest.mock import patch, MagicMock
-from src.vectordb.client import ChromaDBClient, get_chromadb_client, reset_chromadb_client
+from src.vectordb.client import ChromaDBClient, get_chromadb_client
 
 
 class TestChromaDBClient:
@@ -20,16 +20,11 @@ class TestChromaDBClient:
 
     def setup_method(self):
         """Set up test environment."""
-        reset_chromadb_client()
         self.host = "localhost"
         self.port = 8000
         self.client = ChromaDBClient(host=self.host, port=self.port)
         self.base_url = f"http://{self.host}:{self.port}/api/v2"
         self.coll_url = f"{self.base_url}/tenants/default_tenant/databases/default_database/collections"
-
-    def teardown_method(self):
-        """Clean up test environment."""
-        reset_chromadb_client()
 
     @responses.activate
     def test_list_collections(self):
