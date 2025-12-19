@@ -57,6 +57,7 @@ application, serving as a reference for all other documentation files.
   │ Legacy Commands    │ (15 handlers - being migrated)
   │                    | (src/commands/handlers/legacy_commands.py)
   └────────────────────┘
+```
 
 ### Data Flow
 
@@ -92,16 +93,16 @@ learned context
 
 The AI has access to 8 powerful tools for various operations:
 
-| Tool Name                   | Description                                          | Status             |
-| --------------------------- | ---------------------------------------------------- | ------------------- |
-| `read_file()`               | Read file contents                                   | ✅ Tested & Working |
-| `write_file()`              | Create/modify files                                  | ✅ Ready            |
-| `list_directory()`          | Browse directories                                   | ✅ Ready            |
-| `get_current_directory()`   | Show current path                                    | ✅ Tested & Working |
-| `parse_document()`          | Extract text/tables/forms/layout from documents      | ✅ Ready            |
-| `learn_information()`       | Store in knowledge base                              | ✅ Ready            |
-| `search_knowledge()`        | Query learned information                            | ✅ Ready            |
-| `search_web()`              | Search the internet using DuckDuckGo                 | ✅ Ready            |
+| Tool Name                 | Description                                     | Status              |
+| ------------------------- | ----------------------------------------------- | ------------------  |
+| `read_file()`             | Read file contents                              | ✅ Tested & Working |
+| `write_file()`            | Create/modify files                             | ✅ Ready            |
+| `list_directory()`        | Browse directories                              | ✅ Ready            |
+| `get_current_directory()` | Show current path                               | ✅ Tested & Working |
+| `parse_document()`        | Extract text/tables/forms/layout from documents | ✅ Ready            |
+| `learn_information()`     | Store in knowledge base                         | ✅ Ready            |
+| `search_knowledge()`      | Query learned information                       | ✅ Ready            |
+| `search_web()`            | Search the internet using DuckDuckGo            | ✅ Ready            |
 
 **Tool Integration Architecture:**
 
@@ -115,6 +116,7 @@ File System    Multimodal Analysis     Secure        Structured     Conversation
     Contextual
 Operations     & Understanding        Execution      Data Output    Context     
    Responses
+```
 
 ### 2. Spaces System
 
@@ -179,6 +181,7 @@ aliases=["mc"])
 def handle_mycommand(args: str) -> None:
     """Handle /mycommand - does something useful."""
     print(f"Executing: {args}")
+```
 
 **How it works:**
 
@@ -224,6 +227,7 @@ TOOL_DEFINITION = {
 def execute_my_tool(arg1: str) -> Dict[str, Any]:
     """Execute the tool."""
     return {"success": True, "result": f"Executed with {arg1}"}
+```
 
 **How it works:**
 
@@ -269,7 +273,7 @@ def get_context() -> ApplicationContext:
         _context = ApplicationContext()
     return _context
 
-```text
+```
 
 **Usage:**
 
@@ -281,7 +285,7 @@ ctx.llm  # Access ChatOpenAI instance
 ctx.vectorstore  # Access Chroma instance
 ctx.conversation_history  # Access message history
 
-```text
+```
 
 **Benefits:**
 
@@ -318,7 +322,7 @@ src/
 ├── security/           # Security enforcement
 └── vectordb/           # Knowledge storage
 
-```text
+```
 
 ## 🗄️ Database Architecture
 
@@ -356,7 +360,7 @@ CREATE TABLE sessions (
     message_count INTEGER DEFAULT 0
 );
 
-```text
+```
 
 ### ChromaDB v2 Architecture
 
@@ -402,7 +406,7 @@ DB_PATH=db/history.db                         # SQLite database path
 
 KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
 
-```text
+```
 
 ## 🛡️ Security Architecture
 
@@ -416,7 +420,7 @@ KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
 
 conn.execute(f"PRAGMA key='{encryption_key}'")
 
-```text
+```
 
 #### Application-Level Encryption
 
@@ -433,7 +437,7 @@ class EncryptedStore:
     def decrypt_content(self, encrypted_content: str) -> str:
         return self.cipher.decrypt(encrypted_content.encode()).decode()
 
-```text
+```
 
 ### Access Control
 
@@ -449,7 +453,7 @@ def get_user_conversations(user_id: str, session_id: str = None):
 
     return db.execute(query, params)
 
-```text
+```
 
 ## 🧪 Testing Architecture
 
@@ -469,8 +473,8 @@ def get_user_conversations(user_id: str, session_id: str = None):
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │   ┌─────────────┐      ┌─────────────┐      ┌─────────────────────────┐  │
-│   │  Unit Tests │      │ Integration │      │   Security Tests       │  │
-│   │  (171 tests)│      │  (40 tests) │      │   (25 tests)           │  │
+│   │  Unit Tests │      │ Integration │      │   Security Tests        │  │
+│   │  (171 tests)│      │  (40 tests) │      │   (25 tests)            │  │
 │   └──────┬──────┘      └──────┬──────┘      └────────────┬────────────┘  │
 │          │                    │                          │               │
 │          └────────────────────┴──────────────────────────┘               │
@@ -483,7 +487,7 @@ def get_user_conversations(user_id: str, session_id: str = None):
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 
-```text
+```
 
 ### Test Categories
 
@@ -506,7 +510,7 @@ CREATE INDEX CONCURRENTLY idx_content_fts ON conversations USING
 gin(to_tsvector('english', content));
 CREATE INDEX CONCURRENTLY idx_metadata ON conversations USING gin(metadata);
 
-```text
+```
 
 ### Query Optimization
 
@@ -532,15 +536,15 @@ def get_recent_messages(session_id: str, hours: int = 24):
         ORDER BY timestamp DESC
     '''.format(hours), (session_id,))
 
-```text
+```
 
 ## 🔄 Integration Points
 
 ### Service Dependencies
 
-1. **LM Studio**: Local LLM server (http://192.168.0.203:1234)
-2. **ChromaDB v2 Server**: Vector database (http://192.168.0.204:8000)
-3. **Ollama**: Embedding server (http://192.168.0.204:11434)
+1. **LM Studio**: Local LLM server (<http://192.168.0.203:1234>)
+2. **ChromaDB v2 Server**: Vector database (<http://192.168.0.204:8000>)
+3. **Ollama**: Embedding server (<http://192.168.0.204:11434>)
 
 ### Service Startup Commands
 
@@ -557,22 +561,23 @@ chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
 # Terminal 3: Ollama
 
 ollama serve
+```
 
 ## 📋 Key Features Matrix
 
-| Feature              | Status | Description                                                   |
-| -------------------- | ------- | ------------------------------------------------------------- |
-| Dual Interfaces      | ✅      | GUI (PyQt6) and CLI with full feature parity                  |
-| AI Learning System   | ✅      | ChromaDB v2 vector database integration                       |
-| Document Processing  | ✅      | 80+ file types with unified processing                        |
-| Spaces System        | ✅      | Isolated workspaces with separate knowledge bases             |
-| Tool Calling         | ✅      | 8 AI tools for file operations and knowledge management       |
-| Memory Persistence   | ✅      | SQLite database for conversation history                      |
-| Markdown Support     | ✅      | Rich text rendering in GUI                                    |
-| Web Ingestion        | ✅      | URL learning capability via `/web` command                    |
-| Personalized Memory  | ✅      | Mem0 for user preference tracking                             |
-| Smart Chunking       | ✅      | 1500-char chunks with paragraph-aware boundaries              |
-| Quality Filtering    | ✅      | Automatic filtering of binary files and low-value content     |
+| Feature             | Status  | Description                                               |
+| ------------------- | ------  | --------------------------------------------------------- |
+| Dual Interfaces     | ✅      | GUI (PyQt6) and CLI with full feature parity              |
+| AI Learning System  | ✅      | ChromaDB v2 vector database integration                   |
+| Document Processing | ✅      | 80+ file types with unified processing                    |
+| Spaces System       | ✅      | Isolated workspaces with separate knowledge bases         |
+| Tool Calling        | ✅      | 8 AI tools for file operations and knowledge management   |
+| Memory Persistence  | ✅      | SQLite database for conversation history                  |
+| Markdown Support    | ✅      | Rich text rendering in GUI                                |
+| Web Ingestion       | ✅      | URL learning capability via `/web` command                |
+| Personalized Memory | ✅      | Mem0 for user preference tracking                         |
+| Smart Chunking      | ✅      | 1500-char chunks with paragraph-aware boundaries          |
+| Quality Filtering   | ✅      | Automatic filtering of binary files and low-value content |
 
 ## 🎯 Design Principles
 

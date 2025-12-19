@@ -26,12 +26,12 @@
       "enabled": true,
       "style": "dash"
     },
-     "md041": {
-       "enabled": false
-     },
-     "md046": {
-       "enabled": false
-     }
+    "md041": {
+      "enabled": false
+    },
+    "md046": {
+      "enabled": false
+    }
   },
   "extensions": {
     "front-matter": {
