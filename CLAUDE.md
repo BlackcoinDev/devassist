@@ -89,6 +89,52 @@ uv run vulture <file>                                         # Dead code
 uv run codespell <file>                                       # Spelling
 ```
 
+### Markdown Linting (v0.2.0 - 3-Phase Auto-Fix)
+
+```bash
+# Detect markdown issues
+uv run python tests/lint/lint-markdown.py
+
+# Auto-fix 92% of issues (24+ rules)
+uv run python tests/lint/fix-markdown.py
+
+# Preview changes without modifying files
+uv run python tests/lint/fix-markdown.py --dry-run
+
+# Fix specific file with verbose output
+uv run python tests/lint/fix-markdown.py docs/MANUAL.md --verbose
+
+# Custom line length
+uv run python tests/lint/fix-markdown.py --line-length 120
+```
+
+**3-Phase Architecture:**
+- **Phase 1**: Pymarkdown native fix (16+ rules: MD004, MD005, MD029, MD030, etc.)
+- **Phase 2**: Custom fixes (7 rules: MD013, MD022, MD026, MD031, MD032, MD040, MD047)
+- **Phase 3**: Table alignment (MD060)
+
+**Coverage**: 92% auto-fix (24+ rules), only MD024 & MD036 require manual work.
+
+**Workflow**:
+```bash
+# 1. Auto-fix everything
+uv run python tests/lint/fix-markdown.py
+
+# 2. Review changes
+git diff docs/
+
+# 3. Manually fix remaining issues (MD024, MD036)
+#    - MD024: Duplicate headings (1 issue)
+#    - MD036: Emphasis as headings (11 issues)
+
+# 4. Verify zero issues
+uv run python tests/lint/lint-markdown.py
+
+# 5. Commit
+git add docs/ .pymarkdown
+git commit -m "docs: achieve markdown zero tolerance"
+```
+
 **Key Patterns:**
 
 - Always prefix commands with `uv run` when using tools
@@ -214,16 +260,16 @@ File Discovery → Content Extraction (Docling) → Text Chunking (1500 chars)
 
 The qwen3-vl-30b model can autonomously call these tools:
 
-| Tool | Purpose | Test Status |
-|------|---------|-------------|
-| `read_file()` | Read file contents | ✅ Tested |
-| `write_file()` | Create/modify files | ✅ Ready |
-| `list_directory()` | Browse directories | ✅ Ready |
-| `get_current_directory()` | Show current path | ✅ Tested |
-| `parse_document()` | Extract text/tables/forms via Docling | ✅ Ready |
-| `learn_information()` | Store in ChromaDB | ✅ Ready |
-| `search_knowledge()` | Query vector DB | ✅ Ready |
-| `search_web()` | DuckDuckGo search | ✅ Ready |
+| Tool                        | Purpose                                  | Test Status |
+| --------------------------- | ---------------------------------------- | ----------- |
+| `read_file()`               | Read file contents                       | ✅ Tested   |
+| `write_file()`              | Create/modify files                      | ✅ Ready    |
+| `list_directory()`          | Browse directories                       | ✅ Ready    |
+| `get_current_directory()`   | Show current path                        | ✅ Tested   |
+| `parse_document()`          | Extract text/tables/forms via Docling    | ✅ Ready    |
+| `learn_information()`       | Store in ChromaDB                        | ✅ Ready    |
+| `search_knowledge()`        | Query vector DB                          | ✅ Ready    |
+| `search_web()`              | DuckDuckGo search                        | ✅ Ready    |
 
 **Tool testing coverage:** 8/8 tools have comprehensive unit and integration tests (89 total tests, 100% pass rate).
 
@@ -282,33 +328,33 @@ When adding features:
 
 **Core Application:**
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `src/main.py` | CLI interface + LLM initialization | 3,175 |
-| `src/gui.py` | PyQt6 GUI interface | 2,135 |
-| `launcher.py` | Interface selector + .env loader | 216 |
+| File            | Purpose                              | Lines |
+| --------------- | ------------------------------------ | ----- |
+| `src/main.py`   | CLI interface + LLM initialization   | 3,175 |
+| `src/gui.py`    | PyQt6 GUI interface                  | 2,135 |
+| `launcher.py`   | Interface selector + .env loader     | 216   |
 
 **Modular Architecture (v0.2.0):**
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `src/core/config.py` | Configuration management from .env | 296 |
-| `src/core/context.py` | ApplicationContext (dependency injection) | 272 |
-| `src/core/context_utils.py` | Shared utility functions | 291 |
-| `src/commands/registry.py` | Command dispatcher (plugin system) | ~150 |
-| `src/tools/registry.py` | AI tool dispatcher (plugin system) | ~150 |
-| `src/vectordb/client.py` | ChromaDB unified API client | 291 |
-| `src/storage/database.py` | SQLite connection management | 97 |
-| `src/storage/memory.py` | Conversation history persistence | 172 |
-| `src/storage/cache.py` | Embedding and query caching | 161 |
+| File                           | Purpose                                     | Lines |
+| ------------------------------ | ------------------------------------------- | ----- |
+| `src/core/config.py`           | Configuration management from .env          | 296   |
+| `src/core/context.py`          | ApplicationContext (dependency injection)   | 272   |
+| `src/core/context_utils.py`    | Shared utility functions                    | 291   |
+| `src/commands/registry.py`     | Command dispatcher (plugin system)          | ~150  |
+| `src/tools/registry.py`        | AI tool dispatcher (plugin system)          | ~150  |
+| `src/vectordb/client.py`       | ChromaDB unified API client                 | 291   |
+| `src/storage/database.py`      | SQLite connection management                | 97    |
+| `src/storage/memory.py`        | Conversation history persistence            | 172   |
+| `src/storage/cache.py`         | Embedding and query caching                 | 161   |
 
 **Tools & Testing:**
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `tools/populate_codebase.py` | Bulk codebase import (production) | - |
-| `tests/conftest.py` | Test fixtures | - |
-| `pytest.ini` | Test configuration | - |
+| File                            | Purpose                             | Lines |
+| ------------------------------- | ----------------------------------- | ----- |
+| `tools/populate_codebase.py`    | Bulk codebase import (production)   | -     |
+| `tests/conftest.py`             | Test fixtures                       | -     |
+| `pytest.ini`                    | Test configuration                  | -     |
 
 ### Common Development Tasks
 

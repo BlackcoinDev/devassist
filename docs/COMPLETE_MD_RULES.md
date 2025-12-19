@@ -12,37 +12,37 @@ auto-fixed and which require manual intervention.
 
 These rules can be automatically fixed by the `fix-markdown.py` script:
 
-| Rule | Name | Description | Auto-Fix Status |
-| ------ | ------ | ------------- | ----------------- |
-| **MD013** | Line length | Lines should not exceed 80 characters | ✅ Partially fixable |
-| **MD022** | Blank lines around headings | Headings should be surrounded by blank lines | ✅ Fully fixable |
-| **MD030** | List marker space | Spaces after list markers should be consistent | ❌ Manual fix required |
-| **MD031** | Blank lines around code blocks | Code blocks should be surrounded by blank lines | ✅ Fully fixable |
-| **MD032** | Blank lines around lists | Lists should be surrounded by blank lines | ✅ Partially fixable |
-| **MD040** | Fenced code language | Fenced code blocks should have language specified | ✅ Fully fixable |
-| **MD047** | Trailing newline | Files should end with single trailing newline | ✅ Fully fixable |
+| Rule       | Name                           | Description                                       | Auto-Fix Status          |
+| ---------- | ------------------------------ | ------------------------------------------------- | ------------------------ |
+| **MD013**  | Line length                    | Lines should not exceed 80 characters             | ✅ Partially fixable      |
+| **MD022**  | Blank lines around headings    | Headings should be surrounded by blank lines      | ✅ Fully fixable          |
+| **MD030**  | List marker space              | Spaces after list markers should be consistent    | ❌ Manual fix required    |
+| **MD031**  | Blank lines around code blocks | Code blocks should be surrounded by blank lines   | ✅ Fully fixable          |
+| **MD032**  | Blank lines around lists       | Lists should be surrounded by blank lines         | ✅ Partially fixable      |
+| **MD040**  | Fenced code language           | Fenced code blocks should have language specified | ✅ Fully fixable          |
+| **MD047**  | Trailing newline               | Files should end with single trailing newline     | ✅ Fully fixable          |
 
 ### ⚠️ Partially Auto-Fixable Rules (2 rules)
 
 These rules can be partially auto-fixed but often require manual review:
 
-| Rule | Name | Description | Notes |
-| ------ | ------ | ------------- | ------- |
-| **MD005** | List indent | Inconsistent indentation for list items at same level | Complex nested structures |
-| **MD025** | Single H1 | Multiple top-level headings (should have single H1) | Document structure decision |
+| Rule      | Name        | Description                                             | Notes                       |
+| --------- | ----------- | ------------------------------------------------------- | --------------------------- |
+| **MD005** | List indent | Inconsistent indentation for list items at same level   | Complex nested structures   |
+| **MD025** | Single H1   | Multiple top-level headings (should have single H1)     | Document structure decision |
 
 ### ❌ Manual-Fix Required Rules (6 rules)
 
 These rules require manual fixing due to complexity and context sensitivity:
 
-| Rule | Name | Description | Complexity |
-| ------ | ------ | ------------- | ------------ |
-| **MD004** | List style | Inconsistent unordered list markers (`*`, `-`, `+`) | Medium |
-| **MD024** | Duplicate headings | Multiple headings with same content | Medium |
-| **MD026** | Trailing punctuation | Headings should not have trailing punctuation | Low |
-| **MD029** | Ordered list prefix | Ordered list items should have sequential numbers | High |
-| **MD036** | Emphasis as heading | Bold/italic emphasis used instead of proper headings | High |
-| **MD060** | Table column alignment | Table pipes must be vertically aligned | Medium |
+| Rule      | Name                   | Description                                            | Complexity |
+| --------- | ---------------------- | ------------------------------------------------------ | ---------- |
+| **MD004** | List style             | Inconsistent unordered list markers (`*`, `-`, `+`)    | Medium     |
+| **MD024** | Duplicate headings     | Multiple headings with same content                    | Medium     |
+| **MD026** | Trailing punctuation   | Headings should not have trailing punctuation          | Low        |
+| **MD029** | Ordered list prefix    | Ordered list items should have sequential numbers      | High       |
+| **MD036** | Emphasis as heading    | Bold/italic emphasis used instead of proper headings   | High       |
+| **MD060** | Table column alignment | Table pipes must be vertically aligned                 | Medium     |
 
 ## 📚 Detailed Rule Reference
 
@@ -54,11 +54,13 @@ These rules require manual fixing due to complexity and context sensitivity:
 
 ```markdown
 ❌ Wrong:
+
 * Item one
 - Item two  ❌ (inconsistent)
 + Item three ❌ (inconsistent)
 
 ✅ Correct:
+
 - Item one
 - Item two  ✅ (consistent)
 - Item three ✅ (consistent)
@@ -75,12 +77,14 @@ These rules require manual fixing due to complexity and context sensitivity:
 
 ```markdown
 ❌ Wrong:
+
 - Item 1
   - Nested item  ❌ (inconsistent indentation)
 - Item 2
     - Another nested  ❌ (different indentation)
 
 ✅ Correct:
+
 - Item 1
   - Nested item  ✅ (consistent 2-space indent)
 - Item 2
@@ -118,8 +122,11 @@ standards while preserving content meaning.
 
 ```markdown
 ❌ Wrong:
+
 # Heading 1  ❌ (no blank line before)
+
 Paragraph text...
+
 ## Heading 2  ❌ (no blank line after previous content)
 
 ✅ Correct:
@@ -142,6 +149,7 @@ Paragraph text...
 
 ```markdown
 ❌ Wrong:
+
 ## Introduction
 
 Content about introduction...
@@ -151,6 +159,7 @@ Content about introduction...
 More content...
 
 ✅ Correct:
+
 ## Introduction
 
 Content about introduction...
@@ -171,13 +180,17 @@ More content...
 
 ```markdown
 ❌ Wrong:
+
 # First Heading  ❌ (first H1)
+
 Content...
 
 # Second Heading  ❌ (second H1)
+
 More content...
 
 ✅ Correct:
+
 # Main Title  ✅ (single H1)
 
 ## Section 1  ✅ (use H2+)
@@ -200,11 +213,13 @@ More content...
 
 ```markdown
 ❌ Wrong:
+
 ### Heading with punctuation.  ❌ (trailing period)
 
 ### Heading with question mark?  ❌ (trailing question mark)
 
 ✅ Correct:
+
 ### Heading without punctuation  ✅
 
 ### Question heading  ✅ (no trailing punctuation)
@@ -221,11 +236,13 @@ More content...
 
 ```markdown
 ❌ Wrong:
+
 1. First item
 1. Second item  ❌ (should be 2)
 1. Third item   ❌ (should be 3)
 
 ✅ Correct:
+
 1. First item
 2. Second item  ✅
 3. Third item   ✅
@@ -242,11 +259,13 @@ More content...
 
 ```markdown
 ❌ Wrong:
+
 - Item one
 -   Item two  ❌ (extra spaces)
 - Item three
 
 ✅ Correct:
+
 - Item one
 - Item two   ✅ (consistent 1 space)
 - Item three
@@ -266,6 +285,7 @@ More content...
 Paragraph text
 
 ```python  ❌ (no blank line before)
+
 def example():
     pass
 
@@ -276,6 +296,7 @@ More text  ❌ (no blank line after)
 Paragraph text
 
 ```python  ✅ (blank line before)
+
 def example():
     pass
 
@@ -283,7 +304,7 @@ def example():
 
 More text  ✅ (blank line after)
 
-```
+```text
 
 **Fix Strategy**: Add blank lines before and after all code blocks.
 
@@ -296,8 +317,10 @@ More text  ✅ (blank line after)
 ```markdown
 ❌ Wrong:
 Paragraph text
+
 - List item  ❌ (no blank line before)
 - Another item
+
 More text  ❌ (no blank line after)
 
 ✅ Correct:
@@ -325,6 +348,7 @@ More text  ✅ (blank line after)
 Content about this section...
 
 ✅ Correct:
+
 ## Important Section  ✅ (proper heading)
 
 Content about this section...
@@ -343,6 +367,7 @@ Content about this section...
 ❌ Wrong:
 
 ```  ❌ (no language)
+
 def example():
     pass
 
@@ -351,6 +376,7 @@ def example():
 ✅ Correct:
 
 ```python  ✅ (language specified)
+
 def example():
     pass
 
@@ -387,16 +413,16 @@ Content here...
 
 ```markdown
 ❌ Wrong:
-| A | B |      [0, 3, 7]
-|---|---|     [0, 3, 7]
-| 1 | 2 |     [0, 3, 7]
-| 10 | 20 |   [0, 5, 10] ❌ (misaligned)
+| A   | B   | [0, 3, 7]                 |
+| --- | --- | [0, 3, 7]                 |
+| 1   | 2   | [0, 3, 7]                 |
+| 10  | 20  | [0, 5, 10] ❌ (misaligned) |
 
 ✅ Correct:
-| A   | B   |   [0, 5, 10]
-| --- | --- |   [0, 5, 10]
-| 1   | 2   |   [0, 5, 10]
-| 10  | 20  |   [0, 5, 10] ✅ (aligned)
+| A   | B   | [0, 5, 10]             |
+| --- | --- | [0, 5, 10]             |
+| 1   | 2   | [0, 5, 10]             |
+| 10  | 20  | [0, 5, 10] ✅ (aligned) |
 
 ```
 

@@ -18,13 +18,13 @@
 
 **Modules Improved to ≥90%:**
 
-| Module | Before | After | Status |
-|--------|--------|-------|--------|
-| `launcher.py` | 45% | **98%** | ✅ |
-| `web_tools.py` | 86% | **97%** | ✅ |
-| `memory_commands.py` | 88% | **100%** | ✅ |
-| `knowledge_tools.py` | 80% | **100%** | ✅ |
-| `learning_commands.py` | 84% | **100%** | ✅ |
+| Module                  | Before | After    | Status |
+| ----------------------- | ------ | -------- | ------ |
+| `launcher.py`           | 45%    | **98%**  | ✅      |
+| `web_tools.py`          | 86%    | **97%**  | ✅      |
+| `memory_commands.py`    | 88%    | **100%** | ✅      |
+| `knowledge_tools.py`    | 80%    | **100%** | ✅      |
+| `learning_commands.py`  | 84%    | **100%** | ✅      |
 
 ---
 
@@ -48,30 +48,30 @@
 
 ### Moderate Coverage (70-89%): 10 modules ⚠️
 
-| Module | Coverage | Missing Lines | Priority |
-|--------|----------|---------------|----------|
-| `file_tools.py` | 85.9% | 11 | HIGH |
-| `legacy_commands.py` | 84.7% | 60 | MEDIUM |
-| `config_commands.py` | 84.2% | 6 | HIGH |
-| `config.py` | 83.9% | 19 | MEDIUM |
-| `spaces.py` | 79.7% | 14 | HIGH |
-| `client.py` | 76.5% | 28 | MEDIUM |
-| `context_utils.py` | 75.3% | 37 | MEDIUM |
-| `cache.py` | 73.1% | 21 | MEDIUM |
-| `path_security.py` | 72.9% | 19 | HIGH |
-| `document_tools.py` | 71.0% | 9 | HIGH |
+| Module                  | Coverage | Missing Lines | Priority |
+| ----------------------- | -------- | ------------- | -------- |
+| `file_tools.py`         | 85.9%    | 11            | HIGH     |
+| `legacy_commands.py`    | 84.7%    | 60            | MEDIUM   |
+| `config_commands.py`    | 84.2%    | 6             | HIGH     |
+| `config.py`             | 83.9%    | 19            | MEDIUM   |
+| `spaces.py`             | 79.7%    | 14            | HIGH     |
+| `client.py`             | 76.5%    | 28            | MEDIUM   |
+| `context_utils.py`      | 75.3%    | 37            | MEDIUM   |
+| `cache.py`              | 73.1%    | 21            | MEDIUM   |
+| `path_security.py`      | 72.9%    | 19            | HIGH     |
+| `document_tools.py`     | 71.0%    | 9             | HIGH     |
 
 **Total Missing:** ~224 lines (~22 tests needed)
 
 ### Critical Low Coverage (<70%): 5 modules 🔴
 
-| Module | Coverage | Missing Lines |
-|--------|----------|---------------|
-| `export_commands.py` | 62.8% | 16 |
-| `space_commands.py` | 59.5% | 30 |
-| `file_commands.py` | 39.1% | 70 |
-| `database_commands.py` | 34.0% | 93 |
-| `main.py` | 31.8% | 917 |
+| Module                 | Coverage   | Missing Lines   |
+| ---------------------- | ---------- | --------------- |
+| `export_commands.py`   | 62.8%      | 16              |
+| `space_commands.py`    | 59.5%      | 30              |
+| `file_commands.py`     | 39.1%      | 70              |
+| `database_commands.py` | 34.0%      | 93              |
+| `main.py`              | 31.8%      | 917             |
 
 **Total Missing:** ~1,126 lines (~112 tests needed)
 
@@ -149,14 +149,14 @@ Complete the 4 small modules (~35 lines total):
 Complete 4 medium modules (~95 lines total):
 
 1. **config.py** (19 lines) - Configuration validation edge cases
-6. **path_security.py** (19 lines) - Security boundary tests
-7. **cache.py** (21 lines) - Cache eviction and expiration
-8. **client.py** (28 lines) - ChromaDB connection errors
-9. **context_utils.py** (37 lines) - Utility function edge cases
+2. **path_security.py** (19 lines) - Security boundary tests
+3. **cache.py** (21 lines) - Cache eviction and expiration
+4. **client.py** (28 lines) - ChromaDB connection errors
+5. **context_utils.py** (37 lines) - Utility function edge cases
 
 ### Phase 3: Large Module (Est. 6-8 hours)
 
-10. **legacy_commands.py** (60 lines) - Legacy command error paths
+1. **legacy_commands.py** (60 lines) - Legacy command error paths
 
 ### Phase 4: Critical Modules (Est. 20-30 hours)
 
@@ -175,21 +175,26 @@ Address the 5 critical modules if overall >90% coverage is required:
 ### Testing Patterns Discovered
 
 1. **Import Coverage Quirk**: Modules show "not imported" warnings in targeted
+
 coverage runs but report correctly in full test suite. Always verify with full
 suite.
 
-2. **Error Path Coverage**: Most missing lines are error handling paths.
-Strategy:
-   - Mock underlying functions to return False/raise exceptions
-   - Test empty/whitespace input validation
-   - Test invalid argument formats
+1. **Error Path Coverage**: Most missing lines are error handling paths.
 
-3. **Dead Code Detection**: Some unreachable code identified (e.g., web_tools.py
+Strategy:
+
+- Mock underlying functions to return False/raise exceptions
+- Test empty/whitespace input validation
+- Test invalid argument formats
+
+1. **Dead Code Detection**: Some unreachable code identified (e.g., web_tools.py
+
 line 104 - logical contradiction in conditional).
 
 ### Coverage Improvement Formula
 
 For modules 70-89% coverage:
+
 - **Formula**: `tests_needed ≈ missing_lines / 10`
 - **Effort**: 15-30 minutes per module
 - **Focus**: Error paths, edge cases, validation logic
@@ -197,11 +202,13 @@ For modules 70-89% coverage:
 ### Strategic Recommendations
 
 **To Reach >90% Module-Level Coverage:**
+
 - Complete Phases 1-3 (all moderate modules)
 - Estimated effort: 18-26 hours
 - Result: 23/28 modules ≥90% (82% of modules)
 
 **To Reach >90% Overall Coverage:**
+
 - Must address `main.py` (917 lines, 65% of gap)
 - Alternative: Exclude main.py as "integration code"
 - Use E2E/integration tests to cover main.py workflows
@@ -211,21 +218,25 @@ For modules 70-89% coverage:
 ## Test Infrastructure Quality
 
 **Test Organization:** ✅ Excellent
+
 - Clear test class organization
 - Proper use of fixtures and mocks
 - AAA pattern consistently applied
 
 **Test Isolation:** ✅ Good
+
 - Independent tests with setup/teardown
 - Proper mocking of external dependencies
 - No shared state between tests
 
 **Test Naming:** ✅ Clear
+
 - Descriptive test names
 - Clear documentation strings
 - Easy to identify test purpose
 
 **Missing Test Patterns:**
+
 - Property-based testing (Hypothesis)
 - Performance regression tests
 - Load/stress testing for ChromaDB operations
@@ -234,11 +245,11 @@ For modules 70-89% coverage:
 
 ## Files Created/Modified
 
-### New Files:
+### New Files
 
 - `tools/analyze_coverage.py` - Coverage analysis script
 
-### Modified Files:
+### Modified Files
 
 - `tests/unit/test_launcher.py` - Added 6 tests
 - `tests/unit/test_tools.py` - Added 10 tests

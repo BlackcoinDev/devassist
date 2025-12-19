@@ -12,12 +12,18 @@ no longer uses hardcoded defaults.
 
 #### What Changed
 
-- **Before**: Application worked with or without `.env`, used hardcoded fallbacks, ChromaDB was optional
-- **After**: Application **requires** `.env` file, **no hardcoded defaults exist**, **ChromaDB is mandatory** for learning features
+- **Before**: Application worked with or without `.env`, used hardcoded fallbacks, ChromaDB was
+
+  optional
+
+- **After**: Application **requires** `.env` file, **no hardcoded defaults exist**, **ChromaDB is
+
+  mandatory** for learning features
 
 #### Migration Steps
 
 1. **Copy configuration template**:
+
    ```bash
    cp .env.example .env
    ```
@@ -72,7 +78,9 @@ from src.main import get_relevant_context, add_to_knowledge_base
 **After (v0.2.0):**
 
 ```python
+
 # Use ApplicationContext for all services
+
 from src.core.context import get_context
 
 ctx = get_context()
@@ -82,6 +90,7 @@ embeddings = ctx.embeddings
 conversation_history = ctx.conversation_history
 
 # Import utilities from new modules
+
 from src.core.context_utils import get_relevant_context, add_to_knowledge_base
 from src.storage.database import initialize_database
 from src.storage.memory import load_memory, save_memory
@@ -94,7 +103,9 @@ from src.vectordb.client import ChromaDBClient
 **Before (v0.2.0):**
 
 ```python
+
 # Commands hardcoded in handle_slash_command() function
+
 # Tools manually added to enable_tools list
 
 ```text
@@ -102,7 +113,9 @@ from src.vectordb.client import ChromaDBClient
 **After (v0.2.0):**
 
 ```python
+
 # Commands use decorator pattern
+
 from src.commands.registry import CommandRegistry
 
 @CommandRegistry.register("mycommand", "Description", category="utility")
@@ -110,6 +123,7 @@ def handle_mycommand(args: str) -> None:
     pass
 
 # Tools use decorator pattern
+
 from src.tools.registry import ToolRegistry
 
 @ToolRegistry.register("my_tool", TOOL_DEFINITION)
@@ -123,7 +137,9 @@ def execute_my_tool(arg1: str) -> Dict[str, Any]:
 **Before (v0.2.0):**
 
 ```python
+
 # Environment variables accessed directly via os.getenv()
+
 import os
 chroma_host = os.getenv("CHROMA_HOST")
 
@@ -132,7 +148,9 @@ chroma_host = os.getenv("CHROMA_HOST")
 **After (v0.2.0):**
 
 ```python
+
 # Configuration centralized in Config dataclass
+
 from src.core.config import Config
 
 config = Config.load()
@@ -140,7 +158,7 @@ chroma_host = config.chroma_host
 
 ```
 
-### Migration Steps
+### Implementation Migration Steps
 
 #### Step 1: Update Custom Code Imports
 
@@ -148,11 +166,14 @@ If you have custom extensions or scripts that import from `src.main`, update
 them:
 
 ```python
+
 # OLD
+
 from src.main import llm, vectorstore
 result = vectorstore.similarity_search(query)
 
 # NEW
+
 from src.core.context import get_context
 ctx = get_context()
 result = ctx.vectorstore.similarity_search(query)
@@ -176,7 +197,7 @@ def handle_mycustom(args: str) -> None:
 
 ```
 
-3. The handler will auto-register when imported
+1. The handler will auto-register when imported
 
 #### Step 3: Migrate Custom Tools
 
@@ -215,13 +236,16 @@ def execute_my_custom_tool(input: str) -> Dict[str, Any]:
 If you have custom tests:
 
 ```python
+
 # OLD
+
 from src.main import llm, vectorstore
 
 def test_something():
     assert llm is not None
 
 # NEW
+
 from src.core.context import get_context, reset_context
 
 def test_something():
@@ -257,17 +281,22 @@ The following remain compatible:
 After migrating, verify everything works:
 
 ```bash
+
 # 1. Run tests with new module coverage
+
 uv run pytest --cov=src --cov=launcher --cov-report=term-missing
 
 # 2. Test both interfaces
+
 uv run python launcher.py --cli
 uv run python launcher.py --gui
 
 # 3. Verify slash commands work
-# In CLI: /help, /vectordb, /memory, /learn, etc.
+
+# In CLI: /help, /vectordb, /memory, /learn, etc
 
 # 4. Check tool calling
+
 # Ask AI: "read the README file" (should use read_file tool)
 
 ```text
@@ -306,17 +335,25 @@ For detailed tool integration architecture, see
 #### Tool Result Handling & AI Usage
 
 **Tool Result Lifecycle:**
+
 1. **Execution**: AI calls tool → Tool runs → Returns structured result
 2. **Storage**: Results stored in conversation memory (Python variables, not
+
 files)
-3. **Integration**: Results formatted and added to conversation history as
+
+1. **Integration**: Results formatted and added to conversation history as
+
 HumanMessage
-4. **Processing**: Results become part of LLM's thinking context for response
+
+1. **Processing**: Results become part of LLM's thinking context for response
+
 generation
-5. **Response**: AI uses tool data to craft informed, accurate responses
-6. **Persistence**: Results saved in SQLite conversation history
+
+1. **Response**: AI uses tool data to craft informed, accurate responses
+2. **Persistence**: Results saved in SQLite conversation history
 
 **Result Locations:**
+
 - **During Execution**: `tool_results` list and `enhanced_history` messages
 - **During Response**: Integrated into LLM's context window
 - **After Response**: Persisted in SQLite database conversation history
@@ -329,13 +366,18 @@ generation
 3. **`list_directory()`** - Browse directories (ready)
 4. **`get_current_directory()`** - Show current path (tested & working)
 5. **`parse_document()`** - Extract text/tables/forms/layout from documents
+
 (ready)
-6. **`learn_information()`** - Store in knowledge base (ready)
-7. **`search_knowledge()`** - Query learned information (ready)
+
+1. **`learn_information()`** - Store in knowledge base (ready)
+2. **`search_knowledge()`** - Query learned information (ready)
 
 #### Tool Ecosystem Benefits
 
-- **Document Intelligence**: qwen3-vl-30b's multimodal capabilities for OCR, table extraction, form analysis
+- **Document Intelligence**: qwen3-vl-30b's multimodal capabilities for OCR, table extraction, form
+
+  analysis
+
 - **Knowledge Synthesis**: Tools work together to build comprehensive understanding
 - **Result Integration**: Tool outputs seamlessly feed into AI response generation
 - **Autonomous Operations**: AI can execute complex multi-step tasks without user intervention
@@ -345,39 +387,51 @@ generation
 #### Migration for Tool Usage
 
 1. **No additional configuration needed** - tools use existing ChromaDB/Ollama
+
 setup
-2. **Tools are automatically available** in both GUI and CLI interfaces
-3. **Natural language triggers** - AI recognizes intent and calls appropriate
+
+1. **Tools are automatically available** in both GUI and CLI interfaces
+2. **Natural language triggers** - AI recognizes intent and calls appropriate
+
 tools
-4. **Fallback to manual commands** - all tools accessible via slash commands if
+
+1. **Fallback to manual commands** - all tools accessible via slash commands if
+
 needed
 
 #### Required Environment Variables
 
 ```bash
+
 # LM Studio Configuration
+
 LM_STUDIO_URL=http://192.168.0.203:1234/v1    # Your LM Studio endpoint
 LM_STUDIO_KEY=lm-studio                        # API key for authentication
 MODEL_NAME=qwen3-vl-30b                        # LLM model name
 
 # Vector Database Configuration (REQUIRED - ChromaDB is mandatory)
+
 CHROMA_HOST=192.168.0.204                      # ChromaDB server host
 CHROMA_PORT=8000                               # ChromaDB server port
 
 # Ollama Configuration
+
 OLLAMA_BASE_URL=http://192.168.0.204:11434    # Ollama embeddings endpoint
 EMBEDDING_MODEL=qwen3-embedding:latest        # Embedding model name
 
 # Application Settings
+
 MAX_HISTORY_PAIRS=5                            # Conversation memory limit
 TEMPERATURE=0.7                               # LLM creativity (0.0-1.0)
 MAX_INPUT_LENGTH=10000                        # Maximum input length
 
 # Database Configuration
+
 DB_TYPE=sqlite                                # Database type
 DB_PATH=db/history.db                         # SQLite database path
 
 # System Configuration
+
 KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
 
 ```text
@@ -390,6 +444,7 @@ For comprehensive database architecture details, please refer to the
 ### SQLite (Recommended)
 
 **Advantages:**
+
 - Zero configuration - no server setup required
 - ACID transactions - data integrity guaranteed
 - Concurrent access - handles multiple processes safely
@@ -401,8 +456,6 @@ For comprehensive database architecture details, please refer to the
 [ARCHITECTURE.md](ARCHITECTURE.md) for detailed SQLite schema, Python
 implementation, and encryption setup.
 
-
-
 ## 🔐 Security Considerations
 
 For comprehensive security architecture details, please refer to the
@@ -411,17 +464,20 @@ For comprehensive security architecture details, please refer to the
 ### Encryption Strategies
 
 **Database-Level Encryption:**
+
 - SQLCipher for SQLite
 - PostgreSQL with pgcrypto
 - MongoDB with encryption at rest
 
 **Application-Level Encryption:**
+
 - Fernet encryption for content
 - Secure key management
 
 ### Access Control
 
 **Multi-Tenant Isolation:**
+
 - User-specific conversation access
 - Session-based permissions
 - Secure data separation
@@ -438,16 +494,19 @@ For comprehensive performance architecture details, please refer to the
 ### Indexing Strategies
 
 **SQLite Optimization:**
+
 - Session-timestamp indexing for fast retrieval
 - Content length indexing for size-based queries
 
 **PostgreSQL Optimization:**
+
 - Full-text search with GIN indexes
 - Metadata indexing for complex queries
 
 ### Query Optimization
 
 **Efficient Data Access:**
+
 - Pagination strategies for large datasets
 - Time-based filtering for recent messages
 - Optimized query patterns for common operations

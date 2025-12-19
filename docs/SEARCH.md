@@ -23,16 +23,21 @@ effectiveness.
 ### Using Context in Conversations
 
 ```bash
+
 # Check current context mode
+
 /context
 
 # Enable context for every query (full RAG mode)
+
 /context on
 
 # Let AI decide when to use context (default, most efficient)
+
 /context auto
 
 # Disable context searching
+
 /context off
 
 ```text
@@ -40,14 +45,19 @@ effectiveness.
 ### Teaching DevAssist
 
 ```bash
+
 # Remember a piece of information
+
 /learn Python is a high-level programming language with dynamic typing
 
 # Bulk import a codebase into the knowledge base
+
 /populate /path/to/your/project
 
 # Search what you've taught DevAssist (ask the AI, it will search automatically)
+
 You: "What do you know about Python programming fundamentals?"
+
 # AI autonomously calls search_knowledge tool and responds with context
 
 ```text
@@ -56,7 +66,7 @@ You: "What do you know about Python programming fundamentals?"
 
 ## Core Concepts
 
-### What is RAG?
+### What is RAG
 
 **Retrieval-Augmented Generation** combines two processes:
 
@@ -64,6 +74,7 @@ You: "What do you know about Python programming fundamentals?"
 2. **Generation**: Using those documents to improve AI responses
 
 **Example:**
+
 - User: "How does our authentication system work?"
 - System: Searches knowledge base → finds auth docs → provides them to AI
 - AI: Incorporates the docs → gives more accurate, specific answer about YOUR system
@@ -72,13 +83,13 @@ You: "What do you know about Python programming fundamentals?"
 
 DevAssist uses **semantic search** (not keyword search):
 
-| Aspect | Semantic Search (DevAssist) | Keyword Search |
-|--------|---------------------------|-----------------|
-| **How it works** | Converts text to embeddings (vector numbers), finds similar meanings | Looks for exact text matches |
-| **Query**: "How to write Python code" | Finds docs about "programming in Python" ✅ | Misses it (no keyword match) ❌ |
-| **Intelligence** | Understands context and meaning | Simple pattern matching |
-| **Flexibility** | High—finds related concepts | Low—needs exact words |
-| **Speed** | Medium (embedding generation) | Very fast |
+| Aspect                                 | Semantic Search (DevAssist)                                          | Keyword Search                  |
+| -------------------------------------- | -------------------------------------------------------------------- | ------------------------------- |
+| **How it works**                       | Converts text to embeddings (vector numbers), finds similar meanings | Looks for exact text matches    |
+| **Query**: "How to write Python code"  | Finds docs about "programming in Python" ✅                           | Misses it (no keyword match) ❌  |
+| **Intelligence**                       | Understands context and meaning                                      | Simple pattern matching         |
+| **Flexibility**                        | High—finds related concepts                                          | Low—needs exact words           |
+| **Speed**                              | Medium (embedding generation)                                        | Very fast                       |
 
 ---
 
@@ -163,6 +174,7 @@ def get_relevant_context(
 ```
 
 **When it's called:**
+
 - Automatically when `context_mode == "on"`
 - AI decides when `context_mode == "auto"` (recommended)
 - Never when `context_mode == "off"`
@@ -177,9 +189,11 @@ Context: on → get_relevant_context("What are the performance best practices?")
 Query embedding generated
        ↓
 ChromaDB search finds:
+
   - "Use connection pooling for databases"
   - "Cache frequently accessed data"
   - "Profile before optimizing"
+
        ↓
 AI response: "Based on your knowledge base: [context]. Additionally..."
 
@@ -200,6 +214,7 @@ def execute_web_search(query: str) -> dict:
 ```text
 
 **When it's called:**
+
 - AI autonomously decides based on query type
 - Used for current events, general knowledge, external info
 - Not subject to context mode (independent tool)
@@ -228,6 +243,7 @@ def execute_search_knowledge(query: str, limit: int = 5) -> dict:
 ```
 
 **When AI calls it:**
+
 - User asks meta questions: "What do you know about X?"
 - Debugging: "Show me what you learned about authentication"
 - Verification: "Find the docs on feature Y"
@@ -256,6 +272,7 @@ User: "What's the capital of France?"
 ```text
 
 **Advantages:**
+
 - Fastest response times (avoids unnecessary searches)
 - Most efficient (no redundant vector operations)
 - Best accuracy (AI knows when context helps)
@@ -280,10 +297,12 @@ User: "What's 2+2?"
 ```text
 
 **Advantages:**
+
 - Ensures all learned info is considered
 - Good for debugging why knowledge isn't being used
 
 **Disadvantages:**
+
 - Slower (extra search for every query)
 - May include irrelevant context
 
@@ -306,10 +325,12 @@ User: "How does our system work?"
 ```text
 
 **Advantages:**
+
 - Fastest (no embedding/search overhead)
 - Useful for testing general AI capabilities
 
 **Disadvantages:**
+
 - AI forgets everything you taught it
 - Can't access learned documents
 
@@ -324,11 +345,17 @@ User: "How does our system work?"
 
 ```bash
 /context
-# Output:
+
+# Output
+
 # 🎯 Current context mode: auto
+
 # Options: auto, on, off
+
 # - auto: AI decides when to include context
+
 # - on: Always include available context
+
 # - off: Never include context from knowledge base
 
 ```
@@ -344,6 +371,7 @@ User: "How does our system work?"
 Remember a single piece of information:
 
 **Note:** There is no `/search` slash command. To search your knowledge base:
+
 - Ask the AI a question and it autonomously calls the `search_knowledge` tool
 - Use `/context on` to ensure knowledge base is searched
 - Use `/context auto` (default) for smart searching
@@ -356,12 +384,14 @@ Remember a single piece of information:
 ```text
 
 **What happens:**
+
 1. Text is converted to embedding (vector)
 2. Stored in ChromaDB with metadata (timestamp, source)
 3. Indexed for semantic search
 4. Returns instantly
 
 **Use cases:**
+
 - Team standards or conventions
 - Important decisions
 - Technical explanations
@@ -389,21 +419,27 @@ pooling enabled.
 Bulk import an entire codebase:
 
 ```bash
+
 # Basic usage
+
 /populate /path/to/your/project
 
 # Dry run (validate without writing)
+
 /populate /path/to/your/project --dry-run
 
 # Clear existing knowledge, then repopulate
+
 /populate /path/to/your/project --clear
 
 # Real-world example
+
 /populate ~/projects/myapp --clear
 
 ```
 
 **Process:**
+
 1. Recursively scans directory for code files
 2. Extracts content from 80+ file types:
    - Languages: Python, JavaScript, Java, Go, Rust, etc.
@@ -414,6 +450,7 @@ Bulk import an entire codebase:
 5. Stores with metadata (filename, line numbers)
 
 **Options:**
+
 - `--dry-run`: Validate without writing to database
 - `--clear`: Delete existing collection before repopulating
 
@@ -432,6 +469,7 @@ Processing files...
 ```
 
 **Performance:**
+
 - Small project (< 100 files): ~10-30 seconds
 - Medium project (100-500 files): ~1-3 minutes
 - Large project (500+ files): ~5-15 minutes
@@ -466,6 +504,7 @@ DevAssist uses **two-level caching** for maximum performance:
 #### Level 1: In-Memory Cache (QUERY_CACHE)
 
 **How it works:**
+
 - Cache key: `{space_name}:{query}:{k}`
 - Stores last 1000 query results
 - Lookup time: <1ms (instant)
@@ -484,6 +523,7 @@ User: "Tell me about Python" [again]
 #### Level 2: Disk Cache (query_cache.json)
 
 **How it works:**
+
 - Persists in-memory cache to disk
 - Survives application restarts
 - Automatically saved every 50 queries
@@ -504,7 +544,9 @@ devassist/
 **View cache stats:**
 
 ```bash
+
 # Check cache size (in code debug mode)
+
 # QUERY_CACHE contains {space}:{query}:{k} → [results]
 
 ```text
@@ -512,10 +554,13 @@ devassist/
 **Clear cache (if needed):**
 
 ```bash
+
 # Remove query_cache.json to reset
+
 rm query_cache.json
 
 # Or just clear space-specific cache by changing space
+
 /space myspace
 
 ```
@@ -550,15 +595,19 @@ rm query_cache.json
 Each **space** is a separate knowledge base:
 
 ```bash
+
 # Switch to project A knowledge base
+
 /space projectA
 You: /populate ~/projects/projectA
 
 # Switch to project B
+
 /space projectB
 You: /populate ~/projects/projectB
 
 # Queries only search current space
+
 You: "How do we handle authentication?"
 → Searches projectB knowledge base only
 → projectA docs are ignored
@@ -566,6 +615,7 @@ You: "How do we handle authentication?"
 ```text
 
 **Benefits:**
+
 - Isolate knowledge by project
 - Prevent cross-project confusion
 - Faster searches (smaller collection)
@@ -594,6 +644,7 @@ ChromaDB Collections:
 **Causes & Solutions:**
 
 1. **Knowledge base is empty**
+
    ```bash
    # Check if you've learned anything
    /populate /path/to/project
@@ -602,17 +653,20 @@ ChromaDB Collections:
    ```
 
 2. **Context mode is off**
+
    ```bash
    /context on    # or auto
    ```
 
 3. **Wrong space selected**
+
    ```bash
    /space         # Check current space
    /space myspace # Switch to right space
    ```
 
 4. **Query doesn't match learned content**
+
    ```bash
    # Good queries (ask the AI):
    "What database do we use?" (finds "PostgreSQL 15" docs)
@@ -629,17 +683,20 @@ ChromaDB Collections:
 **Causes & Solutions:**
 
 1. **ChromaDB server not running**
+
    ```bash
    # Terminal 2: Start ChromaDB
    chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
    ```
 
 2. **Context mode is `on`** (searching every query)
+
    ```bash
    /context auto  # Let AI decide
    ```
 
 3. **Large knowledge base**
+
    ```bash
    # Check collection size
    /space           # List spaces
@@ -651,7 +708,6 @@ ChromaDB Collections:
 
 4. **Ollama not running** (embedding generation slow)
 
-
    ```bash
    # Terminal 3: Start Ollama
    ollama serve
@@ -659,23 +715,24 @@ ChromaDB Collections:
 
 ### LLM doesn't use the context
 
-
 **Problem:** Context found but AI doesn't incorporate it.
 
 **Diagnosis:**
 
-
-
 ```bash
+
 # Check if context is being retrieved
+
 /context on     # Force context for every query
 /search "your question"  # Manually search
 
-# If results appear but AI ignores them, try:
-#   Rephrase question (more specific)
-#   Clear cache: rm query_cache.json
-#   Check LEARNING_MODE with /learning command
+# If results appear but AI ignores them, try
 
+#   Rephrase question (more specific)
+
+#   Clear cache: rm query_cache.json
+
+#   Check LEARNING_MODE with /learning command
 
 ```text
 
@@ -686,13 +743,17 @@ ChromaDB Collections:
 **Debugging:**
 
 ```bash
+
 # Check if ChromaDB server is running
+
 curl http://192.168.0.204:8000/api/heartbeat
 
-# If not running, start it:
+# If not running, start it
+
 chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
 
 # Check .env configuration
+
 cat .env | grep CHROMA
 
 ```
@@ -704,8 +765,11 @@ cat .env | grep CHROMA
 **Solution:**
 
 ```bash
+
 # Automatically managed (max 1000 entries)
-# If needed, clear:
+
+# If needed, clear
+
 rm query_cache.json
 
 # App will recreate on next search
@@ -721,18 +785,19 @@ rm query_cache.json
 The DevAssist modular architecture organizes search functionality across several
 focused modules:
 
-| Function | Module Location | Purpose |
-|----------|-----------------|---------|
-| `get_relevant_context()` | `src/core/context_utils.py` | Semantic search with caching |
-| `execute_search_knowledge()` | `src/tools/executors/knowledge_tools.py` | AI tool for knowledge base searches |
-| `execute_web_search()` | `src/tools/executors/web_tools.py` | DuckDuckGo web search tool |
-| `handle_context_command()` | `src/commands/handlers/config_commands.py` | `/context` command handler |
-| `load_query_cache()` | `src/storage/cache.py` | Load search result cache from disk |
-| `save_query_cache()` | `src/storage/cache.py` | Persist search cache to disk |
-| `handle_learn_command()` | `src/commands/handlers/learning_commands.py` | `/learn` command handler |
-| `handle_populate_command()` | `src/commands/handlers/learning_commands.py` | `/populate` command handler |
+| Function                     | Module Location                                 | Purpose                              |
+| ---------------------------- | ----------------------------------------------- | ------------------------------------ |
+| `get_relevant_context()`     | `src/core/context_utils.py`                     | Semantic search with caching         |
+| `execute_search_knowledge()` | `src/tools/executors/knowledge_tools.py`        | AI tool for knowledge base searches  |
+| `execute_web_search()`       | `src/tools/executors/web_tools.py`              | DuckDuckGo web search tool           |
+| `handle_context_command()`   | `src/commands/handlers/config_commands.py`      | `/context` command handler           |
+| `load_query_cache()`         | `src/storage/cache.py`                          | Load search result cache from disk   |
+| `save_query_cache()`         | `src/storage/cache.py`                          | Persist search cache to disk         |
+| `handle_learn_command()`     | `src/commands/handlers/learning_commands.py`    | `/learn` command handler             |
+| `handle_populate_command()`  | `src/commands/handlers/learning_commands.py`    | `/populate` command handler          |
 
 **Architecture Notes:**
+
 - **Commands** auto-register via `@CommandRegistry.register()` decorator
 - **Tools** auto-register via `@ToolRegistry.register()` decorator
 - Search functions integrate with `ApplicationContext` for accessing ChromaDB and embeddings
@@ -741,19 +806,24 @@ focused modules:
 ### Environment Variables
 
 ```bash
+
 # ChromaDB Configuration
+
 CHROMA_HOST=192.168.0.204
 CHROMA_PORT=8000
 
 # Embedding Configuration
+
 OLLAMA_BASE_URL=http://localhost:11434
 EMBEDDING_MODEL=qwen3-embedding
 
 # LLM Configuration
+
 LM_STUDIO_URL=http://localhost:1234/v1
 MODEL_NAME=qwen3-vl-30b
 
 # Search Configuration
+
 MAX_HISTORY_PAIRS=50
 TEMPERATURE=0.7
 MAX_INPUT_LENGTH=2000
@@ -804,6 +874,7 @@ knowledge base size.
 ### Response Times (Context Modes)
 
 Based on official expectations (CLAUDE.md):
+
 - **LLM base response time**: 2-5 seconds
 - **Search operations**: Additional overhead varies by knowledge base size
 
@@ -829,14 +900,15 @@ Cache Hit (repeat query with cached search)
 These are approximate timings for the ChromaDB query operation only (not
 including LLM response time):
 
-| Knowledge Base Size | Search Time | Embedding Generation |
-|-------------------|------------|---------------------|
-| <10 docs | ~10-20ms | ~30-50ms |
-| 10-100 docs | ~20-50ms | ~30-50ms |
-| 100-1000 docs | ~50-100ms | ~30-50ms |
-| 1000+ docs | ~100-200ms | ~30-50ms |
+| Knowledge Base Size | Search Time  | Embedding Generation |
+| ------------------- | ------------ | -------------------- |
+| <10 docs            | ~10-20ms     | ~30-50ms             |
+| 10-100 docs         | ~20-50ms     | ~30-50ms             |
+| 100-1000 docs       | ~50-100ms    | ~30-50ms             |
+| 1000+ docs          | ~100-200ms   | ~30-50ms             |
 
 **Caching Impact:**
+
 - First query: Full embedding + search time
 - Repeat query (cache hit): <1ms (instant, from memory)
 
@@ -845,6 +917,7 @@ including LLM response time):
 ## Roadmap & Future Improvements
 
 **Planned:**
+
 - [ ] Hybrid search (semantic + keyword)
 - [ ] Query expansion and reranking
 - [ ] Automatic knowledge summarization
@@ -853,6 +926,7 @@ including LLM response time):
 - [ ] Search analytics and insights
 
 **Under consideration:**
+
 - GPT-4 level semantic understanding
 - Pinecone integration for larger scale
 - Knowledge graph construction
@@ -872,30 +946,38 @@ including LLM response time):
 ## Quick Reference
 
 ```bash
+
 # Check context status
+
 /context
 
 # Control context (auto = AI decides, on = always, off = never)
+
 /context auto
 /context on
 /context off
 
 # Search knowledge base (ask the AI - it autonomously calls search_knowledge)
+
 You: "What do you know about [topic]?"
 
 # Teach DevAssist
+
 /learn Important information to remember
 
 # Bulk import codebase
+
 /populate /path/to/project
 /populate /path/to/project --dry-run
 /populate /path/to/project --clear
 
 # Switch knowledge base
+
 /space myproject
 /space list
 
 # Check learning mode
+
 /learning
 /learning normal
 

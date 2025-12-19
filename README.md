@@ -632,41 +632,41 @@ You: quit
 
 ### Slash Commands v0.2.0
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `/learn <text>` | **Teach AI new information** (stores in ChromaDB) | `/learn Docker containers are lightweight` |
-| `/web <url>` | **Learn content from webpage** (web ingestion via Docling) | `/web https://example.com` |
-| `/vectordb` | **Inspect knowledge base** (shows chunks, sources, statistics) | `/vectordb` |
-| `/mem0` | **Inspect personalized memory** (user preferences and context) | `/mem0` |
-| `/populate <path>` | **Bulk import codebases** (uses document processing tools) | `/populate /path/to/project` |
-| `/model` | **Check/switch AI models** | `/model` |
-| `/memory` | **View conversation history** (SQLite database) | `/memory` |
-| `/clear` | **Reset conversation memory** | `/clear` |
-| `/space <cmd>` | **Workspace management** (isolated knowledge bases) | `/space create myproject` |
-| `/context <mode>` | **Control context integration** (`auto`/`on`/`off`) | `/context auto` |
-| `/learning <mode>` | **Control learning behavior** (`normal`/`strict`/`off`) | `/learning normal` |
-| `/export <fmt>` | **Export conversation** (`json`/`markdown`) | `/export json` |
-| `/read <file>` | **Read file contents** (direct file access) | `/read README.md` |
-| `/write <file>` | **Write content to file** (direct file editing) | `/write notes.txt Hello world` |
-| `/list [dir]` | **List directory contents** (filesystem browsing) | `/list src/` |
-| `/pwd` | **Show current directory** (navigation) | `/pwd` |
-| `/help` | **Show all commands** | `/help` |
-| `quit` | **Exit application** | `quit` |
+| Command            | Description                                                           | Example                                 |
+| ------------------ | --------------------------------------------------------------------- | --------------------------------------- |
+| `/learn <text>`    | **Teach AI new information** (stores in ChromaDB)                     | `/learn Docker containers are lightweight` |
+| `/web <url>`       | **Learn content from webpage** (web ingestion via Docling)            | `/web https://example.com`              |
+| `/vectordb`        | **Inspect knowledge base** (shows chunks, sources, statistics)        | `/vectordb`                             |
+| `/mem0`            | **Inspect personalized memory** (user preferences and context)        | `/mem0`                                 |
+| `/populate <path>` | **Bulk import codebases** (uses document processing tools)            | `/populate /path/to/project`            |
+| `/model`           | **Check/switch AI models**                                            | `/model`                                |
+| `/memory`          | **View conversation history** (SQLite database)                       | `/memory`                               |
+| `/clear`           | **Reset conversation memory**                                         | `/clear`                                |
+| `/space <cmd>`     | **Workspace management** (isolated knowledge bases)                   | `/space create myproject`               |
+| `/context <mode>`  | **Control context integration** (`auto`/`on`/`off`)                   | `/context auto`                         |
+| `/learning <mode>` | **Control learning behavior** (`normal`/`strict`/`off`)               | `/learning normal`                      |
+| `/export <fmt>`    | **Export conversation** (`json`/`markdown`)                           | `/export json`                          |
+| `/read <file>`     | **Read file contents** (direct file access)                           | `/read README.md`                       |
+| `/write <file>`    | **Write content to file** (direct file editing)                       | `/write notes.txt Hello world`          |
+| `/list [dir]`      | **List directory contents** (filesystem browsing)                     | `/list src/`                            |
+| `/pwd`             | **Show current directory** (navigation)                               | `/pwd`                                  |
+| `/help`            | **Show all commands**                                                 | `/help`                                 |
+| `quit`             | **Exit application**                                                  | `quit`                                  |
 
 ### AI Tool Integration
 
 **8 AI Tools Available** (qwen3-vl-30b can call these autonomously):
 
-| Tool | Function | Use Case |
-|------|----------|----------|
-| `read_file()` | Read file contents | "show me the README" |
-| `write_file()` | Create/modify files | "create a config file" |
-| `list_directory()` | Browse directories | "what files are here" |
-| `get_current_directory()` | Show current path | "where am I" |
-| `parse_document()` | Extract text/tables/forms/layout | "analyze this PDF" |
-| `learn_information()` | Store in knowledge base | "remember this fact" |
-| `search_knowledge()` | Query learned information | "what do you know about X" |
-| `search_web()` | Search internet with DuckDuckGo | "what's the latest on AI" |
+| Tool                        | Function                               | Use Case                   |
+| --------------------------- | -------------------------------------- | -------------------------- |
+| `read_file()`               | Read file contents                     | "show me the README"       |
+| `write_file()`              | Create/modify files                    | "create a config file"     |
+| `list_directory()`          | Browse directories                     | "what files are here"      |
+| `get_current_directory()`   | Show current path                      | "where am I"               |
+| `parse_document()`          | Extract text/tables/forms/layout       | "analyze this PDF"         |
+| `learn_information()`       | Store in knowledge base                | "remember this fact"       |
+| `search_knowledge()`        | Query learned information              | "what do you know about X" |
+| `search_web()`              | Search internet with DuckDuckGo        | "what's the latest on AI"  |
 
 **Tool Testing Status:**
 - ✅ `read_file()` and `get_current_directory()` are fully tested and working

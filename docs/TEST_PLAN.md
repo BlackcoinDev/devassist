@@ -22,6 +22,7 @@ into 37 focused modules, but currently has 0% test coverage for new components.
 - **Coverage:** ~64% overall (Core components verified at >90%)
 
 **Target State:**
+
 - **Total Tests:** ~300+ tests
 - **Coverage:** 90%+ for all modules
 - **Estimated Effort:** 20-30 hours of test development
@@ -41,6 +42,7 @@ depend on.
 #### Test File: `tests/unit/test_application_context.py`
 
 **Test Classes:**
+
 1. **TestContextInitialization** (5 tests)
    - `test_initialize_creates_context` - Verify context object creation
    - `test_initialize_loads_config` - Verify configuration loading from .env
@@ -63,6 +65,7 @@ depend on.
    - `test_context_lazy_loading` - Verify lazy initialization of components
 
 **Mocking Strategy:**
+
 - Mock LM Studio connection
 - Mock ChromaDB connection
 - Mock .env file loading
@@ -80,6 +83,7 @@ Configuration loading and validation is critical for application startup.
 #### Test File: `tests/unit/test_config.py`
 
 **Test Classes:**
+
 1. **TestConfigLoading** (5 tests)
    - `test_load_config_from_env` - Load all required variables
    - `test_load_config_with_missing_required` - Handle missing variables
@@ -99,6 +103,7 @@ Configuration loading and validation is critical for application startup.
    - `test_config_immutability` - Verify config cannot be modified after load
 
 **Mocking Strategy:**
+
 - Mock os.environ for .env variables
 - Use tempfile for temporary .env files
 - Mock validation failures
@@ -115,6 +120,7 @@ Shared utility functions used across the application.
 #### Test File: `tests/unit/test_context_utils.py`
 
 **Test Classes:**
+
 1. **TestKnowledgeBaseFunctions** (6 tests)
    - `test_add_to_knowledge_base` - Add text to ChromaDB
    - `test_add_to_knowledge_base_with_metadata` - Add with metadata
@@ -142,6 +148,7 @@ Shared utility functions used across the application.
    - `test_validate_file_path` - File path validation
 
 **Mocking Strategy:**
+
 - Mock ChromaDB client
 - Mock SQLite database
 - Mock Mem0 client
@@ -161,6 +168,7 @@ Eight command handler modules need individual testing.
 #### Test File: `tests/unit/test_command_handlers.py`
 
 **Modules to Test:**
+
 1. **config_commands.py** (86 lines) - 5 tests
    - Test config display, modification, reset
 
@@ -191,6 +199,7 @@ Eight command handler modules need individual testing.
    - Test space creation, switching, deletion
 
 **Test Strategy:**
+
 - Mock CommandRegistry to verify registration
 - Mock ApplicationContext for dependencies
 - Test each command with valid/invalid arguments
@@ -230,6 +239,7 @@ class TestConfigCommands:
 #### Test File: `tests/unit/test_database.py`
 
 **Test Classes:**
+
 1. **TestDatabaseConnection** (4 tests)
    - `test_initialize_database` - Create db/history.db
    - `test_initialize_creates_tables` - Verify schema creation
@@ -254,6 +264,7 @@ class TestConfigCommands:
 #### Test File: `tests/unit/test_memory.py`
 
 **Test Classes:**
+
 1. **TestConversationPersistence** (6 tests)
    - `test_save_message` - Save user/AI messages
    - `test_load_history` - Load conversation history
@@ -282,6 +293,7 @@ class TestConfigCommands:
 #### Test File: `tests/unit/test_cache.py`
 
 **Test Classes:**
+
 1. **TestEmbeddingCache** (5 tests)
    - `test_cache_embedding` - Store embedding
    - `test_retrieve_cached_embedding` - Get cached embedding
@@ -308,6 +320,7 @@ class TestConfigCommands:
 #### Test File: `tests/unit/test_vectordb_client.py`
 
 **Test Classes:**
+
 1. **TestClientInitialization** (3 tests)
    - `test_connect_to_chroma` - Establish connection
    - `test_connection_retry` - Retry on failure
@@ -339,6 +352,7 @@ class TestConfigCommands:
 #### Test File: `tests/unit/test_spaces.py`
 
 **Test Classes:**
+
 1. **TestSpaceManagement** (6 tests)
    - `test_create_space` - Create new space
    - `test_switch_space` - Switch active space
@@ -369,6 +383,7 @@ Security modules are critical and currently have ZERO tests.
 #### Test File: `tests/security/test_input_sanitizer.py` (10 tests)
 
 **Test Classes:**
+
 1. **TestInputSanitization** (5 tests)
    - `test_sanitize_removes_dangerous_chars` - Remove <, >, &, etc.
    - `test_sanitize_preserves_safe_input` - Keep normal text
@@ -388,6 +403,7 @@ Security modules are critical and currently have ZERO tests.
 #### Test File: `tests/security/test_path_security.py` (10 tests)
 
 **Test Classes:**
+
 1. **TestPathTraversalPrevention** (5 tests)
    - `test_detect_path_traversal` - Detect ../ attacks
    - `test_validate_safe_path` - Allow safe paths
@@ -407,6 +423,7 @@ Security modules are critical and currently have ZERO tests.
 #### Test File: `tests/security/test_rate_limiter.py` (5 tests)
 
 **Test Classes:**
+
 1. **TestRateLimiting** (5 tests)
    - `test_rate_limit_allows_below_threshold` - Allow normal rate
    - `test_rate_limit_blocks_above_threshold` - Block excessive rate
@@ -428,12 +445,14 @@ executors,
 but imports were broken.
 
 **Action Items:**
+
 1. ✅ Update imports (COMPLETE)
 2. ⏳ Run tests to verify functionality
 3. Add integration tests for tool chains
 4. Add tests for error conditions in each tool
 
 **Additional Tests Needed:**
+
 - Test tool execution with invalid file paths
 - Test tool execution with permission errors
 - Test tool chaining (one tool's output → another's input)
@@ -487,13 +506,13 @@ tests/
 
 ### 7.2 Test Count Projection
 
-| Category | Current | Needed | Total Target |
-|----------|---------|--------|--------------|
-| Unit Tests | 226 | +20 | 246 |
-| Integration Tests | 26 | +30 | 56 |
-| Security Tests | 19 | 0 | 19 |
-| Performance Tests | 0 | +10 | 10 |
-| **TOTAL** | **271** | **+60** | **331** |
+| Category              | Current | Needed  | Total Target |
+| --------------------- | ------- | ------- | ------------ |
+| Unit Tests            | 226     | +20     | 246          |
+| Integration Tests     | 26      | +30     | 56           |
+| Security Tests        | 19      | 0       | 19           |
+| Performance Tests     | 0       | +10     | 10           |
+| **TOTAL**             | **271** | **+60** | **331**      |
 
 ---
 
@@ -510,6 +529,7 @@ tests/
 5. ✅ Security tests (25 tests) - DONE
 
 **Success Criteria:**
+
 - All P0 components have >90% coverage
 - Security vulnerabilities tested
 - Core infrastructure stable
@@ -527,6 +547,7 @@ tests/
 5. ✅ Spaces tests (12 tests) - DONE
 
 **Success Criteria:**
+
 - Storage layer fully tested
 - Vector DB operations verified
 - Space isolation confirmed
@@ -541,6 +562,7 @@ tests/
 2. ✅ Command handler tests (40 tests) - DONE
 
 **Success Criteria:**
+
 - All command handlers tested
 - Utility functions covered
 - CommandRegistry integration verified
@@ -559,6 +581,7 @@ tests/
 6. ✅ Additional integration tests (20 tests) - DONE
 
 **Success Criteria:**
+
 - Full workflows tested end-to-end
 - Performance benchmarks established
 - All components integrate correctly
@@ -601,12 +624,14 @@ def test_example():
 ### 9.3 Mocking Strategy
 
 **Always Mock:**
+
 - External services (LM Studio, ChromaDB, Ollama)
 - File system operations (use tempfile or mock)
 - Network calls
 - Environment variables
 
 **Never Mock:**
+
 - The code under test
 - Simple data structures
 - Pure functions without side effects
@@ -614,6 +639,7 @@ def test_example():
 ### 9.4 Test Isolation
 
 **Requirements:**
+
 - Each test must be independent
 - Use `setup_method()` and `teardown_method()`
 - Clear registries/caches before/after tests
@@ -622,14 +648,14 @@ def test_example():
 
 ### 9.5 Coverage Targets & Current Status
 
-| Component Type | Minimum Coverage | Target Coverage | Current Status |
-|----------------|------------------|-----------------|----------------|
-| Core Infrastructure | 90% | 95% | ✅ **100%** (context.py, config.py) |
-| Security Modules | 95% | 100% | ✅ **91-100%** (rate_limiter.py 100%, path_security.py 91%) |
-| Storage Layer | 85% | 90% | ✅ **98-100%** (database.py 100%, memory.py 98%, cache.py 100%) |
-| Command Handlers | 80% | 85% | ✅ **86-100%** (7/8 handlers ≥86%, 4 at 100%) |
-| Tool Executors | 85% | 90% | ✅ **97-100%** (3/4 executors at 100%) |
-| Utilities | 85% | 90% | ✅ **87-100%** (context_utils.py 87%, client.py 95%) |
+| Component Type      | Minimum Coverage | Target Coverage | Current Status                                                  |
+| ------------------- | ---------------- | --------------- | --------------------------------------------------------------- |
+| Core Infrastructure | 90%              | 95%             | ✅ **100%** (context.py, config.py)                              |
+| Security Modules    | 95%              | 100%            | ✅ **91-100%** (rate_limiter.py 100%, path_security.py 91%)      |
+| Storage Layer       | 85%              | 90%             | ✅ **98-100%** (database.py 100%, memory.py 98%, cache.py 100%)  |
+| Command Handlers    | 80%              | 85%             | ✅ **86-100%** (7/8 handlers ≥86%, 4 at 100%)                    |
+| Tool Executors      | 85%              | 90%             | ✅ **97-100%** (3/4 executors at 100%)                           |
+| Utilities           | 85%              | 90%             | ✅ **87-100%** (context_utils.py 87%, client.py 95%)             |
 
 **Overall Achievement:** ✅ **20/28 modules (71%) ≥90% coverage** (Target: 24/28
 = 86%)
@@ -641,12 +667,15 @@ def test_example():
 ### 10.1 Test Execution Pipeline
 
 ```bash
+
 # Local development
+
 uv run pytest tests/unit/        # Fast unit tests (~10s)
 uv run pytest tests/integration/ # Integration tests (~30s)
 uv run pytest tests/security/    # Security tests (~5s)
 
 # CI/CD pipeline
+
 uv run pytest --cov=src --cov-report=html --cov-fail-under=90
 
 ```text
@@ -655,15 +684,19 @@ uv run pytest --cov=src --cov-report=html --cov-fail-under=90
 
 ```bash
 #!/bin/bash
+
 # .git/hooks/pre-commit
 
 # Run unit tests (fast)
+
 uv run pytest tests/unit/ -q
 
 # Run linting
+
 uv run python tests/lint/lint-python.py
 
 # Check coverage
+
 uv run pytest --cov=src --cov-fail-under=85 -q
 
 ```
@@ -671,6 +704,7 @@ uv run pytest --cov=src --cov-fail-under=85 -q
 ### 10.3 CI/CD Requirements
 
 **Pull Request Checks:**
+
 - ✅ All tests must pass
 - ✅ Coverage must be ≥90%
 - ✅ No linting errors
@@ -684,6 +718,7 @@ uv run pytest --cov=src --cov-fail-under=85 -q
 ### 11.1 When to Update Tests
 
 **Always update tests when:**
+
 - Adding new features
 - Modifying existing functionality
 - Fixing bugs (add regression test)
@@ -704,12 +739,14 @@ uv run pytest --cov=src --cov-fail-under=85 -q
 ### 11.3 Identifying Flaky Tests
 
 **Signs of flaky tests:**
+
 - Passes locally but fails in CI
 - Fails intermittently
 - Depends on timing or execution order
 - Uses real external services
 
 **Solutions:**
+
 - Add proper mocking
 - Increase timeouts
 - Fix race conditions
@@ -722,14 +759,14 @@ uv run pytest --cov=src --cov-fail-under=85 -q
 
 ### 12.1 Quantitative Metrics
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Total Tests | 256 | 365+ |
-| Test Coverage | ~64% | >90% |
-| Test Execution Time | ~45s | <60s |
-| Passing Rate | 100% | 100% |
-| Flaky Test Rate | 0% | <1% |
-| Security Test Coverage | 100% | 100% |
+| Metric                  | Current | Target |
+| ----------------------- | ------- | ------ |
+| Total Tests             | 256     | 365+   |
+| Test Coverage           | ~64%    | >90%   |
+| Test Execution Time     | ~45s    | <60s   |
+| Passing Rate            | 100%    | 100%   |
+| Flaky Test Rate         | 0%      | <1%    |
+| Security Test Coverage  | 100%    | 100%   |
 
 ### 12.2 Qualitative Metrics
 
@@ -809,15 +846,16 @@ uv run pytest --cov=src --cov-fail-under=85 -q
 Test suite for [Module Name].
 
 Tests cover:
+
 - [Feature 1]
 - [Feature 2]
 - [Feature 3]
+
 """
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from src.module import ClassUnderTest
-
 
 class TestFeatureGroup:
     """Test [feature description]."""

@@ -11,7 +11,9 @@ vertically aligned pipes for consistent formatting.
 ### Command Line Usage
 
 ```bash
+
 # Create a simple table
+
 python tools/create_md_table.py "Metric,Before,After,Change" "Total
 Tests,256,360,+104" "Coverage,50%,53%,+3%"
 
@@ -38,23 +40,27 @@ print(table)
 ### What MD060 Requires
 
 1. **Vertical Pipe Alignment**: All pipes (`|`) must be at identical character
+
 positions in every row
-2. **Consistent Column Widths**: Each column must have the same width across all
+
+1. **Consistent Column Widths**: Each column must have the same width across all
+
 rows
-3. **Proper Separator**: Separator row must align with header and content
+
+1. **Proper Separator**: Separator row must align with header and content
 
 ### Visual Example
 
 ```markdown
 ✅ CORRECT (MD060 Compliant):
-| Metric               | Before   | After   | Change            |  [0, 23, 34, 44, 64]
-| --------             | -------- | ------- | --------          |  [0, 23, 34, 44, 64]
-| **Total Tests**      | 256      | **360** | +104 tests (+41%) |  [0, 23, 34, 44, 64]
+| Metric          | Before   | After   | Change            | [0, 23, 34, 44, 64] |
+| --------------- | -------- | ------- | ----------------- | [0, 23, 34, 44, 64] |
+| **Total Tests** | 256      | **360** | +104 tests (+41%) | [0, 23, 34, 44, 64] |
 
 ❌ INCORRECT (MD060 Violation):
-| Metric | Before | After | Change |      [0, 9, 18, 26, 35]
-|--------|--------|-------|--------|      [0, 9, 18, 26, 35]
-| **Total Tests** | 256 | **360** | +104...  [0, 18, 24, 34, 54] ❌ (misaligned)
+| Metric          | Before   | After   | Change                                       | [0, 9, 18, 26, 35] |
+| --------------- | -------- | ------- | -------------------------------------------- | [0, 9, 18, 26, 35] |
+| **Total Tests** | 256      | **360** | +104...  [0, 18, 24, 34, 54] ❌ (misaligned)  | ------------------ |
 
 ```
 
@@ -139,6 +145,7 @@ The table generator automatically handles:
 ### Column Width Calculation
 
 The tool automatically:
+
 1. Calculates maximum width needed for each column
 2. Accounts for markdown formatting characters
 3. Pads all cells to consistent widths
@@ -149,7 +156,9 @@ The tool automatically:
 ### For Content Generation Agents
 
 ```python
+
 # When generating reports with tables
+
 def generate_coverage_report():
     # Collect data
     modules = get_module_data()
@@ -172,6 +181,7 @@ def generate_coverage_report():
     
     # Include in markdown report
     report = f"""
+
 # Coverage Report
 
 {table}
@@ -185,7 +195,9 @@ def generate_coverage_report():
 ### For Documentation Agents
 
 ```python
+
 # When creating API documentation
+
 def generate_api_table(endpoints):
     headers = ["Endpoint", "Method", "Description", "Status"]
     rows = []
@@ -246,7 +258,9 @@ rows = [
 ### Verify Table Compliance
 
 ```bash
+
 # Check if your table is MD060 compliant
+
 echo "your_table_here" | pymarkdown scan - | grep MD060 || echo "✅ MD060
 Compliant!"
 
@@ -255,7 +269,9 @@ Compliant!"
 ### Test Table Alignment
 
 ```python
+
 # Programmatic validation
+
 def validate_table_alignment(table_str):
     lines = table_str.split('\n')
     pipe_positions = []
@@ -279,9 +295,9 @@ def validate_table_alignment(table_str):
 
 ```markdown
 ❌ Don't do this:
-| A | B |
-|---|---|
-| 1 | 2 |
+| A   | B   |
+| --- | --- |
+| 1   | 2   |
 
 ```text
 
@@ -364,10 +380,10 @@ rows = [
 **Output**:
 
 ```markdown
-| Component          | Status      | Version  |
-| ------------------ | ----------- | -------- |
-| Core Engine        | ✅ Active    | v2.1.0   |
-| VectorDB Client    | ✅ Active    | v1.5.2   |
+| Component          | Status        | Version  |
+| ------------------ | ------------- | -------- |
+| Core Engine        | ✅ Active      | v2.1.0   |
+| VectorDB Client    | ✅ Active      | v1.5.2   |
 | Legacy Commands    | ⚠️ Deprecated | v0.9.8   |
 
 ```text
@@ -391,9 +407,9 @@ rows = [
 ```markdown
 | Metric          | Current | Target | Progress                     | Status      |
 | --------------- | ------- | ------ | ---------------------------- | ----------- |
-| Test Coverage   | 53%     | 90%    | ▰▰▰▰▰▱▱▱▱ 53%               | ✅ On Track  |
-| Documentation   | 85%     | 100%   | ▰▰▰▰▰▰▰▰▰▱ 85%              | ✅ On Track  |
-| Performance     | 95%     | 95%    | ▰▰▰▰▰▰▰▰▰▰ 95%              | ✅ Complete  |
+| Test Coverage   | 53%     | 90%    | ▰▰▰▰▰▱▱▱▱ 53%                | ✅ On Track  |
+| Documentation   | 85%     | 100%   | ▰▰▰▰▰▰▰▰▰▱ 85%               | ✅ On Track  |
+| Performance     | 95%     | 95%    | ▰▰▰▰▰▰▰▰▰▰ 95%               | ✅ Complete  |
 
 ```
 

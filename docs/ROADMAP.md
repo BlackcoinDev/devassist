@@ -15,7 +15,10 @@ interfaces.
 - ✅ Tool calling capabilities with 8 tools (including web search)
 - ✅ Conversation memory with SQLite
 - ✅ Markdown support in GUI
-- ✅ **Modular Architecture**: Refactored from monolithic (4,556 lines) to modular structure (3,175 + 8 focused modules)
+- ✅ **Modular Architecture**: Refactored from monolithic (4,556 lines) to modular structure (3,175 +
+
+  8 focused modules)
+
 - ✅ **Plugin System**: CommandRegistry and ToolRegistry with self-registering decorators
 - ✅ **Dependency Injection**: ApplicationContext pattern replacing scattered globals
 
@@ -47,19 +50,39 @@ For current security architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
 **Priority**: Medium
 **Status**: ✅ Completed (v0.2.0)
 
-- **Docling Integration**: Replace multiple separate libraries with Docling for unified document processing
-- **How Docling Replaces Other Libraries**: Docling provides a single, powerful library that handles PDF, DOCX, RTF, EPUB, XLSX, HTML, and other formats with a consistent API. It can extract text, tables, images, and metadata from various document types, reducing the need for separate libraries like PyPDF2 (for PDFs), python-docx (for Word docs), striprtf (for RTF), ebooklib (for EPUB), and openpyxl (for Excel). This simplifies dependencies, improves maintainability, and offers better performance and accuracy for complex documents.
+- **Docling Integration**: Replace multiple separate libraries with Docling for unified document
+
+  processing
+
+- **How Docling Replaces Other Libraries**: Docling provides a single, powerful library that handles
+
+  PDF, DOCX, RTF, EPUB, XLSX, HTML, and other formats with a consistent API. It can extract text,
+  tables, images, and metadata from various document types, reducing the need for separate libraries
+  like PyPDF2 (for PDFs), python-docx (for Word docs), striprtf (for RTF), ebooklib (for EPUB), and
+  openpyxl (for Excel). This simplifies dependencies, improves maintainability, and offers better
+  performance and accuracy for complex documents.
+
 - **Integration Steps**:
   1. ✅ Install Docling (`uv pip install docling`)
   2. ✅ Refactor `document_processing_example.py` to use Docling's unified
+
 DocumentConverter
-  3. ✅ Update `populate_codebase.py` to leverage Docling for all supported
+
+  1. ✅ Update `populate_codebase.py` to leverage Docling for all supported
+
 formats
-  4. ✅ Gradually remove redundant libraries (PyPDF2, python-docx, striprtf,
+
+  1. ✅ Gradually remove redundant libraries (PyPDF2, python-docx, striprtf,
+
 ebooklib, openpyxl) after testing
-  5. ✅ Test extraction quality and add support for additional formats like .odt,
+
+  1. ✅ Test extraction quality and add support for additional formats like .odt,
+
 .mobi
-- **Benefits**: Fewer dependencies, unified codebase, enhanced document understanding with layout preservation
+
+- **Benefits**: Fewer dependencies, unified codebase, enhanced document understanding with layout
+
+  preservation
 
 ### 3. Advanced AI Model Support
 
@@ -165,8 +188,11 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   1. Install devlog library (`pip install devlog`)
   2. Replace standard logging with devlog in main.py, launcher.py, gui.py
   3. Configure structured JSON logging with context for AI interactions and
+
 errors
-  4. Add log filtering and analysis tools
+
+  1. Add log filtering and analysis tools
+
 - **Benefits**: Improved log readability, better error tracking, enhanced debugging capabilities
 
 - **Usage Analytics**: Track feature usage and performance metrics
@@ -202,9 +228,23 @@ errors
 **Priority**: Medium  
 **Status**: Planned  
 
-- **Pydantic-AI Overview**: Pydantic-AI is a Python library that combines Pydantic's data validation with AI model interactions, enabling structured tool calling, agent-based workflows, and type-safe AI responses. It can enhance the app by providing more reliable and structured AI interactions, better error handling, and integration with existing Pydantic models.
-- **Pydantic-AI Graphs**: An extension for building graph-based agent workflows, allowing complex multi-step reasoning, conditional logic, and dynamic agent routing. This can create more sophisticated AI behaviors beyond linear tool calling.
-- **How It Integrates**: Replace or augment LangChain's tool calling with Pydantic-AI's structured approach and graphs, allowing for better validation of AI outputs and inputs. This can improve the reliability of the 8 tools and add support for more complex agent behaviors with graph-based decision making.
+- **Pydantic-AI Overview**: Pydantic-AI is a Python library that combines Pydantic's data validation
+
+  with AI model interactions, enabling structured tool calling, agent-based workflows, and type-safe
+  AI responses. It can enhance the app by providing more reliable and structured AI interactions,
+  better error handling, and integration with existing Pydantic models.
+
+- **Pydantic-AI Graphs**: An extension for building graph-based agent workflows, allowing complex
+
+  multi-step reasoning, conditional logic, and dynamic agent routing. This can create more
+  sophisticated AI behaviors beyond linear tool calling.
+
+- **How It Integrates**: Replace or augment LangChain's tool calling with Pydantic-AI's structured
+
+  approach and graphs, allowing for better validation of AI outputs and inputs. This can improve the
+  reliability of the 8 tools and add support for more complex agent behaviors with graph-based
+  decision making.
+
 - **Integration Steps**:
   1. Install Pydantic-AI (`pip install pydantic-ai`)
   2. Refactor tool definitions to use Pydantic-AI's structured tools
@@ -218,8 +258,16 @@ errors
 **Priority**: Medium  
 **Status**: Planned  
 
-- **Arcade Overview**: Arcade is a library/framework for agent authorization and secure tool execution, providing fine-grained access control for AI agents interacting with external tools and APIs.
-- **How It Integrates**: Integrate Arcade to add authorization layers to the 8 tools, ensuring that AI actions are validated and permitted based on user permissions and security policies. This enhances security for file operations, API calls, and system interactions.
+- **Arcade Overview**: Arcade is a library/framework for agent authorization and secure tool
+
+  execution, providing fine-grained access control for AI agents interacting with external tools and
+  APIs.
+
+- **How It Integrates**: Integrate Arcade to add authorization layers to the 8 tools, ensuring that
+
+  AI actions are validated and permitted based on user permissions and security policies. This
+  enhances security for file operations, API calls, and system interactions.
+
 - **Integration Steps**:
   1. Install Arcade library (`pip install arcade-ai` or similar)
   2. Define authorization policies for each tool
@@ -233,23 +281,41 @@ errors
 **Priority**: Medium  
 **Status**: Planned  
 
-- **Crawl4AI Overview**: Crawl4AI is an AI-powered web crawling library that intelligently extracts structured data, text, and content from websites, handling dynamic content and anti-bot measures.
-- **How It Integrates**: Add web crawling capabilities to ingest online documentation, articles, and resources into the knowledge base, expanding beyond local files. This can enhance the AI's knowledge with real-time web data.
+- **Crawl4AI Overview**: Crawl4AI is an AI-powered web crawling library that intelligently extracts
+
+  structured data, text, and content from websites, handling dynamic content and anti-bot measures.
+
+- **How It Integrates**: Add web crawling capabilities to ingest online documentation, articles, and
+
+  resources into the knowledge base, expanding beyond local files. This can enhance the AI's
+  knowledge with real-time web data.
+
 - **Integration Steps**:
   1. Install Crawl4AI (`pip install crawl4ai`)
   2. Add web crawling functions to `populate_codebase.py`
   3. Implement URL validation and content filtering
   4. Integrate with ChromaDB for storing crawled content
   5. Add UI controls for web ingestion in the GUI
-- **Benefits**: Access to vast online knowledge, dynamic content updates, improved AI responses with current information
+- **Benefits**: Access to vast online knowledge, dynamic content updates, improved AI responses with
+
+  current information
 
 ### 14. Mem0 AI Integration
 
 **Priority**: Medium
 **Status**: ✅ Completed (v0.2.0)  
 
-- **Mem0 Overview**: Mem0 is an AI memory framework that provides intelligent, long-term memory management for agents, enabling better context retention, recall, and personalization across sessions.
-- **How It Integrates**: Enhance the current SQLite-based conversation memory with Mem0's advanced memory system, allowing the AI to remember user preferences, past interactions, and learned information more effectively. Mem0 uses the remote ChromaDB server for vectorized memory storage alongside SQLite for history/metadata tracking.
+- **Mem0 Overview**: Mem0 is an AI memory framework that provides intelligent, long-term memory
+
+  management for agents, enabling better context retention, recall, and personalization across
+  sessions.
+
+- **How It Integrates**: Enhance the current SQLite-based conversation memory with Mem0's advanced
+
+  memory system, allowing the AI to remember user preferences, past interactions, and learned
+  information more effectively. Mem0 uses the remote ChromaDB server for vectorized memory storage
+  alongside SQLite for history/metadata tracking.
+
 - **Integration Steps**:
   1. ✅ Install Mem0 (`pip install mem0ai`)
   2. ✅ Integrate Mem0 w/ Remote ChromaDB (LM Studio/Ollama) for privacy
@@ -263,15 +329,25 @@ errors
 **Priority**: Medium  
 **Status**: Planned  
 
-- **LangGraph Overview**: LangGraph is a library for building stateful, multi-actor applications with LLMs, using graph-based workflows to manage complex agent interactions and decision-making processes.
-- **How It Integrates**: Extend the current tool-calling system with LangGraph's graph-based architecture, enabling more sophisticated agent behaviors, conditional logic, and multi-step workflows beyond the existing 8 tools.
+- **LangGraph Overview**: LangGraph is a library for building stateful, multi-actor applications
+
+  with LLMs, using graph-based workflows to manage complex agent interactions and decision-making
+  processes.
+
+- **How It Integrates**: Extend the current tool-calling system with LangGraph's graph-based
+
+  architecture, enabling more sophisticated agent behaviors, conditional logic, and multi-step
+  workflows beyond the existing 8 tools.
+
 - **Integration Steps**:
   1. Install LangGraph (`pip install langgraph`)
   2. Design graph structures for complex tasks
   3. Integrate with existing LangChain setup
   4. Update agent execution to use graph nodes and edges
   5. Add graph visualization in the GUI
-- **Benefits**: More complex agent workflows, better handling of multi-step tasks, improved AI reasoning
+- **Benefits**: More complex agent workflows, better handling of multi-step tasks, improved AI
+
+  reasoning
 
 ## Future Vision and Use Cases
 
@@ -288,7 +364,10 @@ architecture, local AI integration, and extensible tool system.
 #### 1. Individual Developer Assistant
 
 - **Current Fit**: Already supports code generation, explanation, and learning
-- **Future Enhancement**: With roadmap integrations (Pydantic-AI, LangGraph), it can become a full IDE companion with advanced code analysis, refactoring suggestions, and project management
+- **Future Enhancement**: With roadmap integrations (Pydantic-AI, LangGraph), it can become a full
+
+  IDE companion with advanced code analysis, refactoring suggestions, and project management
+
 - **Target Users**: Solo developers, students, hobbyists
 - **Monetization**: Freemium model with premium AI models
 
@@ -392,6 +471,7 @@ while maintaining its core values of accessibility and extensibility.
 ## Contributing
 
 When implementing new features:
+
 1. Create a feature branch
 2. Add comprehensive tests
 3. Update documentation
@@ -411,36 +491,40 @@ When implementing new features:
   - ✅ Introduced ApplicationContext dependency injection pattern
   - ✅ Created unified ChromaDBClient (eliminated 10+ duplicate API patterns)
   - ✅ Organized code into core/, storage/, security/, vectordb/, commands/,
+
 tools/
-  - ✅ Achieved clear separation of concerns with layered architecture
+
+- ✅ Achieved clear separation of concerns with layered architecture
 
 - **Code Quality Improvements**:
-  - ✅ Resolved most Flake8 style violations (5 remaining issues)
-  - ✅ Auto-formatted code with autopep8 for consistent styling
-  - ⚠️ Some MyPy type checking issues remain (25 issues)
-  - ⚠️ Some Vulture dead code warnings remain (5 issues)
-  - ⚠️ Pre-commit hooks for automatic quality checks (planned)
+- ✅ Resolved most Flake8 style violations (5 remaining issues)
+- ✅ Auto-formatted code with autopep8 for consistent styling
+- ⚠️ Some MyPy type checking issues remain (25 issues)
+- ⚠️ Some Vulture dead code warnings remain (5 issues)
+- ⚠️ Pre-commit hooks for automatic quality checks (planned)
 
 - **Testing Infrastructure Enhancement**:
-  - ✅ Fixed unused mock variables in test files
-  - ✅ Added comprehensive tool testing coverage (8/8 tools tested)
-  - ✅ Implemented proper test markers and categorization
-  - ✅ Created dedicated tool test suites (unit, integration, execution tests)
-  - ✅ Improved test fixtures and mocking strategies
+- ✅ Fixed unused mock variables in test files
+- ✅ Added comprehensive tool testing coverage (8/8 tools tested)
+- ✅ Implemented proper test markers and categorization
+- ✅ Created dedicated tool test suites (unit, integration, execution tests)
+- ✅ Improved test fixtures and mocking strategies
 
 - **Tool Testing Implementation**:
-  - ✅ Unit tests for all 8 AI tools (read_file, write_file, list_directory,
+- ✅ Unit tests for all 8 AI tools (read_file, write_file, list_directory,
+
 get_current_directory, parse_document, learn_information, search_knowledge,
 search_web)
-  - ✅ Integration tests for tool calling through LLM interface
-  - ✅ Security and error handling validation
-  - ✅ Mock external dependencies (filesystem, web APIs, databases)
+
+- ✅ Integration tests for tool calling through LLM interface
+- ✅ Security and error handling validation
+- ✅ Mock external dependencies (filesystem, web APIs, databases)
 
 - **CI/CD Quality Gates**:
-  - ✅ 90%+ code coverage including tool functions
-  - ⚠️ Some linting checks need fixing (flake8, mypy, vulture)
-  - ✅ Comprehensive tool functionality testing (8/8 tools)
-  - ✅ Fast test execution (20.30s for 89 tests)
+- ✅ 90%+ code coverage including tool functions
+- ⚠️ Some linting checks need fixing (flake8, mypy, vulture)
+- ✅ Comprehensive tool functionality testing (8/8 tools)
+- ✅ Fast test execution (20.30s for 89 tests)
 
 **Integration Steps**:
 ✅ 1. Run autopep8 auto-formatting on main.py and tools/
@@ -457,6 +541,7 @@ search_web)
 reliable tool functionality, and automated quality assurance.
 
 **Current Status**:
+
 - ✅ 89 tests total (79 active + 10 GUI)
 - ✅ 100% pass rate on all tests
 - ✅ 95%+ code coverage

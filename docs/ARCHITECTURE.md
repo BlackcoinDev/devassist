@@ -55,27 +55,38 @@ application, serving as a reference for all other documentation files.
         │
   ┌─────▼──────────────┐
   │ Legacy Commands    │ (15 handlers - being migrated)
-  │ (src/commands/handlers/legacy_commands.py)
+  │                    | (src/commands/handlers/legacy_commands.py)
   └────────────────────┘
+
+```
+
 ### Data Flow
 
 1. **Interface Selection** → `launcher.py` chooses GUI or CLI
 2. **Application Initialization** → `initialize_application()` sets up LLM and
+
 vector database
-3. **Space Loading** → Load last used workspace from `space_settings.json`
-4. **Welcome Display** → `show_welcome()` shows interface and current space info
-5. **User Teaching** → `/learn` commands add knowledge to current space's
+
+1. **Space Loading** → Load last used workspace from `space_settings.json`
+2. **Welcome Display** → `show_welcome()` shows interface and current space info
+3. **User Teaching** → `/learn` commands add knowledge to current space's
+
 collection
-6. **Code Ingestion** → `/populate` bulk imports codebases to current space
-7. **Text Chunking** → `chunk_text()` processes content for vector storage
-8. **Query Processing** → User asks questions via GUI or CLI
-9. **Context Retrieval** → Current space's ChromaDB collection provides relevant
+
+1. **Code Ingestion** → `/populate` bulk imports codebases to current space
+2. **Text Chunking** → `chunk_text()` processes content for vector storage
+3. **Query Processing** → User asks questions via GUI or CLI
+4. **Context Retrieval** → Current space's ChromaDB collection provides relevant
+
 learned information
-10. **AI Enhancement** → LM Studio generates responses with space-specific
+
+1. **AI Enhancement** → LM Studio generates responses with space-specific
+
 learned context
-11. **Memory Persistence** → SQLite saves conversation history
-12. **Space Persistence** → Current space setting saved to `space_settings.json`
-13. **Knowledge Growth** → AI learns continuously within current space
+
+1. **Memory Persistence** → SQLite saves conversation history
+2. **Space Persistence** → Current space setting saved to `space_settings.json`
+3. **Knowledge Growth** → AI learns continuously within current space
 
 ## 🧠 Core Components
 
@@ -83,16 +94,16 @@ learned context
 
 The AI has access to 8 powerful tools for various operations:
 
-| Tool Name | Description | Status |
-|-----------|-------------|--------|
-| `read_file()` | Read file contents | ✅ Tested & Working |
-| `write_file()` | Create/modify files | ✅ Ready |
-| `list_directory()` | Browse directories | ✅ Ready |
-| `get_current_directory()` | Show current path | ✅ Tested & Working |
-| `parse_document()` | Extract text/tables/forms/layout from documents | ✅ Ready |
-| `learn_information()` | Store in knowledge base | ✅ Ready |
-| `search_knowledge()` | Query learned information | ✅ Ready |
-| `search_web()` | Search the internet using DuckDuckGo | ✅ Ready |
+| Tool Name                   | Description                                          | Status              |
+| --------------------------- | ---------------------------------------------------- | ------------------- |
+| `read_file()`               | Read file contents                                   | ✅ Tested & Working  |
+| `write_file()`              | Create/modify files                                  | ✅ Ready             |
+| `list_directory()`          | Browse directories                                   | ✅ Ready             |
+| `get_current_directory()`   | Show current path                                    | ✅ Tested & Working  |
+| `parse_document()`          | Extract text/tables/forms/layout from documents      | ✅ Ready             |
+| `learn_information()`       | Store in knowledge base                              | ✅ Ready             |
+| `search_knowledge()`        | Query learned information                            | ✅ Ready             |
+| `search_web()`              | Search the internet using DuckDuckGo                 | ✅ Ready             |
 
 **Tool Integration Architecture:**
 
@@ -161,7 +172,9 @@ and tools, eliminating the need for central configuration.
 Commands use a decorator-based auto-registration system:
 
 ```python
+
 # In src/commands/handlers/utility_commands.py
+
 from src.commands.registry import CommandRegistry
 
 @CommandRegistry.register("mycommand", "Description", category="utility",
@@ -192,7 +205,9 @@ def handle_mycommand(args: str) -> None:
 AI tools use the same self-registration approach:
 
 ```python
+
 # In src/tools/executors/utility_tools.py
+
 from src.tools.registry import ToolRegistry
 
 TOOL_DEFINITION = {
@@ -237,7 +252,9 @@ def execute_my_tool(arg1: str) -> Dict[str, Any]:
 Centralized dependency injection replaces scattered globals:
 
 ```python
+
 # In src/core/context.py
+
 from dataclasses import dataclass
 
 @dataclass
@@ -250,6 +267,7 @@ class ApplicationContext:
     # ... more services
 
 # Singleton accessor
+
 _context: Optional[ApplicationContext] = None
 
 def get_context() -> ApplicationContext:
@@ -273,6 +291,7 @@ ctx.conversation_history  # Access message history
 ```text
 
 **Benefits:**
+
 - All services accessible from single source
 - Easy mocking for tests
 - Thread-safe with proper locking
@@ -358,29 +377,36 @@ CREATE TABLE sessions (
 ### Required Environment Variables
 
 ```bash
+
 # LM Studio Configuration
+
 LM_STUDIO_URL=http://192.168.0.203:1234/v1    # Your LM Studio endpoint
 LM_STUDIO_KEY=lm-studio                        # API key for authentication
 MODEL_NAME=qwen3-vl-30b                        # LLM model name
 
 # Vector Database Configuration (REQUIRED)
+
 CHROMA_HOST=192.168.0.204                      # ChromaDB server host
 CHROMA_PORT=8000                               # ChromaDB server port
 
 # Ollama Configuration
+
 OLLAMA_BASE_URL=http://192.168.0.204:11434    # Ollama embeddings endpoint
 EMBEDDING_MODEL=qwen3-embedding:latest        # Embedding model name
 
 # Application Settings
+
 MAX_HISTORY_PAIRS=5                            # Conversation memory limit
 TEMPERATURE=0.7                               # LLM creativity (0.0-1.0)
 MAX_INPUT_LENGTH=10000                        # Maximum input length
 
 # Database Configuration
+
 DB_TYPE=sqlite                                # Database type
 DB_PATH=db/history.db                         # SQLite database path
 
 # System Configuration
+
 KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
 
 ```text
@@ -392,7 +418,9 @@ KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
 #### Database-Level Encryption
 
 ```python
+
 # SQLCipher for SQLite
+
 conn.execute(f"PRAGMA key='{encryption_key}'")
 
 ```text
@@ -490,7 +518,9 @@ CREATE INDEX CONCURRENTLY idx_metadata ON conversations USING gin(metadata);
 ### Query Optimization
 
 ```python
+
 # Efficient pagination
+
 def get_messages_paginated(session_id: str, page: int = 1, per_page: int = 50):
     offset = (page - 1) * per_page
     return db.execute('''
@@ -501,6 +531,7 @@ def get_messages_paginated(session_id: str, page: int = 1, per_page: int = 50):
     ''', (session_id, per_page, offset))
 
 # Recent messages (most common query)
+
 def get_recent_messages(session_id: str, hours: int = 24):
     return db.execute('''
         SELECT * FROM conversations
@@ -521,32 +552,36 @@ def get_recent_messages(session_id: str, hours: int = 24):
 ### Service Startup Commands
 
 ```bash
+
 # Terminal 1: LM Studio (load qwen3-vl-30b model)
+
 m studio --start-server
 
 # Terminal 2: ChromaDB v2 Server
+
 chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
 
 # Terminal 3: Ollama
+
 ollama serve
 
 ```
 
 ## 📋 Key Features Matrix
 
-| Feature | Status | Description |
-| --------- | -------- | ------------- |
-| Dual Interfaces | ✅ | GUI (PyQt6) and CLI with full feature parity |
-| AI Learning System | ✅ | ChromaDB v2 vector database integration |
-| Document Processing | ✅ | 80+ file types with unified processing |
-| Spaces System | ✅ | Isolated workspaces with separate knowledge bases |
-| Tool Calling | ✅ | 8 AI tools for file operations and knowledge management |
-| Memory Persistence | ✅ | SQLite database for conversation history |
-| Markdown Support | ✅ | Rich text rendering in GUI |
-| Web Ingestion | ✅ | URL learning capability via `/web` command |
-| Personalized Memory | ✅ | Mem0 for user preference tracking |
-| Smart Chunking | ✅ | 1500-char chunks with paragraph-aware boundaries |
-| Quality Filtering | ✅ | Automatic filtering of binary files and low-value content |
+| Feature              | Status  | Description                                                   |
+| -------------------- | ------- | ------------------------------------------------------------- |
+| Dual Interfaces      | ✅       | GUI (PyQt6) and CLI with full feature parity                  |
+| AI Learning System   | ✅       | ChromaDB v2 vector database integration                       |
+| Document Processing  | ✅       | 80+ file types with unified processing                        |
+| Spaces System        | ✅       | Isolated workspaces with separate knowledge bases             |
+| Tool Calling         | ✅       | 8 AI tools for file operations and knowledge management       |
+| Memory Persistence   | ✅       | SQLite database for conversation history                      |
+| Markdown Support     | ✅       | Rich text rendering in GUI                                    |
+| Web Ingestion        | ✅       | URL learning capability via `/web` command                    |
+| Personalized Memory  | ✅       | Mem0 for user preference tracking                             |
+| Smart Chunking       | ✅       | 1500-char chunks with paragraph-aware boundaries              |
+| Quality Filtering    | ✅       | Automatic filtering of binary files and low-value content     |
 
 ## 🎯 Design Principles
 
