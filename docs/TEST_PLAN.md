@@ -225,8 +225,6 @@ class TestConfigCommands:
     def test_config_error_handling():
         """Test error handling for invalid configs."""
 
-```
-
 ---
 
 ## 3. HIGH PRIORITY - Storage Layer
@@ -466,6 +464,7 @@ but imports were broken.
 ### 7.1 Recommended Directory Structure
 
 ```text
+
 tests/
 ├── unit/                           # Isolated unit tests
 │   ├── test_application_context.py    # NEW (15 tests)
@@ -593,6 +592,7 @@ tests/
 ### 9.1 Test Naming Convention
 
 ```python
+
 def test_<action>_<condition>_<expected_result>():
     """
     Test that <action> under <condition> results in <expected result>.
@@ -607,6 +607,7 @@ def test_<action>_<condition>_<expected_result>():
 ### 9.2 Test Structure (AAA Pattern)
 
 ```python
+
 def test_example():
     # Arrange - Set up test data and mocks
     registry = CommandRegistry()
@@ -618,8 +619,6 @@ def test_example():
     # Assert - Verify expected behavior
     assert result is True
     mock_handler.assert_called_once()
-
-```
 
 ### 9.3 Mocking Strategy
 
@@ -698,8 +697,6 @@ uv run python tests/lint/lint-python.py
 # Check coverage
 
 uv run pytest --cov=src --cov-fail-under=85 -q
-
-```
 
 ### 10.3 CI/CD Requirements
 
@@ -841,6 +838,7 @@ uv run pytest --cov=src --cov-fail-under=85 -q
 ## Appendix A: Test Template
 
 ```python
+
 #!/usr/bin/env python3
 """
 Test suite for [Module Name].
@@ -888,8 +886,6 @@ class TestFeatureGroup:
         # Act & Assert
         with pytest.raises(ValueError):
             self.instance.method(invalid_input)
-
-```
 
 ---
 

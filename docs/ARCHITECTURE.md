@@ -58,8 +58,6 @@ application, serving as a reference for all other documentation files.
   │                    | (src/commands/handlers/legacy_commands.py)
   └────────────────────┘
 
-```
-
 ### Data Flow
 
 1. **Interface Selection** → `launcher.py` chooses GUI or CLI
@@ -108,6 +106,7 @@ The AI has access to 8 powerful tools for various operations:
 **Tool Integration Architecture:**
 
 ```text
+
 User Query → AI (qwen3-vl-30b) → Tool Selection → Execution → Result Integration
 → AI Response
      ↓              ↓                      ↓            ↓              ↓        
@@ -116,8 +115,6 @@ File System    Multimodal Analysis     Secure        Structured     Conversation
     Contextual
 Operations     & Understanding        Execution      Data Output    Context     
    Responses
-
-```
 
 ### 2. Spaces System
 
@@ -183,8 +180,6 @@ def handle_mycommand(args: str) -> None:
     """Handle /mycommand - does something useful."""
     print(f"Executing: {args}")
 
-```
-
 **How it works:**
 
 1. Decorator executes during module import
@@ -229,8 +224,6 @@ TOOL_DEFINITION = {
 def execute_my_tool(arg1: str) -> Dict[str, Any]:
     """Execute the tool."""
     return {"success": True, "result": f"Executed with {arg1}"}
-
-```
 
 **How it works:**
 
@@ -564,8 +557,6 @@ chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
 # Terminal 3: Ollama
 
 ollama serve
-
-```
 
 ## 📋 Key Features Matrix
 

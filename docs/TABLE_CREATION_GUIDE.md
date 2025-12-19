@@ -33,8 +33,6 @@ rows = [
 table = create_md060_table(headers, rows)
 print(table)
 
-```
-
 ## ✅ MD060 Compliance Rules
 
 ### What MD060 Requires
@@ -52,6 +50,7 @@ rows
 ### Visual Example
 
 ```markdown
+
 ✅ CORRECT (MD060 Compliant):
 | Metric          | Before   | After   | Change            | [0, 23, 34, 44, 64] |
 | --------------- | -------- | ------- | ----------------- | [0, 23, 34, 44, 64] |
@@ -61,8 +60,6 @@ rows
 | Metric          | Before   | After   | Change                                       | [0, 9, 18, 26, 35] |
 | --------------- | -------- | ------- | -------------------------------------------- | [0, 9, 18, 26, 35] |
 | **Total Tests** | 256      | **360** | +104...  [0, 18, 24, 34, 54] ❌ (misaligned)  | ------------------ |
-
-```
 
 ## 📋 Table Creation Guidelines
 
@@ -127,8 +124,6 @@ rows = [
     ["Metric1", "1234", "5678"],
     ["Metric2", "90", "12345"],  # Different digit counts
 ]
-
-```
 
 ## 🎨 Advanced Features
 
@@ -220,6 +215,7 @@ def generate_api_table(endpoints):
 ### Comparison Tables
 
 ```python
+
 headers = ["Metric", "Before", "After", "Change", "Status"]
 rows = [
     ["Total Tests", "256", "**360**", "+104 (+41%)", "✅ Improved"],
@@ -232,6 +228,7 @@ rows = [
 ### Status Tables
 
 ```python
+
 headers = ["#", "Component", "Status", "Version", "Last Updated"]
 rows = [
     ["1", "`core/context.py`", "✅ Active", "v1.2.3", "2025-12-18"],
@@ -244,6 +241,7 @@ rows = [
 ### Feature Matrices
 
 ```python
+
 headers = ["Feature", "CLI", "GUI", "API", "Notes"]
 rows = [
     ["Learning Commands", "✅", "✅", "✅", "All interfaces supported"],
@@ -294,6 +292,7 @@ def validate_table_alignment(table_str):
 ### 1. Manual Table Creation
 
 ```markdown
+
 ❌ Don't do this:
 | A   | B   |
 | --- | --- |
@@ -304,6 +303,7 @@ def validate_table_alignment(table_str):
 ### 2. Inconsistent Column Counts
 
 ```python
+
 ❌ Wrong:
 headers = ["A", "B", "C"]
 rows = [
@@ -316,6 +316,7 @@ rows = [
 ### 3. Ignoring Markdown Formatting
 
 ```python
+
 ❌ Wrong:
 rows = [
     ["**Bold Text**", "Normal"],  # Bold affects width!
@@ -327,13 +328,12 @@ rows = [
 ### 4. Mixing Data Types Without Planning
 
 ```python
+
 ❌ Wrong:
 rows = [
     ["Short", "123456789012345678901234567890"],  # Very different lengths
     ["Medium Length", "123"],
 ]
-
-```
 
 ## 📚 Best Practices
 
@@ -410,8 +410,6 @@ rows = [
 | Test Coverage   | 53%     | 90%    | ▰▰▰▰▰▱▱▱▱ 53%                | ✅ On Track  |
 | Documentation   | 85%     | 100%   | ▰▰▰▰▰▰▰▰▰▱ 85%               | ✅ On Track  |
 | Performance     | 95%     | 95%    | ▰▰▰▰▰▰▰▰▰▰ 95%               | ✅ Complete  |
-
-```
 
 ## 🔍 Troubleshooting
 

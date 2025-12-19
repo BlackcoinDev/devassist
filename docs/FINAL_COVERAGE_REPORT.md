@@ -224,8 +224,6 @@ pytest --cov=src/module -q tests/
 
 pytest --cov=src --cov-report=term-missing -q tests/
 
-```
-
 ### 3. **Dead Code Detection**
 
 Found unreachable code in `web_tools.py:104`:
@@ -236,8 +234,6 @@ Found unreachable code in `web_tools.py:104`:
 
 if not has_crypto and ("coin" in query.lower()):
     # "coin" is in crypto_keywords, so has_crypto is always True
-
-```
 
 ### 4. **Module-Level vs Overall Coverage**
 

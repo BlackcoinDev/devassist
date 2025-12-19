@@ -197,8 +197,6 @@ with patch("builtins.__import__", side_effect=mock_import):
     result = function()
     assert "not installed" in result["error"]
 
-```
-
 ---
 
 ## 🎯 Achievement Highlights (Updated)
@@ -308,12 +306,11 @@ with patch("builtins.__import__", side_effect=mock_import):
 ## 📊 Coverage Trend
 
 ```text
+
 Starting Point:  50% overall, 9/28 modules ≥90% (32%)
 After Session:   54% overall, 18/28 modules ≥90% (64%)
 
 Improvement:     +4% overall, +9 modules (+100%)
-
-```
 
 **Module-level progress is exceptional** - doubled the number of
 excellent-coverage modules!

@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-DevAssist (v0.2.0) is an AI-powered learning assistant and development tool that combines conversational AI with persistent knowledge management. It features dual interfaces (PyQt6 GUI and CLI), AI learning via ChromaDB vector database, document processing for 80+ file types, and 8 AI tools for file operations and knowledge management.
+DevAssist (v0.2.0) is an AI-powered learning assistant and development tool that combines conversational AI with
+persistent knowledge management. It features dual interfaces (PyQt6 GUI and CLI), AI learning via ChromaDB vector
+database, document processing for 80+ file types, and 8 AI tools for file operations and knowledge management.
 
 **Core Technology Stack:**
 
@@ -23,92 +25,116 @@ DevAssist (v0.2.0) is an AI-powered learning assistant and development tool that
 **Setup (one-time):**
 
 ```bash
+
 # Create virtual environment with latest Python 3.13.x
+
 uv venv venv --python 3.13  # Uses latest 3.13.x available on your system
 source venv/bin/activate    # On Windows: venv\Scripts\activate
 
 # Install dependencies
+
 uv pip install -r requirements.txt
-```
+```text
 
 **Running the Application:**
 
 ```bash
+
 # GUI (default) - use uv run
+
 uv run python launcher.py
 
 # CLI only
+
 uv run python launcher.py --cli
 
 # GUI only
+
 uv run python launcher.py --gui
 
 # Direct execution (if in venv)
+
 python launcher.py
-```
 
 ### Testing (Using `uv`)
 
 ```bash
+
 # Run all tests (89 tests, ~20-25s execution)
+
 uv run pytest
 
 # Run with coverage report (target: 90%+)
+
 uv run pytest --cov=main --cov=launcher --cov-report=term-missing
 
 # Run specific test categories
+
 uv run pytest tests/unit/              # Unit tests only
 uv run pytest tests/integration/       # Integration tests only
 uv run pytest tests/unit/test_main.py  # Specific test file
 
 # Run single test
+
 uv run pytest tests/unit/test_main.py::TestSpaceManagement::test_get_space_collection_name -v
 
 # GUI tests (manual only - may cause crashes)
+
 export RUN_GUI_TESTS=1
 uv run pytest tests/unit/test_gui.py -v
 
 # Run tests without coverage (faster)
+
 uv run pytest -q
-```
 
 ### Code Quality (Using `uv`)
 
 ```bash
+
 # Comprehensive project linting (RECOMMENDED)
+
 uv run python tests/lint/all-lint.py
 
 # Python-specific linting only (faster)
+
 uv run python tests/lint/lint-python.py
 
 # Individual linters via uv
+
 uv run autopep8 --in-place --aggressive --aggressive <file>  # Auto-format
 uv run flake8 <file>                                          # Style check
 uv run mypy <file>                                            # Type check
 uv run vulture <file>                                         # Dead code
 uv run codespell <file>                                       # Spelling
-```
+```text
 
 ### Markdown Linting (v0.2.0 - 3-Phase Auto-Fix)
 
 ```bash
+
 # Detect markdown issues
+
 uv run python tests/lint/lint-markdown.py
 
 # Auto-fix 92% of issues (24+ rules)
+
 uv run python tests/lint/fix-markdown.py
 
 # Preview changes without modifying files
+
 uv run python tests/lint/fix-markdown.py --dry-run
 
 # Fix specific file with verbose output
+
 uv run python tests/lint/fix-markdown.py docs/MANUAL.md --verbose
 
 # Custom line length
+
 uv run python tests/lint/fix-markdown.py --line-length 120
-```
+```text
 
 **3-Phase Architecture:**
+
 - **Phase 1**: Pymarkdown native fix (16+ rules: MD004, MD005, MD029, MD030, etc.)
 - **Phase 2**: Custom fixes (7 rules: MD013, MD022, MD026, MD031, MD032, MD040, MD047)
 - **Phase 3**: Table alignment (MD060)
@@ -116,24 +142,31 @@ uv run python tests/lint/fix-markdown.py --line-length 120
 **Coverage**: 92% auto-fix (24+ rules), only MD024 & MD036 require manual work.
 
 **Workflow**:
+
 ```bash
+
 # 1. Auto-fix everything
+
 uv run python tests/lint/fix-markdown.py
 
 # 2. Review changes
+
 git diff docs/
 
 # 3. Manually fix remaining issues (MD024, MD036)
+
 #    - MD024: Duplicate headings (1 issue)
+
 #    - MD036: Emphasis as headings (11 issues)
 
 # 4. Verify zero issues
+
 uv run python tests/lint/lint-markdown.py
 
 # 5. Commit
+
 git add docs/ .pymarkdown
 git commit -m "docs: achieve markdown zero tolerance"
-```
 
 **Key Patterns:**
 
@@ -152,7 +185,8 @@ DevAssist uses a sophisticated separation-of-concerns storage architecture:
 2. **ChromaDB v2** (remote server): Semantic vector search for learned knowledge
 3. **Mem0**: Personalized user preferences and long-term memory patterns
 
-This separation allows each system to be optimized independently—SQLite for fast retrieval, ChromaDB for semantic similarity, and Mem0 for personalization.
+This separation allows each system to be optimized independently—SQLite for fast retrieval, ChromaDB for semantic
+similarity, and Mem0 for personalization.
 
 ### Dual Interface Architecture
 
@@ -171,16 +205,20 @@ Both GUI (`src/gui.py`) and CLI (`src/main.py`) MUST maintain complete feature p
 ```bash
 
 # ALWAYS test both interfaces (using uv run)
+
 uv run python launcher.py --cli  # Test CLI
 uv run python launcher.py --gui  # Test GUI
 
 # Run full test suite with coverage
+
 uv run pytest --cov=main --cov=launcher --cov-report=term-missing
-```
+
+```text
 
 ### Data Flow
 
 ```text
+
 User Input → Interface (GUI/CLI)
           → initialize_application() (shared backend)
           → Space loading (space_settings.json)
@@ -188,7 +226,6 @@ User Input → Interface (GUI/CLI)
           → Context retrieval (ChromaDB current space collection)
           → Response generation
           → Memory persistence (SQLite + Mem0)
-```
 
 ### Spaces System
 
@@ -207,24 +244,29 @@ Each "space" is an isolated workspace with its own ChromaDB collection:
 **All three services must be running:**
 
 ```bash
+
 # Terminal 1: LM Studio (load qwen3-vl-30b model)
+
 lm studio --start-server
 
 # Terminal 2: ChromaDB v2 Server (REQUIRED for learning features)
+
 chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
 
 # Terminal 3: Ollama (REQUIRED for embeddings)
+
 ollama serve
-```
 
 ### Environment Variables
 
-**CRITICAL:** Application requires `.env` file with NO hardcoded defaults. Copy `.env.example` to `.env` and configure all variables:
+**CRITICAL:** Application requires `.env` file with NO hardcoded defaults. Copy `.env.example` to `.env` and configure
+all variables:
 
 ```bash
+
 cp .env.example .env
+
 # Edit .env with your settings
-```
 
 Required variables include:
 
@@ -252,7 +294,6 @@ DevAssist uses **Docling** for unified document processing (v0.2.0), replacing s
 File Discovery → Content Extraction (Docling) → Text Chunking (1500 chars)
              → Embedding Generation (Ollama) → Vector Storage (ChromaDB)
              → Metadata Enrichment → Semantic Search Ready
-```
 
 ## AI Tool System
 
@@ -262,14 +303,14 @@ The qwen3-vl-30b model can autonomously call these tools:
 
 | Tool                        | Purpose                                  | Test Status |
 | --------------------------- | ---------------------------------------- | ----------- |
-| `read_file()`               | Read file contents                       | ✅ Tested   |
-| `write_file()`              | Create/modify files                      | ✅ Ready    |
-| `list_directory()`          | Browse directories                       | ✅ Ready    |
-| `get_current_directory()`   | Show current path                        | ✅ Tested   |
-| `parse_document()`          | Extract text/tables/forms via Docling    | ✅ Ready    |
-| `learn_information()`       | Store in ChromaDB                        | ✅ Ready    |
-| `search_knowledge()`        | Query vector DB                          | ✅ Ready    |
-| `search_web()`              | DuckDuckGo search                        | ✅ Ready    |
+| `read_file()`               | Read file contents                       | ✅ Tested    |
+| `write_file()`              | Create/modify files                      | ✅ Ready     |
+| `list_directory()`          | Browse directories                       | ✅ Ready     |
+| `get_current_directory()`   | Show current path                        | ✅ Tested    |
+| `parse_document()`          | Extract text/tables/forms via Docling    | ✅ Ready     |
+| `learn_information()`       | Store in ChromaDB                        | ✅ Ready     |
+| `search_knowledge()`        | Query vector DB                          | ✅ Ready     |
+| `search_web()`              | DuckDuckGo search                        | ✅ Ready     |
 
 **Tool testing coverage:** 8/8 tools have comprehensive unit and integration tests (89 total tests, 100% pass rate).
 
@@ -305,11 +346,11 @@ The qwen3-vl-30b model can autonomously call these tools:
 **Test organization:**
 
 ```text
+
 tests/
 ├── unit/              # 52 tests (26 main + 6 launcher + 20 tool tests)
 ├── integration/       # 26 tests (11 app + 15 tool calling)
 └── conftest.py        # Shared fixtures (mock_env, mock_llm, mock_vectorstore)
-```
 
 ### GUI/CLI Consistency Checklist
 
@@ -352,15 +393,18 @@ When adding features:
 
 | File                            | Purpose                             | Lines |
 | ------------------------------- | ----------------------------------- | ----- |
-| `tools/populate_codebase.py`    | Bulk codebase import (production)   | -     |
-| `tests/conftest.py`             | Test fixtures                       | -     |
-| `pytest.ini`                    | Test configuration                  | -     |
+| `tools/populate_codebase.py`    | Bulk codebase import (production)   | ----- |
+| `tests/conftest.py`             | Test fixtures                       | ----- |
+| `pytest.ini`                    | Test configuration                  | ----- |
 
 ### Common Development Tasks
 
 **Adding a new slash command:**
 
-1. Create handler function in `src/commands/handlers/[category]_commands.py` (choose appropriate category: help, config, database, memory, learning, space, file, export)
+1. Create handler function in `src/commands/handlers/[category]_commands.py` (choose appropriate category: help, config,
+
+   database, memory, learning, space, file, export)
+
 2. Decorate with `@CommandRegistry.register("command_name", "Description", category="category", aliases=[])`
 3. Handler auto-registers on import—no central configuration needed
 4. Update GUI command button handlers in `src/gui.py` if adding a button
@@ -368,19 +412,24 @@ When adding features:
 6. Test in both CLI and GUI modes
 
 **Example:**
+
 ```python
+
 # In src/commands/handlers/utility_commands.py
+
 from src.commands.registry import CommandRegistry
 
 @CommandRegistry.register("mycommand", "Does something useful", category="utility")
 def handle_mycommand(args: str) -> None:
     """Handle /mycommand - does something useful."""
     print(f"Executing mycommand with args: {args}")
-```
 
 **Adding a new AI tool:**
 
-1. Create executor function in `src/tools/executors/[category]_tools.py` (choose: file_tools, knowledge_tools, document_tools, web_tools)
+1. Create executor function in `src/tools/executors/[category]_tools.py` (choose: file_tools, knowledge_tools,
+
+   document_tools, web_tools)
+
 2. Define OpenAI function calling schema in `TOOL_DEFINITION` dictionary
 3. Decorate with `@ToolRegistry.register("tool_name", TOOL_DEFINITION)`
 4. Executor auto-registers on import and LLM automatically receives tool definition
@@ -389,8 +438,11 @@ def handle_mycommand(args: str) -> None:
 7. Update this documentation
 
 **Example:**
+
 ```python
+
 # In src/tools/executors/utility_tools.py
+
 from src.tools.registry import ToolRegistry
 from typing import Dict, Any
 
@@ -414,7 +466,6 @@ def execute_my_tool(arg1: str) -> Dict[str, Any]:
     """Execute my_tool with arg1."""
     result = f"Tool executed with: {arg1}"
     return {"success": True, "result": result}
-```
 
 **Modifying document processing:**
 
@@ -461,10 +512,15 @@ def execute_my_tool(arg1: str) -> Dict[str, Any]:
 
 ## Key Architectural Insights
 
-**Why Spaces Work:** Each space is simply a different ChromaDB collection name. No data duplication or migration—just pointer switching. This allows instant context switching between projects.
+**Why Spaces Work:** Each space is simply a different ChromaDB collection name. No data duplication or migration—just
+pointer switching. This allows instant context switching between projects.
 
-**Why Three Storage Systems:** SQLite for transactional integrity (conversations), ChromaDB for semantic search (embeddings), Mem0 for personalization patterns. Each optimized for its specific use case.
+**Why Three Storage Systems:** SQLite for transactional integrity (conversations), ChromaDB for semantic search
+(embeddings), Mem0 for personalization patterns. Each optimized for its specific use case.
 
-**Why Dual Interface Matters:** GUI and CLI share identical backend (`initialize_application()`) but different frontends. All business logic lives in `src/main.py`, GUI just renders it. This ensures feature parity and reduces duplication.
+**Why Dual Interface Matters:** GUI and CLI share identical backend (`initialize_application()`) but different
+frontends. All business logic lives in `src/main.py`, GUI just renders it. This ensures feature parity and reduces
+duplication.
 
-**Testing Philosophy:** 100% pass rate with 90%+ coverage isn't just metrics—tests use isolated fixtures (`conftest.py`) to prevent production data contamination, critical for AI systems with subtle side effects.
+**Testing Philosophy:** 100% pass rate with 90%+ coverage isn't just metrics—tests use isolated fixtures (`conftest.py`)
+to prevent production data contamination, critical for AI systems with subtle side effects.

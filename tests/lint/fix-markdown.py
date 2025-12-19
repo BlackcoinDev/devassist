@@ -36,14 +36,27 @@ import re
 import os
 import subprocess
 import argparse
+import importlib.util
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import List, Tuple, Dict, Set, Any
+
+# Import shared table utilities
+table_utils_spec = importlib.util.spec_from_file_location(
+    "table_utils", os.path.join(os.path.dirname(__file__), "table_utils.py")
+)
+if table_utils_spec and table_utils_spec.loader:
+    table_utils = importlib.util.module_from_spec(table_utils_spec)
+    table_utils_spec.loader.exec_module(table_utils)
+else:
+    # Fallback - shouldn't happen
+    raise ImportError("Could not load table_utils module")
 
 
 @dataclass
 class FixConfig:
     """Configuration for markdown fixing operations."""
+
     line_length: int = 120
     aggressive_mode: bool = True
     dry_run: bool = False
@@ -54,6 +67,7 @@ class FixConfig:
 @dataclass
 class FixResults:
     """Results from a fix operation."""
+
     success: bool
     phase1_fixes: int = 0
     phase2_fixes: int = 0
@@ -65,6 +79,7 @@ class FixResults:
 # ============================================================================
 # PHASE 1: Pymarkdown Native Fix
 # ============================================================================
+
 
 def run_pymarkdown_fix(file_path: str, config: FixConfig) -> Tuple[bool, str, int]:
     """
@@ -85,26 +100,18 @@ def run_pymarkdown_fix(file_path: str, config: FixConfig) -> Tuple[bool, str, in
         Tuple of (success, output_message, fix_count)
     """
     try:
-        cmd = [
-            "pymarkdown",
-            "--config", config.config_file,
-            "fix",
-            file_path
-        ]
+        cmd = ["pymarkdown", "--config", config.config_file, "fix", file_path]
 
         if config.verbose:
             print(f"  Running: {' '.join(cmd)}")
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 
         # Parse output to count fixes
         output = result.stdout + result.stderr
-        fix_count = output.count("Fixed:")
+        # pymarkdown doesn't output "Fixed:" messages, so check if it succeeded
+        # and assume fixes were applied if return code is 0 and no errors
+        fix_count = 1 if result.returncode == 0 and not result.stderr else 0
 
         if result.returncode == 0:
             return True, output, fix_count
@@ -114,7 +121,11 @@ def run_pymarkdown_fix(file_path: str, config: FixConfig) -> Tuple[bool, str, in
     except subprocess.TimeoutExpired:
         return False, "Pymarkdown fix timed out", 0
     except FileNotFoundError:
-        return False, "pymarkdown not found - install with: pip install pymarkdownlnt", 0
+        return (
+            False,
+            "pymarkdown not found - install with: pip install pymarkdownlnt",
+            0,
+        )
     except Exception as e:
         return False, f"Pymarkdown fix error: {str(e)}", 0
 
@@ -122,6 +133,7 @@ def run_pymarkdown_fix(file_path: str, config: FixConfig) -> Tuple[bool, str, in
 # ============================================================================
 # PHASE 2: Custom Fixes
 # ============================================================================
+
 
 class MarkdownFixer:
     """Custom fixes for complex markdown rules requiring context awareness."""
@@ -149,12 +161,12 @@ class MarkdownFixer:
 
         Simple fix: ensure exactly one newline at end.
         """
-        if not content.endswith('\n'):
+        if not content.endswith("\n"):
             self.fixes_applied += 1
-            return content + '\n'
+            return content + "\n"
 
         # Remove multiple trailing newlines
-        while content.endswith('\n\n'):
+        while content.endswith("\n\n"):
             content = content[:-1]
             self.fixes_applied += 1
 
@@ -169,12 +181,13 @@ class MarkdownFixer:
         """
         # Replace 2 or more consecutive newlines with exactly 2 newlines (1 blank line)
         import re
+
         original = content
-        content = re.sub(r'\n{3,}', '\n\n', content)
+        content = re.sub(r"\n{3,}", "\n\n", content)
 
         if content != original:
             # Count how many replacements we made
-            self.fixes_applied += original.count('\n\n\n')
+            self.fixes_applied += original.count("\n\n\n")
 
         return content
 
@@ -184,27 +197,27 @@ class MarkdownFixer:
 
         Pattern: Add blank line before/after headings if missing.
         """
-        lines = content.split('\n')
+        lines = content.split("\n")
         result = []
 
         for i, line in enumerate(lines):
             # Check if this is a heading
-            if re.match(r'^#{1,6}\s+.+', line):
+            if re.match(r"^#{1,6}\s+.+", line):
                 # Add blank line before if needed
                 if i > 0 and result and result[-1].strip():
-                    result.append('')
+                    result.append("")
                     self.fixes_applied += 1
 
                 result.append(line)
 
                 # Add blank line after if needed
                 if i < len(lines) - 1 and lines[i + 1].strip():
-                    result.append('')
+                    result.append("")
                     self.fixes_applied += 1
             else:
                 result.append(line)
 
-        return '\n'.join(result)
+        return "\n".join(result)
 
     def fix_md031_code_block_blanks(self, content: str) -> str:
         """
@@ -212,16 +225,16 @@ class MarkdownFixer:
 
         Pattern: Add blank lines before/after ``` markers.
         """
-        lines = content.split('\n')
+        lines = content.split("\n")
         result = []
         in_code_block = False
 
         for i, line in enumerate(lines):
-            if line.startswith('```'):
+            if line.startswith("```"):
                 if not in_code_block:
                     # Opening fence - add blank before
                     if i > 0 and result and result[-1].strip():
-                        result.append('')
+                        result.append("")
                         self.fixes_applied += 1
                     in_code_block = True
                 else:
@@ -232,12 +245,12 @@ class MarkdownFixer:
 
                 # Add blank after closing fence
                 if not in_code_block and i < len(lines) - 1 and lines[i + 1].strip():
-                    result.append('')
+                    result.append("")
                     self.fixes_applied += 1
             else:
                 result.append(line)
 
-        return '\n'.join(result)
+        return "\n".join(result)
 
     def fix_md032_list_blanks(self, content: str) -> str:
         """
@@ -245,31 +258,32 @@ class MarkdownFixer:
 
         Pattern: Add blank lines before/after list blocks.
         """
-        lines = content.split('\n')
+        lines = content.split("\n")
         result = []
         in_list = False
 
         for i, line in enumerate(lines):
-            is_list_item = bool(re.match(r'^[\s]*[-*+]\s+', line) or
-                               re.match(r'^[\s]*\d+\.\s+', line))
+            is_list_item = bool(
+                re.match(r"^[\s]*[-*+]\s+", line) or re.match(r"^[\s]*\d+\.\s+", line)
+            )
 
             if is_list_item:
                 if not in_list:
                     # Starting a list - add blank before
                     if i > 0 and result and result[-1].strip():
-                        result.append('')
+                        result.append("")
                         self.fixes_applied += 1
                     in_list = True
                 result.append(line)
             else:
                 if in_list and line.strip():
                     # Ending a list - add blank after
-                    result.append('')
+                    result.append("")
                     self.fixes_applied += 1
                     in_list = False
                 result.append(line)
 
-        return '\n'.join(result)
+        return "\n".join(result)
 
     def fix_md026_trailing_punctuation(self, content: str) -> str:
         """
@@ -277,17 +291,18 @@ class MarkdownFixer:
 
         Pattern: Remove .,;:!? from end of headings.
         """
+
         def remove_punctuation(match):
             self.fixes_applied += 1
             heading_prefix = match.group(1)
-            heading_text = match.group(2).rstrip('.,;:!?')
+            heading_text = match.group(2).rstrip(".,;:!?")
             return f"{heading_prefix}{heading_text}"
 
         content = re.sub(
-            r'^(#{1,6}\s+)(.+?)[.,;:!?]+\s*$',
+            r"^(#{1,6}\s+)(.+?)[.,;:!?]+\s*$",
             remove_punctuation,
             content,
-            flags=re.MULTILINE
+            flags=re.MULTILINE,
         )
         return content
 
@@ -296,52 +311,73 @@ class MarkdownFixer:
         MD040: Fenced code blocks should have language specified.
 
         Algorithm:
-        1. Find code blocks with missing language
+        1. Find code blocks without language specifiers
         2. Detect language from content (shebang, keywords)
-        3. Default to 'text' if unknown
+        3. Add appropriate language tag
         """
+
         def detect_language(code_content: str) -> str:
             """Detect programming language from code content."""
-            lines = code_content.strip().split('\n')
-            if not lines:
-                return 'text'
+            if not code_content.strip():
+                return "text"
 
+            lines = code_content.strip().split("\n")
             first_line = lines[0].strip()
 
             # Check shebang
-            if first_line.startswith('#!'):
-                if 'python' in first_line:
-                    return 'python'
-                elif 'bash' in first_line or 'sh' in first_line:
-                    return 'bash'
-                elif 'node' in first_line:
-                    return 'javascript'
+            if first_line.startswith("#!"):
+                if "python" in first_line:
+                    return "python"
+                elif "bash" in first_line or "sh" in first_line:
+                    return "bash"
+                elif "node" in first_line:
+                    return "javascript"
 
-            # Check keywords
+            # Check content keywords
             code_lower = code_content.lower()
-            if any(kw in code_lower for kw in ['def ', 'import ', 'class ', 'self.']):
-                return 'python'
-            elif any(kw in code_lower for kw in ['function ', 'const ', 'let ', 'var ']):
-                return 'javascript'
-            elif any(kw in code_lower for kw in ['package ', 'func ', 'import ']):
-                return 'go'
-            elif '#include' in code_content or 'int main(' in code_content:
-                return 'c'
+            if any(kw in code_lower for kw in ["def ", "import ", "class ", "self."]):
+                return "python"
+            elif any(
+                kw in code_lower
+                for kw in ["function ", "const ", "let ", "var ", "console."]
+            ):
+                return "javascript"
+            elif any(kw in code_lower for kw in ["package ", "func ", "import ("]):
+                return "go"
+            elif "#include" in code_content or "int main(" in code_content:
+                return "c"
+            elif (
+                "pip install" in code_content
+                or "uv run" in code_content
+                or "cp .env" in code_content
+            ):
+                return "bash"
 
-            return 'text'
+            return "text"
 
-        def add_language(match):
-            code_content = match.group(1)
-            language = detect_language(code_content)
+        def process_code_block(match):
+            lang_part = match.group(1)  # Language specifier after ```
+            code_content = match.group(2)
+
+            # If already has a specific language, keep it
+            if lang_part and lang_part not in ["text", "plain"]:
+                return match.group(0)
+
+            # Detect and add appropriate language
+            detected_lang = detect_language(code_content)
             self.fixes_applied += 1
-            return f"```{language}\n{code_content}\n```"
+            return f"```{detected_lang}\n{code_content}\n```"
 
-        # Pattern: ``` (newline) code (newline) ```
+        # Fix code blocks: ```[lang]\n[code]\n```
+        content = re.sub(r"```(\w*)\n([^`]+?)\n```", process_code_block, content)
+
+        # Remove empty code blocks (various malformed formats)
+        content = re.sub(r"```\w*\s*\n\s*\n\s*```", "", content)  # Multi-line empty
+        content = re.sub(r"```\w*\s*```", "", content)  # Single-line empty
         content = re.sub(
-            r'```\n([^`]+)\n```',
-            add_language,
-            content
-        )
+            r"^\s*```\s*$", "", content, flags=re.MULTILINE
+        )  # Lines with only backticks
+
         return content
 
     def fix_md013_line_length(self, content: str) -> str:
@@ -356,30 +392,32 @@ class MarkdownFixer:
         5. Prefer sentence breaks (. ) over mid-sentence
         6. Preserve list indentation
         """
-        lines = content.split('\n')
+        lines = content.split("\n")
         result = []
         in_code_block = False
 
         for line in lines:
             # Track code block state
-            if line.startswith('```'):
+            if line.startswith("```"):
                 in_code_block = not in_code_block
                 result.append(line)
                 continue
 
             # Skip lines that shouldn't be wrapped
-            if (in_code_block or
-                line.startswith('|') or  # Table row
-                line.startswith('#') or  # Heading
-                len(line) <= self.config.line_length):
+            if (
+                in_code_block
+                or line.startswith("|")  # Table row
+                or line.startswith("#")  # Heading
+                or len(line) <= self.config.line_length
+            ):
                 result.append(line)
                 continue
 
             # Detect list indentation
-            list_match = re.match(r'^(\s*)([-*+]|\d+\.)\s+', line)
-            indent = ''
+            list_match = re.match(r"^(\s*)([-*+]|\d+\.)\s+", line)
+            indent = ""
             if list_match:
-                indent = ' ' * len(list_match.group(0))
+                indent = " " * len(list_match.group(0))
 
             # Smart wrapping
             wrapped = self._wrap_line(line, indent)
@@ -387,9 +425,9 @@ class MarkdownFixer:
             if len(wrapped) > 1:
                 self.fixes_applied += 1
 
-        return '\n'.join(result)
+        return "\n".join(result)
 
-    def _wrap_line(self, line: str, indent: str = '') -> List[str]:
+    def _wrap_line(self, line: str, indent: str = "") -> List[str]:
         """
         Wrap a single long line intelligently.
 
@@ -400,17 +438,17 @@ class MarkdownFixer:
         # Find protected spans (URLs, inline code)
         protected = self._find_protected_spans(line)
 
-        words = line.split(' ')
+        words = line.split(" ")
         result = []
-        current_line = words[0] if words else ''
+        current_line = words[0] if words else ""
 
         for word in words[1:]:
-            test_line = current_line + ' ' + word
+            test_line = current_line + " " + word
 
             # Check if adding this word would exceed limit
             if len(test_line) > max_len:
                 # Try to break at sentence boundary
-                if current_line.endswith(('.', '!', '?')):
+                if current_line.endswith((".", "!", "?")):
                     result.append(current_line)
                     current_line = indent + word
                 else:
@@ -429,11 +467,11 @@ class MarkdownFixer:
         protected = set()
 
         # Find URLs
-        for match in re.finditer(r'https?://[^\s]+', line):
+        for match in re.finditer(r"https?://[^\s]+", line):
             protected.add((match.start(), match.end()))
 
         # Find inline code
-        for match in re.finditer(r'`[^`]+`', line):
+        for match in re.finditer(r"`[^`]+`", line):
             protected.add((match.start(), match.end()))
 
         return protected
@@ -442,6 +480,7 @@ class MarkdownFixer:
 # ============================================================================
 # PHASE 3: Table Alignment
 # ============================================================================
+
 
 class TableAligner:
     """MD060-compliant table alignment."""
@@ -473,13 +512,13 @@ class TableAligner:
             # Emoji and special characters are typically in these ranges
             code_point = ord(char)
 
-            if ea_width in ('F', 'W'):  # Fullwidth or Wide
+            if ea_width in ("F", "W"):  # Fullwidth or Wide
                 width += 2
             elif code_point >= 0x1F300 and code_point <= 0x1F9FF:  # Emoji range
                 width += 2
             elif code_point >= 0x2600 and code_point <= 0x27BF:  # Misc symbols
                 width += 2
-            elif cat == 'Mn':  # Mark, Nonspacing (combining characters)
+            elif cat == "Mn":  # Mark, Nonspacing (combining characters)
                 width += 0
             else:
                 width += 1
@@ -496,15 +535,15 @@ class TableAligner:
         3. Calculate max width per column
         4. Rebuild with left-justified padding
         """
-        lines = content.split('\n')
+        lines = content.split("\n")
         result = []
         i = 0
 
         while i < len(lines):
-            if lines[i].strip().startswith('|'):
+            if lines[i].strip().startswith("|"):
                 # Found table start
                 table_lines = []
-                while i < len(lines) and lines[i].strip().startswith('|'):
+                while i < len(lines) and lines[i].strip().startswith("|"):
                     table_lines.append(lines[i])
                     i += 1
 
@@ -517,39 +556,23 @@ class TableAligner:
                 result.append(lines[i])
                 i += 1
 
-        return '\n'.join(result)
+        return "\n".join(result)
 
     def _align_table_block(self, table_lines: List[str]) -> List[str]:
         """Align a single table block."""
         if not table_lines:
             return table_lines
 
-        # Parse all rows
-        rows = []
-        for line in table_lines:
-            cells = [cell.strip() for cell in line.split('|')]
-            # Remove empty first/last cells from split
-            if cells and not cells[0]:
-                cells = cells[1:]
-            if cells and not cells[-1]:
-                cells = cells[:-1]
-            rows.append(cells)
+        # Parse all rows using shared utility
+        rows = table_utils.parse_table_rows(table_lines)
 
         if not rows:
             return table_lines
 
         # Calculate max CHARACTER width per column (for pipe alignment)
         # VSCode MD060 expects pipes at same CHARACTER positions, not visual width
-        num_cols = max(len(row) for row in rows)
-        col_widths = [0] * num_cols
-
-        for row in rows:
-            for col_idx, cell in enumerate(row):
-                if col_idx < num_cols:
-                    # Use character count, not visual width
-                    # This ensures pipes align at same character positions
-                    char_width = len(cell)
-                    col_widths[col_idx] = max(col_widths[col_idx], char_width)
+        col_widths = table_utils.calculate_column_widths(rows, use_visual_width=False)
+        num_cols = len(col_widths)
 
         # Rebuild aligned table
         aligned = []
@@ -559,17 +582,17 @@ class TableAligner:
                 if col_idx < len(row):
                     cell = row[col_idx]
                 else:
-                    cell = ''
+                    cell = ""
 
                 # Check if this is a separator row
-                if set(cell.strip()) <= {'-', ':'}:
+                if set(cell.strip()) <= {"-", ":"}:
                     # Preserve separator pattern - pad with dashes
-                    cells.append(cell.ljust(col_widths[col_idx], '-'))
+                    cells.append(cell.ljust(col_widths[col_idx], "-"))
                 else:
                     # Left-justify content - pad with spaces to character width
                     cells.append(cell.ljust(col_widths[col_idx]))
 
-            aligned.append('| ' + ' | '.join(cells) + ' |')
+            aligned.append("| " + " | ".join(cells) + " |")
 
         return aligned
 
@@ -577,6 +600,7 @@ class TableAligner:
 # ============================================================================
 # Main Orchestrator
 # ============================================================================
+
 
 def fix_markdown_file(file_path: str, config: FixConfig) -> FixResults:
     """
@@ -593,7 +617,7 @@ def fix_markdown_file(file_path: str, config: FixConfig) -> FixResults:
 
     try:
         # Read original content
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             original_content = f.read()
 
         # Phase 1: Pymarkdown native fix
@@ -602,14 +626,14 @@ def fix_markdown_file(file_path: str, config: FixConfig) -> FixResults:
 
         success, output, fix_count = run_pymarkdown_fix(file_path, config)
         results.phase1_fixes = fix_count
-        results.details['phase1_output'] = output
+        results.details["phase1_output"] = output
 
         if not success and "not found" in output:
             results.errors.append(output)
             # Continue with phases 2 & 3 even if pymarkdown not available
 
         # Read content after phase 1
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Phase 2: Custom fixes
@@ -632,10 +656,10 @@ def fix_markdown_file(file_path: str, config: FixConfig) -> FixResults:
         total_fixes = results.phase1_fixes + results.phase2_fixes + results.phase3_fixes
 
         if content != original_content and not config.dry_run:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
-        results.details['total_fixes'] = total_fixes
+        results.details["total_fixes"] = total_fixes
 
     except Exception as e:
         results.success = False
@@ -648,10 +672,11 @@ def fix_markdown_file(file_path: str, config: FixConfig) -> FixResults:
 # CLI
 # ============================================================================
 
+
 def parse_args():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description='Markdown Auto-Fix v0.2.0 - 3-Phase Hybrid Architecture',
+        description="Markdown Auto-Fix v0.2.0 - 3-Phase Hybrid Architecture",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -667,34 +692,31 @@ Phase Breakdown:
   Phase 3: Table alignment (1 rule: MD060)
 
 Coverage: 96%% auto-fix (25+ rules), only MD024 & MD036 require manual work.
-        """
+        """,
     )
 
     parser.add_argument(
-        'files',
-        nargs='*',
-        help='Specific files to fix (default: all docs/*.md)'
+        "files", nargs="*", help="Specific files to fix (default: all docs/*.md)"
     )
     parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='Preview changes without modifying files'
+        "--dry-run", action="store_true", help="Preview changes without modifying files"
     )
     parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Show detailed progress and phase information'
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Show detailed progress and phase information",
     )
     parser.add_argument(
-        '--line-length',
+        "--line-length",
         type=int,
         default=120,
-        help='Maximum line length for MD013 (default: 120)'
+        help="Maximum line length for MD013 (default: 120)",
     )
     parser.add_argument(
-        '--config',
-        default='.pymarkdown',
-        help='Path to pymarkdown config file (default: .pymarkdown)'
+        "--config",
+        default=".pymarkdown",
+        help="Path to pymarkdown config file (default: .pymarkdown)",
     )
 
     return parser.parse_args()
@@ -709,7 +731,7 @@ def main():
         line_length=args.line_length,
         dry_run=args.dry_run,
         verbose=args.verbose,
-        config_file=args.config
+        config_file=args.config,
     )
 
     # Determine files to process
@@ -720,7 +742,7 @@ def main():
         files_to_process = []
         for root, dirs, files in os.walk("docs/"):
             for file in files:
-                if file.endswith('.md'):
+                if file.endswith(".md"):
                     files_to_process.append(os.path.join(root, file))
 
     # Print header
@@ -753,7 +775,7 @@ def main():
             for error in results.errors:
                 print(f"  ❌ {error}")
 
-        total_fixes = results.details.get('total_fixes', 0)
+        total_fixes = results.details.get("total_fixes", 0)
 
         if total_fixes > 0:
             fixed_files += 1

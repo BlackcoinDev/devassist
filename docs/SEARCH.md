@@ -146,8 +146,6 @@ In-Memory Cache (QUERY_CACHE)
 ├─ Capacity: Last 500-1000 queries
 └─ Persistence: query_cache.json
 
-```
-
 ---
 
 ## Search Methods
@@ -159,6 +157,7 @@ In-Memory Cache (QUERY_CACHE)
 Searches learned documents using embeddings:
 
 ```python
+
 def get_relevant_context(
     query: str,
     k: int = 3,                    # Return top 3 results
@@ -170,8 +169,6 @@ def get_relevant_context(
     # 4. Query with embeddings (cosine similarity)
     # 5. Cache results for future use
     # 6. Return formatted context string
-
-```
 
 **When it's called:**
 
@@ -197,8 +194,6 @@ ChromaDB search finds:
        ↓
 AI response: "Based on your knowledge base: [context]. Additionally..."
 
-```
-
 ### 2. **Web Search (Knowledge from Internet)**
 
 **Function**: `execute_web_search()` (src/main.py:3007)
@@ -206,6 +201,7 @@ AI response: "Based on your knowledge base: [context]. Additionally..."
 Uses DuckDuckGo API for real-time information:
 
 ```python
+
 def execute_web_search(query: str) -> dict:
     # 1. Enhance query if needed (e.g., add "cryptocurrency" context)
     # 2. Call DuckDuckGo API (max 10 results)
@@ -227,8 +223,6 @@ User: "What's the latest in AI?"
 AI decides: This needs current info → calls search_web()
 Result: Latest news articles from internet
 
-```
-
 ### 3. **AI Tool: search_knowledge()**
 
 **Function**: `execute_search_knowledge()` (src/main.py:3330)
@@ -239,8 +233,6 @@ Wrapper tool that AI can call explicitly:
 def execute_search_knowledge(query: str, limit: int = 5) -> dict:
     # Calls get_relevant_context() with configurable limit
     # Returns structured result: {success, query, results, result_count}
-
-```
 
 **When AI calls it:**
 
@@ -260,6 +252,7 @@ happens:
 AI intelligently decides when to search:
 
 ```text
+
 User: "What's 2+2?"
 → AI: No context needed, responds "4" (instant)
 
@@ -280,9 +273,8 @@ User: "What's the capital of France?"
 **Enable:**
 
 ```bash
-/context auto
 
-```
+/context auto
 
 ### Mode: `on` (Always Search)
 
@@ -311,13 +303,12 @@ User: "What's 2+2?"
 ```bash
 /context on
 
-```
-
 ### Mode: `off` (Never Search)
 
 Never searches knowledge base:
 
 ```text
+
 User: "How does our system work?"
 → No search
 → AI responds using only general knowledge
@@ -337,6 +328,7 @@ User: "How does our system work?"
 **Enable:**
 
 ```bash
+
 /context off
 
 ```text
@@ -344,6 +336,7 @@ User: "How does our system work?"
 ### Checking Current Mode
 
 ```bash
+
 /context
 
 # Output
@@ -357,8 +350,6 @@ User: "How does our system work?"
 # - on: Always include available context
 
 # - off: Never include context from knowledge base
-
-```
 
 ---
 
@@ -412,8 +403,6 @@ You: What database do we use?
 DevAssist: Based on what you've taught me, you use PostgreSQL 15 with connection
 pooling enabled.
 
-```
-
 #### Method 2: `/populate` Command
 
 Bulk import an entire codebase:
@@ -435,8 +424,6 @@ Bulk import an entire codebase:
 # Real-world example
 
 /populate ~/projects/myapp --clear
-
-```
 
 **Process:**
 
@@ -466,8 +453,6 @@ Processing files...
 ✅ 1,847 chunks created and embedded
 ✅ Successfully added to knowledge base
 
-```
-
 **Performance:**
 
 - Small project (< 100 files): ~10-30 seconds
@@ -480,6 +465,7 @@ The `learn_information()` AI tool allows the model to autonomously save
 information:
 
 ```bash
+
 You: Remember that we migrated from MySQL to PostgreSQL last month
 
 DevAssist: [Calls learn_information tool]
@@ -490,8 +476,6 @@ DevAssist: [Calls learn_information tool]
 You: When did we switch databases?
 DevAssist: Based on what I've learned, you migrated from MySQL to PostgreSQL
 last month.
-
-```
 
 ---
 
@@ -563,8 +547,6 @@ rm query_cache.json
 
 /space myspace
 
-```
-
 ### Optimization Tips
 
 1. **Use `context auto` (not `on`)**
@@ -631,8 +613,6 @@ ChromaDB Collections:
 ├── space_projectB
 └── space_research
 
-```
-
 ---
 
 ## Troubleshooting
@@ -650,20 +630,17 @@ ChromaDB Collections:
    /populate /path/to/project
    # or
    /learn Some important information
-   ```
 
 2. **Context mode is off**
 
    ```bash
    /context on    # or auto
-   ```
 
 3. **Wrong space selected**
 
    ```bash
    /space         # Check current space
    /space myspace # Switch to right space
-   ```
 
 4. **Query doesn't match learned content**
 
@@ -674,7 +651,6 @@ ChromaDB Collections:
 
    # Poor queries:
    "Tell me about xyz" (very specific, may not match learned content)
-   ```
 
 ### Slow search responses
 
@@ -687,13 +663,11 @@ ChromaDB Collections:
    ```bash
    # Terminal 2: Start ChromaDB
    chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
-   ```
 
 2. **Context mode is `on`** (searching every query)
 
    ```bash
    /context auto  # Let AI decide
-   ```
 
 3. **Large knowledge base**
 
@@ -704,7 +678,6 @@ ChromaDB Collections:
    # If too large, consider:
    /space projectA
    /populate . --clear  # Only keep current project
-   ```
 
 4. **Ollama not running** (embedding generation slow)
 
@@ -756,8 +729,6 @@ chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
 
 cat .env | grep CHROMA
 
-```
-
 ### Cache growing too large
 
 **Problem:** `query_cache.json` becomes huge (slow startup).
@@ -773,8 +744,6 @@ cat .env | grep CHROMA
 rm query_cache.json
 
 # App will recreate on next search
-
-```
 
 ---
 
@@ -839,8 +808,6 @@ devassist/
 │                             # Format: {space:query:k: [results]}
 └── embedding_cache.json      # Document embedding cache
 
-```
-
 ---
 
 ## Best Practices
@@ -879,6 +846,7 @@ Based on official expectations (CLAUDE.md):
 - **Search operations**: Additional overhead varies by knowledge base size
 
 ```text
+
 Context Mode: off
 └─ Pure LLM response: ~2-5 seconds
 
@@ -892,8 +860,6 @@ Context Mode: on (always search)
 Cache Hit (repeat query with cached search)
 └─ Search step: <1ms (instant cache lookup)
 └─ Total response: ~2-5 seconds (LLM dominates timing)
-
-```
 
 ### Search Operation Timing
 
@@ -980,8 +946,6 @@ You: "What do you know about [topic]?"
 
 /learning
 /learning normal
-
-```
 
 ---
 

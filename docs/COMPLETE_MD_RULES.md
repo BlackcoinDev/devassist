@@ -380,9 +380,7 @@ def example():
 def example():
     pass
 
-```
-
-```text
+text
 
 **Fix Strategy**: Add appropriate language identifier (python, javascript,
 etc.).
@@ -424,8 +422,6 @@ Content here...
 | 1   | 2   | [0, 5, 10]             |
 | 10  | 20  | [0, 5, 10] ✅ (aligned) |
 
-```
-
 **Fix Strategy**: Use `create_md_table.py` tool for perfect alignment.
 
 ## 📊 Current Issue Distribution
@@ -459,9 +455,8 @@ Content here...
 ### 1. Run Auto-Fix First
 
 ```bash
-python tests/lint/fix-markdown.py
 
-```
+python tests/lint/fix-markdown.py
 
 ### 2. Manual Fix Priority Order
 

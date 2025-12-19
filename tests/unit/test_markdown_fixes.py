@@ -20,9 +20,9 @@ sys.path.insert(0, str(tests_lint_path))
 
 # Import from fix-markdown.py (Python sees it as fix_markdown module)
 import importlib.util
+
 spec = importlib.util.spec_from_file_location(
-    "fix_markdown",
-    tests_lint_path / "fix-markdown.py"
+    "fix_markdown", tests_lint_path / "fix-markdown.py"
 )
 fix_markdown = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(fix_markdown)
@@ -35,6 +35,85 @@ fix_markdown_file = fix_markdown.fix_markdown_file
 run_pymarkdown_fix = fix_markdown.run_pymarkdown_fix
 
 
+# ============================================================================
+# MD060 Linting Tests
+# ============================================================================
+
+
+class TestMD060Linting:
+    """Test MD060 table column alignment linting functionality."""
+
+    def test_check_md060_compliance_aligned_table(self):
+        """Test that properly aligned tables pass MD060 checking."""
+        content = """# Test Document
+
+| Column A | Column B | Column C |
+|----------|----------|----------|
+| Data 1   | Data 2   | Data 3   |
+| Longer   | Short    | Medium   |
+"""
+        # Import the function for testing
+        sys.path.insert(0, str(tests_lint_path))
+        from lint_markdown import check_md060_compliance
+
+        errors = check_md060_compliance(content, "test.md")
+        assert len(errors) == 0, f"Expected no errors, got: {errors}"
+
+    def test_check_md060_compliance_misaligned_table(self):
+        """Test that misaligned tables trigger MD060 violations."""
+        content = """# Test Document
+
+| Column A| Column B |Column C|
+|---------|----------|--------|
+| Data 1  |Data 2| Data 3|
+"""
+        # Import the function for testing
+        sys.path.insert(0, str(tests_lint_path))
+        from lint_markdown import check_md060_compliance
+
+        errors = check_md060_compliance(content, "test.md")
+        assert len(errors) > 0, "Expected MD060 violations for misaligned table"
+        assert any("MD060" in error for error in errors), (
+            "Expected MD060 error messages"
+        )
+        assert any("pipes misaligned" in error for error in errors), (
+            "Expected misalignment message"
+        )
+
+    def test_validate_table_alignment_perfect_alignment(self):
+        """Test table alignment validation with perfectly aligned table."""
+        table_lines = [
+            "| Column A | Column B | Column C |",
+            "|----------|----------|----------|",
+            "| Data 1   | Data 2   | Data 3   |",
+        ]
+
+        # Import the function for testing
+        sys.path.insert(0, str(tests_lint_path))
+        from lint_markdown import validate_table_alignment
+
+        errors = validate_table_alignment(table_lines, 1, "test.md")
+        assert len(errors) == 0, f"Expected no errors for aligned table, got: {errors}"
+
+    def test_validate_table_alignment_misaligned_pipes(self):
+        """Test table alignment validation detects misaligned pipes."""
+        table_lines = [
+            "| Column A| Column B |Column C|",  # Misaligned pipes
+            "|---------|----------|--------|",
+            "| Data 1  |Data 2| Data 3|",  # Misaligned pipes
+        ]
+
+        # Import the function for testing
+        sys.path.insert(0, str(tests_lint_path))
+        from lint_markdown import validate_table_alignment
+
+        errors = validate_table_alignment(table_lines, 1, "test.md")
+        assert len(errors) > 0, "Expected errors for misaligned pipes"
+        assert any("pipes misaligned" in error for error in errors), (
+            "Expected misalignment detection"
+        )
+
+
 @pytest.fixture
 def config():
     """Default test configuration."""
@@ -43,7 +122,7 @@ def config():
         aggressive_mode=True,
         dry_run=False,
         verbose=False,
-        config_file=".pymarkdown"
+        config_file=".pymarkdown",
     )
 
 
@@ -62,6 +141,7 @@ def aligner(config):
 # ============================================================================
 # Phase 2 Tests: Custom Fixes
 # ============================================================================
+
 
 class TestMD047TrailingNewline:
     """MD047: Files should end with single trailing newline."""
@@ -104,7 +184,7 @@ class TestMD022HeadingBlanks:
         content = "Previous\n\n## Heading\n\nNext"
         result = fixer.fix_md022_heading_blanks(content)
         # Should not add extra blanks
-        assert result.count('\n\n') == 2
+        assert result.count("\n\n") == 2
 
     def test_multiple_heading_levels(self, fixer):
         content = "Text\n# H1\nText\n## H2\nText\n### H3\nText"
@@ -131,8 +211,8 @@ class TestMD031CodeBlockBlanks:
         content = "Text\n\n```python\ncode\n```\n\nText"
         result = fixer.fix_md031_code_block_blanks(content)
         # Should not add extra blanks
-        original_blanks = content.count('\n\n')
-        result_blanks = result.count('\n\n')
+        original_blanks = content.count("\n\n")
+        result_blanks = result.count("\n\n")
         assert result_blanks == original_blanks
 
 
@@ -158,8 +238,8 @@ class TestMD032ListBlanks:
     def test_list_already_surrounded(self, fixer):
         content = "Text\n\n- Item\n\nText"
         result = fixer.fix_md032_list_blanks(content)
-        original_blanks = content.count('\n\n')
-        result_blanks = result.count('\n\n')
+        original_blanks = content.count("\n\n")
+        result_blanks = result.count("\n\n")
         assert result_blanks == original_blanks
 
 
@@ -235,19 +315,23 @@ class TestMD013LineLength:
     """MD013: Lines should not exceed configured length."""
 
     def test_wrap_long_line(self, fixer):
-        long_line = "This is a very long line that exceeds the maximum length " \
-                   "of 100 characters and should be wrapped at word boundaries " \
-                   "to maintain readability."
+        long_line = (
+            "This is a very long line that exceeds the maximum length "
+            "of 100 characters and should be wrapped at word boundaries "
+            "to maintain readability."
+        )
         content = long_line
         result = fixer.fix_md013_line_length(content)
-        lines = result.split('\n')
+        lines = result.split("\n")
         # All lines should be <= 100 chars
         assert all(len(line) <= 100 for line in lines)
         assert len(lines) > 1  # Should be wrapped
 
     def test_preserve_table_rows(self, fixer):
-        table = "| Column A | Column B | Column C | Column D | Column E | " \
-               "Column F | Column G | Column H |"
+        table = (
+            "| Column A | Column B | Column C | Column D | Column E | "
+            "Column F | Column G | Column H |"
+        )
         result = fixer.fix_md013_line_length(table)
         # Table should not be wrapped (starts with |)
         assert result == table
@@ -266,14 +350,16 @@ class TestMD013LineLength:
 
     def test_preserve_list_indentation(self, fixer):
         # List item longer than 100 chars
-        content = "- This is a list item that is quite long and exceeds " \
-                 "the maximum line length so it should be wrapped but " \
-                 "preserve indentation for continuation lines"
+        content = (
+            "- This is a list item that is quite long and exceeds "
+            "the maximum line length so it should be wrapped but "
+            "preserve indentation for continuation lines"
+        )
         result = fixer.fix_md013_line_length(content)
-        lines = result.split('\n')
+        lines = result.split("\n")
         # Continuation lines should be indented
         if len(lines) > 1:
-            assert lines[1].startswith('  ')  # 2 spaces for "- "
+            assert lines[1].startswith("  ")  # 2 spaces for "- "
 
     def test_short_lines_unchanged(self, fixer):
         content = "Short line\nAnother short line"
@@ -286,23 +372,18 @@ class TestMD013LineLength:
 # Phase 3 Tests: Table Alignment
 # ============================================================================
 
+
 class TestTableAlignment:
     """MD060: Table pipes must be vertically aligned."""
 
     def test_align_simple_table(self, aligner):
-        table = [
-            "| A | B |",
-            "|---|---|",
-            "| 1 | 2 |",
-            "| 100 | 200 |"
-        ]
-        content = '\n'.join(table)
+        table = ["| A | B |", "|---|---|", "| 1 | 2 |", "| 100 | 200 |"]
+        content = "\n".join(table)
         result = aligner.align_tables(content)
 
         # Check that pipes are aligned
-        lines = result.split('\n')
-        pipe_positions = [[i for i, c in enumerate(line) if c == '|']
-                         for line in lines]
+        lines = result.split("\n")
+        pipe_positions = [[i for i, c in enumerate(line) if c == "|"] for line in lines]
 
         # All rows should have same pipe positions
         assert len(set(tuple(p) for p in pipe_positions)) == 1
@@ -313,38 +394,29 @@ class TestTableAlignment:
             "| Name | Age | City |",
             "|------|-----|------|",
             "| Alice | 30 | NYC |",
-            "| Bob | 25 | San Francisco |"
+            "| Bob | 25 | San Francisco |",
         ]
-        content = '\n'.join(table)
+        content = "\n".join(table)
         result = aligner.align_tables(content)
 
-        lines = result.split('\n')
+        lines = result.split("\n")
         # "San Francisco" should determine column width
         assert "San Francisco" in result
         # All pipes should align
-        pipe_positions = [[i for i, c in enumerate(line) if c == '|']
-                         for line in lines]
+        pipe_positions = [[i for i, c in enumerate(line) if c == "|"] for line in lines]
         assert len(set(tuple(p) for p in pipe_positions)) == 1
 
     def test_preserve_separator_row(self, aligner):
-        table = [
-            "| Col1 | Col2 |",
-            "|------|------|",
-            "| A | B |"
-        ]
-        content = '\n'.join(table)
+        table = ["| Col1 | Col2 |", "|------|------|", "| A | B |"]
+        content = "\n".join(table)
         result = aligner.align_tables(content)
 
         # Separator should still be dashes
         assert "------" in result or "----" in result
 
     def test_table_already_aligned(self, aligner):
-        table = [
-            "| A   | B   |",
-            "| --- | --- |",
-            "| 1   | 2   |"
-        ]
-        content = '\n'.join(table)
+        table = ["| A   | B   |", "| --- | --- |", "| 1   | 2   |"]
+        content = "\n".join(table)
         result = aligner.align_tables(content)
 
         # Should detect it's already aligned
@@ -360,6 +432,7 @@ class TestTableAlignment:
 # ============================================================================
 # Integration Tests
 # ============================================================================
+
 
 class TestFullWorkflow:
     """Test complete fix_markdown_file workflow."""
@@ -388,7 +461,7 @@ Next paragraph
         assert results.success
         # Should have fixes in phase 2 (headings, code, lists, punctuation)
         # and phase 3 (tables)
-        total_fixes = results.details.get('total_fixes', 0)
+        total_fixes = results.details.get("total_fixes", 0)
         assert total_fixes > 0
 
         # Read result
@@ -411,7 +484,7 @@ Next paragraph
         # File should be unchanged
         assert test_file.read_text() == original
         # But should report fixes
-        assert results.details.get('total_fixes', 0) > 0
+        assert results.details.get("total_fixes", 0) > 0
 
     def test_empty_file(self, config, tmp_path):
         """Test handling of empty file."""
@@ -446,12 +519,13 @@ Done.
         results = fix_markdown_file(str(test_file), config)
         assert results.success
         # Might add trailing newline, but otherwise minimal fixes
-        assert results.details.get('total_fixes', 0) <= 1
+        assert results.details.get("total_fixes", 0) <= 1
 
 
 # ============================================================================
 # Edge Cases and Error Handling
 # ============================================================================
+
 
 class TestEdgeCases:
     """Test edge cases and error handling."""
@@ -466,11 +540,11 @@ class TestEdgeCases:
     def test_very_long_table(self, aligner):
         """Test table with many rows."""
         rows = ["| A | B |", "|---|---|"]
-        rows.extend([f"| {i} | {i*2} |" for i in range(100)])
-        content = '\n'.join(rows)
+        rows.extend([f"| {i} | {i * 2} |" for i in range(100)])
+        content = "\n".join(rows)
 
         result = aligner.align_tables(content)
-        lines = result.split('\n')
+        lines = result.split("\n")
         assert len(lines) == 102  # header + separator + 100 rows
 
     def test_malformed_table(self, aligner):
@@ -478,9 +552,9 @@ class TestEdgeCases:
         table = [
             "| A | B | C |",
             "|---|---|",  # Missing column
-            "| 1 | 2 |"
+            "| 1 | 2 |",
         ]
-        content = '\n'.join(table)
+        content = "\n".join(table)
 
         # Should handle gracefully
         result = aligner.align_tables(content)
@@ -511,6 +585,7 @@ def foo():
 # Performance Tests
 # ============================================================================
 
+
 class TestPerformance:
     """Test performance with large files."""
 
@@ -521,20 +596,23 @@ class TestPerformance:
         # Generate large file (1000 lines)
         lines = []
         for i in range(200):
-            lines.extend([
-                f"## Section {i}",
-                f"Content for section {i}.",
-                "",
-                "```python",
-                f"def func_{i}():",
-                "    pass",
-                "```",
-                ""
-            ])
+            lines.extend(
+                [
+                    f"## Section {i}",
+                    f"Content for section {i}.",
+                    "",
+                    "```python",
+                    f"def func_{i}():",
+                    "    pass",
+                    "```",
+                    "",
+                ]
+            )
 
-        test_file.write_text('\n'.join(lines))
+        test_file.write_text("\n".join(lines))
 
         import time
+
         start = time.time()
         results = fix_markdown_file(str(test_file), config)
         elapsed = time.time() - start
@@ -547,21 +625,23 @@ class TestPerformance:
         """Test alignment of many tables."""
         tables = []
         for i in range(50):
-            tables.extend([
-                f"## Table {i}",
-                "",
-                "| A | B | C |",
-                "|---|---|---|",
-                "| 1 | 2 | 3 |",
-                ""
-            ])
+            tables.extend(
+                [
+                    f"## Table {i}",
+                    "",
+                    "| A | B | C |",
+                    "|---|---|---|",
+                    "| 1 | 2 | 3 |",
+                    "",
+                ]
+            )
 
-        content = '\n'.join(tables)
+        content = "\n".join(tables)
         result = aligner.align_tables(content)
 
         # Should handle without performance degradation
         assert result is not None
-        assert len(result.split('\n')) == len(tables)
+        assert len(result.split("\n")) == len(tables)
 
 
 if __name__ == "__main__":

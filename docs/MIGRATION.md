@@ -26,7 +26,6 @@ no longer uses hardcoded defaults.
 
    ```bash
    cp .env.example .env
-   ```
 
 2. **Configure all required variables**:
    - All variables in `.env.example` are mandatory
@@ -156,8 +155,6 @@ from src.core.config import Config
 config = Config.load()
 chroma_host = config.chroma_host
 
-```
-
 ### Implementation Migration Steps
 
 #### Step 1: Update Custom Code Imports
@@ -178,8 +175,6 @@ from src.core.context import get_context
 ctx = get_context()
 result = ctx.vectorstore.similarity_search(query)
 
-```
-
 #### Step 2: Migrate Custom Commands
 
 If you added custom slash commands to `handle_slash_command()`:
@@ -195,8 +190,6 @@ def handle_mycustom(args: str) -> None:
     """Handle /mycustom command."""
     print(f"Custom command executed: {args}")
 
-```
-
 1. The handler will auto-register when imported
 
 #### Step 3: Migrate Custom Tools
@@ -207,6 +200,7 @@ If you added custom AI tools:
 2. Define tool schema and executor:
 
 ```python
+
 from src.tools.registry import ToolRegistry
 from typing import Dict, Any
 
@@ -254,8 +248,6 @@ def test_something():
 
 def teardown():
     reset_context()  # Clean up for next test
-
-```
 
 ### Backwards Compatibility
 
@@ -317,8 +309,6 @@ If you need to rollback to v0.2.0:
 ```bash
 git checkout tags/v0.2.0
 uv pip install -r requirements.txt
-
-```
 
 Note: No database migration is needed for rollback—data formats are compatible.
 
@@ -520,6 +510,7 @@ best practices.
 ### From JSON to Database
 
 ```python
+
 def migrate_json_to_database(json_file: str, db_store):
     """Migrate existing JSON conversations to database"""
 
@@ -547,6 +538,7 @@ def migrate_json_to_database(json_file: str, db_store):
 ### Data Validation
 
 ```python
+
 def validate_migration(source_count: int, target_count: int) -> bool:
     """Validate that migration preserved all data"""
     if source_count != target_count:
@@ -566,6 +558,7 @@ def validate_migration(source_count: int, target_count: int) -> bool:
 ### Usage Statistics
 
 ```sql
+
 -- Conversation statistics
 SELECT
     session_id,
@@ -592,6 +585,7 @@ GROUP BY user_id;
 ### Performance Metrics
 
 ```python
+
 def log_query_performance(query_name: str, start_time: float, result_count:
 int):
     """Log query performance for monitoring"""
@@ -602,8 +596,6 @@ int):
     # Could send to monitoring system
     # metrics_client.histogram('db_query_duration', duration, tags={'query':
 query_name})
-
-```
 
 This guide provides a comprehensive foundation for implementing various database
 backends for conversation memory storage, with security, performance, and

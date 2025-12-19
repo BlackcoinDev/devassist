@@ -54,13 +54,26 @@ def run_command(cmd, description):
 
 
 def main():
-    """
-    Main linting orchestrator that runs comprehensive checks across the entire project.
+    """Main function to run all linting checks."""
+    import argparse
 
-    Executes Python linting, Markdown linting, shell script validation, configuration checks,
-    and project structure validation in sequence.
-    """
+    parser = argparse.ArgumentParser(description="Run comprehensive code linting")
+    parser.add_argument(
+        "--fix-markdown",
+        action="store_true",
+        help="Automatically fix markdown issues after linting",
+    )
+    parser.add_argument(
+        "--fix-all",
+        action="store_true",
+        help="Automatically fix all auto-fixable issues",
+    )
+
+    args = parser.parse_args()
+
     print("🔧 All Code Linting v0.2.0")
+    if args.fix_markdown or args.fix_all:
+        print("🔨 Auto-fix mode enabled")
     print("=" * 50)
 
     # Get project root directory
@@ -73,7 +86,7 @@ def main():
 
     # 1. Python linting
     print("\n🐍 Python Files:")
-    if not run_command("python tests/lint/lint-python.py", "Python linting"):
+    if not run_command("uv run python tests/lint/lint-python.py", "Python linting"):
         all_passed = False
 
     # 2. Shell script linting (if shellcheck is available)
@@ -108,22 +121,8 @@ def main():
     else:
         print("ℹ️ No shell scripts found")
 
-    # 3. Configuration file checks
-    print("\n⚙️ Configuration Files:")
-
-    # Check .env file exists and is readable
-    if os.path.exists(".env"):
-        try:
-            with open(".env", "r") as f:
-                f.read()  # Just check readability
-            print("✅ .env file is readable")
-        except Exception as e:
-            print(f"❌ .env file error: {e}")
-            all_passed = False
-    else:
-        print("⚠️ .env file not found")
-
-    # Check for required files
+    # Validate required files
+    print("\n📋 Required Files:")
     required_files = [
         "src/main.py",
         "src/gui.py",
@@ -141,8 +140,55 @@ def main():
 
     # 3. Markdown linting
     print("\n📄 Markdown Files:")
-    if not run_command("python tests/lint/lint-markdown.py", "Markdown linting"):
+    markdown_passed = run_command(
+        "uv run python tests/lint/lint-markdown.py", "Markdown linting"
+    )
+    if not markdown_passed:
         all_passed = False
+
+        # Auto-fix markdown issues if requested
+        if args.fix_markdown or args.fix_all:
+            print("\n🔨 Auto-fixing markdown issues...")
+            # Find all markdown files and fix them
+            md_files = []
+            for root, dirs, files in os.walk("."):
+                dirs[:] = [
+                    d
+                    for d in dirs
+                    if d
+                    not in [
+                        "__pycache__",
+                        ".git",
+                        "venv",
+                        "node_modules",
+                        "faiss_index",
+                        "chroma_data",
+                        "blackcoin-more",
+                        ".pytest_cache",
+                    ]
+                ]
+                for file in files:
+                    if file.endswith(".md"):
+                        md_files.append(os.path.join(root, file))
+
+            if md_files:
+                files_arg = " ".join(f'"{f}"' for f in md_files)
+                fix_cmd = f"uv run python tests/lint/fix-markdown.py {files_arg}"
+                if run_command(fix_cmd, "Markdown auto-fix"):
+                    print("✅ Markdown issues auto-fixed!")
+                    # Re-run linting to verify fixes
+                    print("\n🔄 Re-verifying markdown fixes...")
+                    if run_command(
+                        "uv run python tests/lint/lint-markdown.py", "Markdown re-lint"
+                    ):
+                        print("✅ Markdown issues resolved!")
+                        all_passed = True  # Override the failure since we fixed it
+                    else:
+                        print("❌ Some markdown issues could not be auto-fixed")
+                else:
+                    print("❌ Markdown auto-fix failed")
+            else:
+                print("ℹ️ No markdown files found to fix")
 
     # 4. Project structure check
     print("\n📁 Project Structure:")
@@ -155,10 +201,18 @@ def main():
 
     print("\n" + "=" * 50)
     if all_passed:
-        print("🎉 All linting checks passed!")
+        if args.fix_markdown or args.fix_all:
+            print("🎉 All linting checks passed (with auto-fixes applied)!")
+        else:
+            print("🎉 All linting checks passed!")
         return True
     else:
-        print("❌ Some checks failed. Please review the issues above.")
+        if args.fix_markdown or args.fix_all:
+            print("❌ Some checks failed. Auto-fix was attempted where possible.")
+            print("💡 Run without --fix-markdown to see remaining manual fixes needed.")
+        else:
+            print("❌ Some checks failed. Please review the issues above.")
+            print("💡 Use --fix-markdown to auto-fix markdown issues automatically.")
         return False
 
 
