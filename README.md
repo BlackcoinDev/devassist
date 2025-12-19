@@ -399,24 +399,27 @@ python tests/lint/lint-python.py
 
 1. **LM Studio** (Port 1234) - **REQUIRED**:
 
-     ```bash
-     # Install LM Studio and load qwen3-vl-30b model
-     # Start local server at http://192.168.0.203:1234
+    ```bash
+    # Install LM Studio and load qwen3-vl-30b model
+    # Start local server at http://192.168.0.203:1234
+    ```
 
 2. **ChromaDB v2 Server** (Port 8000) - **REQUIRED** for learning features:
 
-     ```bash
-     # Install ChromaDB
-     pip install chromadb
+    ```bash
+    # Install ChromaDB
+    pip install chromadb
 
-     # Start ChromaDB v2 server (MANDATORY for /learn and /populate commands)
-     chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
+    # Start ChromaDB v2 server (MANDATORY for /learn and /populate commands)
+    chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
+    ```
 
 3. **Ollama** (Port 11434) - **REQUIRED** for learning features:
 
-     ```bash
-     # Install Ollama for embeddings
-     ollama pull qwen3-embedding:latest
+    ```bash
+    # Install Ollama for embeddings
+    ollama pull qwen3-embedding:latest
+    ```
 
      # Start Ollama service (MANDATORY for vector database operations)
      ollama serve
@@ -437,58 +440,64 @@ all variables before running.
    ```bash
    git clone https://github.com/BlackcoinDev/devassist.git
    cd devassist
+   ```
 
 2. **Create Python 3.13.x virtual environment**:
 
-     **Using uv (recommended):**
-  
-  ```bash
-     uv venv venv --python 3.13  # Uses latest 3.13.x available on your system
-     source venv/bin/activate    # On Windows: venv\Scripts\activate
+   **Using uv (recommended):**
 
-     **Using pip3:**
-   
-  ```bash
-     python3 -m venv venv
-     source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```bash
+   uv venv venv --python 3.13  # Uses latest 3.13.x available on your system
+   source venv/bin/activate    # On Windows: venv\Scripts\activate
+   ```
 
-   1. **Install dependencies**:
+   **Using pip3:**
 
-      **Using uv (recommended):**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-      ```bash
-      uv pip install -r requirements.txt
+3. **Install dependencies**:
 
-      **Using pip3:**
+   **Using uv (recommended):**
 
-      ```bash
-      pip3 install -r requirements.txt
+   ```bash
+   uv pip install -r requirements.txt
+   ```
+
+   **Using pip3:**
+
+   ```bash
+   pip3 install -r requirements.txt
+   ```
 
    Optional: Install shellcheck for shell script linting (available on macOS via Homebrew, Linux via package managers,
 Windows via Chocolatey/Scoop). This enables comprehensive linting of shell scripts in the project, helping detect errors
 and improve code quality. Install with: `brew install shellcheck` (macOS), `sudo apt install shellcheck`
 (Ubuntu/Debian), or equivalent for your platform.
 
-3. **Configure environment (REQUIRED)**:
+4. **Configure environment (REQUIRED)**:
 
-     ```bash
-     cp .env.example .env
-     # Edit .env with your settings (see Configuration section below)
-     # The application WILL NOT start without a properly configured .env file
+   ```bash
+   cp .env.example .env
+   # Edit .env with your settings (see Configuration section below)
+   # The application WILL NOT start without a properly configured .env file
+5. **Start required services** (see Prerequisites section above)
 
-4. **Start required services** (see Prerequisites section above)
+6. **Run the application**:
 
-5. **Run the application**:
+   **GUI Version (Recommended):**
 
-    **GUI Version (Recommended):**
-   
-    ```bash
-    uv run python launcher.py        # Modern graphical interface
+   ```bash
+   uv run python launcher.py        # Modern graphical interface
+   ```
 
-    **CLI Version (Terminal):**
-   
-    ```bash
-    uv run python launcher.py --cli  # Traditional terminal interface
+   **CLI Version (Terminal):**
+
+   ```bash
+   uv run python launcher.py --cli  # Traditional terminal interface
+   ```
 
 ## ⚙️ Configuration
 
@@ -630,7 +639,7 @@ Regular commands (no slash needed):
 quit    - Exit the application
 exit    - Exit the application
 q       - Exit the application
-```text
+```
 
 ## 🖥️ GUI Interface
 
@@ -723,43 +732,45 @@ You: quit
 
 👋 Goodbye! Your conversation has been saved.
 
+```
+
 ### Slash Commands v0.2.0
 
-| Command            | Description                                                           | Example                                    |
-| ------------------ | --------------------------------------------------------------------- | ------------------------------------------ |
-| `/learn <text>`    | **Teach AI new information** (stores in ChromaDB)                     | `/learn Docker containers are lightweight` |
-| `/web <url>`       | **Learn content from webpage** (web ingestion via Docling)            | `/web https://example.com`                 |
-| `/vectordb`        | **Inspect knowledge base** (shows chunks, sources, statistics)        | `/vectordb`                                |
-| `/mem0`            | **Inspect personalized memory** (user preferences and context)        | `/mem0`                                    |
-| `/populate <path>` | **Bulk import codebases** (uses document processing tools)            | `/populate /path/to/project`               |
-| `/model`           | **Check/switch AI models**                                            | `/model`                                   |
-| `/memory`          | **View conversation history** (SQLite database)                       | `/memory`                                  |
-| `/clear`           | **Reset conversation memory**                                         | `/clear`                                   |
-| `/space <cmd>`     | **Workspace management** (isolated knowledge bases)                   | `/space create myproject`                  |
-| `/context <mode>`  | **Control context integration** (`auto`/`on`/`off`)                   | `/context auto`                            |
-| `/learning <mode>` | **Control learning behavior** (`normal`/`strict`/`off`)               | `/learning normal`                         |
-| `/export <fmt>`    | **Export conversation** (`json`/`markdown`)                           | `/export json`                             |
-| `/read <file>`     | **Read file contents** (direct file access)                           | `/read README.md`                          |
-| `/write <file>`    | **Write content to file** (direct file editing)                       | `/write notes.txt Hello world`             |
-| `/list [dir]`      | **List directory contents** (filesystem browsing)                     | `/list src/`                               |
-| `/pwd`             | **Show current directory** (navigation)                               | `/pwd`                                     |
-| `/help`            | **Show all commands**                                                 | `/help`                                    |
-| `quit`             | **Exit application**                                                  | `quit`                                     |
+| Command            | Description                                                    | Example                                    |
+| ------------------ | -------------------------------------------------------------- | ------------------------------------------ |
+| `/learn <text>`    | **Teach AI new information** (stores in ChromaDB)              | `/learn Docker containers are lightweight` |
+| `/web <url>`       | **Learn content from webpage** (web ingestion via Docling)     | `/web https://example.com`                 |
+| `/vectordb`        | **Inspect knowledge base** (shows chunks, sources, statistics) | `/vectordb`                                |
+| `/mem0`            | **Inspect personalized memory** (user preferences and context) | `/mem0`                                    |
+| `/populate <path>` | **Bulk import codebases** (uses document processing tools)     | `/populate /path/to/project`               |
+| `/model`           | **Check/switch AI models**                                     | `/model`                                   |
+| `/memory`          | **View conversation history** (SQLite database)                | `/memory`                                  |
+| `/clear`           | **Reset conversation memory**                                  | `/clear`                                   |
+| `/space <cmd>`     | **Workspace management** (isolated knowledge bases)            | `/space create myproject`                  |
+| `/context <mode>`  | **Control context integration** (`auto`/`on`/`off`)            | `/context auto`                            |
+| `/learning <mode>` | **Control learning behavior** (`normal`/`strict`/`off`)        | `/learning normal`                         |
+| `/export <fmt>`    | **Export conversation** (`json`/`markdown`)                    | `/export json`                             |
+| `/read <file>`     | **Read file contents** (direct file access)                    | `/read README.md`                          |
+| `/write <file>`    | **Write content to file** (direct file editing)                | `/write notes.txt Hello world`             |
+| `/list [dir]`      | **List directory contents** (filesystem browsing)              | `/list src/`                               |
+| `/pwd`             | **Show current directory** (navigation)                        | `/pwd`                                     |
+| `/help`            | **Show all commands**                                          | `/help`                                    |
+| `quit`             | **Exit application**                                           | `quit`                                     |
 
 ### AI Tool Integration
 
 **8 AI Tools Available** (qwen3-vl-30b can call these autonomously):
 
-| Tool                        | Function                               | Use Case                   |
-| --------------------------- | -------------------------------------- | -------------------------- |
-| `read_file()`               | Read file contents                     | "show me the README"       |
-| `write_file()`              | Create/modify files                    | "create a config file"     |
-| `list_directory()`          | Browse directories                     | "what files are here"      |
-| `get_current_directory()`   | Show current path                      | "where am I"               |
-| `parse_document()`          | Extract text/tables/forms/layout       | "analyze this PDF"         |
-| `learn_information()`       | Store in knowledge base                | "remember this fact"       |
-| `search_knowledge()`        | Query learned information              | "what do you know about X" |
-| `search_web()`              | Search internet with DuckDuckGo        | "what's the latest on AI"  |
+| Tool                      | Function                         | Use Case                   |
+| ------------------------- | -------------------------------- | -------------------------- |
+| `read_file()`             | Read file contents               | "show me the README"       |
+| `write_file()`            | Create/modify files              | "create a config file"     |
+| `list_directory()`        | Browse directories               | "what files are here"      |
+| `get_current_directory()` | Show current path                | "where am I"               |
+| `parse_document()`        | Extract text/tables/forms/layout | "analyze this PDF"         |
+| `learn_information()`     | Store in knowledge base          | "remember this fact"       |
+| `search_knowledge()`      | Query learned information        | "what do you know about X" |
+| `search_web()`            | Search internet with DuckDuckGo  | "what's the latest on AI"  |
 
 **Tool Testing Status:**
 
@@ -783,7 +794,7 @@ You: quit
 ```bash
 User: "analyze this PDF"
 AI: Calls parse_document() → Gets {"success": true, "content": "..."} → Analyzes data → "Based on the PDF content..."
-```text
+```
 
 ### Verbose Logging & AI Transparency
 
@@ -797,7 +808,7 @@ VERBOSE_LOGGING=true
 SHOW_LLM_REASONING=true
 SHOW_TOKEN_USAGE=true
 SHOW_TOOL_DETAILS=true
-```text
+```
 
 **What you'll see:**
 
@@ -844,7 +855,7 @@ You: /learn Python was created by Guido van Rossum in 1991
 You: /learn My favorite programming language is Python
 ✅ Learned: My favorite programming language is...
 
-```text
+```
 
 **AI uses learned information in conversations:**
 
@@ -857,7 +868,7 @@ that Python is your favorite programming language...
 You: Tell me about containers
 AI Assistant: Based on what you've taught me, Docker containers provide lightweight, portable application packaging...
 
-```python
+```
 
 **Bulk import entire codebases:**
 
@@ -869,6 +880,8 @@ You: /populate /path/to/your/project
 
 You: How does the authentication work in this codebase?
 AI Assistant: Based on the codebase, the authentication system uses JWT tokens...
+
+```
 
 ### Learning Mode Control
 
@@ -899,6 +912,8 @@ Control how the AI uses learned information with three learning modes:
 /learning strict  # Minimal context, learning queries only
 /learning off     # Disable all learning features
 
+```
+
 ## 🛠️ Advanced Usage
 
 ### Populating Knowledge Base
@@ -919,6 +934,8 @@ optimal reliability and performance.
 - `--clear`: Delete existing collection before repopulating (prevents duplicates)
 - `--dry-run`: Validate files without writing to database
 
+```
+
 ### Custom Knowledge Addition
 
 ```bash
@@ -933,29 +950,25 @@ optimal reliability and performance.
 
 /populate /path/to/project/src
 /populate .  # Current directory
-```text
+```
 
 ### Memory Management
 
-```bash
-
-# View current conversation
+## View current conversation
 
 /memory
 
-# Clear all memory
+## Clear all memory
 
 /clear
 
-# Memory persists automatically between sessions
-
-```text
+## Memory persists automatically between sessions
 
 ## 🔧 Development
 
 ### Project Structure
 
-```go
+```text
 devassist/
 ├── launcher.py                # Unified launcher for GUI/CLI versions
 ├── src/
@@ -1031,6 +1044,7 @@ devassist/
 ├── mypy.ini                   # MyPy type checking configuration
 ├── LICENSE                    # MIT License
 └── README.md                  # This file
+```
 
 ### Key Files Explanation
 
@@ -1071,25 +1085,29 @@ devassist/
 
 ### Common Issues
 
-**"ERROR: No .env file found!"**
+**ERROR: No .env file found!**
 
 - The application requires a `.env` file - copy from template: `cp .env.example .env`
 - Edit `.env` with your specific configuration values
 - All variables in `.env.example` are required - no defaults exist
 
-**"ERROR: [VARIABLE_NAME] environment variable is required"**
+#### ERROR: [VARIABLE_NAME] environment variable is required
 
 - Check that all required variables are set in your `.env` file
 - Compare with `.env.example` to ensure nothing is missing
 - Restart the application after fixing the configuration
 
-**"Cannot connect to LM Studio"**
+#### Cannot connect to LM Studio
 
-- Ensure LM Studio is running and a model is loaded
-- Check `LM_STUDIO_URL` in `.env` matches your LM Studio endpoint
-- Verify the model specified in `MODEL_NAME` is loaded in LM Studio
+- Ensure LM Studio is running and a model is loaded.
+- Verify the LM Studio server is listening on the correct host and port (default: `http://localhost:1234/v1`).
+- Check that `LM_STUDIO_URL` in `.env` matches the LM Studio endpoint exactly (including `/v1`).
+- Confirm that the model specified in `MODEL_NAME` is loaded and available in LM Studio.
+- If LM Studio is behind a firewall or running on a remote host, ensure the host and port are reachable from your machine.
+- Restart LM Studio if you recently changed the model or configuration.
+- Verify that the `LM_STUDIO_KEY` is set correctly if authentication is enabled.
 
-**"ERROR: ChromaDB connection failed"**
+#### ERROR: ChromaDB connection failed
 
 - ChromaDB v2 server is **required** for learning features (/learn and /populate)
 - Ensure ChromaDB server is running: `chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data`
@@ -1097,25 +1115,25 @@ devassist/
 - Ensure Ollama is running: `ollama serve`
 - Check `OLLAMA_BASE_URL` points to correct Ollama instance
 
-**"Import errors"**
+#### Import errors
 
 - Activate virtual environment: `source venv/bin/activate`
 - Install dependencies: `uv pip install -r requirements.txt`
 - Check Python version compatibility (requires Python 3.13.x)
 
-**"Memory not loading"**
+#### Memory not loading
 
 - Check `db/history.db` exists and is readable
 - Verify file permissions and SQLite database integrity
 - The app will create a new database if corrupted
 
-**"Database connection failed"**
+#### Database connection failed
 
 - For SQLite: Ensure write permissions to database file location
 - For ChromaDB: Check server is running and network connectivity
 - For Ollama: Verify service is running and accessible
 
-**"Data corruption detected"**
+#### Data corruption detected
 
 - Run integrity checks on database
 - Restore from backup if available
