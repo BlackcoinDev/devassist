@@ -162,7 +162,9 @@ class TestFileSystemTools:
     @patch("os.path.abspath")
     @patch("os.path.exists")
     @patch("os.path.isfile")
-    def test_read_file_not_a_file(self, mock_isfile, mock_exists, mock_abspath, mock_getcwd):
+    def test_read_file_not_a_file(
+        self, mock_isfile, mock_exists, mock_abspath, mock_getcwd
+    ):
         """Test read_file when path is not a file (e.g., directory)."""
         mock_getcwd.return_value = "/tmp"
         mock_abspath.return_value = "/tmp/some_dir"
@@ -179,9 +181,17 @@ class TestFileSystemTools:
     @patch("os.path.exists")
     @patch("os.path.isfile")
     @patch("os.path.getsize")
-    @patch("builtins.open", side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "invalid"))
+    @patch(
+        "builtins.open", side_effect=UnicodeDecodeError("utf-8", b"", 0, 1, "invalid")
+    )
     def test_read_file_unicode_decode_error(
-        self, mock_open_func, mock_getsize, mock_isfile, mock_exists, mock_abspath, mock_getcwd
+        self,
+        mock_open_func,
+        mock_getsize,
+        mock_isfile,
+        mock_exists,
+        mock_abspath,
+        mock_getcwd,
     ):
         """Test read_file with binary file causing UnicodeDecodeError."""
         mock_getcwd.return_value = "/tmp"
@@ -214,7 +224,13 @@ class TestFileSystemTools:
     @patch("os.makedirs")
     @patch("builtins.open", new_callable=mock_open)
     def test_write_file_create_directory(
-        self, mock_file, mock_makedirs, mock_exists, mock_dirname, mock_abspath, mock_getcwd
+        self,
+        mock_file,
+        mock_makedirs,
+        mock_exists,
+        mock_dirname,
+        mock_abspath,
+        mock_getcwd,
     ):
         """Test write_file creating parent directory."""
         mock_getcwd.return_value = "/tmp"
@@ -257,7 +273,9 @@ class TestFileSystemTools:
     @patch("os.path.abspath")
     @patch("os.path.exists")
     @patch("os.path.isdir")
-    def test_list_directory_not_a_directory(self, mock_isdir, mock_exists, mock_abspath, mock_getcwd):
+    def test_list_directory_not_a_directory(
+        self, mock_isdir, mock_exists, mock_abspath, mock_getcwd
+    ):
         """Test list_directory when path is a file, not directory."""
         mock_getcwd.return_value = "/tmp"
         mock_abspath.return_value = "/tmp/file.txt"
@@ -350,7 +368,9 @@ class TestDocumentProcessingTools:
     @patch("os.getcwd")
     @patch("os.path.abspath")
     @patch("os.path.exists")
-    def test_parse_document_file_not_found(self, mock_exists, mock_abspath, mock_getcwd):
+    def test_parse_document_file_not_found(
+        self, mock_exists, mock_abspath, mock_getcwd
+    ):
         """Test file not found error."""
         mock_getcwd.return_value = "/tmp"
         mock_abspath.return_value = "/tmp/missing.pdf"
@@ -364,7 +384,9 @@ class TestDocumentProcessingTools:
     @patch("os.getcwd")
     @patch("os.path.abspath")
     @patch("os.path.exists")
-    def test_parse_document_docling_not_installed(self, mock_exists, mock_abspath, mock_getcwd):
+    def test_parse_document_docling_not_installed(
+        self, mock_exists, mock_abspath, mock_getcwd
+    ):
         """Test ImportError when docling is not installed."""
         mock_getcwd.return_value = "/tmp"
         mock_abspath.return_value = "/tmp/test.pdf"
@@ -372,6 +394,7 @@ class TestDocumentProcessingTools:
 
         # Mock the import to raise ImportError
         import builtins
+
         real_import = builtins.__import__
 
         def mock_import(name, *args, **kwargs):
@@ -537,7 +560,7 @@ class TestWebSearchTools:
 
     def test_search_web_success(self):
         """Test successful web search."""
-        # Mock the duckduckgo_search module properly
+        # Mock the ddgs module properly
         mock_ddgs_class = MagicMock()
         mock_ddgs_instance = MagicMock()
         mock_ddgs_instance.text.return_value = [
@@ -548,8 +571,8 @@ class TestWebSearchTools:
         mock_ddgs_instance.__exit__.return_value = None
         mock_ddgs_class.return_value = mock_ddgs_instance
 
-        with patch.dict("sys.modules", {"duckduckgo_search": MagicMock()}):
-            with patch("duckduckgo_search.DDGS", mock_ddgs_class):
+        with patch.dict("sys.modules", {"ddgs": MagicMock()}):
+            with patch("ddgs.DDGS", mock_ddgs_class):
                 result = execute_web_search("test query")
 
                 assert result["success"] is True
@@ -558,8 +581,8 @@ class TestWebSearchTools:
 
     def test_search_web_failure(self):
         """Test web search failure."""
-        with patch.dict("sys.modules", {"duckduckgo_search": MagicMock()}):
-            with patch("duckduckgo_search.DDGS", side_effect=Exception("Network error")):
+        with patch.dict("sys.modules", {"ddgs": MagicMock()}):
+            with patch("ddgs.DDGS", side_effect=Exception("Network error")):
                 result = execute_web_search("test query")
 
                 assert "error" in result
@@ -578,14 +601,18 @@ class TestWebSearchTools:
         mock_ddgs_class = MagicMock()
         mock_ddgs_instance = MagicMock()
         mock_ddgs_instance.text.return_value = [
-            {"title": "Coin Result", "body": "About coins", "href": "https://example.com"}
+            {
+                "title": "Coin Result",
+                "body": "About coins",
+                "href": "https://example.com",
+            }
         ]
         mock_ddgs_instance.__enter__.return_value = mock_ddgs_instance
         mock_ddgs_instance.__exit__.return_value = None
         mock_ddgs_class.return_value = mock_ddgs_instance
 
-        with patch.dict("sys.modules", {"duckduckgo_search": MagicMock()}):
-            with patch("duckduckgo_search.DDGS", mock_ddgs_class):
+        with patch.dict("sys.modules", {"ddgs": MagicMock()}):
+            with patch("ddgs.DDGS", mock_ddgs_class):
                 # Test with "bitcoin" - already crypto-related, should NOT enhance
                 result = execute_web_search("bitcoin price")
 
@@ -604,8 +631,8 @@ class TestWebSearchTools:
         mock_ddgs_instance.__exit__.return_value = None
         mock_ddgs_class.return_value = mock_ddgs_instance
 
-        with patch.dict("sys.modules", {"duckduckgo_search": MagicMock()}):
-            with patch("duckduckgo_search.DDGS", mock_ddgs_class):
+        with patch.dict("sys.modules", {"ddgs": MagicMock()}):
+            with patch("ddgs.DDGS", mock_ddgs_class):
                 result = execute_web_search("test query")
 
                 assert "error" in result
@@ -614,9 +641,10 @@ class TestWebSearchTools:
 
     def test_search_web_general_exception(self):
         """Test general unexpected exception handling."""
+
         # Import mock to trigger a general exception during module import
         def failing_import(*args, **kwargs):
-            if args[0] == "duckduckgo_search":
+            if args[0] == "ddgs":
                 raise RuntimeError("Unexpected error")
             raise ImportError("Module not found")
 

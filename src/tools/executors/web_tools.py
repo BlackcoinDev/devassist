@@ -81,7 +81,7 @@ def execute_web_search(query: str, max_results: int = 10) -> Dict[str, Any]:
         Dict with success status and search results
     """
     try:
-        from duckduckgo_search import DDGS  # type: ignore[import-untyped]
+        from ddgs import DDGS  # type: ignore[import-untyped]
 
         print(f"🌍 Searching web for: '{query}'")
 
@@ -118,14 +118,12 @@ def execute_web_search(query: str, max_results: int = 10) -> Dict[str, Any]:
             # If DDGS search fails, provide diagnostic info
             logger.error(f"DDGS search execution error: {str(search_err)}")
             return {
-                "error": f"Web search failed: {str(search_err)}. The duckduckgo-search package is installed but encountered an error."
+                "error": f"Web search failed: {str(search_err)}. The ddgs package is installed but encountered an error."
             }
 
     except ImportError as ie:
         logger.error(f"Failed to import duckduckgo_search: {str(ie)}")
-        return {
-            "error": "duckduckgo-search not installed. Run: pip install duckduckgo-search"
-        }
+        return {"error": "ddgs not installed. Run: pip install ddgs"}
     except Exception as e:
         logger.error(f"Web search failed: {e}")
         return {"error": str(e)}
