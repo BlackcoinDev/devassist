@@ -42,22 +42,22 @@ class TestMemoryCoverage:
         ctx = get_context()
         mock_conn = Mock()
         mock_cursor = Mock()
-        
+
         # Return a row with unknown type "UnknownType"
         mock_cursor.fetchall.return_value = [("UnknownType", "content")]
         mock_conn.cursor.return_value = mock_cursor
-        
+
         ctx.db_conn = mock_conn
         ctx.db_lock = Mock()
-        
+
         # Mock config to enable sqlite
         with patch('src.storage.memory.get_config') as mock_config_get:
             mock_config = Mock()
             mock_config.db_type = "sqlite"
             mock_config_get.return_value = mock_config
-            
+
             history = load_memory()
-            
+
             # Should skip the unknown message
             assert len(history) == 0
 
@@ -67,30 +67,30 @@ class TestMemoryCoverage:
         mock_conn = Mock()
         # Raise exception when getting cursor
         mock_conn.cursor.side_effect = Exception("DB Error")
-        
+
         ctx.db_conn = mock_conn
         ctx.db_lock = Mock()
-        
+
         with patch('src.storage.memory.get_config') as mock_config_get:
             mock_config = Mock()
             mock_config.db_type = "sqlite"
             mock_config_get.return_value = mock_config
-            
+
             history = load_memory()
-            
+
             # Should recover and return empty list
             assert history == []
 
     def test_save_memory_db_missing(self):
         """Test saving when DB is missing (RuntimeError pathway)."""
         ctx = get_context()
-        ctx.db_conn = None # Ensure no DB
-        
+        ctx.db_conn = None  # Ensure no DB
+
         with patch('src.storage.memory.get_config') as mock_config_get:
             mock_config = Mock()
             mock_config.db_type = "sqlite"
             mock_config_get.return_value = mock_config
-            
+
             with pytest.raises(RuntimeError, match="Database required but not available"):
                 save_memory([HumanMessage(content="hi")])
 
@@ -102,14 +102,14 @@ class TestMemoryCoverage:
         # Raise error on execute
         mock_cursor.execute.side_effect = Exception("Insert failed")
         mock_conn.cursor.return_value = mock_cursor
-        
+
         ctx.db_conn = mock_conn
-        ctx.db_lock = MagicMock() # Needs to be a context manager
-        
+        ctx.db_lock = MagicMock()  # Needs to be a context manager
+
         with patch('src.storage.memory.get_config') as mock_config_get:
             mock_config = Mock()
             mock_config.db_type = "sqlite"
             mock_config_get.return_value = mock_config
-            
+
             with pytest.raises(Exception, match="Insert failed"):
                 save_memory([HumanMessage(content="hi")])

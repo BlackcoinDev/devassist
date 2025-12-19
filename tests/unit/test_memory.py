@@ -32,7 +32,7 @@ class TestConversationPersistence:
         ctx = get_context()
         ctx.db_conn = MagicMock()
         ctx.db_lock = MagicMock()
-        
+
         # Mock cursor to return no rows
         mock_cursor = ctx.db_conn.cursor.return_value
         mock_cursor.fetchall.return_value = []
@@ -43,7 +43,7 @@ class TestConversationPersistence:
             mock_get_config.return_value = mock_config
 
             history = load_memory()
-            
+
             assert len(history) == 1
             assert isinstance(history[0], SystemMessage)
             assert "coding" in history[0].content
@@ -53,14 +53,14 @@ class TestConversationPersistence:
         ctx = get_context()
         ctx.db_conn = MagicMock()
         ctx.db_lock = MagicMock()
-        
+
         # Mock data from DB
         rows = [
             ("SystemMessage", "Sys prompt"),
             ("HumanMessage", "Hello"),
             ("AIMessage", "Hi there")
         ]
-        
+
         mock_cursor = ctx.db_conn.cursor.return_value
         mock_cursor.fetchall.return_value = rows
 
@@ -70,7 +70,7 @@ class TestConversationPersistence:
             mock_get_config.return_value = mock_config
 
             history = load_memory()
-            
+
             assert len(history) == 3
             assert isinstance(history[0], SystemMessage)
             assert isinstance(history[1], HumanMessage)
@@ -80,7 +80,7 @@ class TestConversationPersistence:
     def test_load_memory_no_db(self):
         """Test loading memory when the database is not available."""
         ctx = get_context()
-        ctx.db_conn = None # No connection
+        ctx.db_conn = None  # No connection
 
         with patch('src.core.config.get_config') as mock_get_config:
             mock_config = MagicMock()
@@ -108,16 +108,16 @@ class TestConversationPersistence:
             mock_get_config.return_value = mock_config
 
             save_memory(history)
-            
+
             # Verify existing messages were deleted
             mock_cursor.execute.assert_any_call("DELETE FROM conversations WHERE session_id = 'default'")
-            
+
             # Verify bulk insert was called
             assert mock_cursor.executemany.called
             args = mock_cursor.executemany.call_args[0]
             assert len(args[1]) == 2
             assert args[1][1] == ("default", "HumanMessage", "User")
-            
+
             # Verify commit
             assert ctx.db_conn.commit.called
 
@@ -128,28 +128,28 @@ class TestHistoryTrimming:
     def test_trim_history_no_trim_needed(self):
         """Test that history is not trimmed if it's within limits."""
         history = [SystemMessage(content="S"), HumanMessage(content="H"), AIMessage(content="A")]
-        
+
         # Limit is 2 pairs (total 5 msgs)
         trimmed = trim_history(history, max_pairs=2)
-        
+
         assert len(trimmed) == 3
         assert trimmed == history
 
     def test_trim_history_performs_trim(self):
         """Test that history is trimmed correctly to keep system msg + recent pairs."""
         history = [
-            SystemMessage(content="System"), # Always keep
-            HumanMessage(content="H1"), 
+            SystemMessage(content="System"),  # Always keep
+            HumanMessage(content="H1"),
             AIMessage(content="A1"),
             HumanMessage(content="H2"),
             AIMessage(content="A2"),
             HumanMessage(content="H3"),
             AIMessage(content="A3")
         ]
-        
+
         # Limit to 1 pair (total 1 + 2 = 3 msgs)
         trimmed = trim_history(history, max_pairs=1)
-        
+
         assert len(trimmed) == 3
         assert trimmed[0].content == "System"
         assert trimmed[1].content == "H3"
@@ -158,7 +158,7 @@ class TestHistoryTrimming:
     def test_trim_history_uses_config_default(self):
         """Test that trim_history uses the default limit from config."""
         history = [SystemMessage(content="S")] + [HumanMessage(content="H")] * 20
-        
+
         with patch('src.storage.memory.get_config') as mock_get_config:
             mock_config = MagicMock()
             mock_config.max_history_pairs = 5

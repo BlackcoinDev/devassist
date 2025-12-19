@@ -115,5 +115,3 @@ def get_database_connection() -> Tuple[Optional[sqlite3.Connection], Optional[th
     """
     ctx = get_context()
     return ctx.db_conn, ctx.db_lock
-
-

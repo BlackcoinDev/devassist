@@ -14,11 +14,12 @@ import pytest
 import responses
 from unittest.mock import MagicMock, patch
 from src.vectordb.spaces import (
-    list_spaces, delete_space, switch_space, 
+    list_spaces, delete_space, switch_space,
     save_current_space, load_current_space, get_space_collection_name
 )
 from src.core.context import get_context, reset_context
 from src.core.context_utils import add_to_knowledge_base, get_relevant_context
+
 
 class TestSpaceWorkflows:
     """End-to-end space workflow testing."""
@@ -28,7 +29,7 @@ class TestSpaceWorkflows:
         reset_context()
         if os.path.exists("space_settings.json"):
             os.remove("space_settings.json")
-        
+
         self.host = "localhost"
         self.port = 8000
         self.base_url = f"http://{self.host}:{self.port}/api/v2"
@@ -68,9 +69,9 @@ class TestSpaceWorkflows:
         # 4. List spaces again (should show 'default' and 'work')
         # We need to clear responses to re-add with new data
         responses.replace(
-            responses.GET, 
-            self.coll_url, 
-            json=[{"name": "space_work", "id": "work-id"}], 
+            responses.GET,
+            self.coll_url,
+            json=[{"name": "space_work", "id": "work-id"}],
             status=200
         )
         spaces = list_spaces()
@@ -99,7 +100,7 @@ class TestSpaceWorkflows:
 
         ctx = get_context()
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings
         mock_embeddings = MagicMock()
         mock_embeddings.embed_query.return_value = [0.1] * 384
@@ -108,23 +109,23 @@ class TestSpaceWorkflows:
 
         # 2. Add knowledge to 'space-a'
         switch_space("space-a")
-        
+
         # API mocks for adding knowledge
         responses.add(
-            responses.GET, 
-            self.coll_url, 
-            json=[{"name": "space_space-a", "id": "a-id"}], 
+            responses.GET,
+            self.coll_url,
+            json=[{"name": "space_space-a", "id": "a-id"}],
             status=200
         )
         responses.add(responses.POST, f"{self.coll_url}/a-id/add", status=201)
-        
+
         assert add_to_knowledge_base("Secret project code: Alpha") is True
 
         # 3. Verify knowledge exists in 'space-a'
         responses.add(
-            responses.POST, 
-            f"{self.coll_url}/a-id/query", 
-            json={"documents": [["Secret project code: Alpha"]]}, 
+            responses.POST,
+            f"{self.coll_url}/a-id/query",
+            json={"documents": [["Secret project code: Alpha"]]},
             status=200
         )
         context_a = get_relevant_context("project code")
@@ -132,22 +133,22 @@ class TestSpaceWorkflows:
 
         # 4. Switch to 'space-b'
         switch_space("space-b")
-        
+
         # API mocks for space-b
         responses.replace(
-            responses.GET, 
-            self.coll_url, 
+            responses.GET,
+            self.coll_url,
             json=[
                 {"name": "space_space-a", "id": "a-id"},
                 {"name": "space_space-b", "id": "b-id"}
-            ], 
+            ],
             status=200
         )
         # Empty query results for space-b
         responses.add(
-            responses.POST, 
-            f"{self.coll_url}/b-id/query", 
-            json={"documents": [[]]}, 
+            responses.POST,
+            f"{self.coll_url}/b-id/query",
+            json={"documents": [[]]},
             status=200
         )
 
@@ -167,7 +168,7 @@ class TestSpaceWorkflows:
         ctx.vectorstore = MagicMock()
         switch_space("persistent-space")
         assert load_current_space() == "persistent-space"
-        
+
         # Simulate app restart
         reset_context()
         assert load_current_space() == "persistent-space"

@@ -180,11 +180,11 @@ class TestCacheManagement:
             mock_get_config.return_value = mock_config
 
             save_query_cache()
-            
+
             # Verify file contains only 500 entries (as per logic in cache.py)
             with open(self.temp_file.name, 'r') as f:
                 saved_data = json.load(f)
-            
+
             assert len(saved_data) == 500
             assert len(ctx.query_cache) == 500
 
@@ -200,6 +200,6 @@ class TestCacheManagement:
 
             # Should not raise exception, just log warning
             save_query_cache()
-            
+
             # Cache should still be intact
             assert len(ctx.query_cache) == 1

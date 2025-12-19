@@ -43,7 +43,7 @@ class TestKnowledgeBaseFunctions:
 
         # No network calls should be made
         result = get_relevant_context(query)
-        
+
         assert "Relevant context:" in result
         assert "cached doc 1" in result
         assert "cached doc 2" in result
@@ -53,8 +53,8 @@ class TestKnowledgeBaseFunctions:
         """Test retrieving context via ChromaDB API."""
         ctx = get_context()
         ctx.current_space = "default"
-        ctx.vectorstore = MagicMock() # Ensure not None
-        
+        ctx.vectorstore = MagicMock()  # Ensure not None
+
         # Mock embeddings
         mock_embeddings = MagicMock()
         mock_embeddings.embed_query.return_value = [0.1, 0.2]
@@ -68,23 +68,23 @@ class TestKnowledgeBaseFunctions:
         with patch('src.core.context_utils.get_config', return_value=mock_config):
             # 1. Mock listing collections to find 'knowledge_base' (default)
             responses.add(
-                responses.GET, 
-                self.coll_url, 
-                json=[{"id": "kb-id", "name": "knowledge_base"}], 
+                responses.GET,
+                self.coll_url,
+                json=[{"id": "kb-id", "name": "knowledge_base"}],
                 status=200
             )
-            
+
             # 2. Mock query endpoint
             query_url = f"{self.coll_url}/kb-id/query"
             responses.add(
-                responses.POST, 
-                query_url, 
-                json={"documents": [["doc from api"]]}, 
+                responses.POST,
+                query_url,
+                json={"documents": [["doc from api"]]},
                 status=200
             )
 
             result = get_relevant_context("query")
-            
+
             assert "Relevant context:" in result
             assert "doc from api" in result
             # Verify it was cached
@@ -96,7 +96,7 @@ class TestKnowledgeBaseFunctions:
         ctx = get_context()
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings
         mock_embeddings = MagicMock()
         mock_embeddings.embed_documents.return_value = [[0.1, 0.2]]
@@ -109,12 +109,12 @@ class TestKnowledgeBaseFunctions:
         with patch('src.core.context_utils.get_config', return_value=mock_config):
             # 1. Mock listing collections
             responses.add(
-                responses.GET, 
-                self.coll_url, 
-                json=[{"id": "kb-id", "name": "knowledge_base"}], 
+                responses.GET,
+                self.coll_url,
+                json=[{"id": "kb-id", "name": "knowledge_base"}],
                 status=200
             )
-            
+
             # 2. Mock add endpoint
             add_url = f"{self.coll_url}/kb-id/add"
             responses.add(responses.POST, add_url, status=201)
@@ -127,7 +127,7 @@ class TestKnowledgeBaseFunctions:
         ctx = get_context()
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings
         mock_embeddings = MagicMock()
         mock_embeddings.embed_documents.return_value = [[0.1, 0.2]]
@@ -136,7 +136,7 @@ class TestKnowledgeBaseFunctions:
         # Force an exception in the API part
         with patch('src.core.context_utils._get_api_session', side_effect=Exception("API Down")):
             success = add_to_knowledge_base("fallback knowledge")
-            
+
             # Should have used LangChain fallback
             assert success is True
             assert ctx.vectorstore.add_documents.called
@@ -145,7 +145,7 @@ class TestKnowledgeBaseFunctions:
         """Test behavior when vectorstore is not initialized."""
         ctx = get_context()
         ctx.vectorstore = None
-        
+
         result = get_relevant_context("query")
         assert result == ""
 
@@ -156,7 +156,7 @@ class TestKnowledgeBaseFunctions:
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
         ctx.embeddings = None
-        
+
         result = get_relevant_context("query")
         assert result == ""
 
@@ -166,12 +166,12 @@ class TestKnowledgeBaseFunctions:
         ctx = get_context()
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings that raise exception
         mock_embeddings = MagicMock()
         mock_embeddings.embed_query.side_effect = Exception("Embedding error")
         ctx.embeddings = mock_embeddings
-        
+
         result = get_relevant_context("query")
         assert result == ""
 
@@ -181,12 +181,12 @@ class TestKnowledgeBaseFunctions:
         ctx = get_context()
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings
         mock_embeddings = MagicMock()
         mock_embeddings.embed_query.return_value = [0.1, 0.2]
         ctx.embeddings = mock_embeddings
-        
+
         mock_config = MagicMock()
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
@@ -194,12 +194,12 @@ class TestKnowledgeBaseFunctions:
         with patch('src.core.context_utils.get_config', return_value=mock_config):
             # Mock listing collections - empty list
             responses.add(
-                responses.GET, 
-                self.coll_url, 
-                json=[], 
+                responses.GET,
+                self.coll_url,
+                json=[],
                 status=200
             )
-            
+
             result = get_relevant_context("query")
             assert result == ""
 
@@ -209,12 +209,12 @@ class TestKnowledgeBaseFunctions:
         ctx = get_context()
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings
         mock_embeddings = MagicMock()
         mock_embeddings.embed_query.return_value = [0.1, 0.2]
         ctx.embeddings = mock_embeddings
-        
+
         mock_config = MagicMock()
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
@@ -222,16 +222,16 @@ class TestKnowledgeBaseFunctions:
         with patch('src.core.context_utils.get_config', return_value=mock_config):
             # Mock listing collections
             responses.add(
-                responses.GET, 
-                self.coll_url, 
-                json=[{"id": "kb-id", "name": "knowledge_base"}], 
+                responses.GET,
+                self.coll_url,
+                json=[{"id": "kb-id", "name": "knowledge_base"}],
                 status=200
             )
-            
+
             # Mock query endpoint failure
             query_url = f"{self.coll_url}/kb-id/query"
             responses.add(responses.POST, query_url, status=500)
-            
+
             result = get_relevant_context("query")
             assert result == ""
 
@@ -241,12 +241,12 @@ class TestKnowledgeBaseFunctions:
         ctx = get_context()
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings
         mock_embeddings = MagicMock()
         mock_embeddings.embed_query.return_value = [0.1, 0.2]
         ctx.embeddings = mock_embeddings
-        
+
         mock_config = MagicMock()
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
@@ -254,21 +254,21 @@ class TestKnowledgeBaseFunctions:
         with patch('src.core.context_utils.get_config', return_value=mock_config):
             # Mock listing collections
             responses.add(
-                responses.GET, 
-                self.coll_url, 
-                json=[{"id": "kb-id", "name": "knowledge_base"}], 
+                responses.GET,
+                self.coll_url,
+                json=[{"id": "kb-id", "name": "knowledge_base"}],
                 status=200
             )
-            
+
             # Mock query endpoint with empty documents
             query_url = f"{self.coll_url}/kb-id/query"
             responses.add(
-                responses.POST, 
-                query_url, 
+                responses.POST,
+                query_url,
                 json={"documents": [[]]},
                 status=200
             )
-            
+
             result = get_relevant_context("query")
             assert result == ""
 
@@ -278,7 +278,7 @@ class TestKnowledgeBaseFunctions:
         ctx = get_context()
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
-        
+
         success = add_to_knowledge_base("")
         assert success is False
 
@@ -288,12 +288,12 @@ class TestKnowledgeBaseFunctions:
         ctx = get_context()
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings
         mock_embeddings = MagicMock()
         mock_embeddings.embed_documents.return_value = [[0.1, 0.2]]
         ctx.embeddings = mock_embeddings
-        
+
         mock_config = MagicMock()
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
@@ -301,20 +301,20 @@ class TestKnowledgeBaseFunctions:
         with patch('src.core.context_utils.get_config', return_value=mock_config):
             # Mock listing collections - empty (collection doesn't exist)
             responses.add(responses.GET, self.coll_url, json=[], status=200)
-            
+
             # Mock collection creation
             create_url = f"{self.coll_url}"
             responses.add(
-                responses.POST, 
-                create_url, 
-                json={"id": "new-kb-id", "name": "knowledge_base"}, 
+                responses.POST,
+                create_url,
+                json={"id": "new-kb-id", "name": "knowledge_base"},
                 status=201
             )
-            
+
             # Mock add endpoint
             add_url = f"{self.coll_url}/new-kb-id/add"
             responses.add(responses.POST, add_url, status=201)
-            
+
             success = add_to_knowledge_base("new knowledge")
             assert success is True
 
@@ -324,12 +324,12 @@ class TestKnowledgeBaseFunctions:
         ctx = get_context()
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings
         mock_embeddings = MagicMock()
         mock_embeddings.embed_documents.return_value = [[0.1, 0.2]]
         ctx.embeddings = mock_embeddings
-        
+
         mock_config = MagicMock()
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
@@ -337,11 +337,11 @@ class TestKnowledgeBaseFunctions:
         with patch('src.core.context_utils.get_config', return_value=mock_config):
             # Mock listing collections - empty (collection doesn't exist)
             responses.add(responses.GET, self.coll_url, json=[], status=200)
-            
+
             # Mock collection creation failure
             create_url = f"{self.coll_url}"
             responses.add(responses.POST, create_url, status=500)
-            
+
             success = add_to_knowledge_base("new knowledge")
             assert success is False
 
@@ -351,12 +351,12 @@ class TestKnowledgeBaseFunctions:
         ctx = get_context()
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings
         mock_embeddings = MagicMock()
         mock_embeddings.embed_documents.return_value = [[0.1, 0.2]]
         ctx.embeddings = mock_embeddings
-        
+
         mock_config = MagicMock()
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
@@ -364,16 +364,16 @@ class TestKnowledgeBaseFunctions:
         with patch('src.core.context_utils.get_config', return_value=mock_config):
             # Mock listing collections
             responses.add(
-                responses.GET, 
-                self.coll_url, 
-                json=[{"id": "kb-id", "name": "knowledge_base"}], 
+                responses.GET,
+                self.coll_url,
+                json=[{"id": "kb-id", "name": "knowledge_base"}],
                 status=200
             )
-            
+
             # Mock add endpoint failure
             add_url = f"{self.coll_url}/kb-id/add"
             responses.add(responses.POST, add_url, status=500)
-            
+
             success = add_to_knowledge_base("new knowledge")
             assert success is False
 
@@ -381,7 +381,7 @@ class TestKnowledgeBaseFunctions:
         """Test behavior when vectorstore is not available."""
         ctx = get_context()
         ctx.vectorstore = None
-        
+
         success = add_to_knowledge_base("new knowledge")
         assert success is False
 
@@ -391,16 +391,16 @@ class TestKnowledgeBaseFunctions:
         ctx = get_context()
         ctx.current_space = "default"
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings
         mock_embeddings = MagicMock()
         mock_embeddings.embed_query.return_value = [0.1, 0.2]
         ctx.embeddings = mock_embeddings
-        
+
         # Fill cache to trigger save
         for i in range(50):
             ctx.query_cache[f"key_{i}"] = [f"doc_{i}"]
-        
+
         mock_config = MagicMock()
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
@@ -408,21 +408,21 @@ class TestKnowledgeBaseFunctions:
         with patch('src.core.context_utils.get_config', return_value=mock_config):
             # Mock listing collections
             responses.add(
-                responses.GET, 
-                f"http://{self.host}:{self.port}/api/v2/tenants/default_tenant/databases/default_database/collections", 
-                json=[{"id": "kb-id", "name": "knowledge_base"}], 
+                responses.GET,
+                f"http://{self.host}:{self.port}/api/v2/tenants/default_tenant/databases/default_database/collections",
+                json=[{"id": "kb-id", "name": "knowledge_base"}],
                 status=200
             )
-            
+
             # Mock query endpoint
             query_url = f"http://{self.host}:{self.port}/api/v2/tenants/default_tenant/databases/default_database/collections/kb-id/query"
             responses.add(
-                responses.POST, 
-                query_url, 
-                json={"documents": [["doc from api"]]}, 
+                responses.POST,
+                query_url,
+                json={"documents": [["doc from api"]]},
                 status=200
             )
-            
+
             # Mock _save_query_cache to raise exception
             with patch('src.storage.cache.save_query_cache', side_effect=Exception("Save error")):
                 result = get_relevant_context("query")

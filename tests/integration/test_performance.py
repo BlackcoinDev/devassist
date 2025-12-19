@@ -16,6 +16,7 @@ from src.core.context import reset_context, get_context
 from src.core.context_utils import get_relevant_context, add_to_knowledge_base
 from src.main import initialize_application
 
+
 class TestPerformance:
     """Performance benchmarks for core components."""
 
@@ -25,14 +26,14 @@ class TestPerformance:
     def test_startup_performance(self):
         """Measure the time taken to initialize core components."""
         start_time = time.time()
-        
+
         with patch('src.main.initialize_database'), \
-             patch('src.main.initialize_llm'), \
-             patch('src.main.initialize_vectordb'), \
-             patch('src.main.initialize_user_memory'):
-            
+                patch('src.main.initialize_llm'), \
+                patch('src.main.initialize_vectordb'), \
+                patch('src.main.initialize_user_memory'):
+
             initialize_application()
-            
+
         duration = time.time() - start_time
         # Initialization with mocks should be very fast (< 100ms)
         assert duration < 0.1
@@ -54,19 +55,19 @@ class TestPerformance:
 
         ctx = get_context()
         ctx.vectorstore = MagicMock()
-        
+
         # Mock embeddings to be slightly slow (simulating real usage)
         def slow_embed(*args, **kwargs):
-            time.sleep(0.01) # 10ms
+            time.sleep(0.01)  # 10ms
             return [0.1] * 384
-            
+
         ctx.embeddings = MagicMock()
         ctx.embeddings.embed_query.side_effect = slow_embed
-        
+
         start_time = time.time()
         get_relevant_context("query")
         duration = time.time() - start_time
-        
+
         # Should be consistent with the sleep + minimal overhead
         assert duration >= 0.01
         print(f"⏱️ Retrieval latency: {duration:.4f}s")
@@ -90,10 +91,10 @@ class TestPerformance:
         ctx.vectorstore = MagicMock()
         ctx.embeddings = MagicMock()
         ctx.embeddings.embed_documents.return_value = [[0.1] * 384]
-        
+
         # Create a 1MB string
         large_input = "a" * (1024 * 1024)
-        
+
         # This should handle the string without crashing
         success = add_to_knowledge_base(large_input)
         assert success is True
@@ -104,19 +105,19 @@ class TestPerformance:
         """Measure performance degradation with increasing conversation history."""
         ctx = get_context()
         from langchain_core.messages import HumanMessage, AIMessage
-        
+
         # Inject 1000 messages into history
         for i in range(500):
             ctx.conversation_history.append(HumanMessage(content=f"Message {i}"))
             ctx.conversation_history.append(AIMessage(content=f"Response {i}"))
-            
+
         start_time = time.time()
         # Simulate processing that involves history (e.g. context construction)
         # Current main loop keeps last 20 messages
         llm_context_limit = 20
         enhanced_history = [ctx.conversation_history[0]] + ctx.conversation_history[-llm_context_limit:]
-        
+
         duration = time.time() - start_time
         assert len(enhanced_history) == 21
-        assert duration < 0.005 # Should be near-instant
+        assert duration < 0.005  # Should be near-instant
         print(f"⏱️ History slicing (1000 msgs): {duration:.6f}s")

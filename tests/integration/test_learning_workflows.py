@@ -15,6 +15,7 @@ from src.core.context import get_context, reset_context
 from src.core.context_utils import get_relevant_context
 from src.commands.handlers.learning_commands import handle_learn, handle_web
 
+
 class TestLearningWorkflows:
     """End-to-end learning workflow testing."""
 
@@ -38,7 +39,7 @@ class TestLearningWorkflows:
         ctx = get_context()
         ctx.vectorstore = MagicMock()
         ctx.current_space = "default"
-        
+
         mock_conf = MagicMock()
         mock_conf.chroma_host = self.host
         mock_conf.chroma_port = self.port
@@ -52,23 +53,23 @@ class TestLearningWorkflows:
 
         # 2. Add information
         responses.add(
-            responses.GET, 
-            self.coll_url, 
-            json=[{"name": "knowledge_base", "id": "kb-id"}], 
+            responses.GET,
+            self.coll_url,
+            json=[{"name": "knowledge_base", "id": "kb-id"}],
             status=200
         )
         responses.add(responses.POST, f"{self.coll_url}/kb-id/add", status=201)
-        
+
         handle_learn(["The", "secret", "ingredient", "is", "love"])
 
         # 3. Retrieve information
         responses.add(
-            responses.POST, 
-            f"{self.coll_url}/kb-id/query", 
-            json={"documents": [["The secret ingredient is love"]]}, 
+            responses.POST,
+            f"{self.coll_url}/kb-id/query",
+            json={"documents": [["The secret ingredient is love"]]},
             status=200
         )
-        
+
         result = get_relevant_context("What is the secret ingredient?")
         assert "love" in result
         assert "secret ingredient" in result
@@ -82,7 +83,7 @@ class TestLearningWorkflows:
         # 1. Setup mocks
         ctx = get_context()
         ctx.current_space = "default"
-        
+
         mock_conf = MagicMock()
         mock_conf.chroma_host = self.host
         mock_conf.chroma_port = self.port
@@ -99,7 +100,7 @@ class TestLearningWorkflows:
         mock_main_vectorstore.add_documents.return_value = ["doc-id"]
 
         # 2. Execute /web command
-        # Note: We don't need responses for Chroma here because execute_learn_url 
+        # Note: We don't need responses for Chroma here because execute_learn_url
         # directly interacts with the global vectorstore mock
         handle_web(["https://example.com"])
 
@@ -117,7 +118,7 @@ class TestLearningWorkflows:
         """Test how the learning workflow handles vector database failure."""
         ctx = get_context()
         ctx.vectorstore = MagicMock()
-        
+
         mock_conf = MagicMock()
         mock_conf.chroma_host = self.host
         mock_conf.chroma_port = self.port
@@ -125,9 +126,9 @@ class TestLearningWorkflows:
 
         # Mock API failure
         responses.add(responses.GET, self.coll_url, status=500)
-        
+
         # Should not crash, but print error (we'd need capsys to verify output)
         handle_learn(["Failed", "connection"])
-        
+
         # Verify it didn't succeed
         assert not get_context().query_cache  # No cache entries

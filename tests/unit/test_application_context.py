@@ -21,7 +21,7 @@ class TestContextInitialization:
     def test_context_creation(self):
         """Test that ApplicationContext can be created."""
         context = ApplicationContext()
-        
+
         # Verify context was created
         assert context is not None
         assert isinstance(context, ApplicationContext)
@@ -30,9 +30,9 @@ class TestContextInitialization:
         """Test that context can be created with configuration."""
         with patch('src.core.config.Config') as mock_config:
             mock_config.return_value = Mock()
-            
+
             context = ApplicationContext()
-            
+
             # Verify context was created
             assert context is not None
 
@@ -49,7 +49,7 @@ class TestContextGetters:
         """Test that get_context returns the same instance."""
         context1 = get_context()
         context2 = get_context()
-        
+
         assert context1 is context2
 
     def test_get_context_returns_correct_type(self):
@@ -65,10 +65,10 @@ class TestContextLifecycle:
         """Test that cleanup works properly."""
         context = ApplicationContext()
         set_context(context)
-        
+
         # Cleanup should not raise errors
         reset_context()
-        
+
         # After cleanup, a new default context is created by get_context()
         # This is the expected behavior
         new_context = get_context()
@@ -80,29 +80,32 @@ class TestContextLifecycle:
         # First context
         context1 = ApplicationContext()
         set_context(context1)
-        
+
         # Reset
         reset_context()
-        
+
         # Second context should work
         context2 = ApplicationContext()
         set_context(context2)
-        
+
         assert get_context() is context2
 
     def test_context_thread_safety(self):
         """Test that context access is thread-safe using multiple threads."""
         import threading
         reset_context()
-        
+
         contexts = []
+
         def get_ctx():
             contexts.append(get_context())
-            
+
         threads = [threading.Thread(target=get_ctx) for _ in range(10)]
-        for t in threads: t.start()
-        for t in threads: t.join()
-        
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
         assert len(contexts) == 10
         first_ctx = contexts[0]
         for ctx in contexts:
@@ -112,19 +115,20 @@ class TestContextLifecycle:
         """Test that context state can be managed."""
         context = ApplicationContext()
         set_context(context)
-        
+
         # Context should be available
         assert get_context() is context
-        
+
         # Reset and verify - get_context() creates new default context
         reset_context()
         new_context = get_context()
         assert new_context is not context
         assert isinstance(new_context, ApplicationContext)
 
+
 class TestContextMethods:
     """Test individual methods of ApplicationContext."""
-    
+
     def test_reset_caches(self):
         ctx = ApplicationContext()
         ctx.embedding_cache["test"] = [1.0]
@@ -132,34 +136,35 @@ class TestContextMethods:
         ctx.reset_caches()
         assert len(ctx.embedding_cache) == 0
         assert len(ctx.query_cache) == 0
-        
+
     def test_reset_conversation(self):
         ctx = ApplicationContext()
         ctx.conversation_history.append("msg")
         ctx.reset_conversation()
         assert len(ctx.conversation_history) == 0
 
+
 class TestContextAccessors:
     """Test compatibility accessors for ApplicationContext."""
-    
+
     def setup_method(self):
         reset_context()
         self.ctx = get_context()
-        
+
     def test_llm_accessor(self):
         from src.core.context import get_llm, set_llm
         mock_llm = Mock()
         set_llm(mock_llm)
         assert get_llm() is mock_llm
         assert self.ctx.llm is mock_llm
-        
+
     def test_vectorstore_accessor(self):
         from src.core.context import get_vectorstore, set_vectorstore
         mock_vs = Mock()
         set_vectorstore(mock_vs)
         assert get_vectorstore() is mock_vs
         assert self.ctx.vectorstore is mock_vs
-        
+
     def test_embeddings_accessor(self):
         from src.core.context import get_embeddings, set_embeddings
         mock_emb = Mock()
@@ -205,13 +210,13 @@ class TestContextAccessors:
 
     def test_modes_accessors(self):
         from src.core.context import get_context_mode, set_context_mode, get_learning_mode, set_learning_mode, get_current_space, set_current_space
-        
+
         set_context_mode("on")
         assert get_context_mode() == "on"
-        
+
         set_learning_mode("strict")
         assert get_learning_mode() == "strict"
-        
+
         set_current_space("research")
         assert get_current_space() == "research"
 

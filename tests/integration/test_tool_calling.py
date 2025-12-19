@@ -19,6 +19,7 @@ import src.tools.executors.knowledge_tools
 import src.tools.executors.document_tools
 import src.tools.executors.web_tools
 
+
 def ensure_tools_registered():
     """Ensure tools are registered before tests run, re-registering if needed."""
     # We must reload these modules because other tests might have cleared the registry
@@ -26,6 +27,7 @@ def ensure_tools_registered():
     importlib.reload(src.tools.executors.knowledge_tools)
     importlib.reload(src.tools.executors.document_tools)
     importlib.reload(src.tools.executors.web_tools)
+
 
 class TestToolCallExecution:
     """Test tool call execution and routing."""

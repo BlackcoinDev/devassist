@@ -177,7 +177,7 @@ class TestCommandIntegration:
         # Mock conversation history to ensure consistent output
         from src.core.context import get_context
         get_context().conversation_history = []
-        
+
         result = handle_slash_command("/memory")
         assert result is True
 

@@ -12,6 +12,7 @@ from src.commands.handlers.legacy_commands import handle_read_command, handle_wr
 from src.commands.handlers.config_commands import handle_context, handle_learning
 from src.core.context import ApplicationContext, get_context, set_context
 
+
 class TestLegacyCommands:
     """Test legacy command handlers."""
 
@@ -68,7 +69,7 @@ class TestLearningCommands:
 
     def setup_method(self):
         ctx = ApplicationContext()
-        ctx.vectorstore = Mock() # mock vectorstore to simulate availability
+        ctx.vectorstore = Mock()  # mock vectorstore to simulate availability
         set_context(ctx)
 
     @patch('src.commands.handlers.learning_commands.add_to_knowledge_base')
@@ -167,7 +168,7 @@ class TestMemoryCommands:
         """Test /clear command with confirmation."""
         handle_clear([])
         mock_save.assert_called()
-        assert len(get_context().conversation_history) == 1 # 1 system message
+        assert len(get_context().conversation_history) == 1  # 1 system message
         mock_print.assert_any_call("\nConversation memory cleared. Starting fresh.\n")
 
     @patch('builtins.input', side_effect=["n"])
@@ -175,7 +176,7 @@ class TestMemoryCommands:
     def test_clear_command_cancelled(self, mock_print, mock_input):
         """Test /clear command cancelled."""
         ctx = get_context()
-        ctx.conversation_history = [Mock()] # Has history
+        ctx.conversation_history = [Mock()]  # Has history
         handle_clear([])
         assert len(get_context().conversation_history) == 1
         mock_print.assert_any_call("\n❌ Clear cancelled\n")

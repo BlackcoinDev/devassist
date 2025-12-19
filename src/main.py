@@ -94,6 +94,23 @@ INITIALIZATION SEQUENCE:
 # =============================================================================
 
 # Core LangChain components for AI chat functionality
+from src.commands.handlers.legacy_commands import (
+    handle_read_command,
+    handle_write_command,
+    handle_list_command,
+    handle_pwd_command,
+    show_memory,
+    handle_clear_command,
+    handle_learn_command,
+    show_vectordb,
+    show_mem0,
+    handle_populate_command,
+    show_model_info,
+    handle_context_command,
+    handle_learning_command,
+    handle_space_command,
+    handle_export_command,
+)
 from src.tools.executors.document_tools import execute_parse_document
 from src.tools import ToolRegistry
 
@@ -417,23 +434,6 @@ def get_relevant_context(
 # No need to import them here as they're auto-registered
 
 # Import legacy command handlers (will be migrated to new system)
-from src.commands.handlers.legacy_commands import (
-    handle_read_command,
-    handle_write_command,
-    handle_list_command,
-    handle_pwd_command,
-    show_memory,
-    handle_clear_command,
-    handle_learn_command,
-    show_vectordb,
-    show_mem0,
-    handle_populate_command,
-    show_model_info,
-    handle_context_command,
-    handle_learning_command,
-    handle_space_command,
-    handle_export_command,
-)
 
 # Note: Command handlers remain in this file for now.
 # They can be incrementally migrated to src/commands/handlers/ using:

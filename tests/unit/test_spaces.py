@@ -50,13 +50,13 @@ class TestSpaceManagement:
             {"name": "space_project_a"},
             {"name": "space_project_b"}
         ]
-        
+
         with patch('src.vectordb.spaces.get_chromadb_client') as mock_get_client:
             mock_client = mock_get_client.return_value
             mock_client.list_collections.return_value = mock_collections
 
             spaces = list_spaces()
-            
+
             assert "default" in spaces
             assert "project_a" in spaces
             assert "project_b" in spaces
@@ -73,7 +73,7 @@ class TestSpaceManagement:
             mock_client.delete_collection.return_value = True
 
             success = delete_space("project_x")
-            
+
             assert success is True
             mock_client.delete_collection.assert_called_with("space_project_x")
 
@@ -94,10 +94,10 @@ class TestSpaceSwitching:
     def test_switch_space_updates_context(self):
         """Test that switch_space updates the application context."""
         ctx = get_context()
-        ctx.vectorstore = MagicMock() # Required by ensure_space_collection
-        
+        ctx.vectorstore = MagicMock()  # Required by ensure_space_collection
+
         success = switch_space("new_project")
-        
+
         assert success is True
         assert ctx.current_space == "new_project"
         assert os.path.exists("space_settings.json")
@@ -106,9 +106,9 @@ class TestSpaceSwitching:
         """Test persistence of space settings."""
         ctx = get_context()
         ctx.current_space = "persisted_space"
-        
+
         save_current_space()
-        
+
         with open("space_settings.json", "r") as f:
             data = json.load(f)
         assert data["current_space"] == "persisted_space"
@@ -117,7 +117,7 @@ class TestSpaceSwitching:
         """Test loading space settings from disk."""
         with open("space_settings.json", "w") as f:
             json.dump({"current_space": "saved_space"}, f)
-            
+
         loaded = load_current_space()
         assert loaded == "saved_space"
 

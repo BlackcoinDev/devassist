@@ -28,6 +28,7 @@ This module provides command handlers for viewing ChromaDB vector
 database contents and statistics.
 """
 
+from src.core.context_utils import _get_api_session
 from typing import List
 from datetime import datetime
 import logging
@@ -39,7 +40,6 @@ from src.vectordb import get_space_collection_name
 
 logger = logging.getLogger(__name__)
 
-from src.core.context_utils import _get_api_session
 
 # =============================================================================
 # COMMAND HANDLERS

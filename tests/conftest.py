@@ -94,6 +94,3 @@ def mock_embeddings():
     mock_emb.embed_query = MagicMock(return_value=[0.1, 0.2, 0.3])
     mock_emb.embed_documents = MagicMock(return_value=[[0.1, 0.2, 0.3]])
     return mock_emb
-
-
-

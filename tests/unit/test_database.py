@@ -74,7 +74,7 @@ class TestDatabaseConnection:
         ctx = get_context()
         mock_conn = MagicMock(spec=sqlite3.Connection)
         mock_lock = Mock()
-        
+
         ctx.db_conn = mock_conn
         ctx.db_lock = mock_lock
 

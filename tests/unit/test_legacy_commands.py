@@ -38,9 +38,9 @@ class TestLegacyFileHandlers:
                 "type": "text/plain"
             }
         }
-        
+
         handle_read_command("test.txt")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Hello World" in output
         assert "Line 2" in output
@@ -52,9 +52,9 @@ class TestLegacyFileHandlers:
     def test_handle_read_command_error(self, mock_execute, mock_print):
         """Test reading a file with error."""
         mock_execute.return_value = {"error": "File not found"}
-        
+
         handle_read_command("nonexistent.txt")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Error reading file: File not found" in output
 
@@ -63,7 +63,7 @@ class TestLegacyFileHandlers:
     def test_handle_read_command_no_file_path(self, mock_execute, mock_print):
         """Test reading with no file path."""
         handle_read_command("")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Please specify a file path" in output
 
@@ -72,9 +72,9 @@ class TestLegacyFileHandlers:
     def test_handle_write_command_success(self, mock_execute, mock_print):
         """Test writing to a file successfully."""
         mock_execute.return_value = {"success": True}
-        
+
         handle_write_command("test.txt:Hello World")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "File 'test.txt' written successfully" in output
         assert "Wrote 11 characters" in output
@@ -84,9 +84,9 @@ class TestLegacyFileHandlers:
     def test_handle_write_command_error(self, mock_execute, mock_print):
         """Test writing to a file with error."""
         mock_execute.return_value = {"success": False, "error": "Permission denied"}
-        
+
         handle_write_command("test.txt:Hello World")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Error writing file" in output
         assert "Permission denied" in output
@@ -96,9 +96,9 @@ class TestLegacyFileHandlers:
     def test_handle_write_command_exception(self, mock_execute, mock_print):
         """Test writing to a file with exception."""
         mock_execute.side_effect = Exception("Disk full")
-        
+
         handle_write_command("test.txt:Hello World")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Error:" in output
         assert "Disk full" in output
@@ -107,7 +107,7 @@ class TestLegacyFileHandlers:
     def test_handle_write_command_empty_content(self, mock_print):
         """Test writing with empty content."""
         handle_write_command("test.txt:")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Both filename and content are required" in output
 
@@ -115,7 +115,7 @@ class TestLegacyFileHandlers:
     def test_handle_write_command_invalid_format(self, mock_print):
         """Test writing with invalid format."""
         handle_write_command("test.txt")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Usage: /write filename:content" in output
 
@@ -131,9 +131,9 @@ class TestLegacyFileHandlers:
             ],
             "path": "."
         }
-        
+
         handle_list_command("")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Contents of '.'" in output
         assert "subdir/" in output
@@ -146,9 +146,9 @@ class TestLegacyFileHandlers:
     def test_handle_list_command_error(self, mock_execute, mock_print):
         """Test listing directory with error."""
         mock_execute.return_value = {"error": "Directory not found"}
-        
+
         handle_list_command("nonexistent")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Error:" in output
         assert "Directory not found" in output
@@ -158,9 +158,9 @@ class TestLegacyFileHandlers:
     def test_handle_list_command_exception(self, mock_execute, mock_print):
         """Test listing directory with exception."""
         mock_execute.side_effect = Exception("Directory access error")
-        
+
         handle_list_command("problematic_dir")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Error listing directory" in output
         assert "Directory access error" in output
@@ -173,9 +173,9 @@ class TestLegacyFileHandlers:
             "items": [],
             "path": "/empty/dir"
         }
-        
+
         handle_list_command("/empty/dir")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Directory '/empty/dir' is empty" in output
 
@@ -184,7 +184,7 @@ class TestLegacyFileHandlers:
     def test_handle_pwd_command(self, mock_cwd, mock_print):
         """Test showing current directory."""
         handle_pwd_command()
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Current directory: /test/dir" in output
 
@@ -200,9 +200,9 @@ class TestLegacyMemoryHandlers:
         """Test showing empty memory."""
         ctx = get_context()
         ctx.conversation_history = []
-        
+
         show_memory()
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "No conversation history available" in output
 
@@ -214,9 +214,9 @@ class TestLegacyMemoryHandlers:
             HumanMessage(content="Hello there!"),
             SystemMessage(content="Welcome to the system")
         ]
-        
+
         show_memory()
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Conversation History (2 messages)" in output
         assert "Hello there!" in output
@@ -229,9 +229,9 @@ class TestLegacyMemoryHandlers:
         """Test clearing memory with confirmation."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Old message")]
-        
+
         result = handle_clear_command()
-        
+
         assert result is True
         assert len(ctx.conversation_history) == 1
         assert isinstance(ctx.conversation_history[0], SystemMessage)
@@ -244,9 +244,9 @@ class TestLegacyMemoryHandlers:
         """Test clearing memory cancelled."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Old message")]
-        
+
         result = handle_clear_command()
-        
+
         assert result is False
         assert len(ctx.conversation_history) == 1
         assert "Old message" in ctx.conversation_history[0].content
@@ -265,12 +265,12 @@ class TestLegacyLearningHandlers:
         """Test learning new information successfully."""
         ctx = get_context()
         ctx.vectorstore = MagicMock()
-        
+
         mock_config.return_value.current_space = "test-space"
         mock_execute.return_value = {"success": True}
-        
+
         handle_learn_command("Python is awesome")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Learned: Python is awesome" in output
         assert "Added to knowledge base" in output
@@ -280,9 +280,9 @@ class TestLegacyLearningHandlers:
         """Test learning with no content."""
         ctx = get_context()
         ctx.vectorstore = MagicMock()
-        
+
         handle_learn_command("")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Please provide content to learn" in output
 
@@ -291,9 +291,9 @@ class TestLegacyLearningHandlers:
         """Test learning when vectorstore is not available."""
         ctx = get_context()
         ctx.vectorstore = None
-        
+
         handle_learn_command("Some content")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Vector database not available" in output
 
@@ -309,9 +309,9 @@ class TestLegacyVectorDBHandlers:
         """Test showing vector DB when not connected."""
         ctx = get_context()
         ctx.vectorstore = None
-        
+
         show_vectordb()
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Vector database not connected" in output
 
@@ -322,15 +322,15 @@ class TestLegacyVectorDBHandlers:
         """Test showing empty vector DB."""
         ctx = get_context()
         ctx.vectorstore = MagicMock()
-        
+
         mock_config.return_value.current_space = "test-space"
         mock_collection_name.return_value = "test_collection"
-        
+
         # Mock collection that returns None
         ctx.vectorstore.get_collection.return_value = None
-        
+
         show_vectordb()
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "has no knowledge base yet" in output
 
@@ -341,9 +341,9 @@ class TestLegacyVectorDBHandlers:
         """Test showing Mem0 when not available."""
         ctx = get_context()
         ctx.user_memory = None
-        
+
         show_mem0()
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Mem0 not available" in output
 
@@ -354,11 +354,11 @@ class TestLegacyVectorDBHandlers:
         ctx = get_context()
         ctx.user_memory = MagicMock()
         ctx.user_memory.get_all.return_value = {"results": []}
-        
+
         mock_config.return_value.verbose_logging = False
-        
+
         show_mem0()
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "No personalized memories stored yet" in output
 
@@ -374,9 +374,9 @@ class TestLegacyPopulateHandlers:
         """Test populate when vectorstore is not available."""
         ctx = get_context()
         ctx.vectorstore = None
-        
+
         handle_populate_command("test_dir")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Vector database not available" in output
 
@@ -385,9 +385,9 @@ class TestLegacyPopulateHandlers:
         """Test populate with no directory specified."""
         ctx = get_context()
         ctx.vectorstore = MagicMock()
-        
+
         handle_populate_command("")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Please specify a directory" in output
 
@@ -398,9 +398,9 @@ class TestLegacyPopulateHandlers:
         """Test populate with non-existent directory."""
         ctx = get_context()
         ctx.vectorstore = MagicMock()
-        
+
         handle_populate_command("nonexistent")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Directory not found" in output
 
@@ -412,12 +412,12 @@ class TestLegacyPopulateHandlers:
         """Test populate with directory containing no supported files."""
         ctx = get_context()
         ctx.vectorstore = MagicMock()
-        
+
         # Mock os.walk to return no files
         mock_walk.return_value = [("/test/dir", [], [])]
-        
+
         handle_populate_command("/test/dir")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "No supported files found" in output
 
@@ -432,20 +432,21 @@ class TestLegacyPopulateHandlers:
         """Test successful populate operation."""
         ctx = get_context()
         ctx.vectorstore = MagicMock()
-        
+
         mock_config.return_value.current_space = "test-space"
-        
+
         # Mock os.walk to return some files
         mock_walk.return_value = [
             ("/test/dir", [], ["test.txt", "test.py"])
         ]
-        
+
         # Mock parse and learn operations
-        mock_parse.return_value = {"success": True, "content": "This is a much longer test content that should be more than 50 characters long to pass the minimum content threshold for processing."}
+        mock_parse.return_value = {
+            "success": True, "content": "This is a much longer test content that should be more than 50 characters long to pass the minimum content threshold for processing."}
         mock_learn.return_value = {"success": True}
-        
+
         handle_populate_command("/test/dir")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Population complete" in output
         assert "Processed: 2 files" in output
@@ -460,19 +461,19 @@ class TestLegacyPopulateHandlers:
         """Test populate with parse error."""
         ctx = get_context()
         ctx.vectorstore = MagicMock()
-        
+
         mock_config.return_value.current_space = "test-space"
-        
+
         # Mock os.walk to return some files
         mock_walk.return_value = [
             ("/test/dir", [], ["test.txt"])
         ]
-        
+
         # Mock parse operation to fail
         mock_parse.side_effect = Exception("Parse error")
-        
+
         handle_populate_command("/test/dir")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Error processing test.txt" in output
         assert "Parse error" in output
@@ -514,9 +515,9 @@ class TestLegacyContextHandlers:
     def test_handle_context_command_show(self, mock_config, mock_print):
         """Test showing current context mode."""
         mock_config.return_value.context_mode = "auto"
-        
+
         handle_context_command([])
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Current context mode: auto" in output
 
@@ -536,9 +537,9 @@ class TestLegacyContextHandlers:
     def test_handle_context_command_invalid(self, mock_config, mock_print):
         """Test setting invalid context mode."""
         mock_config.return_value.context_mode = "auto"
-        
+
         handle_context_command(["invalid"])
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Invalid mode: invalid" in output
 
@@ -554,9 +555,9 @@ class TestLegacyLearningModeHandlers:
     def test_handle_learning_command_show(self, mock_config, mock_print):
         """Test showing current learning mode."""
         mock_config.return_value.learning_mode = "normal"
-        
+
         handle_learning_command([])
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Current learning mode: normal" in output
 
@@ -576,9 +577,9 @@ class TestLegacyLearningModeHandlers:
     def test_handle_learning_command_invalid(self, mock_config, mock_print):
         """Test setting invalid learning mode."""
         mock_config.return_value.learning_mode = "normal"
-        
+
         handle_learning_command(["invalid"])
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Invalid mode: invalid" in output
 
@@ -593,7 +594,7 @@ class TestLegacySpaceHandlers:
     def test_handle_space_command_no_args(self, mock_print):
         """Test space command with no arguments."""
         handle_space_command("")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Please specify a space command" in output
 
@@ -604,9 +605,9 @@ class TestLegacySpaceHandlers:
         """Test listing spaces."""
         mock_config.return_value.current_space = "default"
         mock_list_spaces.return_value = ["default", "work", "personal"]
-        
+
         handle_space_command("list")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Knowledge Spaces (3)" in output
         assert "✅ default" in output
@@ -618,7 +619,7 @@ class TestLegacySpaceHandlers:
     def test_handle_space_command_create(self, mock_ensure, mock_print):
         """Test creating a new space."""
         handle_space_command("create new-space")
-        
+
         mock_ensure.assert_called_with("new-space")
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Created space: new-space" in output
@@ -646,9 +647,9 @@ class TestLegacySpaceHandlers:
         """Test deleting a space."""
         mock_config.return_value.current_space = "default"
         mock_delete.return_value = True
-        
+
         handle_space_command("delete old-space")
-        
+
         mock_delete.assert_called_with("old-space")
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Deleted space: old-space" in output
@@ -658,9 +659,9 @@ class TestLegacySpaceHandlers:
     def test_handle_space_command_delete_default(self, mock_config, mock_print):
         """Test deleting default space (should fail)."""
         mock_config.return_value.current_space = "default"
-        
+
         handle_space_command("delete default")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Cannot delete the default space" in output
 
@@ -681,9 +682,9 @@ class TestLegacySpaceHandlers:
         """Test deleting space when operation fails."""
         mock_config.return_value.current_space = "default"
         mock_delete.return_value = False
-        
+
         handle_space_command("delete old-space")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Failed to delete space" in output
 
@@ -691,7 +692,7 @@ class TestLegacySpaceHandlers:
     def test_handle_space_command_invalid(self, mock_print):
         """Test invalid space command."""
         handle_space_command("invalid")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Unknown space command" in output
 
@@ -707,9 +708,9 @@ class TestLegacyExportHandlers:
         """Test export when no conversation history."""
         ctx = get_context()
         ctx.conversation_history = []
-        
+
         handle_export_command("json")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "No conversation history to export" in output
 
@@ -722,16 +723,16 @@ class TestLegacyExportHandlers:
         """Test JSON export."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Test message")]
-        
+
         mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
         mock_datetime.now.return_value.isoformat.return_value = "2024-01-01T12:00:00"
-        
+
         # Mock the file object
         mock_file = MagicMock()
         mock_open.return_value.__enter__.return_value = mock_file
-        
+
         handle_export_command("json")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Exported conversation to:" in output
         assert "Format: json" in output
@@ -745,11 +746,11 @@ class TestLegacyExportHandlers:
         """Test TXT export."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Test message")]
-        
+
         mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
-        
+
         handle_export_command("txt")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Exported conversation to:" in output
         assert "Format: txt" in output
@@ -762,11 +763,11 @@ class TestLegacyExportHandlers:
         """Test Markdown export."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Test message")]
-        
+
         mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
-        
+
         handle_export_command("md")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Exported conversation to:" in output
         assert "Format: md" in output
@@ -776,9 +777,9 @@ class TestLegacyExportHandlers:
         """Test export with invalid format."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Test message")]
-        
+
         handle_export_command("invalid")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Invalid format: invalid" in output
 
@@ -791,19 +792,19 @@ class TestLegacyExportHandlers:
         """Test JSON export with error."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Test message")]
-        
+
         mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
         mock_datetime.now.return_value.isoformat.return_value = "2024-01-01T12:00:00"
-        
+
         # Mock the file object
         mock_file = MagicMock()
         mock_open.return_value.__enter__.return_value = mock_file
-        
+
         # Mock json.dump to raise an error
         mock_json_dump.side_effect = Exception("JSON error")
-        
+
         handle_export_command("json")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Error exporting conversation" in output
         assert "JSON error" in output

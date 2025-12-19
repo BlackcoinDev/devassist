@@ -34,7 +34,7 @@ class TestConfigLoading:
             'EMBEDDING_MODEL': 'qwen3-embedding'
         }):
             config = Config.from_env()
-            
+
             assert config.lm_studio_url == 'http://localhost:1234'
             assert config.model_name == 'qwen3-vl-30b'
             assert config.chroma_port == 8000
@@ -56,7 +56,7 @@ class TestConfigLoading:
             'LM_STUDIO_URL': 'http://localhost:1234',
             'LM_STUDIO_KEY': 'test-key',
             'MODEL_NAME': 'qwen3-vl-30b',
-            'MAX_HISTORY_PAIRS': 'invalid', # Not an int
+            'MAX_HISTORY_PAIRS': 'invalid',  # Not an int
             'TEMPERATURE': '0.7',
             'MAX_INPUT_LENGTH': '4096',
             'DB_TYPE': 'sqlite',
@@ -86,8 +86,8 @@ class TestConfigLoading:
             'EMBEDDING_MODEL': 'qwen3-embedding'
         }):
             from src.core import config as config_mod
-            config_mod._config = None # Reset singleton
-            
+            config_mod._config = None  # Reset singleton
+
             c1 = get_config()
             c2 = get_config()
             assert c1 is c2

@@ -36,9 +36,9 @@ class TestConfigHandlers:
         """Test showing current context mode."""
         ctx = get_context()
         ctx.context_mode = "auto"
-        
+
         handle_context([])
-        
+
         # Verify it printed the current mode
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Current context mode: auto" in output
@@ -49,7 +49,7 @@ class TestConfigHandlers:
         """Test setting context mode."""
         handle_context(["on"])
         mock_set.assert_called_with("on")
-        
+
         # Test invalid mode
         handle_context(["invalid"])
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
@@ -60,7 +60,7 @@ class TestConfigHandlers:
         """Test showing current learning mode."""
         ctx = get_context()
         ctx.learning_mode = "normal"
-        
+
         handle_learning([])
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Current learning mode: normal" in output
@@ -104,7 +104,7 @@ class TestSpaceHandlers:
         """Test showing current space info."""
         ctx = get_context()
         ctx.current_space = "my-space"
-        
+
         handle_space([])
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Current space: my-space" in output
@@ -114,7 +114,7 @@ class TestSpaceHandlers:
     def test_handle_space_list(self, mock_list_spaces, mock_print):
         """Test listing available spaces."""
         mock_list_spaces.return_value = ["default", "work", "personal"]
-        
+
         handle_space(["list"])
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Available spaces (3):" in output
@@ -127,9 +127,9 @@ class TestSpaceHandlers:
         """Test creating a new space."""
         mock_list.return_value = ["default"]
         mock_switch.return_value = True
-        
+
         handle_space(["create", "new-project"])
-        
+
         mock_switch.assert_called_with("new-project")
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Created and switched to space: new-project" in output
@@ -142,9 +142,9 @@ class TestSpaceHandlers:
         """Test deleting an existing space with confirmation."""
         mock_list.return_value = ["default", "old-space"]
         mock_delete.return_value = True
-        
+
         handle_space(["delete", "old-space"])
-        
+
         mock_delete.assert_called_with("old-space")
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Deleted space: old-space" in output
@@ -164,7 +164,7 @@ class TestDatabaseHandlers:
         ctx = get_context()
         ctx.vectorstore = MagicMock()
         ctx.current_space = "default"
-        
+
         mock_config = MagicMock()
         mock_config.chroma_host = "localhost"
         mock_config.chroma_port = 8000
@@ -173,12 +173,12 @@ class TestDatabaseHandlers:
         # Mock API responses
         mock_api = mock_session.return_value
         mock_api.get.side_effect = [
-            MagicMock(status_code=200, json=lambda: [{"id": "id1", "name": "knowledge_base"}]), # list colls
-            MagicMock(status_code=200, json=lambda: 42) # count
+            MagicMock(status_code=200, json=lambda: [{"id": "id1", "name": "knowledge_base"}]),  # list colls
+            MagicMock(status_code=200, json=lambda: 42)  # count
         ]
 
         handle_vectordb([])
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Chunks: 42" in output
 
@@ -196,9 +196,9 @@ class TestLearningHandlers:
         ctx = get_context()
         ctx.vectorstore = MagicMock()
         mock_add.return_value = True
-        
+
         handle_learn(["some", "new", "fact"])
-        
+
         mock_add.assert_called_with("some new fact")
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Learned: some new fact" in output
@@ -224,7 +224,7 @@ class TestMemoryHandlers:
         """Test displaying conversation history."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Hello world")]
-        
+
         handle_memory([])
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Conversation History (1 messages)" in output
@@ -237,11 +237,11 @@ class TestMemoryHandlers:
         """Test clearing memory."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Bye")]
-        
+
         handle_clear([])
-        
+
         assert len(ctx.conversation_history) == 1
-        assert "coding" in ctx.conversation_history[0].content # New system message
+        assert "coding" in ctx.conversation_history[0].content  # New system message
         assert mock_save.called
 
 
@@ -269,7 +269,7 @@ class TestFileHandlers:
         """Test writing to a file securely."""
         with patch('builtins.open', MagicMock()) as mock_open:
             handle_write(["test.txt", "hello", "world"])
-            
+
             mock_open.assert_called_with("/mock/dir/test.txt", "w", encoding="utf-8")
             output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
             assert "File written: test.txt" in output
@@ -295,7 +295,7 @@ class TestExportHandlers:
         """Test successful JSON export."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Save me")]
-        
+
         with patch('builtins.open', MagicMock()) as mock_open:
             handle_export(["json"])
             output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)

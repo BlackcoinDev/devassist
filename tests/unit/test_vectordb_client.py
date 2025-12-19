@@ -52,9 +52,9 @@ class TestChromaDBClient:
     def test_create_collection(self):
         """Test collection creation."""
         responses.add(
-            responses.POST, 
-            self.coll_url, 
-            json={"id": "new-id", "name": "new-coll"}, 
+            responses.POST,
+            self.coll_url,
+            json={"id": "new-id", "name": "new-coll"},
             status=201
         )
 
@@ -81,7 +81,7 @@ class TestChromaDBClient:
         responses.add(responses.POST, query_url, json=mock_response, status=200)
 
         docs, meta = self.client.query_collection("coll-id", [0.1, 0.2])
-        
+
         assert len(docs) == 2
         assert docs[0] == "doc1"
         assert meta[1]["source"] == "f2"
@@ -128,7 +128,7 @@ class TestChromaDBClient:
     def test_list_collections_api_failure(self):
         """Test list_collections error handling."""
         responses.add(responses.GET, self.coll_url, status=500)
-        
+
         collections = self.client.list_collections()
         assert collections == []
 
@@ -136,7 +136,7 @@ class TestChromaDBClient:
     def test_list_collections_exception(self):
         """Test list_collections exception handling."""
         responses.add(responses.GET, self.coll_url, body=Exception("Network error"))
-        
+
         collections = self.client.list_collections()
         assert collections == []
 
@@ -144,7 +144,7 @@ class TestChromaDBClient:
     def test_create_collection_failure(self):
         """Test create_collection error handling."""
         responses.add(responses.POST, self.coll_url, status=500)
-        
+
         coll_id = self.client.create_collection("new-coll")
         assert coll_id is None
 
@@ -152,7 +152,7 @@ class TestChromaDBClient:
     def test_create_collection_exception(self):
         """Test create_collection exception handling."""
         responses.add(responses.POST, self.coll_url, body=Exception("Network error"))
-        
+
         coll_id = self.client.create_collection("new-coll")
         assert coll_id is None
 
@@ -161,7 +161,7 @@ class TestChromaDBClient:
         """Test delete_collection error handling."""
         del_url = f"{self.coll_url}/target-coll"
         responses.add(responses.DELETE, del_url, status=500)
-        
+
         success = self.client.delete_collection("target-coll")
         assert success is False
 
@@ -170,7 +170,7 @@ class TestChromaDBClient:
         """Test delete_collection exception handling."""
         del_url = f"{self.coll_url}/target-coll"
         responses.add(responses.DELETE, del_url, body=Exception("Network error"))
-        
+
         success = self.client.delete_collection("target-coll")
         assert success is False
 
@@ -179,7 +179,7 @@ class TestChromaDBClient:
         """Test query_collection error handling."""
         query_url = f"{self.coll_url}/coll-id/query"
         responses.add(responses.POST, query_url, status=500)
-        
+
         docs, meta = self.client.query_collection("coll-id", [0.1, 0.2])
         assert docs == []
         assert meta == []
@@ -189,7 +189,7 @@ class TestChromaDBClient:
         """Test query_collection exception handling."""
         query_url = f"{self.coll_url}/coll-id/query"
         responses.add(responses.POST, query_url, body=Exception("Network error"))
-        
+
         docs, meta = self.client.query_collection("coll-id", [0.1, 0.2])
         assert docs == []
         assert meta == []
@@ -199,7 +199,7 @@ class TestChromaDBClient:
         """Test add_documents error handling."""
         add_url = f"{self.coll_url}/coll-id/add"
         responses.add(responses.POST, add_url, status=500)
-        
+
         success = self.client.add_documents(
             collection_id="coll-id",
             documents=["text"],
@@ -213,7 +213,7 @@ class TestChromaDBClient:
         """Test add_documents exception handling."""
         add_url = f"{self.coll_url}/coll-id/add"
         responses.add(responses.POST, add_url, body=Exception("Network error"))
-        
+
         success = self.client.add_documents(
             collection_id="coll-id",
             documents=["text"],
@@ -227,7 +227,7 @@ class TestChromaDBClient:
         """Test get_collection_count error handling."""
         count_url = f"{self.coll_url}/coll-id/count"
         responses.add(responses.GET, count_url, status=500)
-        
+
         count = self.client.get_collection_count("coll-id")
         assert count == 0
 
@@ -236,7 +236,7 @@ class TestChromaDBClient:
         """Test get_collection_count exception handling."""
         count_url = f"{self.coll_url}/coll-id/count"
         responses.add(responses.GET, count_url, body=Exception("Network error"))
-        
+
         count = self.client.get_collection_count("coll-id")
         assert count == 0
 
@@ -245,7 +245,7 @@ class TestChromaDBClient:
         """Test query_collection with empty response."""
         query_url = f"{self.coll_url}/coll-id/query"
         responses.add(responses.POST, query_url, json={}, status=200)
-        
+
         docs, meta = self.client.query_collection("coll-id", [0.1, 0.2])
         assert docs == []
         assert meta == []
@@ -255,7 +255,7 @@ class TestChromaDBClient:
         """Test query_collection with missing fields in response."""
         query_url = f"{self.coll_url}/coll-id/query"
         responses.add(responses.POST, query_url, json={"other_field": "value"}, status=200)
-        
+
         docs, meta = self.client.query_collection("coll-id", [0.1, 0.2])
         assert docs == []
         assert meta == []
@@ -265,7 +265,7 @@ class TestChromaDBClient:
         """Test add_documents without optional fields."""
         add_url = f"{self.coll_url}/coll-id/add"
         responses.add(responses.POST, add_url, status=201)
-        
+
         success = self.client.add_documents(
             collection_id="coll-id",
             documents=["text"],

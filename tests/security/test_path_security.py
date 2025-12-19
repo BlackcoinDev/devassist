@@ -24,7 +24,7 @@ class TestPathSecurity:
         # Relative path
         safe_path = PathSecurity.validate_path("README.md")
         assert safe_path == os.path.abspath(os.path.join(current_dir, "README.md"))
-        
+
         # Another relative path
         safe_path = PathSecurity.validate_path("src/main.py")
         assert safe_path == os.path.abspath(os.path.join(current_dir, "src/main.py"))
@@ -37,7 +37,7 @@ class TestPathSecurity:
             "/etc/passwd",
             "~/.ssh/id_rsa"
         ]
-        
+
         for path in traversal_paths:
             with pytest.raises(SecurityError) as excinfo:
                 PathSecurity.validate_path(path)
@@ -58,9 +58,9 @@ class TestPathSecurity:
         """Test directory validation."""
         safe_dir = PathSecurity.validate_directory("src")
         assert "src" in safe_dir
-        
+
         with pytest.raises(SecurityError):
-            PathSecurity.validate_directory("README.md") # Not a directory
+            PathSecurity.validate_directory("README.md")  # Not a directory
 
     def test_validate_file_write(self):
         """Test write validation."""
@@ -111,7 +111,7 @@ class TestPathSecurity:
         try:
             with open(test_file, "w") as f:
                 f.write("test content")
-            
+
             safe_path = PathSecurity.validate_file_read(test_file)
             assert test_file in safe_path
         finally:
@@ -136,7 +136,7 @@ class TestPathSecurity:
         try:
             with open(test_file, "w") as f:
                 f.write("existing content")
-            
+
             safe_path = PathSecurity.validate_file_write(test_file)
             assert test_file in safe_path
             assert os.path.exists(safe_path)

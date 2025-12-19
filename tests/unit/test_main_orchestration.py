@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch, MagicMock
 from src.main import initialize_llm, initialize_vectordb, initialize_user_memory, initialize_application
 import sys
 
+
 class TestMainInitialization:
     """Test initialization failure modes."""
 
@@ -61,6 +62,7 @@ class TestMainInitialization:
         initialize_application()
         mock_exit.assert_called_with(1)
 
+
 class TestChatLoopErrorHandling:
     """Test error handling within the main chat loop."""
 
@@ -73,13 +75,13 @@ class TestChatLoopErrorHandling:
         """Test main loop handling of ConnectionError."""
         from src.main import main
         mock_init.return_value = True
-        
+
         # Simulate a loop that runs once then exits
         # Sequence: raise error, then return "q" to exit gracefully
         mock_input.side_effect = [ConnectionError("Server unreachable"), "q"]
-        
+
         main()
-        
+
         mock_logger.error.assert_any_call("Connection error: Server unreachable")
         # Assert that the specific warning message was printed
         any_call_matches = any("Please ensure LM Studio is running and accessible." in str(call) for call in mock_print.call_args_list)
@@ -94,9 +96,9 @@ class TestChatLoopErrorHandling:
         from src.main import main
         mock_init.return_value = True
         mock_input.side_effect = EOFError()
-        
+
         main()
-        
+
         mock_save.assert_called()
         mock_print.assert_any_call("\n\n👋 Goodbye! Your conversation has been saved.")
 
@@ -109,8 +111,8 @@ class TestChatLoopErrorHandling:
         from src.main import main
         mock_init.return_value = True
         mock_input.side_effect = KeyboardInterrupt()
-        
+
         main()
-        
+
         mock_save.assert_called()
         mock_print.assert_any_call("\n\n👋 Goodbye! Your conversation has been saved.")
