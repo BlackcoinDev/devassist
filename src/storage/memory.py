@@ -125,25 +125,31 @@ def save_memory(history: Sequence[BaseMessage]) -> None:
             with ctx.db_lock:
                 cursor = ctx.db_conn.cursor()
 
-                # Clear existing messages for this session
-                cursor.execute("DELETE FROM conversations WHERE session_id = 'default'")
-
-                # Prepare data for bulk insert
+                # Prepare data for bulk insert (handle None content)
                 data_to_insert = [
-                    ("default", type(msg).__name__, msg.content) for msg in history
+                    ("default", type(msg).__name__, msg.content or "")
+                    for msg in history
                 ]
 
-                # Use executemany for efficient bulk insertion
-                cursor.executemany(
-                    """
-                    INSERT INTO conversations (session_id, message_type, content)
-                    VALUES (?, ?, ?)
-                    """,
-                    data_to_insert,
-                )
-
-                ctx.db_conn.commit()
-                logger.debug(f"Saved {len(data_to_insert)} messages to database")
+                # Use transaction for atomic DELETE + INSERT
+                # This prevents data loss if crash occurs between operations
+                try:
+                    cursor.execute("BEGIN TRANSACTION")
+                    cursor.execute(
+                        "DELETE FROM conversations WHERE session_id = 'default'"
+                    )
+                    cursor.executemany(
+                        """
+                        INSERT INTO conversations (session_id, message_type, content)
+                        VALUES (?, ?, ?)
+                        """,
+                        data_to_insert,
+                    )
+                    ctx.db_conn.commit()
+                    logger.debug(f"Saved {len(data_to_insert)} messages to database")
+                except Exception:
+                    ctx.db_conn.rollback()
+                    raise
 
         else:
             # Database not available - this should not happen in normal operation

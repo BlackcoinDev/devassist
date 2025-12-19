@@ -243,7 +243,9 @@ class AIWorker(QThread):
                 def run_mem0_add(text):
                     try:
                         if user_memory is not None:
-                            user_memory.add(text, user_id="default_user")
+                            # Mem0 expects messages as list of dicts with role/content
+                            messages = [{"role": "user", "content": text}]
+                            user_memory.add(messages, user_id="default_user")
                             if VERBOSE_LOGGING:
                                 logger.info(
                                     f"Mem0: Stored memory from GUI: '{text[:50]}...'"

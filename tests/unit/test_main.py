@@ -202,7 +202,8 @@ class TestMemoryManagement(unittest.TestCase):
         save_memory(messages)
 
         # Verify database operations were called
-        mock_cursor.execute.assert_called_once()  # DELETE operation
+        # execute called twice: BEGIN TRANSACTION + DELETE
+        assert mock_cursor.execute.call_count == 2
         mock_cursor.executemany.assert_called_once()  # INSERT operations
         mock_ctx.db_conn.commit.assert_called_once()
 
