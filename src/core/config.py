@@ -238,13 +238,6 @@ def get_logger() -> logging.Logger:
     return _logger
 
 
-# Backwards compatibility: Export commonly used config values as module-level
-# These are lazily evaluated to avoid loading .env at import time
-def _lazy_config_attr(attr: str):
-    """Create a property that lazily loads from config."""
-    return property(lambda self: getattr(get_config(), attr))
-
-
 # For backwards compatibility with existing code that imports these directly
 # We'll keep module-level constants but they now read from Config
 class _ConfigProxy:

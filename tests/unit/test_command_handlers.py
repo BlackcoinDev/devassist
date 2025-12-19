@@ -19,7 +19,7 @@ from src.commands.handlers.space_commands import handle_space
 from src.commands.handlers.database_commands import handle_vectordb
 from src.commands.handlers.learning_commands import handle_learn, handle_web
 from src.commands.handlers.memory_commands import handle_memory, handle_clear, handle_mem0
-from src.commands.handlers.file_commands import handle_read, handle_write, handle_list, handle_pwd
+from src.commands.handlers.file_commands import handle_read, handle_write
 from src.commands.handlers.export_commands import handle_export
 from src.core.context import get_context, reset_context
 from langchain_core.messages import HumanMessage

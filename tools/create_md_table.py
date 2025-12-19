@@ -36,7 +36,7 @@ Or import as a module:
 """
 
 import sys
-from typing import List, Union
+from typing import List
 
 
 def create_md060_table(headers: List[str], rows: List[List[str]]) -> str:
