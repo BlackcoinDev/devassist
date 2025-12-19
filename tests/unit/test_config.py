@@ -144,33 +144,6 @@ class TestConfigProxy:
 class TestConfigEdgeCases:
     """Test edge cases and error handling."""
 
-    def test_lazy_config_attr_function(self):
-        """Test the _lazy_config_attr helper function."""
-        from src.core.config import _lazy_config_attr
-
-        with patch.dict(os.environ, {
-            'LM_STUDIO_URL': 'http://localhost:1234',
-            'LM_STUDIO_KEY': 'test-key',
-            'MODEL_NAME': 'test-model',
-            'MAX_HISTORY_PAIRS': '10',
-            'TEMPERATURE': '0.7',
-            'MAX_INPUT_LENGTH': '4096',
-            'DB_TYPE': 'sqlite',
-            'DB_PATH': 'test.db',
-            'CHROMA_HOST': 'localhost',
-            'CHROMA_PORT': '8000',
-            'OLLAMA_BASE_URL': 'http://localhost:11434',
-            'EMBEDDING_MODEL': 'test-embedding'
-        }):
-            from src.core import config as config_mod
-            config_mod._config = None  # Reset singleton
-
-            # Create a lazy property
-            lazy_prop = _lazy_config_attr('model_name')
-
-            # It should be a property object
-            assert isinstance(lazy_prop, property)
-
     def test_dotenv_import_error_handling(self):
         """Test handling when python-dotenv is not available."""
         import sys

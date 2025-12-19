@@ -489,17 +489,17 @@ class TestLegacyModelHandlers:
         mock_config.return_value.model_name = "test-model"
         mock_config.return_value.lm_studio_url = "http://localhost:1234"
         mock_config.return_value.temperature = 0.7
-        mock_config.return_value.max_tokens = 1000
-        
+        mock_config.return_value.max_input_length = 4096
+
         mock_context.return_value.llm = MagicMock()
-        
+
         show_model_info()
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Model: test-model" in output
         assert "API: http://localhost:1234" in output
         assert "Temperature: 0.7" in output
-        assert "Max Tokens: 1000" in output
+        assert "Max Input Length: 4096" in output
         assert "Connected to: test-model" in output
 
 
@@ -521,16 +521,15 @@ class TestLegacyContextHandlers:
         assert "Current context mode: auto" in output
 
     @patch('builtins.print')
+    @patch('src.commands.handlers.legacy_commands.set_context_mode')
     @patch('src.commands.handlers.legacy_commands.get_config')
-    def test_handle_context_command_set(self, mock_config, mock_print):
+    def test_handle_context_command_set(self, mock_config, mock_set_mode, mock_print):
         """Test setting context mode."""
-        mock_config.return_value.context_mode = "auto"
-        
         handle_context_command(["on"])
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Context mode set to: on" in output
-        assert mock_config.return_value.context_mode == "on"
+        mock_set_mode.assert_called_with("on")
 
     @patch('builtins.print')
     @patch('src.commands.handlers.legacy_commands.get_config')
@@ -562,16 +561,15 @@ class TestLegacyLearningModeHandlers:
         assert "Current learning mode: normal" in output
 
     @patch('builtins.print')
+    @patch('src.commands.handlers.legacy_commands.set_learning_mode')
     @patch('src.commands.handlers.legacy_commands.get_config')
-    def test_handle_learning_command_set(self, mock_config, mock_print):
+    def test_handle_learning_command_set(self, mock_config, mock_set_mode, mock_print):
         """Test setting learning mode."""
-        mock_config.return_value.learning_mode = "normal"
-        
         handle_learning_command(["strict"])
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Learning mode set to: strict" in output
-        assert mock_config.return_value.learning_mode == "strict"
+        mock_set_mode.assert_called_with("strict")
 
     @patch('builtins.print')
     @patch('src.commands.handlers.legacy_commands.get_config')
@@ -633,11 +631,11 @@ class TestLegacySpaceHandlers:
         """Test switching to a space."""
         mock_config.return_value.current_space = "default"
         mock_switch.return_value = True
-        
+
         handle_space_command("switch work")
-        
+
         mock_switch.assert_called_with("work")
-        mock_save.assert_called_with("work")
+        mock_save.assert_called_once()  # save_current_space() takes no args
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Switched to space: work" in output
 
@@ -667,13 +665,12 @@ class TestLegacySpaceHandlers:
         assert "Cannot delete the default space" in output
 
     @patch('builtins.print')
+    @patch('src.commands.handlers.legacy_commands.get_current_space', return_value="work")
     @patch('src.commands.handlers.legacy_commands.get_config')
-    def test_handle_space_command_delete_current(self, mock_config, mock_print):
+    def test_handle_space_command_delete_current(self, mock_config, mock_get_space, mock_print):
         """Test deleting current space (should fail)."""
-        mock_config.return_value.current_space = "work"
-        
         handle_space_command("delete work")
-        
+
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Cannot delete the current space" in output
 

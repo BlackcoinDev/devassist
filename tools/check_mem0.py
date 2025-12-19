@@ -51,17 +51,25 @@ def check_mem0():
     try:
         mem0_config = {
             "llm": {
-                "provider": "openai",
+                "provider": "lmstudio",
                 "config": {
                     "model": model_name,
-                    "openai_base_url": lm_studio_url,
-                    "api_key": "lm-studio",
+                    "lmstudio_base_url": lm_studio_url,
                     "temperature": 0.1,
+                    "lmstudio_response_format": {
+                        "type": "json_schema",
+                        "json_schema": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": True,
+                            }
+                        },
+                    },
                 },
             },
             "embedder": {
                 "provider": "ollama",
-                "config": {"model": embedding_model, "base_url": ollama_url},
+                "config": {"model": embedding_model, "ollama_base_url": ollama_url},
             },
             "vector_store": {
                 "provider": "chroma",
