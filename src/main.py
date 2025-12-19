@@ -177,7 +177,7 @@ from datetime import datetime  # Timestamps for learned knowledge
 from typing import List, Optional, cast
 
 # Security and configuration
-# SecretStr is imported where needed
+from pydantic import SecretStr  # Kept for backwards compatibility
 
 # Mem0 for personalized memory
 try:
