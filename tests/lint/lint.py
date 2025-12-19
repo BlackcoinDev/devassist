@@ -25,8 +25,8 @@
 Project Linting Script v1.0.0
 Runs comprehensive linting checks on all code in the project.
 
-Dependencies: autopep8, flake8, mypy, vulture, codespell, shellcheck
-Install with: pip install autopep8 flake8 mypy vulture codespell && brew install shellcheck
+Dependencies: autopep8, flake8, mypy, vulture, codespell, bandit, shellcheck
+Install with: pip install autopep8 flake8 mypy vulture codespell bandit && brew install shellcheck
 """
 
 import os
@@ -95,7 +95,9 @@ def find_shell_files() -> list[str]:
     for root, dirs, filenames in os.walk("."):
         dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
         for filename in filenames:
-            if filename.endswith(".sh") or (filename.startswith(".") and "bash" in filename):
+            if filename.endswith(".sh") or (
+                filename.startswith(".") and "bash" in filename
+            ):
                 files.append(os.path.join(root, filename))
     return files
 
@@ -117,14 +119,16 @@ def lint_python(files: list[str]) -> bool:
     # 2. Flake8
     if not run_command(
         f"flake8 --max-line-length=150 --extend-ignore=E203,W503,F541 {files_arg}",
-        "Flake8 style check"
+        "Flake8 style check",
     ):
         all_passed = False
 
     # 3. Autopep8
     result = subprocess.run(
         f"autopep8 --diff --max-line-length=150 {files_arg}",
-        shell=True, capture_output=True, text=True
+        shell=True,
+        capture_output=True,
+        text=True,
     )
     if result.returncode == 0 and not result.stdout.strip():
         print("✅ Autopep8 formatting check passed")
@@ -137,15 +141,19 @@ def lint_python(files: list[str]) -> bool:
     if not run_command(f"mypy --ignore-missing-imports {files_arg}", "MyPy type check"):
         all_passed = False
 
+    # 4.5. Bandit Security Check
+    if not run_command(f"bandit -r {files_arg} -c .bandit", "Bandit security check"):
+        all_passed = False
+
     # 5. Vulture
     result = subprocess.run(
-        f"vulture {files_arg}",
-        shell=True, capture_output=True, text=True
+        f"vulture {files_arg}", shell=True, capture_output=True, text=True
     )
     if result.returncode != 0:
         error_lines = result.stdout.strip().split("\n")
         real_issues = [
-            line for line in error_lines
+            line
+            for line in error_lines
             if not ("closeEvent" in line or "_default_params" in line)
         ]
         if real_issues:

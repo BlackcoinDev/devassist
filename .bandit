@@ -1,0 +1,49 @@
+# Bandit configuration for AI Assistant project
+# Security linting configuration for Python codebase
+# Excludes directories that shouldn't be scanned for security issues
+
+exclude_dirs:
+  - tests/
+  - venv/
+  - __pycache__/
+  - .pytest_cache/
+  - .mypy_cache/
+  - chroma_data/
+  - faiss_index/
+  - node_modules/
+  - .git/
+  - build/
+  - dist/
+
+# Skip specific security checks that are acceptable in this context
+skips:
+  # B101 - Assert used (common in tests, but also used in some runtime checks)
+  - B101
+
+  # B110 - Try/except with broad exception + pass (defensive error handling)
+  # These are intentional - ignoring errors during cleanup/shutdown operations
+  - B110
+
+  # B112 - Try/except with SystemExit/continue (legitimate for CLI/file processing)
+  # Used for graceful error handling in loops and CLI applications
+  - B112
+
+  # B301 - Pickle usage (may be needed for vector database caching)
+  - B301
+
+  # B311 - Random usage (may be needed for AI response randomization)
+  - B311
+
+  # B404 - Import of subprocess (needed for system calls in tools)
+  - B404
+
+  # B603 - Subprocess without shell=True (may be needed for security)
+  - B603
+
+# Severity and confidence thresholds
+# Start with MEDIUM to catch most issues without too much noise
+confidence: MEDIUM
+severity: MEDIUM
+
+# Additional plugin configurations can be added here
+# plugins:
