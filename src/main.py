@@ -168,7 +168,8 @@ from langchain_text_splitters import (
 import os  # Environment variable and file system operations
 import sys  # System operations and exit handling
 
-# Standard library imports are now imported where needed to avoid F401 issues
+# Standard library imports (kept for backwards compatibility and test mocking)
+import sqlite3
 import threading  # Thread synchronization for database operations
 from datetime import datetime  # Timestamps for learned knowledge
 
