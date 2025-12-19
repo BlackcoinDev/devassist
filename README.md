@@ -79,6 +79,7 @@ src/commands/handlers/
 ├── file_commands.py       # New command system
 ├── export_commands.py     # New command system
 └── legacy_commands.py     # 15 legacy handlers (23KB)
+```
 
 **Migration Path:** Legacy commands will be gradually migrated to use `@CommandRegistry.register()` decorators for
 consistency with the new command system.
@@ -136,6 +137,7 @@ consistency with the new command system.
 │   (LLM API)     │    │  (Embeddings)   │    │   (Documents)   │
 │  qwen3-vl-30b   │    │ qwen3-embedding │    │   80+ formats   │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
 ## 📄 Document Processing Workflow
 
@@ -186,8 +188,7 @@ AI: Based on the Blackcoin POS v3.1 whitepaper, the key features include:
 - Bitcoin compatibility with modified transaction layout
 - Security enhancements addressing coin-age abuse
 - Robust node incentives for network participation
-
-```text
+```
 
 **Tool-Based Analysis**:
 
@@ -196,7 +197,7 @@ User: Parse the PDF samples/blackcoin-pos-protocol-v3.1-whitepaper.pdf and extra
 AI: [Uses parse_document tool]
 ✅ Successfully extracted content from blackcoin-pos-protocol-v3.1-whitepaper.pdf
 Main sections include: Abstract, Introduction, Background, Proposed Solution, Implementation, Conclusion
-```text
+```
 
 **Codebase Questions**:
 

@@ -11,15 +11,15 @@ The `fix-markdown.py` script can automatically fix these common issues:
 
 ### ✅ Auto-Fixable Rules
 
-| Rule       | Description                                         | Example Fix                                         |
-| ---------- | --------------------------------------------------- | --------------------------------------------------- |
-| **MD022**  | Headings should be surrounded by blank lines        | Adds blank lines around headings                    |
-| **MD030**  | Spaces after list markers should be consistent      | Standardizes to 1 space after `-`, `*`, `+`         |
-| **MD031**  | Code blocks should be surrounded by blank lines     | Adds blank lines around code blocks                 |
-| **MD032**  | Lists should be surrounded by blank lines           | Adds blank lines around lists                       |
-| **MD040**  | Fenced code blocks should have language specified   | Adds `text` language to unspecified code blocks     |
-| **MD047**  | Files should end with single trailing newline       | Adds missing newline character                      |
-| **MD013**  | Line length should be ≤ 80 characters               | Wraps long lines (basic wrapping)                   |
+| Rule       | Description                                        | Example Fix                                     |
+| ---------- | -------------------------------------------------- | ----------------------------------------------- |
+| **MD022**  | Headings should be surrounded by blank lines       | Adds blank lines around headings                |
+| **MD030**  | Spaces after list markers should be consistent     | Standardizes to 1 space after `-`, `*`, `+`     |
+| **MD031**  | Code blocks should be surrounded by blank lines    | Adds blank lines around code blocks             |
+| **MD032**  | Lists should be surrounded by blank lines          | Adds blank lines around lists                   |
+| **MD040**  | Fenced code blocks should have language specified  | Adds `text` language to unspecified code blocks |
+| **MD047**  | Files should end with single trailing newline      | Adds missing newline character                  |
+| **MD013**  | Line length should be ≤ 80 characters              | Wraps long lines (basic wrapping)               |
 
 ### ⚠️ Partially Auto-Fixable Rules
 
@@ -368,6 +368,7 @@ python tests/lint/lint-markdown.py docs/
 python tests/lint/lint-markdown.py docs/
 
 # Should show: "✅ Markdown linting passed - no issues found"
+```
 
 ## 📊 Issue Type Breakdown
 

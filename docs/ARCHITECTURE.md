@@ -557,6 +557,7 @@ chroma run --host 192.168.0.204 --port 8000 --path ./chroma_data
 # Terminal 3: Ollama
 
 ollama serve
+```
 
 ## 📋 Key Features Matrix
 

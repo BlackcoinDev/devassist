@@ -596,6 +596,7 @@ int):
     # Could send to monitoring system
     # metrics_client.histogram('db_query_duration', duration, tags={'query':
 query_name})
+```
 
 This guide provides a comprehensive foundation for implementing various database
 backends for conversation memory storage, with security, performance, and

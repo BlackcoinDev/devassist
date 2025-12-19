@@ -410,6 +410,7 @@ rows = [
 | Test Coverage   | 53%     | 90%    | ▰▰▰▰▰▱▱▱▱ 53%                | ✅ On Track  |
 | Documentation   | 85%     | 100%   | ▰▰▰▰▰▰▰▰▰▱ 85%               | ✅ On Track  |
 | Performance     | 95%     | 95%    | ▰▰▰▰▰▰▰▰▰▰ 95%               | ✅ Complete  |
+```
 
 ## 🔍 Troubleshooting
 
