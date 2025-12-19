@@ -210,6 +210,7 @@ AI: The /populate command processes documents by:
 3. Chunking text into 1500-character segments
 4. Generating vector embeddings via Ollama
 5. Storing in ChromaDB for semantic search
+```
 
 ### Real-World Usage Scenarios
 
@@ -250,14 +251,8 @@ AI: The /populate command processes documents by:
 3. **🧠 Learning System**: AI can learn and retain information via vector database
 4. **💾 ChromaDB v2 Server**: Distributed vector database for persistent knowledge storage
 5. **🔍 Semantic Search**: Context-aware information retrieval using embeddings
-6. **📄 Document Processing**: qwen3-vl-30b multimodal analysis for OCR, table extraction, form analysis, and layout
-
-   understanding
-
-7. **🛠️ AI Tool Calling**: 8 powerful tools for file operations, document processing, knowledge management, and web
-
-   search
-
+6. **📄 Document Processing**: qwen3-vl-30b multimodal analysis for OCR, table extraction, form analysis, and layoutunderstanding
+7. **🛠️ AI Tool Calling**: 8 powerful tools for file operations, document processing, knowledge management, and websearch
 8. **📝 Code Ingestion**: Bulk import and indexing of codebases with 80+ file type support
 9. **💬 Memory Management**: SQLite-based conversation persistence across sessions
 10. **🎛️ Model Management**: Dynamic model switching and configuration
@@ -290,10 +285,7 @@ AI: The /populate command processes documents by:
 The AI now "knows" you through the Mem0 personalized memory system:
 
 - **Automatic Learning**: Mem0 silently observes your messages and learns your preferences without explicit commands
-- **Adaptive Responses**: The AI remembers your coding style, preferences, and context to provide better tailored
-
-  responses
-
+- **Adaptive Responses**: The AI remembers your coding style, preferences, and context to provide better tailored responses
 - **Contextual Awareness**: For every message, Mem0 provides relevant context to help the AI understand your needs
 - **Persistent Memory**: User preferences are stored and remembered across sessions
 
@@ -305,6 +297,7 @@ You: "I prefer Python 3.10 type hints"
 Mem0: *Silently remembers your preference*
 You: "Write a function to sum a list"
 AI: *Generates code with Python 3.10 type hints because it remembers your preference*
+```
 
 ## 🌍 Web Ingestion Features
 
@@ -322,6 +315,7 @@ You: /web https://example.com/documentation
 AI: ✅ Learned from web: Example Documentation
 You: What did you learn about Example?
 AI: *Provides summary based on web content*
+```
 
 ## 📋 Prerequisites
 
@@ -367,6 +361,7 @@ python tests/lint/all-lint.py
 # Run Python-specific linting only
 
 python tests/lint/lint-python.py
+```
 
 ### Quality Assurance Tools
 
@@ -419,10 +414,10 @@ python tests/lint/lint-python.py
     ```bash
     # Install Ollama for embeddings
     ollama pull qwen3-embedding:latest
-    ```
 
-     # Start Ollama service (MANDATORY for vector database operations)
+   # Start Ollama service (MANDATORY for vector database operations)
      ollama serve
+    ```
 
 ### Current Implementation
 
@@ -432,10 +427,10 @@ python tests/lint/lint-python.py
 
 ## 🚀 Installation
 
-> **⚠️ IMPORTANT**: This application requires a `.env` configuration file. Copy `.env.example` to `.env` and configure
+**⚠️ IMPORTANT**: This application requires a `.env` configuration file. Copy `.env.example` to `.env` and configure
 all variables before running.
 
-1. **Clone the repository**:
+1. **Clone the repository:**
 
    ```bash
    git clone https://github.com/BlackcoinDev/devassist.git
@@ -444,7 +439,7 @@ all variables before running.
 
 2. **Create Python 3.13.x virtual environment**:
 
-   **Using uv (recommended):**
+   **Using uv (recommended)**:
 
    ```bash
    uv venv venv --python 3.13  # Uses latest 3.13.x available on your system
@@ -511,12 +506,12 @@ be provided through environment variables.
    ```bash
    cp .env.example .env
 
-1. **Edit `.env` with your specific settings**:
+2. **Edit `.env` with your specific settings**:
 
    ```bash
    nano .env  # or your preferred editor
 
-2. **The application will fail to start** without a properly configured `.env` file.
+3. **The application will fail to start** without a properly configured `.env` file.
 
 ### Required Settings v0.2.0
 
@@ -561,6 +556,7 @@ DB_PATH=db/history.db                         # SQLite database path
 # System Configuration (REQUIRED)
 
 KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
+```
 
 ### Configuration Validation
 
@@ -605,6 +601,7 @@ uv run python launcher.py --cli  # CLI only
 # OR
 
 uv run python launcher.py --gui  # GUI only
+```
 
 **Note**: The application will fail to start without a properly configured `.env` file containing all required
 environment variables.
@@ -677,6 +674,7 @@ The application includes a modern PyQt6-based graphical interface with:
                                 │ Context: [auto ▼]│
                                 │ Learning:[normal▼│
                                 └─────────────────┘
+```
 
 **Note**: The GUI provides complete feature parity with the CLI, including all slash commands (/help, /clear, /learn,
 /vectordb, /mem0, /populate, /context, /learning, /space, etc.) processed locally without calling the AI. The interface
@@ -698,7 +696,7 @@ The GUI supports markdown formatting in messages:
 uv run python launcher.py        # Default - launches GUI
 uv run python launcher.py --gui  # Explicit GUI launch
 
-```text
+```
 
 ### GUI vs CLI
 
@@ -825,6 +823,7 @@ SHOW_TOOL_DETAILS=true
    Arguments: {'file_path': 'README.md'}
 ✅ Tool read_file completed (1247 chars read)
 AI Assistant: [comprehensive analysis based on file content]
+```
 
 **Configuration Options:**
 
@@ -928,13 +927,12 @@ Use the `/populate` command to bulk-load codebases:
 
 This recursively scans directories and adds all code files to the ChromaDB vector database using the direct API for
 optimal reliability and performance.
+```
 
 **Options:**
 
 - `--clear`: Delete existing collection before repopulating (prevents duplicates)
 - `--dry-run`: Validate files without writing to database
-
-```
 
 ### Custom Knowledge Addition
 
