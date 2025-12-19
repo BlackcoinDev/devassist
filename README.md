@@ -354,13 +354,9 @@ All Python dependencies are listed in `requirements.txt`. Key libraries include:
 
 ```bash
 
-# Run comprehensive project linting
+# Run all linting checks (Python, shell, structure)
 
-python tests/lint/all-lint.py
-
-# Run Python-specific linting only
-
-python tests/lint/lint-python.py
+python tests/lint/lint.py
 ```
 
 ### Quality Assurance Tools
@@ -374,7 +370,7 @@ python tests/lint/lint-python.py
 ### Development Workflow
 
 1. **Write Code** → Features implemented with comprehensive error handling
-2. **Run Lints** → `python tests/lint/all-lint.py` for quality assurance
+2. **Run Lints** → `python tests/lint/lint.py` for quality assurance
 3. **Fix Issues** → Address any style, type, or logic problems
 4. **Test Integration** → Verify with CLI and GUI interfaces
 5. **Deploy** → Production-ready code with clean quality metrics
@@ -1014,8 +1010,7 @@ devassist/
 │   ├── integration/           # Integration tests
 │   ├── unit/                  # Unit tests
 │   └── lint/                  # Linting scripts
-│       ├── all-lint.py        # Comprehensive project linting
-│       └── lint-python.py     # Python-specific linting
+│       └── lint.py            # Consolidated project linting
 ├── tools/
 │   ├── README.md              # Guide for AI tool calling
 │   ├── populate_codebase.py  # Codebase population script for bulk import

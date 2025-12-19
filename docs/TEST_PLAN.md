@@ -692,7 +692,7 @@ uv run pytest tests/unit/ -q
 
 # Run linting
 
-uv run python tests/lint/lint-python.py
+uv run python tests/lint/lint.py
 
 # Check coverage
 

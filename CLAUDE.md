@@ -91,13 +91,9 @@ uv run pytest -q
 
 ```bash
 
-# Comprehensive project linting (RECOMMENDED)
+# Run all linting checks (Python, shell, structure)
 
-uv run python tests/lint/all-lint.py
-
-# Python-specific linting only (faster)
-
-uv run python tests/lint/lint-python.py
+uv run python tests/lint/lint.py
 
 # Individual linters via uv
 
@@ -106,67 +102,7 @@ uv run flake8 <file>                                          # Style check
 uv run mypy <file>                                            # Type check
 uv run vulture <file>                                         # Dead code
 uv run codespell <file>                                       # Spelling
-```text
-
-### Markdown Linting (v0.2.0 - 3-Phase Auto-Fix)
-
-```bash
-
-# Detect markdown issues
-
-uv run python tests/lint/lint-markdown.py
-
-# Auto-fix 92% of issues (24+ rules)
-
-uv run python tests/lint/fix-markdown.py
-
-# Preview changes without modifying files
-
-uv run python tests/lint/fix-markdown.py --dry-run
-
-# Fix specific file with verbose output
-
-uv run python tests/lint/fix-markdown.py docs/MANUAL.md --verbose
-
-# Custom line length
-
-uv run python tests/lint/fix-markdown.py --line-length 120
-```text
-
-**3-Phase Architecture:**
-
-- **Phase 1**: Pymarkdown native fix (16+ rules: MD004, MD005, MD029, MD030, etc.)
-- **Phase 2**: Custom fixes (7 rules: MD013, MD022, MD026, MD031, MD032, MD040, MD047)
-- **Phase 3**: Table alignment (MD060)
-
-**Coverage**: 92% auto-fix (24+ rules), only MD024 & MD036 require manual work.
-
-**Workflow**:
-
-```bash
-
-# 1. Auto-fix everything
-
-uv run python tests/lint/fix-markdown.py
-
-# 2. Review changes
-
-git diff docs/
-
-# 3. Manually fix remaining issues (MD024, MD036)
-
-#    - MD024: Duplicate headings (1 issue)
-
-#    - MD036: Emphasis as headings (11 issues)
-
-# 4. Verify zero issues
-
-uv run python tests/lint/lint-markdown.py
-
-# 5. Commit
-
-git add docs/ .pymarkdown
-git commit -m "docs: achieve markdown zero tolerance"
+```
 
 **Key Patterns:**
 

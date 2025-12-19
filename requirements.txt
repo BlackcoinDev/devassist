@@ -28,4 +28,3 @@ types-requests
 vulture
 mem0ai
 ddgs
-pymarkdownlnt
