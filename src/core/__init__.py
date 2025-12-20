@@ -68,12 +68,7 @@ from src.core.utils import (
     get_file_size_info,
     truncate_content,
 )
-from src.core.display import (
-    show_welcome,
-    show_memory_status,
-    show_command_result,
-    format_file_info,
-)
+# Display functions removed to avoid circular imports
 
 __all__ = [
     # Config
