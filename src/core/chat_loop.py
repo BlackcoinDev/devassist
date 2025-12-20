@@ -8,7 +8,13 @@ to improve modularity and reduce the size of the main module.
 import logging
 import time
 from typing import List, Optional
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import (
+    HumanMessage,
+    AIMessage,
+    SystemMessage,
+    ToolMessage,
+    BaseMessage,
+)
 
 # Import security
 from src.security.input_sanitizer import InputSanitizer
@@ -217,7 +223,9 @@ class ChatLoop:
         if self.vectorstore:
             context = self.get_relevant_context(user_input)
             if _config.verbose_logging and context:
-                module_logger.debug(f"   📚 Retrieved {len(context)} chars from vector DB")
+                module_logger.debug(
+                    f"   📚 Retrieved {len(context)} chars from vector DB"
+                )
 
         # Add user memory context
         if self.user_memory:
@@ -242,7 +250,9 @@ class ChatLoop:
                     mem_str = "\n".join(mem_list)
                     context += f"\n\n[User Context & Preferences]:\n{mem_str}"
                     if _config.verbose_logging:
-                        module_logger.debug(f"   🧠 Retrieved {len(mem_list)} memories from Mem0")
+                        module_logger.debug(
+                            f"   🧠 Retrieved {len(mem_list)} memories from Mem0"
+                        )
 
             except Exception as e:
                 if self.logger:
@@ -258,7 +268,7 @@ class ChatLoop:
 You can use tools to help answer questions and perform tasks. Be helpful and provide detailed responses."""
         )
 
-        messages = [system_message]
+        messages: List[BaseMessage] = [system_message]
 
         # Add context if available
         if context:
@@ -277,7 +287,9 @@ You can use tools to help answer questions and perform tasks. Be helpful and pro
         messages.extend(recent_messages)
 
         if _config.show_llm_reasoning:
-            module_logger.info(f"🧠 LLM: Generating response with {len(messages)} messages")
+            module_logger.info(
+                f"🧠 LLM: Generating response with {len(messages)} messages"
+            )
             if context:
                 module_logger.info(f"   📋 Context: {len(context)} chars provided")
 
@@ -313,12 +325,96 @@ You can use tools to help answer questions and perform tasks. Be helpful and pro
         # Handle tool calls
         if hasattr(response, "tool_calls") and response.tool_calls:
             if _config.show_tool_details:
-                module_logger.info(f"   🔧 Tool calls detected: {len(response.tool_calls)}")
-                for tc in response.tool_calls:
-                    tool_name = tc.get("name", "unknown") if isinstance(tc, dict) else getattr(tc, "name", "unknown")
-                    module_logger.info(f"      • {tool_name}")
-            # For now, just return the content - tool calling logic can be added later
-            return response.content or "I tried to use tools but encountered an issue."
+                module_logger.info(
+                    f"   🔧 Tool calls detected: {len(response.tool_calls)}"
+                )
+
+            # Execute each tool call
+            from src.tools import ToolRegistry
+
+            tool_results = []
+
+            for tc in response.tool_calls:
+                tool_name = (
+                    tc.get("name", "unknown")
+                    if isinstance(tc, dict)
+                    else getattr(tc, "name", "unknown")
+                )
+                if _config.show_tool_details:
+                    module_logger.info(f"      • Executing: {tool_name}")
+
+                tool_start = time.time()
+                result = ToolRegistry.execute_tool_call(tc)
+                tool_elapsed = time.time() - tool_start
+
+                if _config.show_tool_details:
+                    success = (
+                        "error" not in result.get("result", {})
+                        if isinstance(result.get("result"), dict)
+                        else True
+                    )
+                    status = "✅" if success else "❌"
+                    module_logger.info(
+                        f"        {status} Completed in {tool_elapsed:.2f}s"
+                    )
+
+                tool_results.append(result)
+
+            # Add tool results as ToolMessages to messages for follow-up LLM call
+            if tool_results:
+                for tc, tr in zip(response.tool_calls, tool_results):
+                    tool_call_id = (
+                        tc.get("id", "")
+                        if isinstance(tc, dict)
+                        else getattr(tc, "id", "")
+                    )
+                    result_content = str(tr.get("result", {}))
+                    tool_message = ToolMessage(
+                        content=result_content, tool_call_id=tool_call_id
+                    )
+                    messages.append(tool_message)
+
+                # Make follow-up LLM call with tool results
+                if _config.show_llm_reasoning:
+                    module_logger.info(
+                        f"🧠 LLM: Generating follow-up response with {len(messages)} messages"
+                    )
+
+                follow_up_start = time.time()
+                response = self.llm.invoke(messages)
+                follow_up_elapsed = time.time() - follow_up_start
+
+                if _config.show_llm_reasoning:
+                    module_logger.info(
+                        f"   ⏱️ Follow-up response generated in {follow_up_elapsed:.2f}s"
+                    )
+
+                # Log token usage for follow-up if available
+                if _config.show_token_usage:
+                    if (
+                        hasattr(response, "response_metadata")
+                        and response.response_metadata
+                    ):
+                        metadata = response.response_metadata
+                        if "token_usage" in metadata:
+                            usage = metadata["token_usage"]
+                            prompt_tokens = usage.get("prompt_tokens", "?")
+                            completion_tokens = usage.get("completion_tokens", "?")
+                            module_logger.info(
+                                f"   📊 Follow-up tokens: {prompt_tokens} prompt, {completion_tokens} completion"
+                            )
+                        elif "usage" in metadata:
+                            usage = metadata["usage"]
+                            prompt_tokens = usage.get("prompt_tokens", "?")
+                            completion_tokens = usage.get("completion_tokens", "?")
+                            module_logger.info(
+                                f"   📊 Follow-up tokens: {prompt_tokens} prompt, {completion_tokens} completion"
+                            )
+
+                return (
+                    response.content
+                    or "Tool execution completed but no final response generated."
+                )
 
         return response.content
 
