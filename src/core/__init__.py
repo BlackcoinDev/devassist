@@ -62,6 +62,18 @@ from src.core.context import (
     get_query_cache,
 )
 from src.core.context_utils import get_relevant_context, add_to_knowledge_base
+from src.core.utils import (
+    chunk_text,
+    validate_file_path,
+    get_file_size_info,
+    truncate_content,
+)
+from src.core.display import (
+    show_welcome,
+    show_memory_status,
+    show_command_result,
+    format_file_info,
+)
 
 __all__ = [
     # Config
@@ -101,4 +113,8 @@ __all__ = [
     # Utilities
     "get_relevant_context",
     "add_to_knowledge_base",
+    "chunk_text",
+    "validate_file_path",
+    "get_file_size_info",
+    "truncate_content",
 ]

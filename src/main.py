@@ -151,6 +151,7 @@ from requests.adapters import HTTPAdapter
 import requests
 from src.core.context import get_context
 from src.core.config import get_config, get_logger, APP_VERSION
+from src.core.utils import chunk_text
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import (
     HumanMessage,
@@ -1851,84 +1852,10 @@ def initialize_application():
     return True
 
 
-def show_welcome():
-    """
-    Display application startup information and load workspace configuration.
-
-    Shows the application header, basic usage instructions, and loads the
-    current workspace (space) that was last used. Spaces provide isolated
-    knowledge bases for different projects or contexts.
-    """
-    # Load the workspace that was last active first (needed for display)
-    global CURRENT_SPACE
-    CURRENT_SPACE = load_current_space()
-
-    # Display clean startup banner
-    print("")
-    print("=" * 60)
-    print(f"      AI Assistant Chat Interface v{APP_VERSION}")
-    print("=" * 60)
-
-    # Show configuration summary
-    print(f"📍 Python: {sys.version.split()[0]} | Model: {MODEL_NAME}")
-    print(f"🔗 LM Studio: {LM_STUDIO_BASE_URL}")
-    print(f"🗄️  ChromaDB: {CHROMA_HOST}:{CHROMA_PORT}")
-    print(f"🧠 Embeddings: {EMBEDDING_MODEL}")
-
-    # Show memory status
-    msg_count = len(conversation_history)
-    print(f"💾 Memory: SQLite ({msg_count} messages loaded)")
-
-    # Show current space
-    print(
-        f"🌐 Space: {CURRENT_SPACE} (collection: {
-            get_space_collection_name(CURRENT_SPACE)
-        })"
-    )
-    print("")
-
-    # Show usage hints
-    print("Hello! I'm ready to help you.")
-    print("Commands: 'quit', 'exit', or 'q' to exit")
-    print("Type /help for all available commands")
-    print("")
+# show_welcome function moved to src.core.display
 
 
-def chunk_text(content: str) -> List[str]:
-    """
-    Intelligently split text content into manageable chunks for vector storage.
-
-    Uses LangChain's RecursiveCharacterTextSplitter to create overlapping chunks
-    that preserve semantic meaning and code structure. This is crucial for
-    effective retrieval-augmented generation (RAG) where context matters.
-
-    Args:
-        content: The text content to be chunked (typically code or documentation)
-
-    Returns:
-        List of text chunks, each ~1500 characters with 200 character overlap
-
-    Technical Details:
-    - Chunk Size: 1500 chars - balances context with search efficiency
-    - Overlap: 200 chars - ensures continuity across chunk boundaries
-    - Separators: Prioritizes paragraph breaks, then lines, then words
-    - Keep Separator: Preserves formatting in split content
-    """
-    # Configure text splitter optimized for code and technical content
-    # These parameters are tuned for programming languages and documentation
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1500,  # Optimal size for context retention
-        chunk_overlap=200,  # Ensures semantic continuity
-        separators=[
-            "\n\n",
-            "\n",
-            " ",
-            "",
-        ],  # Split hierarchy: paragraphs > lines > words > chars
-        keep_separator=True,  # Preserve code formatting
-    )
-
-    return text_splitter.split_text(content)
+# chunk_text function moved to src.core.utils
 
 
 # =============================================================================
@@ -2018,6 +1945,8 @@ def main():  # type: ignore[reportGeneralTypeIssues]
     - Context retrieval and AI response generation
     - Memory persistence and cleanup
     """
+    from src.core.display import show_welcome
+
     show_welcome()
 
     # Initialize application components
