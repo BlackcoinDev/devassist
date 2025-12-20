@@ -227,7 +227,7 @@ SHOW_TOOL_DETAILS=true     # Tool execution details with timing
 **Logging coverage by module:**
 
 | Module | Flags Used |
-|--------|------------|
+| -------- | ------------ |
 | `src/core/chat_loop.py` | All 4 flags (LLM reasoning, tokens, tools, verbose) |
 | `src/tools/registry.py` | `show_tool_details` (registration, execution, timing) |
 | `src/commands/registry.py` | `verbose_logging` (dispatch, completion) |

@@ -1,6 +1,6 @@
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/BlackcoinDev/devassist)
-
 # AI Assistant Chat Application v0.2.0 - Modular Architecture
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/BlackcoinDev/devassist)
 
 An advanced interactive AI chat assistant powered by LangChain, LM Studio, and ChromaDB vector database. Features
 comprehensive learning capabilities, multi-format document processing, robust error handling, and complete feature
