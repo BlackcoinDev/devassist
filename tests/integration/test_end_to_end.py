@@ -19,21 +19,27 @@ class TestEndToEnd:
     def setup_method(self):
         """Reset context before each test."""
         reset_context()
+        # Also clear the module-level conversation history in main.py
+        import src.main
+        src.main.conversation_history.clear()
 
     @patch('src.main.initialize_application')
-    @patch('src.main.input')
-    @patch('src.main.print')
+    @patch('builtins.input')
+    @patch('builtins.print')
     @patch('src.main.save_memory')
+    @patch('src.main.load_memory')
     @patch('src.main.llm')
     @patch('src.main.vectorstore', None)
     @patch('src.main.user_memory', None)
-    def test_basic_session_flow(self, mock_llm, mock_save, mock_print, mock_input, mock_init):
+    def test_basic_session_flow(self, mock_llm, mock_load, mock_save, mock_print, mock_input, mock_init):
         """Test a simple session with two messages and a quit command."""
         # 1. Setup mocks
         mock_init.return_value = True
+        mock_load.return_value = [SystemMessage(content="Hello")]
 
         # Seed history
-        get_context().conversation_history.append(SystemMessage(content="Hello"))
+        import src.main
+        src.main.conversation_history.append(SystemMessage(content="Hello"))
 
         # Sequence of user inputs:
         # 1. A greeting
@@ -66,19 +72,22 @@ class TestEndToEnd:
         assert main_history[2].content == "Hello there! I'm your AI assistant."
 
     @patch('src.main.initialize_application')
-    @patch('src.main.input')
-    @patch('src.main.print')
+    @patch('builtins.input')
+    @patch('builtins.print')
     @patch('src.main.handle_slash_command')
     @patch('src.main.save_memory')
+    @patch('src.main.load_memory')
     @patch('src.main.llm')
     @patch('src.main.vectorstore', None)
     @patch('src.main.user_memory', None)
-    def test_slash_command_flow(self, mock_llm, mock_save, mock_handle, mock_print, mock_input, mock_init):
+    def test_slash_command_flow(self, mock_llm, mock_load, mock_save, mock_handle, mock_print, mock_input, mock_init):
         """Test that slash commands are intercepted and handled without LLM."""
         mock_init.return_value = True
+        mock_load.return_value = [SystemMessage(content="Hello")]
 
         # Seed history
-        get_context().conversation_history.append(SystemMessage(content="Hello"))
+        import src.main
+        src.main.conversation_history.append(SystemMessage(content="Hello"))
 
         # Sequence:
         # 1. Slash command
@@ -94,17 +103,20 @@ class TestEndToEnd:
         assert not mock_llm.invoke.called
 
     @patch('src.main.initialize_application')
-    @patch('src.main.input')
-    @patch('src.main.print')
+    @patch('builtins.input')
+    @patch('builtins.print')
     @patch('src.main.save_memory')
+    @patch('src.main.load_memory')
     @patch('src.main.vectorstore', None)
     @patch('src.main.user_memory', None)
-    def test_empty_input_handling(self, mock_save, mock_print, mock_input, mock_init):
+    def test_empty_input_handling(self, mock_load, mock_save, mock_print, mock_input, mock_init):
         """Verify that empty inputs don't trigger AI calls."""
         mock_init.return_value = True
+        mock_load.return_value = [SystemMessage(content="Hello")]
 
         # Seed history
-        get_context().conversation_history.append(SystemMessage(content="Hello"))
+        import src.main
+        src.main.conversation_history.append(SystemMessage(content="Hello"))
 
         # Sequence:
         # 1. Empty string

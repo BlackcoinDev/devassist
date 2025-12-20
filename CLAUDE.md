@@ -40,17 +40,17 @@ uv pip install -r requirements.txt
 
 ```bash
 
-# GUI (default) - use uv run
+# CLI (default) - use uv run
 
 uv run python launcher.py
 
-# CLI only
-
-uv run python launcher.py --cli
-
-# GUI only
+# GUI mode
 
 uv run python launcher.py --gui
+
+# CLI mode (explicit)
+
+uv run python launcher.py --cli
 
 # Direct execution (if in venv)
 
@@ -60,7 +60,7 @@ python launcher.py
 
 ```bash
 
-# Run all tests (89 tests, ~20-25s execution)
+# Run all tests (436 tests, ~35s execution)
 
 uv run pytest
 
@@ -212,6 +212,32 @@ Required variables include:
 - `MAX_HISTORY_PAIRS`, `TEMPERATURE`, `MAX_INPUT_LENGTH`
 - `DB_TYPE=sqlite`, `DB_PATH=db/history.db`
 
+### Verbose Logging Configuration
+
+DevAssist supports granular logging control via 4 environment variables:
+
+```bash
+# In .env file
+VERBOSE_LOGGING=true       # General debug output (context, commands, memory)
+SHOW_LLM_REASONING=true    # AI response generation steps and timing
+SHOW_TOKEN_USAGE=true      # Token counts for prompts/completions
+SHOW_TOOL_DETAILS=true     # Tool execution details with timing
+```
+
+**Logging coverage by module:**
+
+| Module | Flags Used |
+|--------|------------|
+| `src/core/chat_loop.py` | All 4 flags (LLM reasoning, tokens, tools, verbose) |
+| `src/tools/registry.py` | `show_tool_details` (registration, execution, timing) |
+| `src/commands/registry.py` | `verbose_logging` (dispatch, completion) |
+| `src/core/context.py` | `verbose_logging` (initialization) |
+| `src/storage/memory.py` | `verbose_logging` (load/save operations) |
+| `src/storage/cache.py` | `verbose_logging` (cache operations) |
+| `src/tools/executors/*.py` | `show_tool_details` (tool-specific logging) |
+| `src/commands/handlers/*.py` | `verbose_logging` (command execution) |
+| `src/gui.py` | `verbose_logging` (GUI-specific operations) |
+
 ## Document Processing
 
 ### Unified Docling Processing
@@ -248,7 +274,7 @@ The qwen3-vl-30b model can autonomously call these tools:
 | `search_knowledge()`        | Query vector DB                          | ✅ Ready     |
 | `search_web()`              | DuckDuckGo search                        | ✅ Ready     |
 
-**Tool testing coverage:** 8/8 tools have comprehensive unit and integration tests (89 total tests, 100% pass rate).
+**Tool testing coverage:** 8/8 tools have comprehensive unit and integration tests (436 total tests, 100% pass rate).
 
 ### Tool Result Lifecycle
 
@@ -284,8 +310,10 @@ The qwen3-vl-30b model can autonomously call these tools:
 ```text
 
 tests/
-├── unit/              # 52 tests (26 main + 6 launcher + 20 tool tests)
-├── integration/       # 26 tests (11 app + 15 tool calling)
+├── unit/              # ~300 tests (main, launcher, tools, commands, storage)
+├── integration/       # ~80 tests (app, tool calling, workflows)
+├── security/          # ~40 tests (input sanitization, path security, rate limiting)
+├── tools/             # Document parsing tests
 └── conftest.py        # Shared fixtures (mock_env, mock_llm, mock_vectorstore)
 
 ### GUI/CLI Consistency Checklist
@@ -315,15 +343,16 @@ When adding features:
 
 | File                           | Purpose                                     | Lines |
 | ------------------------------ | ------------------------------------------- | ----- |
-| `src/core/config.py`           | Configuration management from .env          | 296   |
-| `src/core/context.py`          | ApplicationContext (dependency injection)   | 272   |
-| `src/core/context_utils.py`    | Shared utility functions                    | 291   |
-| `src/commands/registry.py`     | Command dispatcher (plugin system)          | ~150  |
-| `src/tools/registry.py`        | AI tool dispatcher (plugin system)          | ~150  |
-| `src/vectordb/client.py`       | ChromaDB unified API client                 | 291   |
-| `src/storage/database.py`      | SQLite connection management                | 97    |
-| `src/storage/memory.py`        | Conversation history persistence            | 172   |
-| `src/storage/cache.py`         | Embedding and query caching                 | 161   |
+| `src/core/config.py`           | Configuration management from .env          | 320   |
+| `src/core/context.py`          | ApplicationContext (dependency injection)   | 310   |
+| `src/core/context_utils.py`    | Shared utility functions                    | 330   |
+| `src/core/chat_loop.py`        | Main chat loop with verbose logging         | 330   |
+| `src/commands/registry.py`     | Command dispatcher (plugin system)          | 190   |
+| `src/tools/registry.py`        | AI tool dispatcher (plugin system)          | 210   |
+| `src/vectordb/client.py`       | ChromaDB unified API client                 | 310   |
+| `src/storage/database.py`      | SQLite connection management                | 120   |
+| `src/storage/memory.py`        | Conversation history persistence            | 205   |
+| `src/storage/cache.py`         | Embedding and query caching                 | 140   |
 
 **Tools & Testing:**
 
@@ -421,7 +450,7 @@ def execute_my_tool(arg1: str) -> Dict[str, Any]:
 
 ### Performance Expectations
 
-- **Test Suite**: ~20-25 seconds for 89 tests
+- **Test Suite**: ~35 seconds for 436 tests (426 passed, 10 GUI skipped)
 - **LLM Response Time**: 2-5 seconds (typical queries)
 - **Tool Operations**: 5-15 seconds (file/document operations)
 - **Memory Usage**: <8GB GPU memory (stable with qwen3-vl-30b)

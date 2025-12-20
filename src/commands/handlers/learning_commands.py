@@ -28,10 +28,15 @@ This module provides command handlers for learning information via
 /learn, bulk importing codebases via /populate, and learning from web pages.
 """
 
+import logging
 from typing import List
 from src.commands.registry import CommandRegistry
 from src.core.context import get_context
 from src.core.context_utils import add_to_knowledge_base
+from src.core.config import get_config
+
+logger = logging.getLogger(__name__)
+_config = get_config()
 
 # =============================================================================
 # COMMAND HANDLERS
@@ -42,6 +47,9 @@ from src.core.context_utils import add_to_knowledge_base
 def handle_learn(args: List[str]) -> None:
     """Handle /learn command."""
     ctx = get_context()
+
+    if _config.verbose_logging:
+        logger.debug(f"/learn command invoked with {len(args)} args")
 
     # Check if vector database is available
     if ctx.vectorstore is None:
@@ -57,12 +65,19 @@ def handle_learn(args: List[str]) -> None:
         print("\nUsage: /learn <information to remember>\n")
         return
 
+    if _config.verbose_logging:
+        logger.info(f"📚 Learning content: {len(content)} chars")
+
     # Use shared utility to add to knowledge base
     success = add_to_knowledge_base(content)
 
     if success:
+        if _config.verbose_logging:
+            logger.info(f"   ✅ Successfully added to knowledge base")
         print(f"\n✅ Learned: {content[:50]}...\n")
     else:
+        if _config.verbose_logging:
+            logger.warning(f"   ❌ Failed to add to knowledge base")
         print(f"\n❌ Failed to learn information\n")
 
 
@@ -98,12 +113,19 @@ def handle_web(args: List[str]) -> None:
         print("\nUsage: /web <url>\n")
         return
 
+    if _config.verbose_logging:
+        logger.info(f"🌐 /web command: Fetching URL {url}")
+
     print(f"\n🌐 Learning from URL: {url}")
     result = execute_learn_url(url)
 
     if "error" in result:
+        if _config.verbose_logging:
+            logger.warning(f"   ❌ URL learning failed: {result['error']}")
         print(f"\n❌ Error: {result['error']}\n")
     elif result.get("success"):
+        if _config.verbose_logging:
+            logger.info(f"   ✅ Successfully learned from URL")
         print(f"\n✅ Successfully learned from {url}\n")
 
 

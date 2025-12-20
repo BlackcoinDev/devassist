@@ -30,11 +30,14 @@ using Docling's unified pipeline for high-fidelity extraction.
 
 import os
 import logging
+import time
 from typing import Dict, Any
 
 from src.tools.registry import ToolRegistry
+from src.core.config import get_config
 
 logger = logging.getLogger(__name__)
+_config = get_config()
 
 # =============================================================================
 # TOOL DEFINITIONS (OpenAI Function Calling Format)
@@ -112,9 +115,22 @@ def execute_parse_document(file_path: str, extract_type: str = "text") -> Dict[s
         if not os.path.exists(full_path):
             return {"error": f"File not found: {file_path}"}
 
+        file_ext = os.path.splitext(full_path)[1].lower()
+
+        if _config.show_tool_details:
+            try:
+                file_size = os.path.getsize(full_path)
+                logger.info(f"🔧 parse_document: Processing {file_path}")
+                logger.info(f"   📄 File type: {file_ext}, Size: {file_size} bytes")
+            except OSError:
+                logger.info(f"🔧 parse_document: Processing {file_path}")
+                logger.info(f"   📄 File type: {file_ext}")
+
         # Process document using Docling unified pipeline
         try:
             from docling.document_converter import DocumentConverter
+
+            start_time = time.time()
 
             # Initialize converter
             converter = DocumentConverter()
@@ -125,7 +141,10 @@ def execute_parse_document(file_path: str, extract_type: str = "text") -> Dict[s
             # Export to markdown (excellent for LLM consumption)
             content = result.document.export_to_markdown()
 
-            file_ext = os.path.splitext(full_path)[1].lower()
+            elapsed = time.time() - start_time
+
+            if _config.show_tool_details:
+                logger.info(f"   ✅ Extracted {len(content)} chars in {elapsed:.2f}s")
 
             return {
                 "success": True,

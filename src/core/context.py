@@ -45,9 +45,12 @@ Usage:
     vectorstore = ctx.vectorstore
 """
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 import threading
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -143,6 +146,14 @@ def get_context() -> ApplicationContext:
         with _context_lock:
             if _context is None:
                 _context = ApplicationContext()
+                # Log context creation (import config lazily to avoid circular imports)
+                try:
+                    from src.core.config import get_config
+                    _cfg = get_config()
+                    if _cfg.verbose_logging:
+                        logger.info("📦 ApplicationContext: Created new context singleton")
+                except Exception:
+                    pass  # Config not yet initialized
     return _context
 
 
@@ -168,6 +179,23 @@ def reset_context() -> None:
 
 
 # =============================================================================
+# LOGGING HELPER
+# =============================================================================
+
+
+def _log_component_set(component_name: str, value: Any) -> None:
+    """Log when a component is set in context (if verbose logging enabled)."""
+    try:
+        from src.core.config import get_config
+        _cfg = get_config()
+        if _cfg.verbose_logging:
+            status = "initialized" if value is not None else "cleared"
+            logger.debug(f"   📦 Context: {component_name} {status}")
+    except Exception:
+        pass  # Config not available
+
+
+# =============================================================================
 # BACKWARDS COMPATIBILITY ACCESSORS
 # =============================================================================
 # These functions provide backwards-compatible access to context state.
@@ -183,6 +211,7 @@ def get_llm() -> Optional[Any]:
 def set_llm(value: Any) -> None:
     """Set the LLM instance in context."""
     get_context().llm = value
+    _log_component_set("LLM", value)
 
 
 def get_vectorstore() -> Optional[Any]:
@@ -193,6 +222,7 @@ def get_vectorstore() -> Optional[Any]:
 def set_vectorstore(value: Any) -> None:
     """Set the vectorstore instance in context."""
     get_context().vectorstore = value
+    _log_component_set("Vectorstore", value)
 
 
 def get_embeddings() -> Optional[Any]:
@@ -203,6 +233,7 @@ def get_embeddings() -> Optional[Any]:
 def set_embeddings(value: Any) -> None:
     """Set the embeddings instance in context."""
     get_context().embeddings = value
+    _log_component_set("Embeddings", value)
 
 
 def get_chroma_client() -> Optional[Any]:
@@ -213,6 +244,7 @@ def get_chroma_client() -> Optional[Any]:
 def set_chroma_client(value: Any) -> None:
     """Set the ChromaDB client in context."""
     get_context().chroma_client = value
+    _log_component_set("ChromaDB client", value)
 
 
 def get_user_memory() -> Optional[Any]:
@@ -223,6 +255,7 @@ def get_user_memory() -> Optional[Any]:
 def set_user_memory(value: Any) -> None:
     """Set the user memory (Mem0) instance in context."""
     get_context().user_memory = value
+    _log_component_set("Mem0 user memory", value)
 
 
 def get_db_conn() -> Optional[Any]:
@@ -233,6 +266,7 @@ def get_db_conn() -> Optional[Any]:
 def set_db_conn(value: Any) -> None:
     """Set the database connection in context."""
     get_context().db_conn = value
+    _log_component_set("SQLite connection", value)
 
 
 def get_db_lock() -> Optional[threading.Lock]:

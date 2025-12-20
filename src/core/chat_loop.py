@@ -5,15 +5,20 @@ This module contains the core interactive chat loop extracted from main.py
 to improve modularity and reduce the size of the main module.
 """
 
-import sys
+import logging
+import time
 from typing import List, Optional
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # Import security
 from src.security.input_sanitizer import InputSanitizer
 from src.security.exceptions import SecurityError
+from src.core.config import get_config
 
 # Display functions will be imported locally to avoid circular imports
+
+module_logger = logging.getLogger(__name__)
+_config = get_config()
 
 
 class ChatLoop:
@@ -111,6 +116,9 @@ class ChatLoop:
         Returns:
             bool: True if should exit, False to continue
         """
+        if _config.verbose_logging:
+            module_logger.debug(f"Processing input: {len(user_input)} chars")
+
         # Security: Sanitize user input
         try:
             user_input = InputSanitizer.sanitize_text(user_input)
@@ -202,9 +210,14 @@ class ChatLoop:
         """Get relevant context from vector database and user memory."""
         context = ""
 
+        if _config.verbose_logging:
+            module_logger.debug("Retrieving context from knowledge base...")
+
         # Get context from vector database
         if self.vectorstore:
             context = self.get_relevant_context(user_input)
+            if _config.verbose_logging and context:
+                module_logger.debug(f"   📚 Retrieved {len(context)} chars from vector DB")
 
         # Add user memory context
         if self.user_memory:
@@ -228,6 +241,8 @@ class ChatLoop:
                 if mem_list:
                     mem_str = "\n".join(mem_list)
                     context += f"\n\n[User Context & Preferences]:\n{mem_str}"
+                    if _config.verbose_logging:
+                        module_logger.debug(f"   🧠 Retrieved {len(mem_list)} memories from Mem0")
 
             except Exception as e:
                 if self.logger:
@@ -261,13 +276,47 @@ You can use tools to help answer questions and perform tasks. Be helpful and pro
         )
         messages.extend(recent_messages)
 
+        if _config.show_llm_reasoning:
+            module_logger.info(f"🧠 LLM: Generating response with {len(messages)} messages")
+            if context:
+                module_logger.info(f"   📋 Context: {len(context)} chars provided")
+
         # Get AI response
         print("🤔 Thinking...", end="", flush=True)
+        start_time = time.time()
         response = self.llm.invoke(messages)
+        elapsed = time.time() - start_time
         print("\r" + " " * 20 + "\r", end="", flush=True)  # Clear thinking message
+
+        if _config.show_llm_reasoning:
+            module_logger.info(f"   ⏱️ Response generated in {elapsed:.2f}s")
+
+        # Log token usage if available
+        if _config.show_token_usage:
+            if hasattr(response, "response_metadata") and response.response_metadata:
+                metadata = response.response_metadata
+                if "token_usage" in metadata:
+                    usage = metadata["token_usage"]
+                    prompt_tokens = usage.get("prompt_tokens", "?")
+                    completion_tokens = usage.get("completion_tokens", "?")
+                    module_logger.info(
+                        f"   📊 Tokens: {prompt_tokens} prompt, {completion_tokens} completion"
+                    )
+                elif "usage" in metadata:
+                    usage = metadata["usage"]
+                    prompt_tokens = usage.get("prompt_tokens", "?")
+                    completion_tokens = usage.get("completion_tokens", "?")
+                    module_logger.info(
+                        f"   📊 Tokens: {prompt_tokens} prompt, {completion_tokens} completion"
+                    )
 
         # Handle tool calls
         if hasattr(response, "tool_calls") and response.tool_calls:
+            if _config.show_tool_details:
+                module_logger.info(f"   🔧 Tool calls detected: {len(response.tool_calls)}")
+                for tc in response.tool_calls:
+                    tool_name = tc.get("name", "unknown") if isinstance(tc, dict) else getattr(tc, "name", "unknown")
+                    module_logger.info(f"      • {tool_name}")
             # For now, just return the content - tool calling logic can be added later
             return response.content or "I tried to use tools but encountered an issue."
 

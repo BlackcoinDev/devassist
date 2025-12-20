@@ -113,12 +113,14 @@ from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer
 from datetime import datetime
 from typing import List
 from langchain_core.messages import BaseMessage
+from src.core.config import get_config
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+_config = get_config()
 
 # Import the AI assistant backend
 # We'll need to refactor some functions to be importable
@@ -219,7 +221,8 @@ class AIWorker(QThread):
             if context and CONTEXT_MODE != "off":
                 # Add context to conversation
                 conversation_history.append(HumanMessage(content=f"Context: {context}"))  # type: ignore[arg-type]
-                logger.info(f"Added context to conversation ({len(context)} chars)")
+                if VERBOSE_LOGGING:
+                    logger.info(f"Added context to conversation ({len(context)} chars)")
 
             # Generate response
             response = current_llm.invoke(conversation_history)
@@ -259,11 +262,12 @@ class AIWorker(QThread):
 
                 threading.Thread(target=run_mem0_add, args=(self.user_input,)).start()
 
-            logger.info(
-                f"AIWorker: Successfully processed response ({
-                    len(response.content)
-                } chars)"
-            )
+            if VERBOSE_LOGGING:
+                logger.info(
+                    f"AIWorker: Successfully processed response ({
+                        len(response.content)
+                    } chars)"
+                )
 
         except Exception as e:
             logger.error(f"AIWorker: Error processing request: {e}")
@@ -1109,7 +1113,8 @@ class AIAssistantGUI(QMainWindow):
             if not message:
                 return
 
-            logger.info(f"GUI: Processing user message ({len(message)} chars)")
+            if _config.verbose_logging:
+                logger.info(f"GUI: Processing user message ({len(message)} chars)")
 
             # Clear input field
             self.input_field.clear()
@@ -2097,7 +2102,8 @@ Use Ctrl+C for immediate interruption.<br>
         try:
             if BACKEND_AVAILABLE:
                 save_memory(conversation_history)
-                logger.info("Conversation memory saved during GUI shutdown")
+                if _config.verbose_logging:
+                    logger.info("Conversation memory saved during GUI shutdown")
         except Exception as e:
             logger.error(f"Failed to save memory during shutdown: {e}")
         if a0:

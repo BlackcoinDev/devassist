@@ -29,9 +29,19 @@ AI tools to be registered with decorators and dispatched by name.
 
 import json
 import logging
+import time
 from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+
+def _get_config():
+    """Lazily get config to avoid circular imports."""
+    try:
+        from src.core.config import get_config
+        return get_config()
+    except Exception:
+        return None
 
 
 class ToolRegistry:
@@ -77,6 +87,9 @@ class ToolRegistry:
             cls._tools[name] = func
             if definition:
                 cls._definitions[name] = definition
+            cfg = _get_config()
+            if cfg and cfg.show_tool_details:
+                logger.debug(f"🔧 Registered tool: {name}")
             return func
         return decorator
 
@@ -92,12 +105,29 @@ class ToolRegistry:
         Returns:
             Tool result dictionary
         """
+        cfg = _get_config()
+
         executor = cls._tools.get(name)
         if executor is None:
             return {"error": f"Unknown tool: {name}"}
 
+        if cfg and cfg.show_tool_details:
+            # Truncate args for display
+            args_str = str(args)[:100] + "..." if len(str(args)) > 100 else str(args)
+            logger.info(f"🔧 Executing tool: {name}")
+            logger.info(f"   📥 Args: {args_str}")
+
         try:
-            return executor(**args)
+            start_time = time.time()
+            result = executor(**args)
+            elapsed = time.time() - start_time
+
+            if cfg and cfg.show_tool_details:
+                success = "error" not in result if isinstance(result, dict) else True
+                status = "✅" if success else "❌"
+                logger.info(f"   {status} Completed in {elapsed:.2f}s")
+
+            return result
         except Exception as e:
             logger.error(f"Error executing tool '{name}': {e}")
             return {"error": str(e)}

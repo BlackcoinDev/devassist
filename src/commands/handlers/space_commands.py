@@ -28,10 +28,15 @@ This module provides command handlers for creating, switching, and
 managing isolated knowledge base workspaces.
 """
 
+import logging
 from typing import List
 from src.commands.registry import CommandRegistry
 from src.core.context import get_context
+from src.core.config import get_config
 from src.vectordb import list_spaces, switch_space, delete_space, get_space_collection_name
+
+logger = logging.getLogger(__name__)
+_config = get_config()
 
 # =============================================================================
 # COMMAND HANDLERS
@@ -42,6 +47,9 @@ from src.vectordb import list_spaces, switch_space, delete_space, get_space_coll
 def handle_space(args: List[str]) -> None:
     """Handle /space command."""
     ctx = get_context()
+
+    if _config.verbose_logging:
+        logger.debug(f"/space command invoked with args: {args}")
 
     space_cmd = " ".join(args) if args else ""
 
@@ -58,7 +66,11 @@ def handle_space(args: List[str]) -> None:
         return
 
     if space_cmd == "list":
+        if _config.verbose_logging:
+            logger.info("📂 Listing all spaces")
         spaces = list_spaces()
+        if _config.verbose_logging:
+            logger.info(f"   Found {len(spaces)} spaces")
         print(f"\nAvailable spaces ({len(spaces)}):")
         for space in spaces:
             marker = " ← current" if space == ctx.current_space else ""
@@ -79,10 +91,17 @@ def handle_space(args: List[str]) -> None:
             print(f"\n❌ Space '{new_space}' already exists\n")
             return
 
+        if _config.verbose_logging:
+            logger.info(f"📂 Creating new space: {new_space}")
+
         if switch_space(new_space):
+            if _config.verbose_logging:
+                logger.info(f"   ✅ Created space with collection: {get_space_collection_name(new_space)}")
             print(f"\n✅ Created and switched to space: {new_space}")
             print(f"Collection: {get_space_collection_name(new_space)}\n")
         else:
+            if _config.verbose_logging:
+                logger.warning(f"   ❌ Failed to create space: {new_space}")
             print(f"\n❌ Failed to create space: {new_space}\n")
 
     elif space_cmd.startswith("switch "):
@@ -96,10 +115,17 @@ def handle_space(args: List[str]) -> None:
             print(f"Use '/space create {target_space}' to create it first\n")
             return
 
+        if _config.verbose_logging:
+            logger.info(f"📂 Switching to space: {target_space}")
+
         if switch_space(target_space):
+            if _config.verbose_logging:
+                logger.info(f"   ✅ Switched to collection: {get_space_collection_name(target_space)}")
             print(f"\n✅ Switched to space: {target_space}")
             print(f"Collection: {get_space_collection_name(target_space)}\n")
         else:
+            if _config.verbose_logging:
+                logger.warning(f"   ❌ Failed to switch to space: {target_space}")
             print(f"\n❌ Failed to switch to space: {target_space}\n")
 
     elif space_cmd.startswith("delete "):
@@ -124,9 +150,16 @@ def handle_space(args: List[str]) -> None:
             print("\n❌ Deletion cancelled\n")
             return
 
+        if _config.verbose_logging:
+            logger.info(f"🗑️ Deleting space: {target_space}")
+
         if delete_space(target_space):
+            if _config.verbose_logging:
+                logger.info(f"   ✅ Successfully deleted space and collection")
             print(f"\n✅ Deleted space: {target_space}\n")
         else:
+            if _config.verbose_logging:
+                logger.warning(f"   ❌ Failed to delete space: {target_space}")
             print(f"\n❌ Failed to delete space: {target_space}\n")
 
     else:

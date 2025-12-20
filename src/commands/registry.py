@@ -33,6 +33,15 @@ from typing import Callable, Dict, List, Optional, Any
 logger = logging.getLogger(__name__)
 
 
+def _get_config():
+    """Lazily get config to avoid circular imports."""
+    try:
+        from src.core.config import get_config
+        return get_config()
+    except Exception:
+        return None
+
+
 class CommandRegistry:
     """
     Registry for slash commands.
@@ -92,6 +101,11 @@ class CommandRegistry:
                 for alias in aliases:
                     cls._commands[alias] = func
 
+            cfg = _get_config()
+            if cfg and cfg.verbose_logging:
+                alias_str = f" (aliases: {aliases})" if aliases else ""
+                logger.debug(f"📋 Registered command: /{name}{alias_str}")
+
             return func
         return decorator
 
@@ -107,12 +121,20 @@ class CommandRegistry:
         Returns:
             True if command was found and executed, False otherwise
         """
+        cfg = _get_config()
+
         handler = cls._commands.get(command)
         if handler is None:
             return False
 
+        if cfg and cfg.verbose_logging:
+            args_str = " ".join(str(a) for a in args) if args else "(no args)"
+            logger.info(f"📋 Dispatching command: /{command} {args_str}")
+
         try:
             handler(args)
+            if cfg and cfg.verbose_logging:
+                logger.debug(f"   ✅ Command /{command} completed")
             return True
         except Exception as e:
             logger.error(f"Error executing command '{command}': {e}")

@@ -29,12 +29,15 @@ base and searching the learned information using semantic search.
 """
 
 import logging
+import time
 from typing import Dict, Any, Optional
 
 from src.tools.registry import ToolRegistry
 from src.core.context_utils import add_to_knowledge_base, get_relevant_context
+from src.core.config import get_config
 
 logger = logging.getLogger(__name__)
+_config = get_config()
 
 # =============================================================================
 # TOOL DEFINITIONS (OpenAI Function Calling Format)
@@ -113,16 +116,29 @@ def execute_learn_information(
         if not information.strip():
             return {"error": "Information cannot be empty"}
 
+        if _config.show_tool_details:
+            logger.info(f"🔧 learn_information: Adding {len(information)} chars to knowledge base")
+            if metadata:
+                logger.info(f"   📋 Metadata: {metadata}")
+
+        start_time = time.time()
+
         # Use shared utility to add to knowledge base
         success = add_to_knowledge_base(information, metadata)
 
+        elapsed = time.time() - start_time
+
         if success:
+            if _config.show_tool_details:
+                logger.info(f"   ✅ Successfully learned in {elapsed:.2f}s")
             return {
                 "success": True,
                 "information_length": len(information),
                 "learned": True,
             }
         else:
+            if _config.show_tool_details:
+                logger.warning(f"   ❌ Failed to add to knowledge base")
             return {"error": "Failed to add information to knowledge base"}
 
     except Exception as e:
@@ -146,14 +162,25 @@ def execute_search_knowledge(query: str, limit: int = 5) -> Dict[str, Any]:
         if not query.strip():
             return {"error": "Query cannot be empty"}
 
+        if _config.show_tool_details:
+            logger.info(f"🔧 search_knowledge: Query='{query[:50]}...' limit={limit}")
+
+        start_time = time.time()
+
         # Use shared utility for context retrieval
         context = get_relevant_context(query, k=limit)
+
+        elapsed = time.time() - start_time
+        result_count = len(context) if context else 0
+
+        if _config.show_tool_details:
+            logger.info(f"   📊 Found {result_count} results in {elapsed:.2f}s")
 
         return {
             "success": True,
             "query": query,
             "results": context,
-            "result_count": len(context) if context else 0,
+            "result_count": result_count,
         }
 
     except Exception as e:

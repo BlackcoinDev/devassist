@@ -71,9 +71,10 @@ def load_memory() -> List[BaseMessage]:
                 rows = cursor.fetchall()
 
             if not rows:
-                logger.debug(
-                    "No conversation history found in database, starting fresh"
-                )
+                if config.verbose_logging:
+                    logger.debug(
+                        "No conversation history found in database, starting fresh"
+                    )
                 return [SystemMessage(content="Lets get some coding done..")]
 
             # Reconstruct message objects from database rows
@@ -88,7 +89,8 @@ def load_memory() -> List[BaseMessage]:
                 else:
                     logger.warning(f"Unknown message type: {msg_type}, skipping")
 
-            logger.debug(f"Loaded {len(history)} messages from database")
+            if config.verbose_logging:
+                logger.debug(f"Loaded {len(history)} messages from database")
             return history
 
         else:
@@ -146,7 +148,8 @@ def save_memory(history: Sequence[BaseMessage]) -> None:
                         data_to_insert,
                     )
                     ctx.db_conn.commit()
-                    logger.debug(f"Saved {len(data_to_insert)} messages to database")
+                    if config.verbose_logging:
+                        logger.debug(f"Saved {len(data_to_insert)} messages to database")
                 except Exception:
                     ctx.db_conn.rollback()
                     raise

@@ -32,8 +32,10 @@ import logging
 from typing import Dict, Any
 
 from src.tools.registry import ToolRegistry
+from src.core.config import get_config
 
 logger = logging.getLogger(__name__)
+_config = get_config()
 
 # =============================================================================
 # TOOL DEFINITIONS (OpenAI Function Calling Format)
@@ -83,7 +85,8 @@ def execute_web_search(query: str, max_results: int = 10) -> Dict[str, Any]:
     try:
         from ddgs import DDGS  # type: ignore[import-untyped]
 
-        print(f"🌍 Searching web for: '{query}'")
+        if _config.show_tool_details:
+            logger.info(f"🌍 search_web: Querying '{query}' (max {max_results} results)")
 
         # Improve search query for better results
         enhanced_query = query
@@ -109,6 +112,8 @@ def execute_web_search(query: str, max_results: int = 10) -> Dict[str, Any]:
                 raw_results = list(ddgs.text(enhanced_query, max_results=max_results))
 
             # Return results directly (no filtering)
+            if _config.show_tool_details:
+                logger.info(f"   📊 Found {len(raw_results)} results")
             return {
                 "success": True,
                 "result_count": len(raw_results),

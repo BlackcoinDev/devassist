@@ -253,9 +253,10 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
                 )
                 if create_response.status_code == 201:
                     collection_id = create_response.json().get("id")
-                    logger.info(
-                        f"Created new collection for space {ctx.current_space}: {collection_name}"
-                    )
+                    if config.verbose_logging:
+                        logger.info(
+                            f"Created new collection for space {ctx.current_space}: {collection_name}"
+                        )
                 else:
                     logger.error(
                         f"Failed to create collection: HTTP {create_response.status_code}"
@@ -285,9 +286,10 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
             )
 
             if response.status_code == 201:
-                logger.info(
-                    f"Document added successfully to space {ctx.current_space}: {doc_id}"
-                )
+                if config.verbose_logging:
+                    logger.info(
+                        f"Document added successfully to space {ctx.current_space}: {doc_id}"
+                    )
                 return True
             else:
                 logger.error(
@@ -300,7 +302,8 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
             # Fallback to LangChain method
             try:
                 ctx.vectorstore.add_documents([doc])
-                logger.debug("Used LangChain fallback for document addition")
+                if config.verbose_logging:
+                    logger.debug("Used LangChain fallback for document addition")
                 return True
             except Exception as fallback_e:
                 logger.error(f"LangChain fallback also failed: {fallback_e}")

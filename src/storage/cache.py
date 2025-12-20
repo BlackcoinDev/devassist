@@ -57,7 +57,8 @@ def load_embedding_cache() -> Dict[str, List[float]]:
             with open(config.embedding_cache_file, "r") as f:
                 cache_data = json.load(f)
             ctx.embedding_cache.update(cache_data)
-            logger.debug(f"Loaded {len(cache_data)} cached embeddings")
+            if config.verbose_logging:
+                logger.debug(f"Loaded {len(cache_data)} cached embeddings")
             return cache_data
     except Exception as e:
         logger.warning(f"Failed to load embedding cache: {e}")
@@ -83,7 +84,8 @@ def load_query_cache() -> Dict[str, List[str]]:
             with open(config.query_cache_file, "r") as f:
                 cache_data = json.load(f)
             ctx.query_cache.update(cache_data)
-            logger.debug(f"Loaded {len(cache_data)} cached query results")
+            if config.verbose_logging:
+                logger.debug(f"Loaded {len(cache_data)} cached query results")
             return cache_data
     except Exception as e:
         logger.warning(f"Failed to load query cache: {e}")
@@ -113,7 +115,8 @@ def save_query_cache() -> None:
         with open(config.query_cache_file, "w") as f:
             json.dump(query_cache, f, separators=(",", ":"))
 
-        logger.debug(f"Saved {len(query_cache)} query cache entries")
+        if config.verbose_logging:
+            logger.debug(f"Saved {len(query_cache)} query cache entries")
 
     except Exception as e:
         logger.warning(f"Failed to save query cache: {e}")
@@ -127,4 +130,6 @@ def cleanup_memory() -> None:
     to prevent memory buildup.
     """
     gc.collect()
-    logger.debug("Memory cleanup completed")
+    config = get_config()
+    if config.verbose_logging:
+        logger.debug("Memory cleanup completed")
