@@ -6,7 +6,7 @@ application, serving as a reference for all other documentation files.
 
 ## 🏗️ System Architecture
 
-### High-Level Overview (v0.2.0 - Modular Architecture)
+### High-Level Overview (v0.3.0 - Shell & MCP Integration)
 
 ```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -89,9 +89,9 @@ learned context
 
 ## 🧠 Core Components
 
-### 1. AI Tools (8 Tools)
+### 1. AI Tools (13 Tools)
 
-The AI has access to 8 powerful tools for various operations:
+The AI has access to 13 powerful tools for various operations:
 
 | Tool Name                 | Description                                     | Status              |
 | ------------------------- | ----------------------------------------------- | ------------------  |
@@ -103,6 +103,11 @@ The AI has access to 8 powerful tools for various operations:
 | `learn_information()`     | Store in knowledge base                         | ✅ Ready            |
 | `search_knowledge()`      | Query learned information                       | ✅ Ready            |
 | `search_web()`            | Search the internet using DuckDuckGo            | ✅ Ready            |
+| `shell_execute()`         | Run shell commands (CLI only)                   | ✅ Ready            |
+| `git_status()`            | Git repository status                           | ✅ Ready            |
+| `git_diff()`              | Show git changes                                | ✅ Ready            |
+| `git_log()`               | Commit history                                  | ✅ Ready            |
+| `code_search()`           | Regex code search (ripgrep)                     | ✅ Ready            |
 
 **Tool Integration Architecture:**
 
@@ -161,7 +166,139 @@ The system supports 80+ file types through unified processing:
 - **Quality filtering** to skip low-value content
 - **Binary detection** with null byte analysis
 
-## 🔌 Plugin Architecture (v0.2.0)
+### 5. Shell Execution Architecture (v0.3.0)
+
+The shell execution system provides safe command execution in CLI mode only:
+
+```text
+User Request → AI decides to call shell_execute()
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │   ShellSecurity     │
+              │   Validation        │
+              └──────────┬──────────┘
+                         │
+        ┌────────────────┼────────────────┐
+        ▼                ▼                ▼
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│ SAFE_CMDS   │  │ BLOCKED_CMDS│  │  UNKNOWN    │
+│ git, npm... │  │ rm, sudo... │  │ Confirmation│
+│ Execute     │  │ Deny        │  │ Required    │
+└─────────────┘  └─────────────┘  └─────────────┘
+```
+
+**Security Layers:**
+
+1. **Allowlist**: Safe commands execute without confirmation
+2. **Blocklist**: Dangerous commands are always denied
+3. **Pattern Detection**: Dangerous patterns like `rm -rf` blocked
+4. **CLI-Only**: Shell execution disabled in GUI mode
+5. **Timeouts**: Maximum 5-minute execution time
+6. **Output Limits**: Truncation prevents memory exhaustion
+
+### 6. MCP Integration Architecture (v0.3.0)
+
+Model Context Protocol enables external tool server integration:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                      MCP Client Manager                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │   stdio      │  │    HTTP      │  │     SSE      │       │
+│  │  Transport   │  │  Transport   │  │  Transport   │       │
+│  │ (subprocess) │  │   (REST)     │  │ (streaming)  │       │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘       │
+│         │                  │                  │              │
+│         └──────────────────┼──────────────────┘              │
+│                            │                                 │
+│                            ▼                                 │
+│              ┌─────────────────────────┐                     │
+│              │    Protocol Layer       │                     │
+│              │  (JSON-RPC 2.0)         │                     │
+│              └─────────────────────────┘                     │
+│                            │                                 │
+│         ┌──────────────────┼──────────────────┐              │
+│         ▼                  ▼                  ▼              │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐       │
+│  │tools/list   │    │tools/call   │    │resources/   │       │
+│  │(discovery)  │    │(execution)  │    │read         │       │
+│  └─────────────┘    └─────────────┘    └─────────────┘       │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+              ┌─────────────────────────┐
+              │   Tool Registry         │
+              │ mcp_servername_toolname │
+              └─────────────────────────┘
+```
+
+**Key Features:**
+
+- **Transport Abstraction**: Unified interface for stdio/HTTP/SSE
+- **Tool Discovery**: Automatic tool enumeration from servers
+- **Namespacing**: MCP tools prefixed with `mcp_servername_`
+- **Lifecycle Management**: Connect/disconnect server management
+- **Error Handling**: Graceful degradation on server failures
+
+### 7. Tool Approval System (v0.3.0)
+
+Per-tool permission control for security:
+
+```text
+Tool Execution Request
+         │
+         ▼
+┌─────────────────────┐
+│  ToolApprovalManager│
+│  check_approval()   │
+└──────────┬──────────┘
+           │
+    ┌──────┼──────┐
+    ▼      ▼      ▼
+┌──────┐┌──────┐┌──────┐
+│ALWAYS││ ASK  ││NEVER │
+│Allow ││Prompt││Block │
+└──────┘└──┬───┘└──────┘
+           │
+           ▼
+    ┌─────────────┐
+    │User Confirm │
+    │ yes / no    │
+    └─────────────┘
+```
+
+**Configuration** (`config/tool_approvals.json`):
+
+```json
+{
+  "version": "1.0",
+  "approvals": {
+    "shell_execute": "ask",
+    "write_file": "ask",
+    "git_status": "always",
+    "mcp_*": "ask"
+  },
+  "defaults": {
+    "builtin": "always",
+    "mcp": "ask"
+  }
+}
+```
+
+**Default Approval Modes:**
+
+| Tool Category | Default Mode | Rationale |
+| -------------- | -------------- | ----------- |
+| Read-only (read_file, git_status) | always | Safe operations |
+| Write operations (write_file) | ask | Modifies files |
+| Shell execution | ask | Potential system impact |
+| MCP tools | ask | External systems |
+
+## 🔌 Plugin Architecture (v0.3.0)
 
 The modular architecture introduces self-registering plugin systems for commands
 and tools, eliminating the need for central configuration.
@@ -571,7 +708,12 @@ ollama serve
 | AI Learning System  | ✅      | ChromaDB v2 vector database integration                   |
 | Document Processing | ✅      | 80+ file types with unified processing                    |
 | Spaces System       | ✅      | Isolated workspaces with separate knowledge bases         |
-| Tool Calling        | ✅      | 8 AI tools for file operations and knowledge management   |
+| Tool Calling        | ✅      | 13 AI tools for file, shell, git, search, and knowledge   |
+| Shell Execution     | ✅      | CLI-only shell commands with allowlist security           |
+| MCP Integration     | ✅      | External tool servers via stdio/HTTP/SSE                  |
+| Tool Approval       | ✅      | Per-tool ask/always/never permission controls             |
+| Git Integration     | ✅      | AI tools for git status, diff, log, show                  |
+| Code Search         | ✅      | Fast ripgrep-based regex search                           |
 | Memory Persistence  | ✅      | SQLite database for conversation history                  |
 | Markdown Support    | ✅      | Rich text rendering in GUI                                |
 | Web Ingestion       | ✅      | URL learning capability via `/web` command                |

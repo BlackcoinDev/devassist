@@ -1,4 +1,4 @@
-# AI Assistant Chat Application v0.2.0 - Modular Architecture
+# AI Assistant Chat Application v0.3.0 - Shell & MCP Integration
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/BlackcoinDev/devassist)
 
@@ -6,7 +6,17 @@ An advanced interactive AI chat assistant powered by LangChain, LM Studio, and C
 comprehensive learning capabilities, multi-format document processing, robust error handling, and complete feature
 parity between GUI and CLI interfaces.
 
-## 🌟 Features v0.2.0
+## 🌟 Features v0.3.0
+
+### New in v0.3.0
+
+- **🔧 Shell Execution (CLI)**: AI can run shell commands with allowlist-based safety (git, npm, python, etc.)
+- **🔌 MCP Support**: Model Context Protocol integration for external tool servers (stdio, HTTP, SSE transports)
+- **📂 Git Integration**: AI tools for git status, diff, log, show operations
+- **🔍 Code Search**: Fast ripgrep-based regex search across codebase
+- **🛡️ Tool Approval System**: Per-tool ask/always/never permission controls
+
+### Core Features
 
 - **🖥️ Modern GUI**: Beautiful PyQt6 interface with dark/light themes
 - **🧠 Learning AI**: Teach the AI new information via /learn command that persists across sessions
@@ -27,9 +37,9 @@ parity between GUI and CLI interfaces.
 
   style, and personal context for better personalized responses
 
-- **🛠️ AI Tool Calling**: qwen3-vl-30b supports 8 powerful tools for file operations, document processing, knowledge
+- **🛠️ AI Tool Calling**: qwen3-vl-30b supports 13 powerful tools for file operations, shell commands, git, code search,
 
-  management, and web search
+  document processing, knowledge management, and web search
 
 - **🌍 Web Ingestion**: Learn content directly from URLs using the `/web` command
 - **⚡ Streaming Responses**: Real-time response display for better user experience
@@ -107,7 +117,7 @@ consistency with the new command system.
 ```text
 
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                            DevAssist v0.2.0                             │
+│                            DevAssist v0.3.0                             │
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │   ┌─────────────┐      ┌─────────────┐      ┌─────────────────────────┐  │
@@ -123,12 +133,21 @@ consistency with the new command system.
 │                    │   (Orchestration)   │                               │
 │                    └──────────┬──────────┘                               │
 │                               │                                          │
-│          ┌────────────────────┼────────────────────┐                     │
-│          ▼                    ▼                    ▼                     │
-│   ┌─────────────┐      ┌─────────────┐      ┌─────────────┐              │
-│   │  AI Tools   │      │  Memory     │      │  Knowledge  │              │
-│   │  (8 tools)  │      │  (SQLite)   │      │  (ChromaDB) │              │
-│   └─────────────┘      └─────────────┘      └─────────────┘              │
+│     ┌─────────────────────────┼─────────────────────────┐                │
+│     ▼                         ▼                         ▼                │
+│ ┌──────────────┐      ┌─────────────┐      ┌─────────────────┐           │
+│ │  AI Tools    │      │  Memory     │      │   Knowledge     │           │
+│ │  (13 tools)  │      │  (SQLite)   │      │   (ChromaDB)    │           │
+│ │ shell/git/   │      └─────────────┘      └─────────────────┘           │
+│ │ search/mcp   │                                                         │
+│ └──────┬───────┘                                                         │
+│        │                                                                 │
+│        ▼                                                                 │
+│ ┌──────────────┐      ┌─────────────────────────────────────┐            │
+│ │Tool Approval │      │           MCP Servers               │            │
+│ │ask/always/   │      │  (stdio | HTTP | SSE transports)    │            │
+│ │never         │      │  External tools via protocol        │            │
+│ └──────────────┘      └─────────────────────────────────────┘            │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
                                 │
@@ -139,6 +158,86 @@ consistency with the new command system.
 │   (LLM API)     │    │  (Embeddings)   │    │   (Documents)   │
 │  qwen3-vl-30b   │    │ qwen3-embedding │    │   80+ formats   │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+## 🔧 Shell Execution & MCP (v0.3.0)
+
+### Shell Execution (CLI Only)
+
+The AI can execute shell commands directly in CLI mode using an allowlist-based security model:
+
+**Safe Commands** (run without confirmation):
+
+```bash
+git, npm, yarn, python, python3, pip, node, cargo, go, uv, pytest, make,
+cat, ls, pwd, grep, rg, find, tree, docker, kubectl
+```
+
+**Blocked Commands** (always denied):
+
+```bash
+rm, sudo, chmod, chown, curl, wget, dd, mkfs
+```
+
+**Unknown Commands**: Require user confirmation before execution.
+
+**Example Usage:**
+
+```text
+You: run npm install
+AI: [Executes npm install automatically - safe command]
+
+You: run custom_script.sh
+AI: Command 'custom_script.sh' requires confirmation. Reply 'yes' to execute.
+```
+
+### MCP (Model Context Protocol) Support
+
+Connect external tool servers via MCP protocol with three transport options:
+
+| Transport | Use Case | Example |
+| ----------- | ---------- | --------- |
+| **stdio** | Local subprocess servers | `npx @modelcontextprotocol/server-filesystem` |
+| **HTTP** | Remote REST-based servers | `http://localhost:8080/mcp` |
+| **SSE** | Streaming notifications | `http://localhost:8081/sse` |
+
+**Configuration** (`config/mcp_servers.json`):
+
+```json
+{
+  "servers": [
+    {
+      "name": "filesystem",
+      "transport": "stdio",
+      "enabled": true,
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    }
+  ]
+}
+```
+
+### Tool Approval System
+
+Control which tools require confirmation before execution:
+
+| Mode | Behavior |
+| ------ | ---------- |
+| `always` | Execute without asking (read-only tools) |
+| `ask` | Prompt user before execution |
+| `never` | Block execution entirely |
+
+**Configuration** (`config/tool_approvals.json`):
+
+```json
+{
+  "approvals": {
+    "shell_execute": "ask",
+    "write_file": "ask",
+    "git_status": "always",
+    "code_search": "always"
+  }
+}
 ```
 
 ## 📄 Document Processing Workflow
@@ -755,7 +854,7 @@ You: quit
 
 ### AI Tool Integration
 
-**8 AI Tools Available** (qwen3-vl-30b can call these autonomously):
+**13 AI Tools Available** (qwen3-vl-30b can call these autonomously):
 
 | Tool                      | Function                         | Use Case                   |
 | ------------------------- | -------------------------------- | -------------------------- |
@@ -767,6 +866,11 @@ You: quit
 | `learn_information()`     | Store in knowledge base          | "remember this fact"       |
 | `search_knowledge()`      | Query learned information        | "what do you know about X" |
 | `search_web()`            | Search internet with DuckDuckGo  | "what's the latest on AI"  |
+| `shell_execute()`         | Run shell commands (CLI only)    | "run npm install"          |
+| `git_status()`            | Git repository status            | "what changed"             |
+| `git_diff()`              | Show git changes                 | "show the diff"            |
+| `git_log()`               | Commit history                   | "recent commits"           |
+| `code_search()`           | Regex code search (ripgrep)      | "find TODO comments"       |
 
 **Tool Testing Status:**
 

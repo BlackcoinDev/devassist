@@ -79,10 +79,79 @@ The AI can "decide" to use tools without you explicitly asking.
 
 `search_web` to search DuckDuckGo.
 
+- **Example**: If you say "Run npm install", it calls `shell_execute` (CLI
+
+only).
+
+- **Example**: If you ask "What files changed?", it calls `git_status`.
+- **Example**: If you say "Find all TODO comments", it calls `code_search`.
 - **Auto-Learning**: If you correct the AI or provide a definition it didn't
 
 know (e.g., "Actually, 'like-for-like' in finance means..."), it may
 autonomously call `learn_information` to save that fact for ever.
+
+### 4. Shell Execution (CLI Only)
+
+In CLI mode, the AI can execute shell commands using an allowlist-based
+security model:
+
+- **Safe Commands**: `git`, `npm`, `python`, `pytest`, etc. run without
+  confirmation
+- **Blocked Commands**: `rm`, `sudo`, `chmod`, etc. are always denied
+- **Unknown Commands**: Require user confirmation before execution
+
+**Example**:
+
+1. **You**: "Run pytest to check the tests."
+2. **AI**: *Calls `shell_execute("pytest")`* → Executes immediately (safe)
+3. **AI**: "Tests completed. 42 passed, 0 failed."
+
+### 5. Git Integration
+
+The AI has dedicated tools for git operations:
+
+- `git_status()` - See what files have changed
+- `git_diff()` - View the actual changes
+- `git_log()` - Browse commit history
+- `git_show()` - Inspect specific commits
+
+**Example**:
+
+1. **You**: "What did I change today?"
+2. **AI**: *Calls `git_status()` and `git_diff()`*
+3. **AI**: "You modified 3 files: main.py, config.py, and README.md..."
+
+### 6. Code Search
+
+Fast regex search across your codebase using ripgrep:
+
+**Example**:
+
+1. **You**: "Find all TODO comments in the project."
+2. **AI**: *Calls `code_search("TODO")`*
+3. **AI**: "Found 12 TODO comments across 8 files..."
+
+### 7. MCP Integration
+
+Connect external tool servers via Model Context Protocol:
+
+- **stdio**: Local subprocess servers (e.g., filesystem, database)
+- **HTTP**: Remote REST-based servers
+- **SSE**: Streaming server events
+
+**Configuration**: Edit `config/mcp_servers.json` to add servers.
+
+### 8. Tool Approval System
+
+Control which tools require confirmation:
+
+| Mode     | Behavior                    |
+| -------- | --------------------------- |
+| `always` | Execute without asking      |
+| `ask`    | Prompt before execution     |
+| `never`  | Block execution entirely    |
+
+**Configuration**: Edit `config/tool_approvals.json` to customize.
 
 ---
 
@@ -149,7 +218,7 @@ Mass-ingest an entire directory of code and documents.
 
 | Command                  | Description                                                          |
 | ------------------------ | -------------------------------------------------------------------- |
-| **`/web <url>`**         | **NEW!** Scrape and learn a webpage using Docling.                   |
+| **`/web <url>`**         | Scrape and learn a webpage using Docling.                            |
 | **`/context <mode>`**    | Set context mode (`auto`, `on`, `off`). Use `on` for RAG.            |
 | **`/space <cmd>`**       | Manage workspaces (`list`, `switch`, `delete`).                      |
 | **`/learn <text>`**      | Manually add a snippet of text to memory.                            |
@@ -160,6 +229,9 @@ Mass-ingest an entire directory of code and documents.
 | **`/read <file>`**       | Read a local file.                                                   |
 | **`/write <file>`**      | Create or edit a file.                                               |
 | **`/clear`**             | Wipe the current conversation context (but not long-term memory).    |
+| **`/approve <tool> <m>`**| Set tool approval mode (`ask`, `always`, `never`).                   |
+| **`/mcp list`**          | List connected MCP servers and their tools.                          |
+| **`/mcp connect <name>`**| Connect to an MCP server from config.                                |
 | **`/help`**              | Show the help menu.                                                  |
 
 ---
@@ -200,6 +272,41 @@ is a dev. The facts never collide.
 
 1. **AI**: "Thanks! I've learned that definition."
 2. **Future**: The AI now knows this permanently.
+
+### Scenario 4: Running Shell Commands (CLI)
+
+**Goal**: Execute development commands through the AI.
+
+1. **Action**: "Run the tests and tell me if anything fails."
+2. **AI**: *Calls `shell_execute("pytest")`*
+3. **Result**: The AI runs pytest and summarizes the results.
+4. **Note**: Works only in CLI mode, not GUI.
+
+### Scenario 5: Code Review with Git
+
+**Goal**: Understand what changed in your codebase.
+
+1. **Action**: "Show me what I changed since yesterday."
+2. **AI**: *Calls `git_log()` and `git_diff()`*
+3. **Result**: The AI shows your recent commits and summarizes the changes.
+
+### Scenario 6: Finding Code Patterns
+
+**Goal**: Search for specific patterns across your codebase.
+
+1. **Action**: "Find all functions that use async/await."
+2. **AI**: *Calls `code_search("async def")`*
+3. **Result**: Lists all async functions with file paths and line numbers.
+
+### Scenario 7: Using MCP Servers
+
+**Goal**: Connect external tools via MCP.
+
+1. **Action**: `/mcp connect filesystem`
+2. **Result**: AI gains access to MCP filesystem tools.
+3. **Action**: "List files in /home/user/documents using MCP."
+4. **AI**: *Calls `mcp_filesystem_list_directory()`*
+5. **Result**: Returns the directory listing from the MCP server.
 
 ---
 

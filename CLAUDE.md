@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-DevAssist (v0.2.0) is an AI-powered learning assistant and development tool that combines conversational AI with
+DevAssist (v0.3.0) is an AI-powered learning assistant and development tool that combines conversational AI with
 persistent knowledge management. It features dual interfaces (PyQt6 GUI and CLI), AI learning via ChromaDB vector
-database, document processing for 80+ file types, and 8 AI tools for file operations and knowledge management.
+database, document processing for 80+ file types, and 13 AI tools for file operations, shell execution, git integration,
+code search, and knowledge management.
 
 **Core Technology Stack:**
 
@@ -17,6 +18,7 @@ database, document processing for 80+ file types, and 8 AI tools for file operat
 - Ollama (qwen3-embedding) for embeddings
 - SQLite for conversation memory
 - PyQt6 for GUI
+- MCP (Model Context Protocol) for external tool integration
 
 ## Essential Commands
 
@@ -259,7 +261,7 @@ File Discovery → Content Extraction (Docling) → Text Chunking (1500 chars)
 
 ## AI Tool System
 
-### 8 AI Tools Available
+### 13 AI Tools Available
 
 The qwen3-vl-30b model can autonomously call these tools:
 
@@ -273,8 +275,19 @@ The qwen3-vl-30b model can autonomously call these tools:
 | `learn_information()`       | Store in ChromaDB                        | ✅ Ready     |
 | `search_knowledge()`        | Query vector DB                          | ✅ Ready     |
 | `search_web()`              | DuckDuckGo search                        | ✅ Ready     |
+| `shell_execute()`           | Run shell commands (CLI only)            | ✅ Ready     |
+| `git_status()`              | Git repository status                    | ✅ Ready     |
+| `git_diff()`                | Show git changes                         | ✅ Ready     |
+| `git_log()`                 | Commit history                           | ✅ Ready     |
+| `code_search()`             | Regex code search (ripgrep)              | ✅ Ready     |
 
-**Tool testing coverage:** 8/8 tools have comprehensive unit and integration tests (436 total tests, 100% pass rate).
+**Tool testing coverage:** 13/13 tools have comprehensive unit and integration tests.
+
+**Shell Execution Security:**
+- CLI-only (disabled in GUI mode)
+- Allowlist-based: safe commands run without confirmation
+- Blocklist: dangerous commands (rm, sudo) always denied
+- Unknown commands require user confirmation
 
 ### Tool Result Lifecycle
 
@@ -339,7 +352,7 @@ When adding features:
 | `src/gui.py`    | PyQt6 GUI interface                  | 2,135 |
 | `launcher.py`   | Interface selector + .env loader     | 216   |
 
-**Modular Architecture (v0.2.0):**
+**Modular Architecture (v0.3.0):**
 
 | File                           | Purpose                                     | Lines |
 | ------------------------------ | ------------------------------------------- | ----- |
@@ -349,10 +362,14 @@ When adding features:
 | `src/core/chat_loop.py`        | Main chat loop with verbose logging         | 330   |
 | `src/commands/registry.py`     | Command dispatcher (plugin system)          | 190   |
 | `src/tools/registry.py`        | AI tool dispatcher (plugin system)          | 210   |
+| `src/tools/approval.py`        | Tool approval system (ask/always/never)     | 150   |
 | `src/vectordb/client.py`       | ChromaDB unified API client                 | 310   |
 | `src/storage/database.py`      | SQLite connection management                | 120   |
 | `src/storage/memory.py`        | Conversation history persistence            | 205   |
 | `src/storage/cache.py`         | Embedding and query caching                 | 140   |
+| `src/security/shell_security.py`| Shell command validation (allowlist)       | 120   |
+| `src/mcp/client.py`            | MCP client manager                          | 250   |
+| `src/mcp/transports/`          | stdio, HTTP, SSE transports                 | ---   |
 
 **Tools & Testing:**
 
@@ -440,9 +457,86 @@ def execute_my_tool(arg1: str) -> Dict[str, Any]:
 4. Update quality filtering logic if needed
 5. Add tests for new file type
 
+**Adding shell commands to the safe list:**
+
+1. Edit `src/security/shell_security.py`
+2. Add command to `SAFE_COMMANDS` set (runs without confirmation)
+3. Or add to `BLOCKED_COMMANDS` set (always denied)
+4. Add tests for new command validation
+5. Document security rationale
+
+**Example:**
+
+```python
+# In src/security/shell_security.py
+
+SAFE_COMMANDS: Set[str] = {
+    "git", "npm", "python", "pytest",  # Development tools
+    "cat", "ls", "grep",               # Read-only utilities
+    "my_safe_command",                 # Add your safe command
+}
+
+BLOCKED_COMMANDS: Set[str] = {
+    "rm", "sudo", "chmod",             # Dangerous operations
+}
+```
+
+**Adding an MCP server:**
+
+1. Create server configuration in `config/mcp_servers.json`
+2. Specify transport type (stdio, http, sse)
+3. For stdio: provide command and args
+4. For http/sse: provide URL and optional headers
+5. Enable server in configuration
+6. Tools auto-discovered and prefixed with `mcp_servername_`
+
+**Example:**
+
+```json
+{
+  "servers": [
+    {
+      "name": "database",
+      "transport": "stdio",
+      "enabled": true,
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "mydb.db"]
+    },
+    {
+      "name": "remote",
+      "transport": "http",
+      "enabled": false,
+      "url": "http://localhost:8080/mcp",
+      "headers": {"Authorization": "Bearer ${API_KEY}"}
+    }
+  ]
+}
+```
+
+**Configuring tool approvals:**
+
+1. Edit `config/tool_approvals.json`
+2. Set approval mode: `always`, `ask`, or `never`
+3. Use wildcards for MCP tools: `mcp_*`
+4. Changes take effect on next tool execution
+
+**Example:**
+
+```json
+{
+  "approvals": {
+    "read_file": "always",        // Safe, read-only
+    "write_file": "ask",          // Prompts user
+    "shell_execute": "ask",       // Prompts for unknown commands
+    "mcp_database_*": "ask",      // All database MCP tools
+    "dangerous_tool": "never"     // Blocked entirely
+  }
+}
+```
+
 ## Known Issues & Constraints
 
-### Current Limitations (v0.2.0)
+### Current Limitations (v0.3.0)
 
 - **Python 3.14**: Not compatible yet—use Python 3.13.x (latest available)
 - **GUI Tests**: Skipped by default (10 tests) to prevent PyQt6 segfaults

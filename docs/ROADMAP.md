@@ -4,7 +4,7 @@ This document outlines the future development roadmap for the Blackcoin
 DevAssist application, a LangChain-based AI learning assistant with GUI/CLI
 interfaces.
 
-## Current Status (v0.2.0)
+## Current Status (v0.3.0)
 
 - ✅ Dual interfaces: Modern PyQt6 GUI and traditional CLI
 - ✅ AI learning system with ChromaDB v2 vector database
@@ -12,7 +12,7 @@ interfaces.
 - ✅ Spaces: Spaces system for isolated knowledge bases
 - ✅ Document Processing: Unified processing via Docling
 - ✅ Web Ingestion: URL learning capability
-- ✅ Tool calling capabilities with 8 tools (including web search)
+- ✅ Tool calling capabilities with 13 tools (file, shell, git, search, knowledge, web)
 - ✅ Conversation memory with SQLite
 - ✅ Markdown support in GUI
 - ✅ **Modular Architecture**: Refactored from monolithic (4,556 lines) to modular structure (3,175 +
@@ -21,6 +21,14 @@ interfaces.
 
 - ✅ **Plugin System**: CommandRegistry and ToolRegistry with self-registering decorators
 - ✅ **Dependency Injection**: ApplicationContext pattern replacing scattered globals
+
+### New in v0.3.0
+
+- ✅ **Shell Execution (CLI)**: AI can run shell commands with allowlist-based safety
+- ✅ **MCP Support**: Model Context Protocol integration (stdio, HTTP, SSE transports)
+- ✅ **Git Integration**: AI tools for git status, diff, log, show operations
+- ✅ **Code Search**: Fast ripgrep-based regex search across codebase
+- ✅ **Tool Approval System**: Per-tool ask/always/never permission controls
 
 ## Planned Integrations and Features
 
@@ -548,11 +556,30 @@ reliable tool functionality, and automated quality assurance.
 - ⚠️ Some linting issues remain (32 total issues)
 - ✅ Excellent test quality and structure
 
+### 17. Shell & MCP Enhancements (v0.4.0+)
+
+**Priority**: Medium
+**Status**: Planned
+
+- **Background Task Execution**: Run long-running commands without blocking the chat
+- **Streaming Shell Output**: Real-time output display for long commands
+- **MCP Server Marketplace**: Easy discovery and installation of MCP servers
+- **Custom Allowlist Configuration**: User-configurable safe command lists
+- **Shell History**: Persistent history of executed commands
+- **GUI Shell Support**: Optional shell access in GUI with additional safeguards
+
+**Integration Steps**:
+
+1. Implement async shell execution with progress streaming
+2. Add background task management UI
+3. Create MCP server discovery mechanism
+4. Add shell configuration commands
+
 ## Timeline
 
-- **Q1 2025**: Security enhancements (SQLCipher)
-- **Q2 2025**: Performance optimizations and additional document types
-- **Q3 2025**: Advanced AI features and GUI improvements
+- **Q1 2025**: ✅ Shell execution, MCP support, Git integration, Code search (v0.3.0)
+- **Q2 2025**: Security enhancements (SQLCipher), background tasks
+- **Q3 2025**: Advanced AI features (Pydantic-AI, LangGraph), MCP marketplace
 - **Q4 2025**: Multi-user support and cloud deployment
 
 This roadmap is subject to change based on community feedback and development
