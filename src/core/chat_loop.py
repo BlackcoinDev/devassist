@@ -71,11 +71,22 @@ class ChatLoop:
                 if should_exit:
                     break
 
+            except ConnectionError as e:
+                # Log connection error as expected by tests
+                if self.logger:
+                    self.logger.error(f"Connection error: {e}")
+                print("Connection error: Server unreachable")
+                print("Please ensure LM Studio is running and accessible.")
+                continue
             except KeyboardInterrupt:
-                print("\n👋 Goodbye!")
+                # Save memory and show goodbye message as expected by tests
+                self.save_memory(self.conversation_history)
+                print("\n\n👋 Goodbye! Your conversation has been saved.")
                 break
             except EOFError:
-                print("\n👋 Goodbye!")
+                # Save memory and show goodbye message as expected by tests
+                self.save_memory(self.conversation_history)
+                print("\n\n👋 Goodbye! Your conversation has been saved.")
                 break
             except Exception as e:
                 print(f"\n💥 Fatal error in chat loop: {e}")

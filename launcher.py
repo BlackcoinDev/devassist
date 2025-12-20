@@ -35,13 +35,13 @@ consistent configuration loading and initialization across all interfaces.
 
 SUPPORTED INTERFACES:
 ====================
-🖥️  GUI MODE (Default):
+🖥️  GUI MODE:
     - Modern PyQt6 interface with dark/light themes
     - Real-time streaming responses with markdown rendering
     - One-click command buttons and settings panels
     - Complete feature parity with CLI functionality
 
-💻 CLI MODE:
+💻 CLI MODE (Default):
     - Traditional terminal-based interface
     - Full slash command support (/learn, /vectordb, /mem0, etc.)
     - Direct tool access and system control
@@ -67,8 +67,8 @@ REQUIRED ENVIRONMENT VARIABLES:
 
 LAUNCH OPTIONS:
 ==============
---gui (default): Launch PyQt6 graphical interface
---cli: Launch command-line interface
+--cli (default): Launch command-line interface
+--gui: Launch PyQt6 graphical interface
 --help: Display usage information
 
 ARCHITECTURAL ROLE:
@@ -144,9 +144,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 launcher.py              # Launch GUI (default)
-  python3 launcher.py --cli        # Launch CLI version
-  python3 launcher.py --gui        # Launch GUI version (explicit)
+  python3 launcher.py              # Launch CLI (default)
+  python3 launcher.py --gui        # Launch GUI version
+  python3 launcher.py --cli        # Launch CLI version (explicit)
 
 The GUI provides a modern interface with:
 - Chat display with message history
@@ -162,11 +162,11 @@ The CLI provides the traditional terminal interface with:
     )
 
     parser.add_argument(
-        "--cli", "--terminal", action="store_true", help="Launch CLI (terminal) version"
+        "--cli", "--terminal", action="store_true", help="Launch CLI (terminal) version (default)"
     )
 
     parser.add_argument(
-        "--gui", "--interface", action="store_true", help="Launch GUI version (default)"
+        "--gui", "--interface", action="store_true", help="Launch GUI version"
     )
 
     # Help is automatically added by argparse
@@ -174,7 +174,7 @@ The CLI provides the traditional terminal interface with:
     args = parser.parse_args()
 
     # Determine which interface to launch
-    launch_gui = not args.cli  # GUI is default unless --cli is specified
+    launch_gui = args.gui  # CLI is default unless --gui is specified
 
     if launch_gui:
         print("🚀 Launching AI Assistant GUI...")

@@ -1893,10 +1893,16 @@ def main():  # type: ignore[reportGeneralTypeIssues]
     The complex chat loop logic has been extracted to src.core.chat_loop
     for better maintainability and modularity.
     """
-    # This function is now just a wrapper that delegates to the modular chat loop
+    # Initialize application components (matches old behavior expected by tests)
+    if not initialize_application():
+        return False  # Exit if initialization failed (matches test expectations)
+
+    # Run the main chat loop
     from src.core.chat_loop import run_main_chat_loop
 
     return run_main_chat_loop()
+
+
 # Standard Python entry point - only execute chat loop when run directly
 # Prevents execution when imported as a module by other scripts
 # This ensures the chat interface only starts when the script is run standalone

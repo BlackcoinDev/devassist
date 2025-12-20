@@ -24,11 +24,12 @@
 Test tool calling in main.py context
 """
 
-# os import removed as it's not used
 import sys
-from src.main import execute_tool_call
+import os
+from src.tools.registry import ToolRegistry
 
-sys.path.append(".")
+# Add the project root to Python path for proper imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Test tool call dict (LangChain format)
 tool_call = {
@@ -38,8 +39,8 @@ tool_call = {
     "type": "tool_call",
 }
 
-print("Testing execute_tool_call with read_file...")
-result = execute_tool_call(tool_call)
+print("Testing ToolRegistry.execute_tool_call with read_file...")
+result = ToolRegistry.execute_tool_call(tool_call)
 print(f"Result: {result}")
 
 # Test with current directory
@@ -50,6 +51,6 @@ tool_call2 = {
     "type": "tool_call",
 }
 
-print("\nTesting execute_tool_call with get_current_directory...")
-result2 = execute_tool_call(tool_call2)
+print("\nTesting ToolRegistry.execute_tool_call with get_current_directory...")
+result2 = ToolRegistry.execute_tool_call(tool_call2)
 print(f"Result: {result2}")
