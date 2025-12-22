@@ -31,23 +31,8 @@ and document processing capabilities. Built specifically for the qwen3-vl-30b + 
 # =============================================================================
 # IMPORTS
 # =============================================================================
-
-# Core LangChain components for AI chat functionality
-
-
 # Command handlers - import to trigger auto-registration via decorators
 from src.commands import CommandRegistry
-
-# CLI handlers will be imported as needed to avoid circular imports
-# from src.cli.handlers import (
-#     handle_read_command,
-#     handle_write_command,
-#     handle_list_command,
-#     handle_pwd_command,
-#     handle_clear_command,
-#     handle_learn_command,
-#     show_vectordb,
-# )
 from src.storage import (
     initialize_database,
     load_memory,
@@ -56,11 +41,7 @@ from src.storage import (
     save_query_cache,
     cleanup_memory,
 )
-
-
 from src.vectordb import get_space_collection_name
-
-
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 import requests
@@ -158,8 +139,6 @@ operation_count = 0
 # =============================================================================
 # HTTP CLIENT SETUP
 # =============================================================================
-
-
 # Create a session with connection pooling and retries
 api_session = requests.Session()
 retry_strategy = Retry(
