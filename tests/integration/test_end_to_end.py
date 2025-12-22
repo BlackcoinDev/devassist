@@ -28,16 +28,25 @@ class TestEndToEnd:
     @patch("builtins.print")
     @patch("src.main.save_memory")
     @patch("src.main.load_memory")
-    @patch("src.main.llm")
-    @patch("src.main.vectorstore", None)
-    @patch("src.main.user_memory", None)
+    @patch("src.main.get_context")
     def test_basic_session_flow(
-        self, mock_llm, mock_load, mock_save, mock_print, mock_input, mock_init
+        self, mock_ctx, mock_load, mock_save, mock_print, mock_input, mock_init
     ):
         """Test a simple session with two messages and a quit command."""
         # 1. Setup mocks
         mock_init.return_value = True
         mock_load.return_value = [SystemMessage(content="Hello")]
+
+        # Mock context with LLM
+        mock_llm = MagicMock()
+        mock_response1 = MagicMock()
+        mock_response1.content = "Hello there! I'm your AI assistant."
+        mock_response2 = MagicMock()
+        mock_response2.content = (
+            "I'm doing great, thank you for asking! How can I help you today?"
+        )
+        mock_llm.invoke.side_effect = [mock_response1, mock_response2]
+        mock_ctx.return_value.llm = mock_llm
 
         # Seed history
         import src.main
@@ -49,15 +58,6 @@ class TestEndToEnd:
         # 2. A question
         # 3. Quit command
         mock_input.side_effect = ["Hello AI", "How are you?", "quit"]
-
-        # Mock LLM responses
-        mock_response1 = MagicMock()
-        mock_response1.content = "Hello there! I'm your AI assistant."
-        mock_response2 = MagicMock()
-        mock_response2.content = (
-            "I'm doing great, thank you for asking! How can I help you today?"
-        )
-        mock_llm.invoke.side_effect = [mock_response1, mock_response2]
 
         # 2. Run the chat loop (mocked so it doesn't loop forever)
         # We need to handle the infinite loop. Since we provided 'quit', it should break.

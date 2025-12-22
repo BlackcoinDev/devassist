@@ -35,36 +35,22 @@ class TestApplicationIntegration:
         """Test complete application initialization flow."""
         from src.main import initialize_application
 
-        # Mock all the complex imports and dependencies
+        # Mock high-level initialization functions
         with (
-            patch("src.main.ChatOpenAI") as mock_llm,
-            patch("chromadb.HttpClient") as mock_client,
-            patch("langchain_chroma.Chroma") as mock_chroma,
-            patch("src.main.sqlite3.connect") as mock_sqlite,
+            patch("src.main.initialize_llm", return_value=True) as mock_llm,
+            patch("src.main.initialize_vectordb", return_value=True) as mock_vdb,
+            patch("src.main.initialize_user_memory", return_value=True),
+            patch("src.storage.database.initialize_database", return_value=(MagicMock(), MagicMock())) as mock_db,
+            patch("src.main.load_memory", return_value=[]),
         ):
-            # Setup mock return values
-            mock_llm_instance = MagicMock()
-            mock_llm.return_value = mock_llm_instance
-
-            mock_client_instance = MagicMock()
-            mock_client.return_value = mock_client_instance
-
-            mock_vectorstore_instance = MagicMock()
-            mock_chroma.return_value = mock_vectorstore_instance
-
-            mock_conn = MagicMock()
-            mock_sqlite.return_value = mock_conn
-
             # Test initialization
             result = initialize_application()
             assert result is True
 
             # Verify key components were initialized
             mock_llm.assert_called_once()
-            mock_client.assert_called_once()
-            mock_chroma.assert_called_once()
-            # SQLite is called for conversation memory and Mem0 history
-            assert mock_sqlite.call_count >= 1
+            mock_vdb.assert_called_once()
+            mock_db.assert_called_once()
 
     def test_memory_persistence_flow(self):
         """Test memory save/load persistence flow."""
@@ -185,15 +171,17 @@ class TestCommandIntegration:
         captured = capsys.readouterr()
         assert "No conversation history" in captured.out
 
-    @patch("src.main.conversation_history", [])
-    @patch("src.main.save_memory")
-    def test_clear_command_integration(self, mock_save, capsys):
+    @patch("src.commands.handlers.memory_commands.save_memory")
+    @patch("src.commands.handlers.memory_commands.get_context")
+    def test_clear_command_integration(self, mock_ctx, mock_save, capsys):
         """Test clear command integration."""
-        from src.main import handle_clear_command
+        from src.commands.handlers.memory_commands import handle_clear
 
-        with patch("src.main.input", return_value="yes"):
-            result = handle_clear_command()
-            assert result is False
+        # Setup mock context
+        mock_ctx.return_value.conversation_history = []
+
+        with patch("builtins.input", return_value="yes"):
+            handle_clear([])
             mock_save.assert_called_once()  # Verify memory is saved during clear
 
             captured = capsys.readouterr()

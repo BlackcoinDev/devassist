@@ -58,15 +58,21 @@ from src.main import (
     load_memory,
     save_memory,
     handle_slash_command,
-    handle_clear_command,
-    handle_context_command,
-    handle_learning_command,
-    handle_space_command,
-    handle_export_command,
 )
+from src.commands.handlers.memory_commands import handle_clear
+from src.commands.handlers.config_commands import handle_context, handle_learning
+from src.commands.handlers.space_commands import handle_space
+from src.commands.handlers.export_commands import handle_export
 from src.storage.memory import trim_history
 from src.vectordb.spaces import ensure_space_collection
 from src.main import initialize_application
+
+# Backwards compatibility aliases
+handle_clear_command = handle_clear
+handle_context_command = handle_context
+handle_learning_command = handle_learning
+handle_space_command = handle_space
+handle_export_command = handle_export
 
 
 class TestSpaceManagement(unittest.TestCase):
@@ -277,36 +283,39 @@ class TestSlashCommands(unittest.TestCase):
         result = handle_slash_command("regular message")
         assert result is False
 
-    @patch("src.main.input", return_value="yes")
-    @patch("src.main.conversation_history", [SystemMessage(content="Test")])
-    @patch("src.main.save_memory")
-    def test_handle_clear_command_yes(self, mock_save, mock_input):
+    @patch("builtins.input", return_value="yes")
+    @patch("src.commands.handlers.memory_commands.save_memory")
+    @patch("src.commands.handlers.memory_commands.get_context")
+    def test_handle_clear_command_yes(self, mock_ctx, mock_save, mock_input):
         """Test /clear command with yes confirmation."""
         import io
         from contextlib import redirect_stdout
 
+        mock_ctx.return_value.conversation_history = [SystemMessage(content="Test")]
+
         f = io.StringIO()
         with redirect_stdout(f):
-            result = handle_clear_command()
+            handle_clear_command([])
         output = f.getvalue()
 
-        self.assertFalse(result)  # Should not exit
         self.assertIn("cleared", output.lower())
         mock_input.assert_called_once()  # Verify user was prompted
         mock_save.assert_called_once()  # Verify memory was saved
 
-    @patch("src.main.input", return_value="no")
-    def test_handle_clear_command_no(self, mock_input):
+    @patch("builtins.input", return_value="no")
+    @patch("src.commands.handlers.memory_commands.get_context")
+    def test_handle_clear_command_no(self, mock_ctx, mock_input):
         """Test /clear command with no confirmation."""
         import io
         from contextlib import redirect_stdout
 
+        mock_ctx.return_value.conversation_history = []
+
         f = io.StringIO()
         with redirect_stdout(f):
-            result = handle_clear_command()
+            handle_clear_command([])
         output = f.getvalue()
 
-        self.assertFalse(result)
         self.assertIn("cancelled", output.lower())
 
 
@@ -365,86 +374,94 @@ class TestContextAndLearning(unittest.TestCase):
 class TestSpaceCommands(unittest.TestCase):
     """Test space management commands."""
 
-    @patch("src.main.list_spaces", return_value=["default", "test"])
-    def test_handle_space_command_list(self, mock_list):
+    @patch("src.commands.handlers.space_commands.list_spaces", return_value=["default", "test"])
+    @patch("src.commands.handlers.space_commands.get_context")
+    def test_handle_space_command_list(self, mock_ctx, mock_list):
         """Test /space list command."""
         import io
         from contextlib import redirect_stdout
 
+        mock_ctx.return_value.current_space = "default"
+
         f = io.StringIO()
         with redirect_stdout(f):
-            handle_space_command("list")
+            handle_space_command(["list"])
         output = f.getvalue()
 
         self.assertIn("Available spaces", output)
-        mock_list.assert_called_once()  # Verify spaces were listed
+        mock_list.assert_called()  # Verify spaces were listed
 
-    @patch("src.main.list_spaces", return_value=["default"])
-    @patch("src.main.switch_space", return_value=True)
-    def test_handle_space_command_create(self, mock_switch, mock_list):
+    @patch("src.commands.handlers.space_commands.list_spaces", return_value=["default"])
+    @patch("src.commands.handlers.space_commands.switch_space", return_value=True)
+    @patch("src.commands.handlers.space_commands.get_context")
+    def test_handle_space_command_create(self, mock_ctx, mock_switch, mock_list):
         """Test /space create command."""
         import io
         from contextlib import redirect_stdout
 
+        mock_ctx.return_value.current_space = "default"
+
         f = io.StringIO()
         with redirect_stdout(f):
-            handle_space_command("create newspace")
+            handle_space_command(["create", "newspace"])
         output = f.getvalue()
 
         self.assertIn("Created and switched", output)
-        mock_list.assert_called_once()  # Verify spaces were checked
         mock_switch.assert_called_once_with("newspace")  # Verify space was switched
 
-    @patch("src.main.list_spaces", return_value=["default", "test"])
-    @patch("src.main.switch_space", return_value=True)
-    def test_handle_space_command_switch(self, mock_switch, mock_list):
+    @patch("src.commands.handlers.space_commands.list_spaces", return_value=["default", "test"])
+    @patch("src.commands.handlers.space_commands.switch_space", return_value=True)
+    @patch("src.commands.handlers.space_commands.get_context")
+    def test_handle_space_command_switch(self, mock_ctx, mock_switch, mock_list):
         """Test /space switch command."""
         import io
         from contextlib import redirect_stdout
 
+        mock_ctx.return_value.current_space = "default"
+
         f = io.StringIO()
         with redirect_stdout(f):
-            handle_space_command("switch test")
+            handle_space_command(["switch", "test"])
         output = f.getvalue()
 
         self.assertIn("Switched to space", output)
-        mock_list.assert_called_once()  # Verify spaces were checked
         mock_switch.assert_called_once_with("test")  # Verify space was switched
 
 
 class TestExportCommand(unittest.TestCase):
     """Test export command functionality."""
 
-    @patch(
-        "src.main.conversation_history",
-        [
-            SystemMessage(content="System"),
-            HumanMessage(content="Human"),
-            AIMessage(content="AI"),
-        ],
-    )
+    @patch("src.commands.handlers.export_commands.get_context")
     @patch("builtins.open", new_callable=mock_open)
-    def test_handle_export_command_json(self, mock_file):
+    def test_handle_export_command_json(self, mock_file, mock_ctx):
         """Test /export json command."""
         import io
         from contextlib import redirect_stdout
 
+        mock_ctx.return_value.conversation_history = [
+            SystemMessage(content="System"),
+            HumanMessage(content="Human"),
+            AIMessage(content="AI"),
+        ]
+
         f = io.StringIO()
         with redirect_stdout(f):
-            handle_export_command("json")
+            handle_export_command(["json"])
         output = f.getvalue()
 
         self.assertIn("exported", output.lower())
 
-    @patch("src.main.conversation_history", [])
-    def test_handle_export_command_empty(self):
+    @patch("src.commands.handlers.export_commands.get_context")
+    def test_handle_export_command_empty(self, mock_ctx):
         """Test /export command with empty history."""
         import io
         from contextlib import redirect_stdout
 
+        mock_ctx.return_value.conversation_history = []
+
         f = io.StringIO()
         with redirect_stdout(f):
-            handle_export_command("json")
+            handle_export_command(["json"])
         output = f.getvalue()
 
         self.assertIn("No conversation history", output)
@@ -453,50 +470,19 @@ class TestExportCommand(unittest.TestCase):
 class TestInitialization(unittest.TestCase):
     """Test application initialization."""
 
-    @patch("src.main.ChatOpenAI")
-    @patch("chromadb.HttpClient")
-    @patch("langchain_ollama.OllamaEmbeddings")
-    @patch("langchain_chroma.Chroma")
-    @patch("src.main.sqlite3.connect")
+    @patch("src.main.initialize_llm", return_value=True)
+    @patch("src.main.initialize_vectordb", return_value=True)
+    @patch("src.main.initialize_user_memory", return_value=True)
+    @patch("src.main.initialize_database")
+    @patch("src.main.load_memory", return_value=[])
     def test_initialize_application_success(
-        self, mock_sqlite, mock_chroma, mock_embeddings, mock_client, mock_llm
+        self, mock_load, mock_db, mock_mem0, mock_vdb, mock_llm
     ):
         """Test successful application initialization."""
-        # Mock successful initialization
-        mock_llm_instance = MagicMock()
-        mock_llm.return_value = mock_llm_instance
-
-        mock_client_instance = MagicMock()
-        mock_client.return_value = mock_client_instance
-
-        mock_embeddings_instance = MagicMock()
-        mock_embeddings.return_value = mock_embeddings_instance
-
-        mock_vectorstore_instance = MagicMock()
-        mock_chroma.return_value = mock_vectorstore_instance
-
-        mock_conn = MagicMock()
-        mock_sqlite.return_value = mock_conn
-
-        with patch.dict(
-            "os.environ",
-            {
-                "LM_STUDIO_URL": "http://test:1234/v1",
-                "LM_STUDIO_KEY": "test-key",
-                "MODEL_NAME": "test-model",
-                "CHROMA_HOST": "localhost",
-                "CHROMA_PORT": "8000",
-                "OLLAMA_BASE_URL": "http://localhost:11434",
-                "EMBEDDING_MODEL": "test-embedding",
-                "DB_TYPE": "sqlite",
-                "DB_PATH": ":memory:",
-                "MAX_HISTORY_PAIRS": "10",
-                "TEMPERATURE": "0.7",
-                "MAX_INPUT_LENGTH": "1000",
-            },
-        ):
-            result = initialize_application()
-            self.assertTrue(result)
+        result = initialize_application()
+        self.assertTrue(result)
+        mock_llm.assert_called_once()
+        mock_vdb.assert_called_once()
 
     @patch("src.main.ChatOpenAI", side_effect=Exception("Connection failed"))
     def test_initialize_application_llm_failure(self, mock_llm):

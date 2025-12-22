@@ -91,9 +91,10 @@ The GUI maintains complete feature parity with the CLI while providing
 an intuitive, modern interface for AI-assisted development and research.
 """
 
-import sys
-import os
 import logging
+import os
+import sys
+
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -111,12 +112,12 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPalette, QColor, QTextCursor
 from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer
 from datetime import datetime
-from typing import List, cast
+from typing import List, cast, Optional, TYPE_CHECKING
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
+from src.core.config import get_config
 
 # Type alias for conversation history
 ConversationHistory = List[BaseMessage]
-from src.core.config import get_config
 
 # Set up logging
 logging.basicConfig(
@@ -138,13 +139,16 @@ CHROMA_PORT: int = 0  # Will be set from environment
 MAX_HISTORY_PAIRS: int = 0  # Will be set from environment
 
 # Check for optional dependencies
+if TYPE_CHECKING:
+    import markdown
+
 try:
     import markdown
 
     MARKDOWN_AVAILABLE = True
 except ImportError:
     MARKDOWN_AVAILABLE = False
-    markdown = None
+    markdown = None  # Optional module
 
 # Backend availability will be determined at runtime
 BACKEND_AVAILABLE = False

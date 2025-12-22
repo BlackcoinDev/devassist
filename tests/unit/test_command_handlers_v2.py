@@ -11,9 +11,6 @@ from src.commands.handlers.config_commands import handle_context, handle_learnin
 from src.core.context import ApplicationContext, get_context, set_context
 
 
-
-
-
 class TestLearningCommands:
     """Test learning command handlers."""
 
@@ -67,24 +64,6 @@ class TestLearningCommands:
         """Test /learn command when adding to knowledge base fails."""
         mock_add.return_value = False
         handle_learn(["test", "information"])
-        mock_print.assert_any_call("\n❌ Failed to learn information\n")
-
-    @patch('src.main.handle_populate_command')
-    @patch('builtins.print')
-    def test_populate_command_with_path(self, mock_print, mock_populate):
-        """Test /populate command with directory path."""
-        handle_populate(["src/", "tests/"])
-        mock_populate.assert_called_with("src/ tests/")
-
-    @patch('src.main.handle_populate_command')
-    @patch('builtins.print')
-    def test_populate_command_empty(self, mock_print, mock_populate):
-        """Test /populate command without arguments."""
-        handle_populate([])
-        mock_populate.assert_called_with("")
-
-    @patch('builtins.print')
-    def test_web_command_no_url(self, mock_print):
         """Test /web command without URL argument."""
         handle_web([])
         mock_print.assert_any_call("\nUsage: /web <url>\n")

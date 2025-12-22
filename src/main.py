@@ -133,7 +133,9 @@ from src.core.context import get_context
 from src.core.config import get_config, get_logger
 from src.core.utils import chunk_text
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import BaseMessage, SystemMessage
+from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage
+from langchain_chroma import Chroma
+from chromadb import HttpClient
 
 # Standard library imports
 import os  # Environment variable and file system operations
@@ -439,21 +441,11 @@ def handle_slash_command(command: str) -> bool:
     return True
 
 
-def handle_pwd_command():
-    """Handle /pwd command to show current working directory."""
-    try:
-        current_dir = os.getcwd()
-        print(f"\n📍 Current directory: {current_dir}\n")
-    except Exception as e:
-        print(f"\n❌ Failed to get current directory: {e}\n")
-
-
 def show_memory():
     """Show conversation history."""
     if not conversation_history:
         print("\n📝 No conversation history available.\n")
         return
-
     print(f"\n📝 Conversation History ({len(conversation_history)} messages):\n")
     for i, msg in enumerate(conversation_history):
         msg_type = type(msg).__name__.replace("Message", "")
@@ -461,172 +453,6 @@ def show_memory():
         content_preview = content[:100] + "..." if len(content) > 100 else content
         print(f"{i + 1:2d}. {msg_type}: {content_preview}")
     print()
-
-
-def handle_clear_command() -> bool:
-    """Handle /clear command. Returns True if should exit."""
-    confirm = input(
-        "Are you sure you want to clear all conversation history? (yes/no): "
-    )
-    if confirm.lower() in ["yes", "y"]:
-        global conversation_history
-        # Clear display and show confirmation
-        print("\nConversation memory cleared. Starting fresh.\n")
-
-        # Add a new system message for the fresh start
-        conversation_history = cast(List[BaseMessage], [SystemMessage(content="Lets get some coding done..")])
-        save_memory(conversation_history)
-        return False
-    else:
-        print("\n❌ Clear cancelled\n")
-        return False
-
-
-def handle_learn_command(content: str):
-    """Handle /learn command."""
-    # Check if vector database is available
-    if vectorstore is None:
-        print(
-            "\nVector database not available. ChromaDB is required for learning features.\n"
-        )
-        return
-
-    # Extract content after 'learn ' command
-    if not content:
-        print("\nUsage: /learn <information to remember>\n")
-        return
-
-    try:
-        # Import Document class for creating knowledge entries
-        from langchain_core.documents import Document
-
-        # Create document with metadata
-        doc = Document(
-            page_content=content,  # The information to remember
-            metadata={
-                "source": "user-input",  # Mark as manually added via /learn command
-                "added_at": str(datetime.now()),  # Timestamp for tracking
-            },
-        )
-
-        # Add to vector database for current space
-        # Generate embeddings and use direct HTTP API calls to ChromaDB v2
-
-        # Generate embeddings using Ollama
-        try:
-            # Import here to handle initialization order
-            from src.main import embeddings
-
-            if embeddings is not None:
-                embeddings_result = embeddings.embed_documents([doc.page_content])
-            else:
-                embeddings_result = None
-            if embeddings_result and len(embeddings_result) > 0:
-                embedding_vector = embeddings_result[0]
-
-                # Get collection for current space
-                collection_name = get_space_collection_name(CURRENT_SPACE)
-                collection_id = None
-
-                # Find or create the collection
-                try:
-                    list_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
-                    list_response = api_session.get(list_url, timeout=10)
-                    if list_response.status_code == 200:
-                        collections = list_response.json()
-                        for coll in collections:
-                            if coll.get("name") == collection_name:
-                                collection_id = coll.get("id")
-                                break
-
-                    # If collection doesn't exist, create it
-                    if not collection_id:
-                        create_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
-                        create_payload = {"name": collection_name}
-                        create_response = api_session.post(
-                            create_url, json=create_payload, timeout=10
-                        )
-                        if create_response.status_code == 201:
-                            collection_id = create_response.json().get("id")
-                            logger.info(
-                                f"Created new collection for space {CURRENT_SPACE}: {collection_name}"
-                            )
-                        else:
-                            logger.error(
-                                f"Failed to create collection: HTTP {
-                                    create_response.status_code
-                                }"
-                            )
-                            raise Exception("Collection creation failed")
-
-                except Exception as e:
-                    logger.error(
-                        f"Error managing collection for space {CURRENT_SPACE}: {e}"
-                    )
-                    raise
-
-                # Add document to the space's collection
-                add_url = (
-                    f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/"
-                    f"tenants/default_tenant/databases/default_database/"
-                    f"collections/{collection_id}/add"
-                )
-
-                # Prepare the document data with embeddings
-                doc_id = f"doc_{len(doc.page_content)}_{int(datetime.now().timestamp() * 1000000)}"
-                payload = {
-                    "ids": [doc_id],
-                    "embeddings": [embedding_vector],
-                    "documents": [doc.page_content],
-                    "metadatas": [doc.metadata] if doc.metadata else [{}],
-                }
-
-                # Make the API call to add the document
-                headers = {"Content-Type": "application/json"}
-                response = api_session.post(
-                    add_url, json=payload, headers=headers, timeout=10
-                )
-
-                if response.status_code == 201:
-                    logger.info(
-                        f"Document added successfully to space {CURRENT_SPACE}: {doc_id}"
-                    )
-                else:
-                    logger.error(
-                        f"Failed to add document to space {CURRENT_SPACE}: {
-                            response.status_code
-                        } - {response.text}"
-                    )
-                    raise Exception("Document addition failed")
-
-            else:
-                logger.error("Failed to generate embeddings")
-                raise Exception("Embedding generation failed")
-
-        except Exception as e:
-            logger.error(f"Error with direct ChromaDB v2 API: {e}")
-            # Fallback to LangChain method
-            try:
-                vectorstore.add_documents([doc])
-                logger.debug("Used LangChain fallback for document addition")
-            except Exception as fallback_e:
-                logger.error(f"LangChain fallback also failed: {fallback_e}")
-                print(f"\n❌ Failed to learn: {e}\n")
-                return
-
-        # Periodic memory cleanup
-        global operation_count
-        operation_count += 1
-        if operation_count % 50 == 0:
-            cleanup_memory()
-
-        print(f"\n✅ Learned: {content[:50]}...\n")
-
-    except Exception as e:
-        print(f"\n❌ Failed to learn: {e}\n")
-
-
-def show_vectordb():
     """
     Display information about the current vector database contents.
 
@@ -1195,13 +1021,14 @@ def handle_populate_command(dir_path: str):
 
                             # Generate embeddings
                             import numpy as np
+                            from typing import cast
                             embeddings_list = embeddings.embed_documents(texts)
                             embeddings_array = np.array(embeddings_list, dtype=np.float32)
 
                             collection.add(
                                 documents=texts,
                                 embeddings=embeddings_array.tolist(),
-                                metadatas=metadatas,
+                                metadatas=cast(list, metadatas),
                                 ids=ids,
                             )
                         else:
@@ -1262,7 +1089,7 @@ def handle_populate_command(dir_path: str):
                     collection.add(
                         documents=texts,
                         embeddings=embeddings_array.tolist(),
-                        metadatas=metadatas,
+                        metadatas=cast(list, metadatas),
                         ids=ids,
                     )
                 else:
@@ -1299,231 +1126,11 @@ def show_model_info():
     print()
 
 
-def handle_context_command(args: List[str]):
-    """Handle /context command."""
-    global CONTEXT_MODE
-    if not args:
-        print(f"\n🎯 Current context mode: {CONTEXT_MODE}")
-        print("Options: auto, on, off")
-        print("- auto: AI decides when to include context")
-        print("- on: Always include available context")
-        print("- off: Never include context from knowledge base")
-        print()
-        return
-
-    mode = args[0].lower()
-    if mode in ["auto", "on", "off"]:
-        CONTEXT_MODE = mode
-        print(f"\n✅ Context mode set to: {mode}\n")
-    else:
-        print(f"\n❌ Invalid context mode: {mode}")
-        print("Valid options: auto, on, off\n")
-
-
-def handle_learning_command(args: List[str]):
-    """Handle /learning command."""
-    global LEARNING_MODE
-    if not args:
-        print(f"\n🧠 Current learning mode: {LEARNING_MODE}")
-        print("Options: normal, strict, off")
-        print("- normal: Balanced learning with context integration")
-        print("- strict: Minimal context, focused on explicit learning")
-        print("- off: Disable all learning and context features")
-        print()
-        return
-
-    mode = args[0].lower()
-    if mode in ["normal", "strict", "off"]:
-        LEARNING_MODE = mode
-        print(f"\n✅ Learning mode set to: {mode}\n")
-    else:
-        print(f"\n❌ Invalid learning mode: {mode}")
-        print("Valid options: normal, strict, off\n")
-
-
-def handle_space_command(cmd_args: str):
-    """Handle /space command."""
-    space_cmd = cmd_args.strip()
-
-    if not space_cmd:
-        # Show current space
-        print(f"\nCurrent space: {CURRENT_SPACE}")
-        print(f"Collection: {get_space_collection_name(CURRENT_SPACE)}")
-        print("\nUsage:")
-        print("  /space list                    - List all spaces")
-        print("  /space create <name>           - Create new space")
-        print("  /space switch <name>           - Switch to space")
-        print("  /space delete <name>           - Delete space")
-        print("  /space current                 - Show current space\n")
-        return
-
-    if space_cmd == "list":
-        spaces = list_spaces()
-        print(f"\nAvailable spaces ({len(spaces)}):")
-        for space in spaces:
-            marker = " ← current" if space == CURRENT_SPACE else ""
-            print(f"  • {space}{marker}")
-        print()
-
-    elif space_cmd == "current":
-        print(f"\nCurrent space: {CURRENT_SPACE}")
-        print(f"Collection: {get_space_collection_name(CURRENT_SPACE)}\n")
-
-    elif space_cmd.startswith("create "):
-        new_space = space_cmd[7:].strip()
-        if not new_space:
-            print("\n❌ Usage: /space create <name>\n")
-            return
-
-        if new_space in list_spaces():
-            print(f"\n❌ Space '{new_space}' already exists\n")
-            return
-
-        if switch_space(new_space):
-            print(f"\n✅ Created and switched to space: {new_space}")
-            print(f"Collection: {get_space_collection_name(new_space)}\n")
-        else:
-            print(f"\n❌ Failed to create space: {new_space}\n")
-
-    elif space_cmd.startswith("switch "):
-        target_space = space_cmd[7:].strip()
-        if not target_space:
-            print("\n❌ Usage: /space switch <name>\n")
-            return
-
-        if target_space not in list_spaces():
-            print(f"\n❌ Space '{target_space}' does not exist")
-            print("Use '/space create {target_space}' to create it first\n")
-            return
-
-        if switch_space(target_space):
-            print(f"\n✅ Switched to space: {target_space}")
-            print(f"Collection: {get_space_collection_name(target_space)}\n")
-        else:
-            print(f"\n❌ Failed to switch to space: {target_space}\n")
-
-    elif space_cmd.startswith("delete "):
-        target_space = space_cmd[7:].strip()
-        if not target_space:
-            print("\n❌ Usage: /space delete <name>\n")
-            return
-
-        if target_space == "default":
-            print("\n❌ Cannot delete the default space\n")
-            return
-
-        if target_space not in list_spaces():
-            print(f"\n❌ Space '{target_space}' does not exist\n")
-            return
-
-        # Confirm deletion
-        confirm = input(
-            f"Are you sure you want to delete space '{target_space}' and all its data? (yes/no): "
-        )
-        if confirm.lower() not in ["yes", "y"]:
-            print("\n❌ Deletion cancelled\n")
-            return
-
-        if delete_space(target_space):
-            print(f"\n✅ Deleted space: {target_space}\n")
-        else:
-            print(f"\n❌ Failed to delete space: {target_space}\n")
-
-    else:
-        print(f"\n❌ Unknown space command: {space_cmd}")
-        print("Use '/space' for help\n")
-
-
-def handle_export_command(format_type: str = "json"):
-    """Handle /export command to save conversation history."""
-    if not conversation_history:
-        print("\n📝 No conversation history to export.\n")
-        return
-
-    # Determine export format
-    format_type = format_type.lower().strip()
-    if format_type not in ["json", "markdown", "md"]:
-        print(f"\n❌ Unsupported format: {format_type}")
-        print("Supported formats: json, markdown (md)\n")
-        return
-
-    # Generate filename with timestamp
-    from datetime import datetime
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"conversation_export_{timestamp}.{
-        format_type if format_type != 'markdown' else 'md'
-    }"
-
-    try:
-        if format_type == "json":
-            # Export as JSON
-            import json
-
-            export_data: dict = {
-                "export_timestamp": datetime.now().isoformat(),
-                "total_messages": len(conversation_history),
-                "messages": [],
-            }
-
-            for i, msg in enumerate(conversation_history):
-                msg_type = type(msg).__name__.replace("Message", "").lower()
-                export_data["messages"].append(
-                    {
-                        "index": i + 1,
-                        "type": msg_type,
-                        "content": str(msg.content),
-                        "timestamp": getattr(
-                            msg, "timestamp", datetime.now().isoformat()
-                        )
-                        if hasattr(msg, "timestamp")
-                        else datetime.now().isoformat(),
-                    }
-                )
-
-            with open(filename, "w", encoding="utf-8") as f:
-                json.dump(export_data, f, indent=2, ensure_ascii=False)
-
-        else:  # markdown
-            # Export as Markdown
-            with open(filename, "w", encoding="utf-8") as f:
-                f.write("# AI Assistant Conversation Export\n\n")
-                f.write(
-                    f"**Export Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-                )
-                f.write(f"**Total Messages:** {len(conversation_history)}\n\n")
-                f.write("---\n\n")
-
-                for i, msg in enumerate(conversation_history):
-                    msg_type = type(msg).__name__.replace("Message", "")
-                    content = str(msg.content)
-
-                    # Format based on message type
-                    if msg_type == "Human":
-                        f.write(f"## User Message {i + 1}\n\n{content}\n\n")
-                    elif msg_type == "AI":
-                        f.write(f"## AI Response {i + 1}\n\n{content}\n\n")
-                    elif msg_type == "System":
-                        f.write(f"### System Message {i + 1}\n\n*{content}*\n\n")
-                    else:
-                        f.write(f"## {msg_type} Message {i + 1}\n\n{content}\n\n")
-
-                    f.write("---\n\n")
-
-        print(f"\n✅ Conversation exported to: {filename}")
-        print(f"📊 Messages exported: {len(conversation_history)}")
-        print(f"📄 Format: {format_type}\n")
-
-    except Exception as e:
-        print(f"\n❌ Failed to export conversation: {e}\n")
-
-
 def initialize_llm():
-    """Initialize LLM with tool calling support."""
+    """Initialize the LLM with tool bindings."""
     global llm
     try:
         from pydantic import SecretStr
-
         llm = ChatOpenAI(
             base_url=cast(str, LM_STUDIO_BASE_URL),
             api_key=SecretStr(cast(str, LM_STUDIO_API_KEY)),
@@ -1531,7 +1138,6 @@ def initialize_llm():
             temperature=TEMPERATURE,
         )
         from src.tools import ToolRegistry
-
         tool_definitions = ToolRegistry.get_definitions()
         llm = llm.bind_tools(tool_definitions)
         print(f"✅ Connected to LLM: {MODEL_NAME} (with {len(tool_definitions)} tools)")
@@ -1546,8 +1152,6 @@ def initialize_vectordb():
     """Initialize ChromaDB and embeddings."""
     global vectorstore, embeddings, chroma_client
     try:
-        from chromadb import HttpClient
-        from langchain_chroma import Chroma
         from langchain_ollama import OllamaEmbeddings
         from typing import Any
 
@@ -1707,6 +1311,68 @@ execute_tool_call = ToolRegistry.execute_tool_call
 # to src/chat/loop.py, src/chat/message_handler.py, etc.
 
 
+def run_main_chat_loop() -> bool:
+    """
+    Run the main interactive chat loop.
+
+    Returns:
+        bool: True if chat loop exited normally, False otherwise
+    """
+    print("AI Assistant - Type 'quit' to exit, '/help' for commands")
+    print()
+
+    while True:
+        try:
+            user_input = input("You: ").strip()
+
+            if not user_input:
+                continue
+
+            if user_input.lower() in ["quit", "exit", "q"]:
+                save_memory(conversation_history)
+                print("\n👋 Goodbye! Your conversation has been saved.")
+                break
+
+            if user_input.startswith("/"):
+                if not handle_slash_command(user_input):
+                    print(f"Unknown command: {user_input}")
+                    print("Type /help for available commands")
+                continue
+
+            # Process regular conversation
+            conversation_history.append(
+                cast(BaseMessage, HumanMessage(content=user_input))
+            )
+
+            # Get response from LLM
+            ctx = get_context()
+            if ctx.llm is None:
+                print("Error: LLM not initialized")
+                continue
+
+            response = ctx.llm.invoke(conversation_history)
+            content = response.content if hasattr(response, 'content') else str(response)
+
+            print(f"\nAssistant: {content}\n")
+            conversation_history.append(
+                cast(BaseMessage, AIMessage(content=content))
+            )
+
+        except KeyboardInterrupt:
+            save_memory(conversation_history)
+            print("\n\n👋 Goodbye! Your conversation has been saved.")
+            break
+        except EOFError:
+            save_memory(conversation_history)
+            print("\n\n👋 Goodbye! Your conversation has been saved.")
+            break
+        except Exception as e:
+            print(f"Error: {e}")
+            continue
+
+    return True
+
+
 def main():
     """
     Main entry point - now delegates to modular chat loop.
@@ -1719,7 +1385,6 @@ def main():
         return False  # Exit if initialization failed (matches test expectations)
 
     # Run the main chat loop
-    from src.core.chat_loop import run_main_chat_loop
 
     return run_main_chat_loop()
 
@@ -1733,7 +1398,6 @@ if __name__ == "__main__":
         exit(1)  # Exit if initialization failed
 
     # Run the main chat loop
-    from src.core.chat_loop import run_main_chat_loop
 
     success = run_main_chat_loop()
     exit(0 if success else 1)
