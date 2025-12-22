@@ -12,7 +12,7 @@ from src.main import (
 )
 
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 class TestMainInitialization:
@@ -36,8 +36,8 @@ class TestMainInitialization:
             # Check that some error message was printed
             assert any("failed" in str(call).lower() for call in mock_print.call_args_list)
 
-    @patch("src.core.config.get_config", return_value=MagicMock(mem0_available=True))
-    @patch("mem0.Memory")
+    # @patch("src.core.config.get_config", return_value=MagicMock(mem0_available=True))  # Patch removed - architecture changed
+    # @patch("mem0.Memory")  # Patch removed - architecture changed
     def test_initialize_user_memory_failure(self, mock_memory):
         """Test initialize_user_memory failure."""
         mock_memory.from_config.side_effect = Exception("Mem0 failure")
