@@ -27,66 +27,6 @@ AI Assistant GUI Application v0.2.0 - PyQt6 Graphical Interface
 GRAPHICAL USER INTERFACE for the intelligent AI assistant system, providing a modern,
 user-friendly alternative to the command-line interface with identical functionality.
 
-CORE FEATURES:
-==============
-🖥️ MODERN INTERFACE:
-- PyQt6-based responsive GUI with dark/light theme support
-- Real-time chat display with persistent message history
-- Streaming response rendering as AI generates text
-- Rich markdown formatting for code blocks, lists, and emphasis
-
-🎛️ USER CONTROLS:
-- One-click command buttons for common operations (/help, /clear, /memory)
-- Settings panel for context mode and learning behavior control
-- Space/workspace selector for managing isolated knowledge bases
-- Model information display and status updates
-
-🤖 AI INTEGRATION:
-- Full access to 8 AI tools (read_file, write_file, parse_document, search_web, etc.)
-- Natural language processing with autonomous tool calling
-- Context-aware conversations using ChromaDB knowledge base
-- Document intelligence with qwen3-vl-30b multimodal analysis
-
-💾 DATA MANAGEMENT:
-- SQLite conversation persistence across sessions
-- ChromaDB vector database integration for knowledge storage
-- Real-time synchronization with CLI interface state
-- Secure file operations within current directory sandbox
-
-ARCHITECTURAL INTEGRATION:
-=========================
-This GUI serves as a complete frontend for the main.py backend, providing:
-- Identical slash command support (/learn, /vectordb, /mem0, /populate, etc.)
-- Same AI tool calling capabilities with qwen3-vl-30b
-- Consistent error handling and status reporting
-- Unified configuration via .env file requirements
-
-INTERACTION MODES:
-=================
-1. Direct Commands: Click buttons or type /commands for immediate execution
-2. Natural Language: Chat naturally, AI autonomously calls tools as needed
-3. Document Processing: Upload/analyze documents with multimodal AI understanding
-4. Knowledge Management: Teach AI, inspect knowledge base, manage workspaces
-
-TECHNICAL STACK:
-===============
-- Frontend: PyQt6 for cross-platform GUI development
-- Backend: LangChain integration with main.py core logic
-- AI: qwen3-vl-30b via LM Studio for chat and tool calling
-- Embeddings: qwen3-embedding via Ollama for vectorization
-- Storage: ChromaDB v2 for knowledge, SQLite for conversations
-- Styling: QSS (Qt Style Sheets) for theme customization
-
-USAGE WORKFLOW:
-==============
-1. Launch GUI → Loads configuration from .env
-2. Initialize → Connects to LM Studio, ChromaDB, Ollama
-3. Chat → Natural conversation with AI tool calling
-4. Commands → Direct slash commands for system control
-5. Documents → Parse files with multimodal AI analysis
-6. Knowledge → Teach and query learned information
-7. Spaces → Manage isolated knowledge workspaces
-
 The GUI maintains complete feature parity with the CLI while providing
 an intuitive, modern interface for AI-assisted development and research.
 """

@@ -21,72 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """
-AI Assistant Chat Application v0.2.0 - Learning Edition
+AI Assistant Chat Application v0.3.0
 
-CORE SYSTEM OVERVIEW:
-====================
 This application provides an intelligent conversational AI assistant with advanced learning
 and document processing capabilities. Built specifically for the qwen3-vl-30b + qwen3-embedding + ChromaDB stack.
 
-ARCHITECTURAL PRINCIPLES:
-- Zero hardcoded defaults - all configuration via .env file
-- Type-safe implementation with comprehensive MyPy checking
-- Dual interface support (GUI + CLI) with identical functionality
-- Sandboxed file operations within current directory only
-- Persistent knowledge across sessions via vector database
-
-VERSION 0.1 CAPABILITIES:
-========================
-🤖 AI FEATURES:
-- Conversational AI with qwen3-vl-30b via LM Studio
-- 8 specialized tools for file operations, document processing, and web search
-- Autonomous tool calling with natural language triggers
-- Context-aware responses using learned knowledge
-
-🧠 LEARNING SYSTEM:
-- Teach AI new information via /learn command
-- Persistent knowledge storage in ChromaDB v2
-- Semantic search with qwen3-embedding via Ollama
-- Spaces system for isolated knowledge workspaces
-
-📄 DOCUMENT INTELLIGENCE:
-- qwen3-vl-30b multimodal analysis for OCR, table extraction, form recognition
-- Support for PDFs, images, Office documents, and text files
-- Structured data extraction (text, tables, forms, layout)
-- Bulk codebase ingestion with 80+ file type support
-
-💾 DATA MANAGEMENT:
-- SQLite database for conversation memory
-- ChromaDB v2 server for vector knowledge storage
-- Automatic conversation persistence across sessions
-- Secure file operations with path validation
-
-🎛️ USER INTERFACE:
-- Modern PyQt6 GUI with dark/light themes
-- Complete CLI interface with identical functionality
-- Comprehensive slash command system (/help, /learn, /vectordb, etc.)
-- Real-time streaming responses and status updates
-
-🔧 TECHNICAL STACK:
-- LLM: qwen3-vl-30b via LM Studio (function calling enabled)
-- Embeddings: qwen3-embedding:latest via Ollama
-- Vector DB: ChromaDB v2 server for knowledge persistence
-- Memory: SQLite for conversation history
-- Framework: LangChain for orchestration
-- UI: PyQt6 for GUI, Rich CLI for terminal
-
-INITIALIZATION SEQUENCE:
-1. Load environment configuration (.env file required)
-2. Initialize qwen3-vl-30b connection via LM Studio
-3. Connect to ChromaDB v2 server for knowledge operations
-4. Initialize Ollama embeddings for vectorization
-5. Load/create SQLite database for conversation memory
-6. Bind 8 AI tools to LLM for autonomous execution
-8. Start interactive chat loop with tool calling support
-4. Load space settings and current workspace configuration
-5. Load conversation history from SQLite database
-6. Enter main chat loop with learning capabilities
-7. Persist all data (conversations, learned knowledge, space settings) to respective stores
 """
 
 # =============================================================================
