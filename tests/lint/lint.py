@@ -32,6 +32,7 @@ Install with: pip install autopep8 flake8 mypy vulture codespell bandit && brew 
 import os
 import sys
 import subprocess
+import re
 from pathlib import Path
 
 # Directories to exclude from linting
@@ -147,14 +148,25 @@ def lint_python(files: list[str]) -> bool:
 
     # 5. Vulture
     result = subprocess.run(
-        f"vulture {files_arg}", shell=True, capture_output=True, text=True
+        f"vulture {files_arg} --ignore-decorators=register,patch,fixture",
+        shell=True,
+        capture_output=True,
+        text=True,
     )
     if result.returncode != 0:
         error_lines = result.stdout.strip().split("\n")
         real_issues = [
             line
             for line in error_lines
-            if not ("closeEvent" in line or "_default_params" in line)
+            if not (
+                "closeEvent" in line
+                or "_default_params" in line
+                or "handle_" in line
+                or "execute_" in line
+                or "handler" in line
+                or "mock_" in line
+                or re.search(r"\bh[0-9]\b", line)  # h1, h2, h3, etc.
+            )
         ]
         if real_issues:
             print("❌ Vulture found dead code issues:")

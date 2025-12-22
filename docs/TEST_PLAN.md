@@ -184,10 +184,10 @@ Eight command handler modules need individual testing.
 5. **help_commands.py** (88 lines) - 5 tests
    - Test help text generation, command listing
 
-6. **legacy_commands.py** (23,867 bytes) - 20 tests
-   - Test all 15 legacy command handlers
-   - Verify backward compatibility
-   - Test integration with new command system
+6. **Command Handlers** (Modern system) - 20 tests
+   - Test all command handlers in src/commands/handlers/
+   - Verify organized by function (file, git, knowledge, etc.)
+   - Test integration with command registry
 
 7. **learning_commands.py** (110 lines) - 5 tests
    - Test /learn, /populate commands

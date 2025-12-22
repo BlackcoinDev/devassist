@@ -133,6 +133,7 @@ from src.core.context import get_context
 from src.core.config import get_config, get_logger
 from src.core.utils import chunk_text
 from langchain_openai import ChatOpenAI
+from langchain_core.messages import BaseMessage, SystemMessage
 
 # Standard library imports
 import os  # Environment variable and file system operations
@@ -475,8 +476,6 @@ def handle_clear_command() -> bool:
         print("\nConversation memory cleared. Starting fresh.\n")
 
         # Add a new system message for the fresh start
-        from langchain_core.messages import SystemMessage
-
         conversation_history = [SystemMessage(content="Lets get some coding done..")]
         save_memory(conversation_history)
         return False
@@ -1667,7 +1666,7 @@ def initialize_application():
     loaded_history = load_memory()
     conversation_history.clear()
     if loaded_history:
-        conversation_history.extend(cast(List, loaded_history))
+        conversation_history.extend(cast(List[BaseMessage], loaded_history))
     get_context().conversation_history = conversation_history
 
     # Personalization

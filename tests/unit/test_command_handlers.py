@@ -251,7 +251,7 @@ class TestFileHandlers:
     @patch('os.path.exists', return_value=True)
     @patch('os.path.isfile', return_value=True)
     @patch('os.path.getsize', return_value=100)
-    def test_handle_read_success(self, mock_size, mock_print):
+    def test_handle_read_success(self, mock_print):
         """Test reading a file securely."""
         with patch('builtins.open', MagicMock(return_value=MagicMock(__enter__=lambda x: MagicMock(read=lambda: "file context")))):
             handle_read(["test.txt"])

@@ -112,7 +112,10 @@ from PyQt6.QtGui import QPalette, QColor, QTextCursor
 from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer
 from datetime import datetime
 from typing import List
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
+
+# Type alias for conversation history
+ConversationHistory = List[BaseMessage]
 from src.core.config import get_config
 
 # Set up logging
@@ -126,7 +129,7 @@ _config = get_config()
 # We'll need to refactor some functions to be importable
 
 # Initialize variables (will be imported from main.py)
-conversation_history: list = []
+conversation_history: ConversationHistory = []
 CONTEXT_MODE: str = "auto"
 LEARNING_MODE: str = "normal"
 MODEL_NAME: str = ""  # Will be set from environment
@@ -203,9 +206,6 @@ class AIWorker(QThread):
                     "❌ LLM not available. Please ensure LM Studio is running with a model loaded."
                 )
                 return
-
-            # Import required classes
-            from langchain_core.messages import HumanMessage, AIMessage
 
             # Add user message to history
             conversation_history.append(HumanMessage(
@@ -1642,8 +1642,6 @@ class AIAssistantGUI(QMainWindow):
                 )
 
                 # Add a new system message for the fresh start
-                from langchain_core.messages import SystemMessage
-
                 conversation_history.append(
                     SystemMessage(content="Lets get some coding done..")
                 )

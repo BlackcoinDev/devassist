@@ -54,8 +54,7 @@ application, serving as a reference for all other documentation files.
   └────────────┘    └──────────────┘   └───────────────┘
         │
   ┌─────▼──────────────┐
-  │ Legacy Commands    │ (15 handlers - being migrated)
-  │                    | (src/commands/handlers/legacy_commands.py)
+  │ Command Handlers   │ (Organized by function in src/commands/handlers/)
   └────────────────────┘
 ```
 
@@ -453,7 +452,7 @@ src/
 │       ├── export_commands.py
 │       ├── git_commands.py     # /git-status, /git-log, /git-diff
 │       ├── system_commands.py  # /search, /shell
-│       └── legacy_commands.py  # Legacy handlers (being migrated)
+│       └── All commands migrated to modern system
 ├── tools/              # Tool plugin system
 │   ├── registry.py     # ToolRegistry dispatcher
 │   └── executors/      # Auto-registering executors
