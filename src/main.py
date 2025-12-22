@@ -95,12 +95,9 @@ INITIALIZATION SEQUENCE:
 
 # Core LangChain components for AI chat functionality
 
-from src.tools.executors.document_tools import execute_parse_document
-from src.tools import ToolRegistry
 
 # Command handlers - import to trigger auto-registration via decorators
 from src.commands import CommandRegistry
-from src.commands import handlers  # Triggers handler registration
 
 # CLI handlers will be imported as needed to avoid circular imports
 # from src.cli.handlers import (
@@ -115,19 +112,16 @@ from src.commands import handlers  # Triggers handler registration
 from src.storage import (
     initialize_database,
     load_memory,
-    save_memory,
     load_embedding_cache,
     load_query_cache,
     save_query_cache,
     cleanup_memory,
 )
 
-from src.vectordb import (
-    get_space_collection_name,
-    list_spaces,
-    delete_space,
-    switch_space,
-)
+
+from src.vectordb import get_space_collection_name
+
+
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 import requests

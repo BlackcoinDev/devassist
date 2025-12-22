@@ -11,7 +11,6 @@ Tests cover:
 
 import responses
 from unittest.mock import patch, MagicMock
-from langchain_core.documents import Document
 from src.core.context_utils import get_relevant_context, add_to_knowledge_base
 from src.core.context import get_context, reset_context
 

@@ -91,13 +91,8 @@ The GUI maintains complete feature parity with the CLI while providing
 an intuitive, modern interface for AI-assisted development and research.
 """
 
-from src.main import (
-    load_memory,
-    list_spaces,
-    switch_space,
-    delete_space,
-    get_space_collection_name,
-)
+from src.main import load_memory
+from src.vectordb import list_spaces, switch_space, delete_space, get_space_collection_name
 from src.core.config import get_config
 import logging
 import os

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import sys
+
 """
 Test suite for Configuration Management (src/core/config.py).
 
@@ -146,7 +148,6 @@ class TestConfigEdgeCases:
 
     def test_dotenv_import_error_handling(self):
         """Test handling when python-dotenv is not available."""
-        import sys
 
         # Save original dotenv module if present
         dotenv_module = sys.modules.get('dotenv')
@@ -181,7 +182,6 @@ class TestConfigEdgeCases:
 
     def test_kmp_duplicate_lib_workaround(self):
         """Test KMP_DUPLICATE_LIB_OK environment variable handling."""
-        import sys
 
         # Save original KMP_DUPLICATE_LIB_OK value
         original_kmp_value = os.environ.get('KMP_DUPLICATE_LIB_OK')

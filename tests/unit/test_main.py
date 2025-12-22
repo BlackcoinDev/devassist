@@ -49,14 +49,12 @@ from src.core.context import get_context, reset_context
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # Import functions to test - these are the core business logic functions
+from src.storage import save_memory
 from src.main import (
     get_space_collection_name,
-    list_spaces,
-    switch_space,
     load_embedding_cache,
     cleanup_memory,
     load_memory,
-    save_memory,
     handle_slash_command,
 )
 from src.commands.handlers.memory_commands import handle_clear

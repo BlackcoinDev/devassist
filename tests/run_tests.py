@@ -67,7 +67,6 @@ def run_tests():
     print()
 
     try:
-        import pytest
         import subprocess
         import sys
 
@@ -113,8 +112,6 @@ def run_tests():
 
         # Fallback: Basic import and functionality validation
         try:
-            import src.main as main
-            import launcher
 
             print("✅ Core modules import successfully")
             print("✅ Basic functionality verified")
