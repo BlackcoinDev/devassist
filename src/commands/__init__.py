@@ -30,8 +30,6 @@ This module provides a plugin-style command system with:
 """
 
 from src.commands.registry import CommandRegistry, register_command
-# Import handlers to trigger registration
-from src.commands import handlers
 
 __all__ = [
     "CommandRegistry",

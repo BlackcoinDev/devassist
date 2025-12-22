@@ -91,6 +91,14 @@ The GUI maintains complete feature parity with the CLI while providing
 an intuitive, modern interface for AI-assisted development and research.
 """
 
+from src.main import (
+    load_memory,
+    list_spaces,
+    switch_space,
+    delete_space,
+    get_space_collection_name,
+)
+from src.core.config import get_config
 import logging
 import os
 import sys
@@ -112,9 +120,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPalette, QColor, QTextCursor
 from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer
 from datetime import datetime
-from typing import List, cast, Optional, TYPE_CHECKING
+from typing import List, cast, Any
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
-from src.core.config import get_config
 
 # Type alias for conversation history
 ConversationHistory = List[BaseMessage]
@@ -139,16 +146,13 @@ CHROMA_PORT: int = 0  # Will be set from environment
 MAX_HISTORY_PAIRS: int = 0  # Will be set from environment
 
 # Check for optional dependencies
-if TYPE_CHECKING:
-    import markdown
-
+markdown: Any = None
 try:
     import markdown
 
     MARKDOWN_AVAILABLE = True
 except ImportError:
     MARKDOWN_AVAILABLE = False
-    markdown = None  # Optional module
 
 # Backend availability will be determined at runtime
 BACKEND_AVAILABLE = False
@@ -175,24 +179,14 @@ class AIWorker(QThread):
             # Import configuration and core functions
             # These are used in various methods throughout the class
             from src.main import (
-                load_memory,
                 save_memory,
                 get_relevant_context,
                 get_llm,
                 get_vectorstore,
                 CONTEXT_MODE,
-                LEARNING_MODE,
-                MODEL_NAME,
-                CURRENT_SPACE,
                 conversation_history,
-                CHROMA_HOST,
-                CHROMA_PORT,
                 MAX_HISTORY_PAIRS,
                 VERBOSE_LOGGING,
-                list_spaces,
-                switch_space,
-                delete_space,
-                get_space_collection_name,
             )
             from src.storage.memory import trim_history
 
@@ -212,34 +206,34 @@ class AIWorker(QThread):
                 return
 
             # Add user message to history
-            conversation_history.append(cast(HumanMessage, HumanMessage(
-                content=self.user_input)))
+            conversation_history.append(
+                cast(HumanMessage, HumanMessage(content=self.user_input))
+            )
 
             # Get context if available
             current_vectorstore = get_vectorstore()
-            context = (get_relevant_context(self.user_input)
-                       if current_vectorstore else "")
+            context = (
+                get_relevant_context(self.user_input) if current_vectorstore else ""
+            )
 
             # Simple context integration (can be enhanced)
             if context and CONTEXT_MODE != "off":
                 # Add context to conversation
-                conversation_history.append(cast(HumanMessage, HumanMessage(
-                    content=f"Context: {context}")))
+                conversation_history.append(
+                    cast(HumanMessage, HumanMessage(content=f"Context: {context}"))
+                )
                 if VERBOSE_LOGGING:
-                    logger.info(
-                        f"Added context to conversation ({
-                            len(context)} chars)")
+                    logger.info(f"Added context to conversation ({len(context)} chars)")
 
             # Generate response
             response = current_llm.invoke(conversation_history)
             conversation_history.append(
-                cast(AIMessage, AIMessage(content=response.content)))
+                cast(AIMessage, AIMessage(content=response.content))
+            )
             self.response_ready.emit(response.content)
 
             # Trim conversation history to prevent memory bloat
-            trimmed = trim_history(
-                conversation_history, MAX_HISTORY_PAIRS
-            )
+            trimmed = trim_history(conversation_history, MAX_HISTORY_PAIRS)
             conversation_history[:] = cast(List[BaseMessage], trimmed)
 
             # Auto-save conversation
@@ -264,15 +258,12 @@ class AIWorker(QThread):
                     except Exception as ex:
                         # Only log Mem0 errors if verbose logging is enabled
                         if VERBOSE_LOGGING:
-                            logger.warning(
-                                f"Mem0 GUI background add failed: {ex}")
+                            logger.warning(f"Mem0 GUI background add failed: {ex}")
 
                 # Run learning in background to not block GUI
                 import threading
 
-                threading.Thread(
-                    target=run_mem0_add, args=(
-                        self.user_input,)).start()
+                threading.Thread(target=run_mem0_add, args=(self.user_input,)).start()
 
             if VERBOSE_LOGGING:
                 logger.info(
@@ -338,9 +329,7 @@ class PopulateWorker(QThread):
                 total_files += len(glob.glob(pattern, recursive=True))
 
             if total_files == 0:
-                self.error.emit(
-                    f"No supported code files found in {
-                        self.dir_path}")
+                self.error.emit(f"No supported code files found in {self.dir_path}")
                 return
 
             self.progress.emit(f"Found {total_files} code files to process")
@@ -375,7 +364,8 @@ class PopulateWorker(QThread):
                         # Progress update every 10 files
                         if processed_files % 10 == 0:
                             self.progress.emit(
-                                f"Processed {processed_files}/{total_files} files...")
+                                f"Processed {processed_files}/{total_files} files..."
+                            )
 
                     except Exception as e:
                         self.progress.emit(
@@ -395,14 +385,14 @@ class PopulateWorker(QThread):
                 added_chunks = 0
 
                 self.progress.emit(
-                    f"Adding {total_chunks} document chunks to vector database in batches...")
+                    f"Adding {total_chunks} document chunks to vector database in batches..."
+                )
 
                 try:
                     for i in range(0, total_chunks, batch_size):
                         batch = all_docs[i: i + batch_size]
                         batch_number = (i // batch_size) + 1
-                        total_batches = (
-                            total_chunks + batch_size - 1) // batch_size
+                        total_batches = (total_chunks + batch_size - 1) // batch_size
 
                         self.progress.emit(
                             f"Adding batch {batch_number}/{total_batches} ({
@@ -416,15 +406,19 @@ class PopulateWorker(QThread):
 
                         # Progress update
                         self.progress.emit(
-                            f"Added {added_chunks}/{total_chunks} chunks to database...")
+                            f"Added {added_chunks}/{total_chunks} chunks to database..."
+                        )
 
                     self.finished.emit(
-                        f"Successfully added {added_chunks} chunks from {processed_files} files to the knowledge base!")
+                        f"Successfully added {added_chunks} chunks from {processed_files} files to the knowledge base!"
+                    )
 
                 except Exception as e:
                     self.error.emit(
-                        f"Failed to add documents to vector database: {
-                            str(e)}. Added {added_chunks}/{total_chunks} chunks before error.")
+                        f"Failed to add documents to vector database: {str(e)}. Added {
+                            added_chunks
+                        }/{total_chunks} chunks before error."
+                    )
 
             else:
                 self.error.emit("Vector database not available")
@@ -615,8 +609,7 @@ class AIAssistantGUI(QMainWindow):
         # Theme toggle
         theme_layout = QHBoxLayout()
         theme_layout.addWidget(QLabel("Theme:"))
-        self.theme_button = QPushButton(
-            "🌙 Dark" if self.dark_theme else "☀️ Light")
+        self.theme_button = QPushButton("🌙 Dark" if self.dark_theme else "☀️ Light")
         self.theme_button.clicked.connect(self.toggle_theme)
         theme_layout.addWidget(self.theme_button)
         settings_layout.addLayout(theme_layout)
@@ -637,8 +630,7 @@ class AIAssistantGUI(QMainWindow):
         self.learning_combo = QComboBox()
         self.learning_combo.addItems(["normal", "strict", "off"])
         self.learning_combo.setCurrentText(LEARNING_MODE)
-        self.learning_combo.currentTextChanged.connect(
-            self.change_learning_mode)
+        self.learning_combo.currentTextChanged.connect(self.change_learning_mode)
         learning_layout.addWidget(self.learning_combo)
         settings_layout.addLayout(learning_layout)
 
@@ -694,13 +686,7 @@ class AIAssistantGUI(QMainWindow):
     def plain_text_to_html(self, text):
         """Convert plain text to basic HTML with formatting."""
         # Escape HTML characters
-        text = text.replace(
-            "&",
-            "&amp;").replace(
-            "<",
-            "&lt;").replace(
-            ">",
-            "&gt;")
+        text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
         # Convert basic markdown-like formatting
         import re
@@ -762,9 +748,7 @@ class AIAssistantGUI(QMainWindow):
         )  # Dark tooltip text
 
         # Text colors
-        palette.setColor(
-            QPalette.ColorRole.Text, QColor(
-                255, 255, 255))  # White text
+        palette.setColor(QPalette.ColorRole.Text, QColor(255, 255, 255))  # White text
         palette.setColor(
             QPalette.ColorRole.BrightText, QColor(255, 255, 255)
         )  # Bright white text
@@ -784,9 +768,7 @@ class AIAssistantGUI(QMainWindow):
         )  # White button text
 
         # Link colors
-        palette.setColor(
-            QPalette.ColorRole.Link, QColor(
-                42, 130, 218))  # Blue links
+        palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))  # Blue links
         palette.setColor(
             QPalette.ColorRole.LinkVisited, QColor(128, 160, 200)
         )  # Visited link color
@@ -846,9 +828,7 @@ class AIAssistantGUI(QMainWindow):
             if (
                 button != self.send_button and button != self.theme_button
             ):  # Send and theme buttons already styled
-                button.setStyleSheet(
-                    button_style.replace(
-                        "#0078d4", "#107c10"))
+                button.setStyleSheet(button_style.replace("#0078d4", "#107c10"))
 
         # Style combo boxes for dark theme
         combo_style = """
@@ -923,9 +903,7 @@ class AIAssistantGUI(QMainWindow):
         palette.setColor(
             QPalette.ColorRole.Window, QColor(240, 240, 240)
         )  # Light gray background
-        palette.setColor(
-            QPalette.ColorRole.WindowText, QColor(
-                0, 0, 0))  # Black text
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(0, 0, 0))  # Black text
         palette.setColor(
             QPalette.ColorRole.Base, QColor(255, 255, 255)
         )  # White base for inputs
@@ -940,9 +918,7 @@ class AIAssistantGUI(QMainWindow):
         )  # Black tooltip text
 
         # Text colors
-        palette.setColor(
-            QPalette.ColorRole.Text, QColor(
-                0, 0, 0))  # Black text
+        palette.setColor(QPalette.ColorRole.Text, QColor(0, 0, 0))  # Black text
         palette.setColor(
             QPalette.ColorRole.BrightText, QColor(255, 255, 255)
         )  # White bright text
@@ -962,9 +938,7 @@ class AIAssistantGUI(QMainWindow):
         )  # Black button text
 
         # Link colors
-        palette.setColor(
-            QPalette.ColorRole.Link, QColor(
-                0, 0, 255))  # Blue links
+        palette.setColor(QPalette.ColorRole.Link, QColor(0, 0, 255))  # Blue links
         palette.setColor(
             QPalette.ColorRole.LinkVisited, QColor(128, 0, 128)
         )  # Purple visited links
@@ -1024,9 +998,7 @@ class AIAssistantGUI(QMainWindow):
             if (
                 button != self.send_button and button != self.theme_button
             ):  # Send and theme buttons already styled
-                button.setStyleSheet(
-                    button_style.replace(
-                        "#0078d4", "#107c10"))
+                button.setStyleSheet(button_style.replace("#0078d4", "#107c10"))
 
         # Style combo boxes for light theme
         combo_style = """
@@ -1094,8 +1066,6 @@ class AIAssistantGUI(QMainWindow):
 
     def load_conversation(self):
         """Load existing conversation history."""
-        from src.main import load_memory
-
         try:
             if BACKEND_AVAILABLE:
                 global conversation_history
@@ -1117,8 +1087,7 @@ class AIAssistantGUI(QMainWindow):
             if hasattr(msg, "type"):
                 if msg.type == "human":
                     formatted_content = self.markdown_to_html(msg.content)
-                    self.chat_display.append(
-                        f"<b>You:</b><br>{formatted_content}<br>")
+                    self.chat_display.append(f"<b>You:</b><br>{formatted_content}<br>")
                 elif msg.type == "ai":
                     formatted_content = self.markdown_to_html(msg.content)
                     self.chat_display.append(
@@ -1131,8 +1100,7 @@ class AIAssistantGUI(QMainWindow):
                     )
             else:
                 formatted_content = self.markdown_to_html(str(msg))
-                self.chat_display.append(
-                    f"<b>Message:</b><br>{formatted_content}<br>")
+                self.chat_display.append(f"<b>Message:</b><br>{formatted_content}<br>")
 
         # Scroll to bottom
         cursor = self.chat_display.textCursor()
@@ -1147,9 +1115,7 @@ class AIAssistantGUI(QMainWindow):
                 return
 
             if _config.verbose_logging:
-                logger.info(
-                    f"GUI: Processing user message ({
-                        len(message)} chars)")
+                logger.info(f"GUI: Processing user message ({len(message)} chars)")
 
             # Clear input field
             self.input_field.clear()
@@ -1222,15 +1188,13 @@ class AIAssistantGUI(QMainWindow):
             # Find the next message or end
             next_msg = current_text.find("<b>You:</b>", ai_start + 1)
             if next_msg == -1:
-                next_msg = current_text.find(
-                    "<b>AI Assistant:</b>", ai_start + 1)
+                next_msg = current_text.find("<b>AI Assistant:</b>", ai_start + 1)
             if next_msg == -1:
                 next_msg = len(current_text)
 
             # Replace the content between AI start and next message
             before = current_text[: ai_start + len("<b>AI Assistant:</b><br>")]
-            after = current_text[next_msg:] if next_msg < len(
-                current_text) else ""
+            after = current_text[next_msg:] if next_msg < len(current_text) else ""
             new_text = before + formatted_content + after
 
             self.chat_display.setHtml(new_text)
@@ -1279,24 +1243,19 @@ class AIAssistantGUI(QMainWindow):
                                     f"api/v2/tenants/default_tenant/databases/"
                                     f"default_database/collections/{coll_id}/count"
                                 )
-                                count_response = requests.get(
-                                    count_url, timeout=10)
+                                count_response = requests.get(count_url, timeout=10)
                                 if count_response.status_code == 200:
                                     count = count_response.json()
-                                    if isinstance(
-                                            count, dict) and "count" in count:
+                                    if isinstance(count, dict) and "count" in count:
                                         count = count["count"]
-                                    if isinstance(
-                                            count, int) and count > max_count:
+                                    if isinstance(count, int) and count > max_count:
                                         max_count = count
                                         collection_id = coll_id
                 except Exception as e:
-                    self.chat_display.append(
-                        f"Error finding collection: {e}<br>")
+                    self.chat_display.append(f"Error finding collection: {e}<br>")
 
             if not collection_id:
-                self.chat_display.append(
-                    "Could not determine active collection.<br>")
+                self.chat_display.append("Could not determine active collection.<br>")
                 return
 
             # Get documents from ChromaDB
@@ -1337,16 +1296,13 @@ class AIAssistantGUI(QMainWindow):
                             if len(doc.page_content) > 100
                             else doc.page_content
                         )
-                        self.chat_display.append(
-                            f"{i}. Content: {content_preview}<br>")
+                        self.chat_display.append(f"{i}. Content: {content_preview}<br>")
                         if doc.metadata:
                             source = doc.metadata.get("source", "unknown")
                             added_at = doc.metadata.get("added_at", "unknown")
-                            self.chat_display.append(
-                                f"   Source: {source}<br>")
+                            self.chat_display.append(f"   Source: {source}<br>")
                             if added_at != "unknown":
-                                self.chat_display.append(
-                                    f"   Added: {added_at}<br>")
+                                self.chat_display.append(f"   Added: {added_at}<br>")
                         self.chat_display.append("<br>")
                 else:
                     self.chat_display.append(
@@ -1357,8 +1313,8 @@ class AIAssistantGUI(QMainWindow):
                     )
             else:
                 self.chat_display.append(
-                    f"Failed to retrieve documents: HTTP {
-                        response.status_code}<br>")
+                    f"Failed to retrieve documents: HTTP {response.status_code}<br>"
+                )
                 self.chat_display.append(
                     "Vector database connection may have issues.<br>"
                 )
@@ -1391,8 +1347,7 @@ class AIAssistantGUI(QMainWindow):
             memories = user_memory.get_all(user_id="default_user")
 
             if not memories or not memories.get("results"):
-                self.chat_display.append(
-                    "📊 No personalized memories stored yet.<br>")
+                self.chat_display.append("📊 No personalized memories stored yet.<br>")
                 self.chat_display.append(
                     "Memories are automatically created from your conversations.<br>"
                 )
@@ -1410,8 +1365,7 @@ class AIAssistantGUI(QMainWindow):
                         content = content[:200] + "..."
                     self.chat_display.append(f"  {i + 1}. {content}<br>")
                 if len(results) > 5:
-                    self.chat_display.append(
-                        f"  ... and {len(results) - 5} more<br>")
+                    self.chat_display.append(f"  ... and {len(results) - 5} more<br>")
 
             self.chat_display.append("--- End Mem0 Memory ---<br><br>")
 
@@ -1491,8 +1445,6 @@ class AIAssistantGUI(QMainWindow):
 
     def change_space(self, space_name):
         """Change current workspace/space."""
-        from src.main import switch_space, list_spaces
-
         global CURRENT_SPACE
         if switch_space(space_name):
             CURRENT_SPACE = space_name
@@ -1502,8 +1454,7 @@ class AIAssistantGUI(QMainWindow):
             self.space_combo.addItems(list_spaces())
             self.space_combo.setCurrentText(CURRENT_SPACE)
         else:
-            self.status_label.setText(
-                f"Failed to switch to space: {space_name}")
+            self.status_label.setText(f"Failed to switch to space: {space_name}")
             # Reset to current space
             self.space_combo.setCurrentText(CURRENT_SPACE)
 
@@ -1548,10 +1499,8 @@ class AIAssistantGUI(QMainWindow):
         """Handle quit commands."""
         from src.main import save_memory
 
-        formatted_response = self.markdown_to_html(
-            "Goodbye! Have a great day!")
-        self.chat_display.append(
-            f"<b>AI Assistant:</b><br>{formatted_response}<br>")
+        formatted_response = self.markdown_to_html("Goodbye! Have a great day!")
+        self.chat_display.append(f"<b>AI Assistant:</b><br>{formatted_response}<br>")
         self.status_label.setText("Goodbye!")
 
         # Save conversation and close after a short delay
@@ -1566,8 +1515,7 @@ class AIAssistantGUI(QMainWindow):
 
     def handle_slash_command(self, command_text):
         """Handle slash commands locally (like CLI)."""
-        command = command_text[1:].strip().lower(
-        )  # Remove leading slash and normalize
+        command = command_text[1:].strip().lower()  # Remove leading slash and normalize
 
         # Import required functions if backend is available
         if not BACKEND_AVAILABLE:
@@ -1578,10 +1526,6 @@ class AIAssistantGUI(QMainWindow):
 
         from src.main import (
             save_memory,
-            get_space_collection_name,
-            list_spaces,
-            switch_space,
-            delete_space,
             get_vectorstore,
         )
 
@@ -1611,8 +1555,7 @@ class AIAssistantGUI(QMainWindow):
                             .replace("<", "&lt;")
                             .replace(">", "&gt;")
                         )
-                        self.chat_display.append(
-                            f"{i + 1}. [{msg_type}] {preview}<br>")
+                        self.chat_display.append(f"{i + 1}. [{msg_type}] {preview}<br>")
                     else:
                         content = str(msg)
                         preview = (
@@ -1647,14 +1590,16 @@ class AIAssistantGUI(QMainWindow):
 
                 # Add a new system message for the fresh start
                 conversation_history.append(
-                    cast(SystemMessage, SystemMessage(content="Lets get some coding done.."))
+                    cast(
+                        SystemMessage,
+                        SystemMessage(content="Lets get some coding done.."),
+                    )
                 )
                 save_memory(conversation_history)
 
             # /export - Export conversation history
             elif command.startswith("export"):
-                export_format = command[7:].strip() if len(
-                    command) > 7 else "json"
+                export_format = command[7:].strip() if len(command) > 7 else "json"
                 if not conversation_history:
                     self.chat_display.append(
                         "<b>AI Assistant:</b><br>No conversation history to export.<br>"
@@ -1679,8 +1624,8 @@ class AIAssistantGUI(QMainWindow):
 
                             for i, msg in enumerate(conversation_history):
                                 msg_type = (
-                                    type(msg).__name__.replace(
-                                        "Message", "").lower())
+                                    type(msg).__name__.replace("Message", "").lower()
+                                )
                                 export_data["messages"].append(
                                     {
                                         "index": i + 1,
@@ -1691,14 +1636,12 @@ class AIAssistantGUI(QMainWindow):
                                 )
 
                             with open(filename, "w", encoding="utf-8") as f:
-                                json.dump(
-                                    export_data, f, indent=2, ensure_ascii=False)
+                                json.dump(export_data, f, indent=2, ensure_ascii=False)
 
                         else:  # markdown
                             # Export as Markdown
                             with open(filename, "w", encoding="utf-8") as f:
-                                f.write(
-                                    "# AI Assistant Conversation Export\n\n")
+                                f.write("# AI Assistant Conversation Export\n\n")
                                 f.write(
                                     f"**Export Date:** {
                                         datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -1712,19 +1655,18 @@ class AIAssistantGUI(QMainWindow):
                                 f.write("---\n\n")
 
                                 for i, msg in enumerate(conversation_history):
-                                    msg_type = type(msg).__name__.replace(
-                                        "Message", "")
+                                    msg_type = type(msg).__name__.replace("Message", "")
                                     content = str(msg.content)
 
                                     # Format based on message type
                                     if msg_type == "Human":
                                         f.write(
-                                            f"## User Message {
-                                                i + 1}\n\n{content}\n\n")
+                                            f"## User Message {i + 1}\n\n{content}\n\n"
+                                        )
                                     elif msg_type == "AI":
                                         f.write(
-                                            f"## AI Response {
-                                                i + 1}\n\n{content}\n\n")
+                                            f"## AI Response {i + 1}\n\n{content}\n\n"
+                                        )
                                     elif msg_type == "System":
                                         f.write(
                                             f"### System Message {i + 1}\n\n*{
@@ -1733,22 +1675,25 @@ class AIAssistantGUI(QMainWindow):
                                         )
                                     else:
                                         f.write(
-                                            f"## {msg_type} Message {
-                                                i + 1}\n\n{content}\n\n")
+                                            f"## {msg_type} Message {i + 1}\n\n{
+                                                content
+                                            }\n\n"
+                                        )
 
                                     f.write("---\n\n")
 
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>✅ Conversation exported to: {filename}<br>")
+                            f"<b>AI Assistant:</b><br>✅ Conversation exported to: {filename}<br>"
+                        )
                         self.chat_display.append(
-                            f"📊 Messages exported: {
-                                len(conversation_history)}<br>")
-                        self.chat_display.append(
-                            f"📄 Format: {export_format}<br>")
+                            f"📊 Messages exported: {len(conversation_history)}<br>"
+                        )
+                        self.chat_display.append(f"📄 Format: {export_format}<br>")
 
                     except Exception as e:
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Failed to export conversation: {e}<br>")
+                            f"<b>AI Assistant:</b><br>❌ Failed to export conversation: {e}<br>"
+                        )
 
             # /space - Space/workspace management
             elif command.startswith("space"):
@@ -1757,10 +1702,11 @@ class AIAssistantGUI(QMainWindow):
                 if not space_cmd:
                     # Show current space
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current space: {CURRENT_SPACE}<br>")
+                        f"<b>AI Assistant:</b><br>Current space: {CURRENT_SPACE}<br>"
+                    )
                     self.chat_display.append(
-                        f"Collection: {
-                            get_space_collection_name(CURRENT_SPACE)}<br>")
+                        f"Collection: {get_space_collection_name(CURRENT_SPACE)}<br>"
+                    )
                     self.chat_display.append("<br><b>Usage:</b><br>")
                     self.chat_display.append(
                         "  /space list &nbsp;&nbsp;&nbsp;&nbsp; - List all spaces<br>"
@@ -1791,7 +1737,8 @@ class AIAssistantGUI(QMainWindow):
 
                 elif space_cmd == "current":
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current space: {CURRENT_SPACE}<br>")
+                        f"<b>AI Assistant:</b><br>Current space: {CURRENT_SPACE}<br>"
+                    )
                     self.chat_display.append(
                         f"Collection: {
                             get_space_collection_name(CURRENT_SPACE)
@@ -1808,12 +1755,14 @@ class AIAssistantGUI(QMainWindow):
 
                     if new_space in list_spaces():
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Space '{new_space}' already exists<br><br>")
+                            f"<b>AI Assistant:</b><br>❌ Space '{new_space}' already exists<br><br>"
+                        )
                         return
 
                     if switch_space(new_space):
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>✅ Created and switched to space: {new_space}<br>")
+                            f"<b>AI Assistant:</b><br>✅ Created and switched to space: {new_space}<br>"
+                        )
                         self.chat_display.append(
                             f"Collection: {
                                 get_space_collection_name(new_space)
@@ -1825,7 +1774,8 @@ class AIAssistantGUI(QMainWindow):
                         self.space_combo.setCurrentText(CURRENT_SPACE)
                     else:
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Failed to create space: {new_space}<br><br>")
+                            f"<b>AI Assistant:</b><br>❌ Failed to create space: {new_space}<br><br>"
+                        )
 
                 elif space_cmd.startswith("switch "):
                     target_space = space_cmd[7:].strip()
@@ -1837,14 +1787,17 @@ class AIAssistantGUI(QMainWindow):
 
                     if target_space not in list_spaces():
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Space '{target_space}' does not exist<br>")
+                            f"<b>AI Assistant:</b><br>❌ Space '{target_space}' does not exist<br>"
+                        )
                         self.chat_display.append(
-                            f"Use '/space create {target_space}' to create it first<br><br>")
+                            f"Use '/space create {target_space}' to create it first<br><br>"
+                        )
                         return
 
                     if switch_space(target_space):
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>✅ Switched to space: {target_space}<br>")
+                            f"<b>AI Assistant:</b><br>✅ Switched to space: {target_space}<br>"
+                        )
                         self.chat_display.append(
                             f"Collection: {
                                 get_space_collection_name(target_space)
@@ -1854,7 +1807,8 @@ class AIAssistantGUI(QMainWindow):
                         self.space_combo.setCurrentText(CURRENT_SPACE)
                     else:
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Failed to switch to space: {target_space}<br><br>")
+                            f"<b>AI Assistant:</b><br>❌ Failed to switch to space: {target_space}<br><br>"
+                        )
 
                 elif space_cmd.startswith("delete "):
                     target_space = space_cmd[7:].strip()
@@ -1872,14 +1826,16 @@ class AIAssistantGUI(QMainWindow):
 
                     if target_space not in list_spaces():
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Space '{target_space}' does not exist<br><br>")
+                            f"<b>AI Assistant:</b><br>❌ Space '{target_space}' does not exist<br><br>"
+                        )
                         return
 
                     # For GUI, we'll just delete without confirmation for
                     # simplicity
                     if delete_space(target_space):
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>✅ Deleted space: {target_space}<br><br>")
+                            f"<b>AI Assistant:</b><br>✅ Deleted space: {target_space}<br><br>"
+                        )
                         # Update the space combo box
                         self.space_combo.clear()
                         self.space_combo.addItems(list_spaces())
@@ -1889,11 +1845,13 @@ class AIAssistantGUI(QMainWindow):
                             self.space_combo.setCurrentText(CURRENT_SPACE)
                     else:
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Failed to delete space: {target_space}<br><br>")
+                            f"<b>AI Assistant:</b><br>❌ Failed to delete space: {target_space}<br><br>"
+                        )
 
                 else:
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>❌ Unknown space command: {space_cmd}<br>")
+                        f"<b>AI Assistant:</b><br>❌ Unknown space command: {space_cmd}<br>"
+                    )
                     self.chat_display.append("Use '/space' for help<br><br>")
 
             # /vectordb - Show vector database contents
@@ -1973,8 +1931,7 @@ class AIAssistantGUI(QMainWindow):
                     self.chat_display.append(
                         "<b>Example:</b> /populate /Users/username/projects/myapp<br>"
                     )
-                    self.chat_display.append(
-                        "<b>Example:</b> /populate src/<br><br>")
+                    self.chat_display.append("<b>Example:</b> /populate src/<br><br>")
                     self.chat_display.append(
                         "For advanced options (--dry-run, --direct-api), use the tools/populate_codebase.py script.<br>"
                     )
@@ -1985,17 +1942,20 @@ class AIAssistantGUI(QMainWindow):
                     # Validate directory exists
                     if not os.path.exists(dir_path):
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Directory not found: {dir_path}<br>")
+                            f"<b>AI Assistant:</b><br>❌ Directory not found: {dir_path}<br>"
+                        )
                         return
 
                     if not os.path.isdir(dir_path):
                         self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Path is not a directory: {dir_path}<br>")
+                            f"<b>AI Assistant:</b><br>❌ Path is not a directory: {dir_path}<br>"
+                        )
                         return
 
                     # Start population in background thread
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>🔍 Starting codebase population from: {dir_path}<br>")
+                        f"<b>AI Assistant:</b><br>🔍 Starting codebase population from: {dir_path}<br>"
+                    )
                     self.chat_display.append(
                         "This may take a while depending on the codebase size...<br>"
                     )
@@ -2007,12 +1967,9 @@ class AIAssistantGUI(QMainWindow):
 
                     # Start population worker
                     current_vectorstore = get_vectorstore()
-                    self.populate_worker = PopulateWorker(
-                        dir_path, current_vectorstore)
-                    self.populate_worker.progress.connect(
-                        self.on_populate_progress)
-                    self.populate_worker.finished.connect(
-                        self.on_populate_finished)
+                    self.populate_worker = PopulateWorker(dir_path, current_vectorstore)
+                    self.populate_worker.progress.connect(self.on_populate_progress)
+                    self.populate_worker.finished.connect(self.on_populate_finished)
                     self.populate_worker.error.connect(self.on_populate_error)
                     self.populate_worker.start()
 
@@ -2023,8 +1980,7 @@ class AIAssistantGUI(QMainWindow):
                 model_info += "1. Load the model in LM Studio<br>"
                 model_info += "2. Set MODEL_NAME in .env file<br>"
                 model_info += "3. Restart the application<br>"
-                self.chat_display.append(
-                    f"<b>AI Assistant:</b><br>{model_info}")
+                self.chat_display.append(f"<b>AI Assistant:</b><br>{model_info}")
 
             # /context - Control context integration
             elif command.startswith("context"):
@@ -2032,7 +1988,8 @@ class AIAssistantGUI(QMainWindow):
                 if mode in ["auto", "on", "off"]:
                     CONTEXT_MODE = mode
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Context integration mode set to: <b>{mode}</b><br>")
+                        f"<b>AI Assistant:</b><br>Context integration mode set to: <b>{mode}</b><br>"
+                    )
                     if mode == "auto":
                         self.chat_display.append(
                             "AI will automatically decide when to use context from knowledge base.<br>"
@@ -2047,7 +2004,8 @@ class AIAssistantGUI(QMainWindow):
                         )
                 else:
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current context mode: <b>{CONTEXT_MODE}</b><br>")
+                        f"<b>AI Assistant:</b><br>Current context mode: <b>{CONTEXT_MODE}</b><br>"
+                    )
                     self.chat_display.append("Usage: /context auto|on|off<br>")
                     self.chat_display.append(
                         "&nbsp;&nbsp;auto - AI decides when to use context (default)<br>"
@@ -2065,7 +2023,8 @@ class AIAssistantGUI(QMainWindow):
                 if mode in ["normal", "strict", "off"]:
                     LEARNING_MODE = mode
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Learning mode set to: <b>{mode}</b><br>")
+                        f"<b>AI Assistant:</b><br>Learning mode set to: <b>{mode}</b><br>"
+                    )
                     if mode == "normal":
                         self.chat_display.append(
                             "AI will learn from /learn commands and provide context when relevant.<br>"
@@ -2080,9 +2039,9 @@ class AIAssistantGUI(QMainWindow):
                         )
                 else:
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current learning mode: <b>{LEARNING_MODE}</b><br>")
-                    self.chat_display.append(
-                        "Usage: /learning normal|strict|off<br>")
+                        f"<b>AI Assistant:</b><br>Current learning mode: <b>{LEARNING_MODE}</b><br>"
+                    )
+                    self.chat_display.append("Usage: /learning normal|strict|off<br>")
                     self.chat_display.append(
                         "&nbsp;&nbsp;normal - Balanced learning and context usage (default)<br>"
                     )
@@ -2117,16 +2076,14 @@ q &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Exit the application<br>
 Note: Quit commands work after AI finishes responding.<br>
 Use Ctrl+C for immediate interruption.<br>
 --- End Help ---"""
-                self.chat_display.append(
-                    f"<b>AI Assistant:</b><br>{help_html}")
+                self.chat_display.append(f"<b>AI Assistant:</b><br>{help_html}")
 
             # Unknown command
             else:
                 self.chat_display.append(
                     f"<b>AI Assistant:</b><br>Unknown command: /{command}<br>"
                 )
-                self.chat_display.append(
-                    "Type /help for available commands<br>")
+                self.chat_display.append("Type /help for available commands<br>")
 
         except Exception as e:
             self.chat_display.append(
@@ -2146,8 +2103,7 @@ Use Ctrl+C for immediate interruption.<br>
             if BACKEND_AVAILABLE:
                 save_memory(conversation_history)
                 if _config.verbose_logging:
-                    logger.info(
-                        "Conversation memory saved during GUI shutdown")
+                    logger.info("Conversation memory saved during GUI shutdown")
         except Exception as e:
             logger.error(f"Failed to save memory during shutdown: {e}")
         if a0:

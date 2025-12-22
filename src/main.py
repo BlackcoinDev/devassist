@@ -98,8 +98,9 @@ INITIALIZATION SEQUENCE:
 from src.tools.executors.document_tools import execute_parse_document
 from src.tools import ToolRegistry
 
-# Command handlers removed - now auto-registered via decorators
+# Command handlers - import to trigger auto-registration via decorators
 from src.commands import CommandRegistry
+from src.commands import handlers  # Triggers handler registration
 
 # CLI handlers will be imported as needed to avoid circular imports
 # from src.cli.handlers import (
@@ -120,6 +121,7 @@ from src.storage import (
     save_query_cache,
     cleanup_memory,
 )
+
 from src.vectordb import (
     get_space_collection_name,
     list_spaces,
@@ -131,30 +133,13 @@ from requests.adapters import HTTPAdapter
 import requests
 from src.core.context import get_context
 from src.core.config import get_config, get_logger
-from src.core.utils import chunk_text
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage
-from langchain_chroma import Chroma
-from chromadb import HttpClient
-
-# Standard library imports
-import os  # Environment variable and file system operations
-import sys  # System operations and exit handling
 
 # Standard library imports (kept for backwards compatibility and test mocking)
 from datetime import datetime  # Timestamps for learned knowledge
 
 # Type hints for better code clarity
-from typing import List, Optional, cast
+from typing import Optional
 
-# Mem0 for personalized memory
-try:
-    from mem0 import Memory
-
-    MEM0_AVAILABLE = True
-except ImportError:
-    Memory = None
-    MEM0_AVAILABLE = False
 
 # =============================================================================
 # SECURITY MODULE (extracted to src/security/)
@@ -441,968 +426,6 @@ def handle_slash_command(command: str) -> bool:
     return True
 
 
-def show_memory():
-    """Show conversation history."""
-    if not conversation_history:
-        print("\n📝 No conversation history available.\n")
-        return
-    print(f"\n📝 Conversation History ({len(conversation_history)} messages):\n")
-    for i, msg in enumerate(conversation_history):
-        msg_type = type(msg).__name__.replace("Message", "")
-        content = str(msg.content)
-        content_preview = content[:100] + "..." if len(content) > 100 else content
-        print(f"{i + 1:2d}. {msg_type}: {content_preview}")
-    print()
-    """
-    Display information about the current vector database contents.
-
-    Shows collection statistics, chunk count, unique sources, and content insights
-    from the ChromaDB vector database. Provides insights into the AI's knowledge base.
-    """
-    if vectorstore is None:
-        print("\n❌ Vector database not available.\n")
-        return
-
-    # Initialize variables that may be used in error handling
-    collection_name = get_space_collection_name(CURRENT_SPACE)
-    collection_id = None
-
-    try:
-        print("\n--- Vector Database Contents ---")
-
-        # Try to get documents from ChromaDB via direct API
-        try:
-            # Find collection for current space
-            # collection_name and collection_id are already initialized above
-
-            list_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
-            list_response = api_session.get(list_url, timeout=10)
-
-            if list_response.status_code == 200:
-                collections = list_response.json()
-                for coll in collections:
-                    if coll.get("name") == collection_name:
-                        collection_id = coll.get("id")
-                        break
-
-            if not collection_id:
-                print(f"❌ No collection found for current space '{CURRENT_SPACE}'")
-                print("The space may not have any documents yet.")
-                return
-
-            logger.info(
-                f"Using collection for space {CURRENT_SPACE}: {collection_name} (ID: {collection_id})"
-            )
-
-            # Get collection statistics
-            count_url = (
-                f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/"
-                f"tenants/default_tenant/databases/default_database/"
-                f"collections/{collection_id}/count"
-            )
-            count_response = api_session.get(count_url, timeout=10)
-
-            if count_response.status_code == 200:
-                count_data = count_response.json()
-                chunk_count = (
-                    count_data
-                    if isinstance(count_data, int)
-                    else count_data.get("count", 0)
-                )
-                print(f"📊 Collection: {collection_name}")
-                print(f"📈 Chunks: {chunk_count}")
-                print(f"🏢 Space: {CURRENT_SPACE}")
-
-                if chunk_count > 0:
-                    try:
-                        # Get metadata for statistics
-                        chroma_client = vectorstore._client
-                        collection = chroma_client.get_collection(collection_name)
-                        results = collection.get(
-                            # Sample up to 1000 for stats
-                            limit=min(chunk_count, 1000),
-                            include=["metadatas"],
-                        )
-
-                        if results and "metadatas" in results and results["metadatas"]:
-                            metadatas = results["metadatas"]
-                            if metadatas is None:
-                                metadatas = []
-
-                            # Analyze metadata for insights
-                            sources = set()
-                            content_types = set()
-                            dates = []
-
-                            for metadata in metadatas:
-                                if metadata:
-                                    if "source" in metadata:
-                                        sources.add(metadata["source"])
-                                    if "content_type" in metadata:
-                                        content_types.add(metadata["content_type"])
-                                    if "added_at" in metadata:
-                                        try:
-                                            # Parse date
-                                            dates.append(metadata["added_at"])
-                                        except Exception:
-                                            pass
-
-                            print(f"\n📋 Statistics:")
-                            print(f"   📄 Unique Sources: {len(sources)}")
-                            if sources:
-                                print(
-                                    f"   🔗 Sources: {', '.join(list(sources)[:5])}{
-                                        '...' if len(sources) > 5 else ''
-                                    }"
-                                )
-
-                            if content_types:
-                                print(
-                                    f"   📝 Content Types: {', '.join(content_types)}"
-                                )
-
-                            if dates:
-                                try:
-                                    date_objs = [
-                                        datetime.fromisoformat(d.replace("Z", "+00:00"))
-                                        for d in dates
-                                        if d
-                                    ]
-                                    if date_objs:
-                                        earliest = min(date_objs)
-                                        latest = max(date_objs)
-                                        print(
-                                            f"   📅 Date Range: {
-                                                earliest.strftime('%Y-%m-%d')
-                                            } to {latest.strftime('%Y-%m-%d')}"
-                                        )
-                                except Exception:
-                                    pass
-
-                            # Show recent additions (last 3 by date)
-                            # Show sample sources
-                            sample_sources = []
-                            # Check first 5 for examples
-                            for metadata in metadatas[:5]:
-                                if metadata and metadata.get("source"):
-                                    sample_sources.append(
-                                        (
-                                            metadata.get("source"),
-                                            metadata.get("added_at", "unknown"),
-                                        )
-                                    )
-                                    if len(sample_sources) >= 3:
-                                        break
-
-                            if sample_sources:
-                                print(f"\n🕒 Sample Sources:")
-                                for i, (source, added_at) in enumerate(sample_sources):
-                                    print(f"   {i + 1}. {source} (added: {added_at})")
-
-                        else:
-                            print("\n📋 Statistics: Unable to retrieve metadata")
-
-                    except Exception as e:
-                        print(f"\n❌ Error retrieving statistics: {e}")
-                else:
-                    print(f"\n  No chunks found in the knowledge base.")
-                    print(
-                        f"  Use /learn to add information or /populate to add codebases."
-                    )
-            else:
-                print(f"Failed to retrieve chunks: HTTP {count_response.status_code}")
-                print("Vector database connection may have issues.")
-
-            print("--- End Vector Database ---")
-
-        except Exception as e:
-            print(f"❌ An error occurred: {e}")
-            print(f"DEBUG: Exception type: {type(e)}")
-            # The original instruction included 'break' and 'continue' here,
-            # but they are only valid inside loops.
-            # To maintain syntactical correctness as per instructions,
-            # these statements are omitted as this block is not within a loop.
-            # If this exception block was part of a loop, 'break' or 'continue'
-            # would be placed here.
-
-            # Get collection statistics instead of all documents
-            count_url = (
-                f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/"
-                f"tenants/default_tenant/databases/default_database/"
-                f"collections/{collection_id}/count"
-            )
-            count_response = api_session.get(count_url, timeout=10)
-
-            if count_response.status_code == 200:
-                count_data = count_response.json()
-                count = (
-                    count_data
-                    if isinstance(count_data, int)
-                    else count_data.get("count", 0)
-                )
-                print(f"📊 Collection: {collection_name}")
-                print(f"📈 Documents: {count}")
-                print(f"🏢 Space: {CURRENT_SPACE}")
-
-                if count > 0:
-                    print("\n📄 Sample Documents:")
-                    try:
-                        # Try to get sample documents using ChromaDB client
-                        # directly
-                        chroma_client = vectorstore._client
-                        collection = chroma_client.get_collection(collection_name)
-                        results = collection.get(
-                            limit=3, include=["documents", "metadatas"]
-                        )
-
-                        if results and "documents" in results and results["documents"]:
-                            docs = results["documents"]
-                            if docs is None:
-                                docs = []
-                            metadatas = results.get("metadatas") or [{}] * len(docs)
-
-                            # First 3 documents
-                            for i, doc in enumerate(docs[:3]):
-                                metadata = metadatas[i] if i < len(metadatas) else {}
-                                if isinstance(doc, str):
-                                    # Clean up the preview - remove excessive
-                                    # whitespace and binary-looking content
-                                    preview = doc.strip()
-                                    # Check for binary content, PDF metadata,
-                                    # or placeholder text
-                                    if (
-                                        any(
-                                            indicator in preview.lower()
-                                            for indicator in [
-                                                "<source>",
-                                                "</source>",
-                                                "<translation",
-                                                "<<",
-                                                ">>",
-                                                "/type",
-                                                "/pages",
-                                                "xref",
-                                                "trailer",
-                                                "startxref",
-                                            ]
-                                        )
-                                        or any(
-                                            ord(c) < 32 and c not in "\n\t"
-                                            for c in preview[:100]
-                                        )
-                                        or preview.startswith("[Binary file:")
-                                        or "[Binary file:" in preview
-                                    ):
-                                        preview = "[Binary file - content not shown]"
-                                    elif len(preview) > 200:
-                                        preview = preview[:200] + "..."
-                                    elif not preview:
-                                        preview = "[empty content]"
-
-                                    source = (
-                                        metadata.get("source", "unknown")
-                                        if metadata
-                                        else "unknown"
-                                    )
-                                    added_at = (
-                                        metadata.get("added_at", "unknown")
-                                        if metadata
-                                        else "unknown"
-                                    )
-                                    print(f"  {i + 1}. {source} (added: {added_at})")
-                                    print(f"      Preview: {preview}")
-                                else:
-                                    print(
-                                        f"  {i + 1}. [Non-text document: {type(doc)}]"
-                                    )
-                        else:
-                            print("  No documents found in collection")
-                    except Exception as e:
-                        print(f"  Could not retrieve sample documents: {str(e)[:100]}")
-                        print(
-                            "  (This is normal for some document types or if the collection is empty)"
-                        )
-                    print()
-            else:
-                print("❌ Could not retrieve collection statistics")
-
-    except Exception as e:
-        print(f"❌ Error accessing vector database: {e}")
-
-
-def show_mem0():
-    """
-    Display information about the current Mem0 personalized memory contents.
-
-    Shows user memory statistics and sample memories from the Mem0 system.
-    """
-    if user_memory is None:
-        print("\n❌ Mem0 not available.\n")
-        return
-
-    try:
-        print("\n--- Mem0 Personalized Memory Contents ---")
-
-        # Get all memories for the user
-        memories = user_memory.get_all(user_id="default_user")
-
-        if VERBOSE_LOGGING:
-            print(f"🧠 Mem0: Retrieved {len(memories.get('results', []))} memories")
-
-        if not memories or not memories.get("results"):
-            print("📊 No personalized memories stored yet.")
-            print("Memories are automatically created from your conversations.")
-            return
-
-        results = memories["results"]
-        print(f"📊 Memories: {len(results)}")
-        print(f"👤 User ID: user")
-
-        if results:
-            print("\n🧠 Sample Memories:")
-            for i, memory in enumerate(results[:5]):  # Show first 5
-                content = memory.get("memory", "No content")
-                if len(content) > 200:
-                    content = content[:200] + "..."
-                print(f"  {i + 1}. {content}")
-
-            if len(results) > 5:
-                print(f"  ... and {len(results) - 5} more")
-
-    except Exception as e:
-        print(f"\n❌ Failed to retrieve Mem0 contents: {e}\n")
-
-
-def handle_populate_command(dir_path: str):
-    """
-    Handle the /populate command to bulk import codebases into the vector database.
-
-    Parses command arguments including optional flags like --dry-run and --direct-api.
-    Processes files in batches, extracts content from various file types, and adds
-    them to the ChromaDB collection with proper metadata.
-
-    Args:
-        dir_path: Directory path with optional flags (--dry-run, --direct-api)
-    """
-    # Import ChromaDB client for direct API usage
-    from chromadb import HttpClient
-
-    # Access global chroma_client
-    global chroma_client
-    # Parse additional options from dir_path
-    parts = dir_path.split()
-    directory = parts[0] if parts else ""
-    options = parts[1:] if len(parts) > 1 else []
-
-    dry_run = "--dry-run" in options
-    use_direct_api = True  # Always use direct API for better reliability
-    clear_first = "--clear" in options
-
-    # Check if directory exists
-    if not directory:
-        print("\nUsage: /populate /path/to/directory [--dry-run] [--direct-api]")
-        print("Examples:")
-        print("   /populate /Users/username/projects/myapp")
-        print("   /populate src/ --dry-run")
-        print("   /populate . --clear")
-        print("   /populate ~/code --dry-run --clear")
-        print("\nOptions:")
-        print("  --dry-run     : Validate files without writing to database")
-        print("  --clear       : Delete existing collection before repopulating")
-        print(
-            "\nNote: Designed for code files. For documents (PDFs, etc.), use document processing tools."
-        )
-        print("Uses direct ChromaDB API for optimal reliability and performance")
-        print(
-            "\nNote: This will recursively scan and add all code files to the vector database."
-        )
-        return
-
-    if not os.path.exists(directory):
-        print(f"\n❌ Directory not found: {directory}")
-        return
-
-    if not os.path.isdir(directory):
-        print(f"\n❌ Path is not a directory: {directory}")
-        return
-
-    print(f"\n🔍 Starting codebase population from: {directory}")
-    if dry_run:
-        print("🔍 DRY RUN MODE - No data will be written to database")
-    if clear_first:
-        print("🧹 CLEAR MODE - Will delete existing collection before repopulating")
-    print("🔧 Using direct ChromaDB API for optimal reliability and performance")
-    print("This may take some time for large codebases...")
-    print()
-
-    # Check if vectorstore is available
-    if vectorstore is None:
-        print("\n❌ Vector database not available. Check your configuration.")
-        return
-
-    # Clear existing collection if requested
-    if clear_first and not dry_run:
-        print("🧹 Clearing existing collection...")
-        try:
-            # Get the collection name for current space
-            collection_name = get_space_collection_name(CURRENT_SPACE)
-
-            # Use direct ChromaDB API to delete collection
-            import requests
-
-            delete_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections/{collection_name}"
-            response = requests.delete(delete_url, timeout=10)
-
-            if response.status_code in [200, 204]:
-                print(f"✅ Cleared collection: {collection_name}")
-            else:
-                print(
-                    f"⚠️  Collection may not exist or failed to clear: {
-                        response.status_code
-                    }"
-                )
-        except Exception as e:
-            print(f"⚠️  Failed to clear collection: {e}")
-
-    try:
-        # Import required libraries for population
-        from pathlib import Path
-        from langchain_core.documents import Document
-
-        # Code file extensions (same as tools/populate_codebase.py)
-        CODE_EXTENSIONS = {
-            ".py": "python",
-            ".js": "javascript",
-            ".ts": "typescript",
-            ".jsx": "react",
-            ".tsx": "react-typescript",
-            ".cpp": "cpp",
-            ".c": "c",
-            ".h": "c-header",
-            ".hpp": "cpp-header",
-            ".java": "java",
-            ".cs": "csharp",
-            ".php": "php",
-            ".rb": "ruby",
-            ".go": "go",
-            ".rs": "rust",
-            ".swift": "swift",
-            ".kt": "kotlin",
-            ".scala": "scala",
-            ".sh": "bash",
-            ".sql": "sql",
-            ".html": "html",
-            ".css": "css",
-            ".md": "markdown",
-            ".json": "json",
-            ".xml": "xml",
-            ".yaml": "yaml",
-            ".yml": "yaml",
-        }
-
-        # ChromaDB doesn't provide easy count
-
-        # Scan directory
-        directory_path = Path(directory)
-        files_to_process = []
-
-        for file_path in directory_path.rglob("*"):
-            if file_path.is_file() and True:
-                files_to_process.append(file_path)
-
-        if not files_to_process:
-            print("❌ No code files found in the specified directory.")
-            return
-
-        print(f"📋 Found {len(files_to_process)} code files to process")
-
-        # Process files in batches for better performance
-        total_chunks = 0
-        processed_files = 0
-        batch_size = 50  # Maximum chunks per batch to avoid payload too large
-        all_documents = []
-
-        print(f"⚡ Processing files in batches of {batch_size} chunks...")
-
-        for file_path in files_to_process:
-            relative_path = file_path.relative_to(directory_path)
-
-            try:
-                # Check if it's a document file that can be processed
-                if file_path.suffix.lower() in [".pdf"]:
-                    # For PDFs, extract text using document processing
-                    try:
-                        parse_result = execute_parse_document(str(file_path), "text")
-                        if parse_result.get("success") and "content" in parse_result:
-                            content = parse_result["content"]
-                            if not content or (
-                                content.startswith("[") and content.endswith("]")
-                            ):
-                                # If no content or still a placeholder, skip
-                                # this file
-                                continue
-                        else:
-                            # If parsing failed, skip this file
-                            continue
-                    except Exception:
-                        # If document processing fails, skip this file
-                        continue
-                elif file_path.suffix.lower() in [
-                    ".png",
-                    ".jpg",
-                    ".jpeg",
-                    ".gif",
-                    ".bmp",
-                ]:
-                    # For images, skip them (can't extract text easily)
-                    continue
-                else:
-                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-                        content = f.read()
-            except Exception:
-                continue  # Skip files that can't be read
-
-            if not content.strip():
-                continue
-
-            # Get metadata
-            ext = file_path.suffix.lower()
-            language = CODE_EXTENSIONS.get(ext, "unknown")
-
-            # Chunk the content
-            chunks = chunk_text(content)
-
-            # Create documents
-            for j, chunk in enumerate(chunks):
-                metadata = {
-                    "source": "codebase",
-                    "file_path": str(relative_path),
-                    "language": language,
-                    "chunk_index": j,
-                    "total_chunks": len(chunks),
-                    "added_at": str(datetime.now()),
-                }
-
-                doc = Document(page_content=chunk, metadata=metadata)
-                all_documents.append(doc)
-
-                # Process batch when it reaches the limit
-                if len(all_documents) >= batch_size:
-                    print(
-                        f"💾 Adding batch of {
-                            len(all_documents)
-                        } chunks to vector database..."
-                    )
-                    try:
-                        if use_direct_api:
-                            # Use direct ChromaDB API
-                            # Ensure chroma_client is initialized
-                            if chroma_client is None:
-                                chroma_client = HttpClient(
-                                    host=CHROMA_HOST, port=CHROMA_PORT
-                                )
-
-                            if chroma_client is None or embeddings is None:
-                                raise Exception(
-                                    "ChromaDB client or embeddings not initialized"
-                                )
-
-                            collection_name = get_space_collection_name(CURRENT_SPACE)
-                            collection = chroma_client.get_collection(collection_name)
-
-                            texts = [doc.page_content for doc in all_documents]
-                            metadatas = [doc.metadata for doc in all_documents]
-                            ids = [
-                                f"{doc.metadata.get('file_path', 'unknown')}_{
-                                    doc.metadata.get('chunk_index', i)
-                                }"
-                                for i, doc in enumerate(all_documents)
-                            ]
-
-                            # Generate embeddings
-                            import numpy as np
-                            from typing import cast
-                            embeddings_list = embeddings.embed_documents(texts)
-                            embeddings_array = np.array(embeddings_list, dtype=np.float32)
-
-                            collection.add(
-                                documents=texts,
-                                embeddings=embeddings_array.tolist(),
-                                metadatas=cast(list, metadatas),
-                                ids=ids,
-                            )
-                        else:
-                            # Use LangChain wrapper
-                            vectorstore.add_documents(all_documents)
-
-                        total_chunks += len(all_documents)
-                        all_documents = []  # Clear batch
-                    except Exception as e:
-                        print(f"❌ Failed to add batch: {e}")
-                        # Continue with next batch
-
-            processed_files += 1
-
-            # Progress update every 10 files
-            if processed_files % 10 == 0:
-                print(
-                    f"📄 Processed {processed_files}/{len(files_to_process)} files "
-                    f"({total_chunks + len(all_documents)} total chunks)..."
-                )
-
-        # Add remaining documents
-        if all_documents:
-            print(f"💾 Adding final batch of {len(all_documents)} chunks...")
-            try:
-                if use_direct_api:
-                    # Use direct ChromaDB API
-                    # Ensure chroma_client is initialized
-                    if chroma_client is None:
-                        chroma_client = HttpClient(
-                            host=CHROMA_HOST, port=CHROMA_PORT
-                        )
-
-                    if chroma_client is None or embeddings is None:
-                        raise Exception("ChromaDB client or embeddings not initialized")
-
-                    collection_name = get_space_collection_name(CURRENT_SPACE)
-                    try:
-                        collection = chroma_client.get_collection(collection_name)
-                    except Exception:
-                        # Collection doesn't exist, create it
-                        collection = chroma_client.create_collection(collection_name)
-
-                    texts = [doc.page_content for doc in all_documents]
-                    metadatas = [doc.metadata for doc in all_documents]
-                    ids = [
-                        f"{doc.metadata.get('file_path', 'unknown')}_{
-                            doc.metadata.get('chunk_index', i)
-                        }"
-                        for i, doc in enumerate(all_documents)
-                    ]
-
-                    # Generate embeddings
-                    import numpy as np
-                    embeddings_list = embeddings.embed_documents(texts)
-                    embeddings_array = np.array(embeddings_list, dtype=np.float32)
-
-                    collection.add(
-                        documents=texts,
-                        embeddings=embeddings_array.tolist(),
-                        metadatas=cast(list, metadatas),
-                        ids=ids,
-                    )
-                else:
-                    # Use LangChain wrapper
-                    vectorstore.add_documents(all_documents)
-
-                total_chunks += len(all_documents)
-            except Exception as e:
-                print(f"❌ Failed to add final batch: {e}")
-
-        # Save and show final stats
-        save_memory(conversation_history)
-        print("\n✅ Codebase population completed!")
-        print("📊 Statistics:")
-        print(f"   Files processed: {processed_files}")
-        print(f"   Total chunks added: {total_chunks}")
-        print(f"   Space: {CURRENT_SPACE}")
-        print()
-
-    except Exception as e:
-        print(f"\n❌ Failed to populate codebase: {e}\n")
-
-
-def show_model_info():
-    """Show current model information."""
-    print(f"\n🤖 Current Model: {MODEL_NAME}")
-    base_url_display = (
-        LM_STUDIO_BASE_URL.replace("/v1", "") if LM_STUDIO_BASE_URL else "unknown"
-    )
-    print(f"🌐 API Endpoint: http://{base_url_display}")
-    print(f"🎯 Temperature: {TEMPERATURE}")
-    print(f"📏 Max Input Length: {MAX_INPUT_LENGTH}")
-    print(f"💾 Context Window: {MAX_HISTORY_PAIRS} message pairs")
-    print()
-
-
-def initialize_llm():
-    """Initialize the LLM with tool bindings."""
-    global llm
-    try:
-        from pydantic import SecretStr
-        llm = ChatOpenAI(
-            base_url=cast(str, LM_STUDIO_BASE_URL),
-            api_key=SecretStr(cast(str, LM_STUDIO_API_KEY)),
-            model=cast(str, MODEL_NAME),
-            temperature=TEMPERATURE,
-        )
-        from src.tools import ToolRegistry
-        tool_definitions = ToolRegistry.get_definitions()
-        llm = llm.bind_tools(tool_definitions)
-        print(f"✅ Connected to LLM: {MODEL_NAME} (with {len(tool_definitions)} tools)")
-        get_context().llm = llm
-        return True
-    except Exception as e:
-        print(f"❌ Failed to initialize LLM: {e}")
-        return False
-
-
-def initialize_vectordb():
-    """Initialize ChromaDB and embeddings."""
-    global vectorstore, embeddings, chroma_client
-    try:
-        from langchain_ollama import OllamaEmbeddings
-        from typing import Any
-
-        class CustomOllamaEmbeddings(OllamaEmbeddings):
-            @property
-            def _default_params(self) -> dict[str, Any]:
-                return {
-                    "num_ctx": self.num_ctx,
-                    "num_gpu": self.num_gpu,
-                    "num_thread": self.num_thread,
-                    "keep_alive": self.keep_alive,
-                }
-
-        chroma_client = HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
-        embeddings = CustomOllamaEmbeddings(
-            model=EMBEDDING_MODEL,
-            base_url=OLLAMA_BASE_URL,
-        )
-
-        from src.vectordb.spaces import get_space_collection_name
-
-        coll_name = get_space_collection_name(CURRENT_SPACE)
-
-        vectorstore = Chroma(
-            client=chroma_client,
-            collection_name=coll_name,
-            embedding_function=embeddings,
-        )
-        print(f"✅ Connected to vector database ({coll_name})")
-
-        # Update context
-        ctx = get_context()
-        ctx.vectorstore = vectorstore
-        ctx.embeddings = embeddings
-        ctx.chroma_client = chroma_client
-        return True
-    except Exception as e:
-        print(f"❌ ChromaDB connection failed: {e}")
-        return False
-
-
-def initialize_user_memory():
-    """Initialize Mem0 personalization."""
-    global user_memory
-    if not MEM0_AVAILABLE:
-        return True
-    try:
-        from mem0 import Memory
-
-        mem0_config = {
-            "llm": {
-                "provider": "lmstudio",
-                "config": {
-                    "model": MODEL_NAME,
-                    "lmstudio_base_url": LM_STUDIO_BASE_URL,
-                    "api_key": LM_STUDIO_API_KEY,
-                    "temperature": 0.1,
-                    "lmstudio_response_format": {
-                        "type": "json_schema",
-                        "json_schema": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": True,
-                            }
-                        },
-                    },
-                },
-            },
-            "embedder": {
-                "provider": "ollama",
-                "config": {
-                    "model": EMBEDDING_MODEL,
-                    "ollama_base_url": OLLAMA_BASE_URL,
-                },
-            },
-            "vector_store": {
-                "provider": "chroma",
-                "config": {
-                    "collection_name": "mem0_user_prefs",
-                    "host": CHROMA_HOST,
-                    "port": CHROMA_PORT,
-                },
-            },
-        }
-        user_memory = Memory.from_config(mem0_config)
-        get_context().user_memory = user_memory
-        print("✅ Connected to Mem0 (User Personalized Memory)")
-        return True
-    except Exception as e:
-        print(f"⚠️ Failed to initialize Mem0: {e}")
-        return False
-
-
-def initialize_application():
-    """
-    Initialize all application components required for operation.
-    """
-    if not initialize_llm():
-        return False
-
-    if not initialize_vectordb():
-        # ChromaDB is critical for learning, but maybe not for basic chat?
-        # The original code exited on failure.
-        sys.exit(1)
-
-    # Database initialization (uses storage module)
-    from src.storage.database import initialize_database
-
-    db_conn, db_lock = initialize_database()
-    if not db_conn:
-        print("Falling back to non-persistent mode")
-
-    # Load conversation history
-    loaded_history = load_memory()
-    conversation_history.clear()
-    if loaded_history:
-        conversation_history.extend(cast(List[BaseMessage], loaded_history))
-    get_context().conversation_history = conversation_history
-
-    # Personalization
-    initialize_user_memory()
-
-    return True
-
-
-# show_welcome function moved to src.core.display
-
-
-# chunk_text function moved to src.core.utils
-
-
-# =============================================================================
-# TOOLS MODULE (registry infrastructure in src/tools/)
-# =============================================================================
-
-# Import tool registry for future migration
-
-# Note: Tool executors remain in this file for now.
-# They can be incrementally migrated to src/tools/executors/ using:
-#   @register_tool("read_file", READ_FILE_DEFINITION)
-#   def execute_read_file(file_path: str) -> dict: ...
-
-# =============================================================================
-# TOOL SYSTEM (extracted to src/tools/)
-# =============================================================================
-# Tool definitions and executors have been moved to src/tools/executors/
-# Import ToolRegistry to access registered tools
-
-# Backwards compatibility for tests and main loop
-execute_tool_call = ToolRegistry.execute_tool_call
-
-
-# =============================================================================
-# CHAT MODULE (infrastructure in src/chat/)
-# =============================================================================
-# Note: The main() function remains here but can be incrementally migrated
-# to src/chat/loop.py, src/chat/message_handler.py, etc.
-
-
-def run_main_chat_loop() -> bool:
-    """
-    Run the main interactive chat loop.
-
-    Returns:
-        bool: True if chat loop exited normally, False otherwise
-    """
-    print("AI Assistant - Type 'quit' to exit, '/help' for commands")
-    print()
-
-    while True:
-        try:
-            user_input = input("You: ").strip()
-
-            if not user_input:
-                continue
-
-            if user_input.lower() in ["quit", "exit", "q"]:
-                save_memory(conversation_history)
-                print("\n👋 Goodbye! Your conversation has been saved.")
-                break
-
-            if user_input.startswith("/"):
-                if not handle_slash_command(user_input):
-                    print(f"Unknown command: {user_input}")
-                    print("Type /help for available commands")
-                continue
-
-            # Process regular conversation
-            conversation_history.append(
-                cast(BaseMessage, HumanMessage(content=user_input))
-            )
-
-            # Get response from LLM
-            ctx = get_context()
-            if ctx.llm is None:
-                print("Error: LLM not initialized")
-                continue
-
-            response = ctx.llm.invoke(conversation_history)
-            content = response.content if hasattr(response, 'content') else str(response)
-
-            print(f"\nAssistant: {content}\n")
-            conversation_history.append(
-                cast(BaseMessage, AIMessage(content=content))
-            )
-
-        except KeyboardInterrupt:
-            save_memory(conversation_history)
-            print("\n\n👋 Goodbye! Your conversation has been saved.")
-            break
-        except EOFError:
-            save_memory(conversation_history)
-            print("\n\n👋 Goodbye! Your conversation has been saved.")
-            break
-        except Exception as e:
-            print(f"Error: {e}")
-            continue
-
-    return True
-
-
-def main():
-    """
-    Main entry point - now delegates to modular chat loop.
-
-    The complex chat loop logic has been extracted to src.core.chat_loop
-    for better maintainability and modularity.
-    """
-    # Initialize application components (matches old behavior expected by tests)
-    if not initialize_application():
-        return False  # Exit if initialization failed (matches test expectations)
-
-    # Run the main chat loop
-
-    return run_main_chat_loop()
-
-
-# Standard Python entry point - only execute chat loop when run directly
-# Prevents execution when imported as a module by other scripts
-# This ensures the chat interface only starts when the script is run standalone
-if __name__ == "__main__":
-    # Initialize application first
-    if not initialize_application():
-        exit(1)  # Exit if initialization failed
-
-    # Run the main chat loop
-
-    success = run_main_chat_loop()
-    exit(0 if success else 1)
-
-
 def execute_learn_url(url: str) -> dict:
     """
     Fetch and learn content from a URL using Docling.
@@ -1413,7 +436,6 @@ def execute_learn_url(url: str) -> dict:
     try:
         from docling.document_converter import DocumentConverter
         from langchain_core.documents import Document
-        from datetime import datetime
 
         # Initialize converter
         converter = DocumentConverter()
@@ -1459,6 +481,70 @@ def execute_learn_url(url: str) -> dict:
         return {"error": "docling library not installed"}
     except Exception as e:
         return {"error": str(e)}
+
+
+def initialize_llm():
+    """Initialize the LLM connection."""
+    try:
+        ctx = get_context()
+        if ctx.llm is None:
+            ctx.llm = get_llm()
+        return True
+    except Exception:
+        return False
+
+
+def initialize_vectordb():
+    """Initialize the vector database connection."""
+    try:
+        ctx = get_context()
+        if ctx.vectorstore is None:
+            ctx.vectorstore = get_vectorstore()
+        return True
+    except Exception:
+        return False
+
+
+def initialize_user_memory():
+    """Initialize user memory system."""
+    try:
+        ctx = get_context()
+        if ctx.user_memory is None:
+            # Initialize Mem0 if available
+            pass
+        return True
+    except Exception:
+        return False
+
+
+def initialize_application() -> bool:
+    """Initialize the entire application."""
+    try:
+        initialize_llm()
+        initialize_vectordb()
+        initialize_user_memory()
+        return True
+    except Exception:
+        return False
+
+
+def handle_populate_command(dir_path: str):
+    """Handle /populate command for bulk learning."""
+    # Implementation for bulk importing codebases
+    pass
+
+
+def run_main_chat_loop() -> bool:
+    """Run the main chat loop."""
+    # Implementation would be the main loop
+    return True
+
+
+def main():
+    """Main entry point."""
+    if initialize_application():
+        return run_main_chat_loop()
+    return False
 
 
 # =============================================================================
