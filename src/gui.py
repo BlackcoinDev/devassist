@@ -126,7 +126,7 @@ _config = get_config()
 # We'll need to refactor some functions to be importable
 
 # Initialize variables (will be imported from main.py)
-conversation_history: List[BaseMessage] = []
+conversation_history: list = []
 CONTEXT_MODE: str = "auto"
 LEARNING_MODE: str = "normal"
 MODEL_NAME: str = ""  # Will be set from environment
@@ -141,7 +141,7 @@ try:
     MARKDOWN_AVAILABLE = True
 except ImportError:
     MARKDOWN_AVAILABLE = False
-    markdown = None  # type: ignore[assignment]
+    markdown = None
 
 # Backend availability will be determined at runtime
 BACKEND_AVAILABLE = False
@@ -167,7 +167,7 @@ class AIWorker(QThread):
         try:
             # Import configuration and core functions
             # These are used in various methods throughout the class
-            from src.main import (  # noqa: F401
+            from src.main import (
                 load_memory,
                 save_memory,
                 get_relevant_context,
@@ -209,7 +209,7 @@ class AIWorker(QThread):
 
             # Add user message to history
             conversation_history.append(HumanMessage(
-                content=self.user_input))  # type: ignore[arg-type]
+                content=self.user_input))
 
             # Get context if available
             current_vectorstore = get_vectorstore()
@@ -220,7 +220,7 @@ class AIWorker(QThread):
             if context and CONTEXT_MODE != "off":
                 # Add context to conversation
                 conversation_history.append(HumanMessage(
-                    content=f"Context: {context}"))  # type: ignore[arg-type]
+                    content=f"Context: {context}"))
                 if VERBOSE_LOGGING:
                     logger.info(
                         f"Added context to conversation ({
@@ -229,14 +229,14 @@ class AIWorker(QThread):
             # Generate response
             response = current_llm.invoke(conversation_history)
             conversation_history.append(
-                AIMessage(content=response.content))  # type: ignore[arg-type]
+                AIMessage(content=response.content))
             self.response_ready.emit(response.content)
 
             # Trim conversation history to prevent memory bloat
             trimmed = trim_history(
                 conversation_history, MAX_HISTORY_PAIRS
             )
-            conversation_history[:] = trimmed  # type: ignore[assignment]
+            conversation_history[:] = trimmed
 
             # Auto-save conversation
             save_memory(conversation_history)

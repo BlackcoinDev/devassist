@@ -1197,11 +1197,13 @@ def handle_populate_command(dir_path: str):
                             ]
 
                             # Generate embeddings
+                            import numpy as np
                             embeddings_list = embeddings.embed_documents(texts)
+                            embeddings_array = np.array(embeddings_list, dtype=np.float32)
 
                             collection.add(
                                 documents=texts,
-                                embeddings=embeddings_list,  # type: ignore[arg-type]
+                                embeddings=embeddings_array.tolist(),
                                 metadatas=metadatas,
                                 ids=ids,
                             )
@@ -1256,11 +1258,13 @@ def handle_populate_command(dir_path: str):
                     ]
 
                     # Generate embeddings
+                    import numpy as np
                     embeddings_list = embeddings.embed_documents(texts)
+                    embeddings_array = np.array(embeddings_list, dtype=np.float32)
 
                     collection.add(
                         documents=texts,
-                        embeddings=embeddings_list,  # type: ignore[arg-type]
+                        embeddings=embeddings_array.tolist(),
                         metadatas=metadatas,
                         ids=ids,
                     )
@@ -1660,7 +1664,10 @@ def initialize_application():
         print("Falling back to non-persistent mode")
 
     # Load conversation history
-    conversation_history[:] = load_memory()  # type: ignore[assignment]
+    loaded_history = load_memory()
+    conversation_history.clear()
+    if loaded_history:
+        conversation_history.extend(cast(List, loaded_history))
     get_context().conversation_history = conversation_history
 
     # Personalization

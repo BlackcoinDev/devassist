@@ -95,7 +95,7 @@ class QwenDocumentProcessor:
                     "error": f"Document type not directly supported: {document_path}. Convert to image format first.",
                 }
 
-            messages = [HumanMessage(content=content)]  # type: ignore[arg-type]
+            messages = [HumanMessage(content=content)]
             response = self.llm.invoke(messages)
 
             response_content = response.content
@@ -158,7 +158,7 @@ Example format:
                     },
                 ]
 
-                messages = [HumanMessage(content=content)]  # type: ignore[arg-type]
+                messages = [HumanMessage(content=content)]
                 response = self.llm.invoke(messages)
 
                 # Parse the JSON response (in a real implementation, you'd validate this)
@@ -225,7 +225,7 @@ Provide a detailed structural analysis that could be used for document processin
                     },
                 ]
 
-                messages = [HumanMessage(content=content)]  # type: ignore[arg-type]
+                messages = [HumanMessage(content=content)]
                 response = self.llm.invoke(messages)
 
                 response_content = response.content

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# flake8: noqa: F841
 # MIT License
 #
 # Copyright (c) 2025 BlackcoinDev

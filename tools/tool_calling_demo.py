@@ -25,14 +25,15 @@ Test Tool Calling with qwen3-vl-30b
 """
 
 # os import removed as it's not used
-from typing import List, Dict, Any
+from typing import List
 from openai import OpenAI
+from openai.types.chat import ChatCompletionToolParam
 
 # Initialize OpenAI client for LM Studio
 client = OpenAI(base_url="http://192.168.0.203:1234/v1", api_key="lm-studio")
 
 # Define a simple tool with proper typing
-tools: List[Dict[str, Any]] = [
+tools: List[ChatCompletionToolParam] = [
     {
         "type": "function",
         "function": {
@@ -56,7 +57,7 @@ print("Test 1: Asking for current time")
 response = client.chat.completions.create(
     model="qwen3-vl-30b",
     messages=[{"role": "user", "content": "What time is it right now?"}],
-    tools=tools,  # type: ignore[arg-type]
+    tools=tools,
 )
 
 print(f"Response: {response.choices[0].message}")
@@ -80,7 +81,7 @@ if response.choices[0].message.tool_calls:
 
     final_response = client.chat.completions.create(
         model="qwen3-vl-30b",
-        messages=messages,  # type: ignore[arg-type]
+        messages=messages,
     )
 
     print(f"Final response: {final_response.choices[0].message.content}")
@@ -89,7 +90,7 @@ else:
 
 # Test 3: Ask to read README file
 print("\nTest 3: Asking to read README file")
-read_tools = [
+read_tools: List[ChatCompletionToolParam] = [
     {
         "type": "function",
         "function": {
@@ -112,7 +113,7 @@ read_tools = [
 response3 = client.chat.completions.create(
     model="qwen3-vl-30b",
     messages=[{"role": "user", "content": "read the README file"}],
-    tools=read_tools,  # type: ignore[arg-type]
+    tools=read_tools,
 )
 
 print(f"Response: {response3.choices[0].message}")

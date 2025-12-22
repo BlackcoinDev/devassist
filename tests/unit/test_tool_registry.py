@@ -33,7 +33,7 @@ Tests cover:
 - Registry introspection methods
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, Mock
 from src.tools.registry import ToolRegistry, register_tool
 
 
@@ -254,7 +254,7 @@ class TestToolCallExecution:
         """Test execute_tool_call error handling."""
         tool_call = {"name": "invalid"}
 
-        with patch("src.tools.registry.logger") as mock_logger:
+        with patch("src.tools.registry.logger"):
             result = ToolRegistry.execute_tool_call(tool_call)
 
             assert result["function_name"] == "invalid"

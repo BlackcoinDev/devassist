@@ -83,7 +83,7 @@ def execute_web_search(query: str, max_results: int = 10) -> Dict[str, Any]:
         Dict with success status and search results
     """
     try:
-        from ddgs import DDGS  # type: ignore[import-untyped]
+        from ddgs import DDGS
 
         if _config.show_tool_details:
             logger.info(f"🌍 search_web: Querying '{query}' (max {max_results} results)")

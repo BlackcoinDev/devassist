@@ -26,12 +26,13 @@ Test tool calling with direct OpenAI API using the same system message as main.p
 
 # os import removed as it's not used
 from openai import OpenAI
+from openai.types.chat import ChatCompletionToolParam, ChatCompletionMessageParam
 
 # Initialize OpenAI client for LM Studio
 client = OpenAI(base_url="http://192.168.0.203:1234/v1", api_key="lm-studio")
 
 # Define tools (same as main.py)
-tools = [
+tools: list[ChatCompletionToolParam] = [
     {
         "type": "function",
         "function": {
@@ -70,7 +71,7 @@ CRITICAL: If a user says "read the README" or "show me the file", you MUST call 
 Do not respond with text about not having access to files."""
 
 # Test with the same user message
-messages = [
+messages: list[ChatCompletionMessageParam] = [
     {"role": "system", "content": system_message},
     {"role": "user", "content": "read the README file"},
 ]
@@ -78,8 +79,8 @@ messages = [
 print("Testing with direct OpenAI API...")
 response = client.chat.completions.create(
     model="qwen3-vl-30b",
-    messages=messages,  # type: ignore[arg-type]
-    tools=tools,  # type: ignore[arg-type]
+    messages=messages,
+    tools=tools,
 )
 
 print(f"Response: {response.choices[0].message}")

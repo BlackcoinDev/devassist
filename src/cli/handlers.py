@@ -362,4 +362,4 @@ def show_vectordb():
         return
 
     # Placeholder for future implementation
-    _ = get_space_collection_name(CURRENT_SPACE)  # noqa: F841
+    _ = get_space_collection_name(CURRENT_SPACE)
