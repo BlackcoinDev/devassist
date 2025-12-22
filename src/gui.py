@@ -111,7 +111,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPalette, QColor, QTextCursor
 from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer
 from datetime import datetime
-from typing import List
+from typing import List, cast
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 
 # Type alias for conversation history
@@ -208,8 +208,8 @@ class AIWorker(QThread):
                 return
 
             # Add user message to history
-            conversation_history.append(HumanMessage(
-                content=self.user_input))
+            conversation_history.append(cast(HumanMessage, HumanMessage(
+                content=self.user_input)))
 
             # Get context if available
             current_vectorstore = get_vectorstore()
@@ -219,8 +219,8 @@ class AIWorker(QThread):
             # Simple context integration (can be enhanced)
             if context and CONTEXT_MODE != "off":
                 # Add context to conversation
-                conversation_history.append(HumanMessage(
-                    content=f"Context: {context}"))
+                conversation_history.append(cast(HumanMessage, HumanMessage(
+                    content=f"Context: {context}")))
                 if VERBOSE_LOGGING:
                     logger.info(
                         f"Added context to conversation ({
@@ -229,14 +229,14 @@ class AIWorker(QThread):
             # Generate response
             response = current_llm.invoke(conversation_history)
             conversation_history.append(
-                AIMessage(content=response.content))
+                cast(AIMessage, AIMessage(content=response.content)))
             self.response_ready.emit(response.content)
 
             # Trim conversation history to prevent memory bloat
             trimmed = trim_history(
                 conversation_history, MAX_HISTORY_PAIRS
             )
-            conversation_history[:] = trimmed
+            conversation_history[:] = cast(List[BaseMessage], trimmed)
 
             # Auto-save conversation
             save_memory(conversation_history)
@@ -1643,7 +1643,7 @@ class AIAssistantGUI(QMainWindow):
 
                 # Add a new system message for the fresh start
                 conversation_history.append(
-                    SystemMessage(content="Lets get some coding done..")
+                    cast(SystemMessage, SystemMessage(content="Lets get some coding done.."))
                 )
                 save_memory(conversation_history)
 

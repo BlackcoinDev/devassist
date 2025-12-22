@@ -28,8 +28,8 @@ This module provides command handlers for viewing conversation history,
 clearing memory, and displaying personalized Mem0 memories.
 """
 
-from typing import List
-from langchain_core.messages import SystemMessage
+from typing import List, cast
+from langchain_core.messages import SystemMessage, BaseMessage
 
 from src.commands.registry import CommandRegistry
 from src.core.context import get_context
@@ -74,7 +74,7 @@ def handle_clear(args: List[str]) -> None:
         print("\nConversation memory cleared. Starting fresh.\n")
 
         # Add a new system message for the fresh start
-        ctx.conversation_history = [SystemMessage(content="Lets get some coding done..")]
+        ctx.conversation_history = cast(List[BaseMessage], [SystemMessage(content="Lets get some coding done..")])
         save_memory(ctx.conversation_history)
     else:
         print("\n❌ Clear cancelled\n")

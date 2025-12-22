@@ -476,7 +476,7 @@ def handle_clear_command() -> bool:
         print("\nConversation memory cleared. Starting fresh.\n")
 
         # Add a new system message for the fresh start
-        conversation_history = [SystemMessage(content="Lets get some coding done..")]
+        conversation_history = cast(List[BaseMessage], [SystemMessage(content="Lets get some coding done..")])
         save_memory(conversation_history)
         return False
     else:

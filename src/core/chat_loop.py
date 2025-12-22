@@ -7,7 +7,7 @@ to improve modularity and reduce the size of the main module.
 
 import logging
 import time
-from typing import List
+from typing import List, cast
 from langchain_core.messages import (
     HumanMessage,
     AIMessage,
@@ -196,7 +196,7 @@ class ChatLoop:
     def _process_conversation(self, user_input: str) -> bool:
         """Process regular conversation input."""
         # Add user message to history
-        self.conversation_history.append(HumanMessage(content=user_input))
+        self.conversation_history.append(cast(HumanMessage, HumanMessage(content=user_input)))
 
         # Get context from vector database and user memory
         context = self._get_context(user_input)
@@ -208,7 +208,7 @@ class ChatLoop:
         self._display_response(response)
 
         # Add AI response to history
-        self.conversation_history.append(AIMessage(content=response))
+        self.conversation_history.append(cast(AIMessage, AIMessage(content=response)))
 
         # Periodic cleanup
         self._periodic_cleanup()
