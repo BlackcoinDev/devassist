@@ -3,14 +3,14 @@
 Unit tests targeting coverage gaps in src/storage/database.py and src/storage/memory.py.
 """
 
-import pytest
 import sqlite3
+import pytest
 from unittest.mock import Mock, patch, MagicMock
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage
 
 from src.storage.database import initialize_database
 from src.storage.memory import load_memory, save_memory
-from src.core.context import get_context, set_context, reset_context, ApplicationContext
+from src.core.context import get_context, reset_context
 
 
 class TestDatabaseCoverage:

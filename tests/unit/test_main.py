@@ -51,31 +51,22 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 # Import functions to test - these are the core business logic functions
 from src.main import (
     get_space_collection_name,
-    ensure_space_collection,
     list_spaces,
-    delete_space,
-    save_current_space,
-    load_current_space,
     switch_space,
     load_embedding_cache,
-    load_query_cache,
-    save_query_cache,
     cleanup_memory,
     load_memory,
     save_memory,
-    get_relevant_context,
-    trim_history,
     handle_slash_command,
     handle_clear_command,
-    handle_learn_command,
-    show_vectordb,
-    show_model_info,
     handle_context_command,
     handle_learning_command,
     handle_space_command,
     handle_export_command,
-    initialize_application,
 )
+from src.storage.memory import trim_history
+from src.vectordb.spaces import ensure_space_collection
+from src.main import initialize_application
 
 
 class TestSpaceManagement(unittest.TestCase):

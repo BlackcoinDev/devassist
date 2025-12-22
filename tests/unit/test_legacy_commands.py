@@ -5,9 +5,6 @@ Test suite for Legacy Command Handlers (src/commands/handlers/legacy_commands.py
 Tests cover all legacy slash commands that haven't been migrated to the new system yet.
 """
 
-import pytest
-import io
-import sys
 from unittest.mock import Mock, patch, MagicMock
 from src.commands.handlers.legacy_commands import (
     handle_read_command, handle_write_command, handle_list_command, handle_pwd_command,
@@ -442,7 +439,9 @@ class TestLegacyPopulateHandlers:
 
         # Mock parse and learn operations
         mock_parse.return_value = {
-            "success": True, "content": "This is a much longer test content that should be more than 50 characters long to pass the minimum content threshold for processing."}
+            "success": True, 
+            "content": "This is a much longer test content that should be more than 50 characters long to pass the minimum content threshold for processing."
+        }
         mock_learn.return_value = {"success": True}
 
         handle_populate_command("/test/dir")

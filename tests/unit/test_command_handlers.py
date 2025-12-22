@@ -9,16 +9,13 @@ Tests cover:
 - Input validation and output formatting
 """
 
-import pytest
-import io
-import sys
 from unittest.mock import Mock, patch, MagicMock
 from src.commands.handlers.config_commands import handle_context, handle_learning
 from src.commands.handlers.help_commands import handle_help, handle_model_info
 from src.commands.handlers.space_commands import handle_space
 from src.commands.handlers.database_commands import handle_vectordb
-from src.commands.handlers.learning_commands import handle_learn, handle_web
-from src.commands.handlers.memory_commands import handle_memory, handle_clear, handle_mem0
+from src.commands.handlers.learning_commands import handle_learn
+from src.commands.handlers.memory_commands import handle_memory, handle_clear
 from src.commands.handlers.file_commands import handle_read, handle_write
 from src.commands.handlers.export_commands import handle_export
 from src.core.context import get_context, reset_context
@@ -296,7 +293,7 @@ class TestExportHandlers:
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Save me")]
 
-        with patch('builtins.open', MagicMock()) as mock_open:
+        with patch('builtins.open', MagicMock()):
             handle_export(["json"])
             output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
             assert "Conversation exported to:" in output

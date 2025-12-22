@@ -65,9 +65,7 @@ class ChromaDBClient:
         self.host = host or config.chroma_host
         self.port = port or config.chroma_port
         self.base_url = f"http://{self.host}:{self.port}/api/v2"
-        self.collections_url = (
-            f"{self.base_url}/tenants/default_tenant/databases/default_database/collections"
-        )
+        self.collections_url = f"{self.base_url}/tenants/default_tenant/databases/default_database/collections"
         self.session = self._create_session()
 
     def _create_session(self) -> requests.Session:
@@ -78,7 +76,9 @@ class ChromaDBClient:
             backoff_factor=0.3,
             status_forcelist=[429, 500, 502, 503, 504],
         )
-        adapter = HTTPAdapter(max_retries=retry_strategy, pool_connections=10, pool_maxsize=20)
+        adapter = HTTPAdapter(
+            max_retries=retry_strategy, pool_connections=10, pool_maxsize=20
+        )
         session.mount("http://", adapter)
         session.mount("https://", adapter)
         return session
@@ -132,14 +132,14 @@ class ChromaDBClient:
         try:
             payload = {"name": name}
             response = self.session.post(
-                self.collections_url,
-                json=payload,
-                timeout=timeout
+                self.collections_url, json=payload, timeout=timeout
             )
             if response.status_code in (200, 201):
                 data = response.json()
                 return data.get("id")
-            logger.warning(f"Failed to create collection '{name}': HTTP {response.status_code}")
+            logger.warning(
+                f"Failed to create collection '{name}': HTTP {response.status_code}"
+            )
             return None
         except Exception as e:
             logger.error(f"Error creating collection '{name}': {e}")
@@ -161,7 +161,9 @@ class ChromaDBClient:
             if response.status_code in (200, 204):
                 logger.info(f"Deleted collection: {name}")
                 return True
-            logger.warning(f"Failed to delete collection '{name}': HTTP {response.status_code}")
+            logger.warning(
+                f"Failed to delete collection '{name}': HTTP {response.status_code}"
+            )
             return False
         except Exception as e:
             logger.error(f"Error deleting collection '{name}': {e}")
@@ -172,7 +174,7 @@ class ChromaDBClient:
         collection_id: str,
         query_embedding: List[float],
         n_results: int = 3,
-        timeout: int = 10
+        timeout: int = 10,
     ) -> Tuple[List[str], List[Dict]]:
         """
         Query a collection by embedding vector.
@@ -187,16 +189,13 @@ class ChromaDBClient:
         """
         try:
             query_url = f"{self.collections_url}/{collection_id}/query"
-            payload = {
-                "query_embeddings": [query_embedding],
-                "n_results": n_results
-            }
+            payload = {"query_embeddings": [query_embedding], "n_results": n_results}
             response = self.session.post(query_url, json=payload, timeout=timeout)
 
             if response.status_code == 200:
                 data = response.json()
-                documents = []
-                metadatas = []
+                documents: list[str] = []
+                metadatas: list[dict] = []
 
                 if "documents" in data and data["documents"]:
                     documents = data["documents"][0] if data["documents"] else []
@@ -219,7 +218,7 @@ class ChromaDBClient:
         embeddings: List[List[float]],
         metadatas: Optional[List[Dict]] = None,
         ids: Optional[List[str]] = None,
-        timeout: int = 30
+        timeout: int = 30,
     ) -> bool:
         """
         Add documents to a collection.
@@ -247,6 +246,7 @@ class ChromaDBClient:
             else:
                 # Generate IDs if not provided
                 import uuid
+
                 payload["ids"] = [str(uuid.uuid4()) for _ in documents]
 
             response = self.session.post(add_url, json=payload, timeout=timeout)

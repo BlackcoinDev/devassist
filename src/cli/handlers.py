@@ -239,16 +239,23 @@ def handle_learn_command(content: str):
 
         # Generate embeddings using Ollama
         try:
-            embeddings_result = embeddings.embed_documents([doc.page_content])
-            if embeddings_result and len(embeddings_result) > 0:
-                embedding_vector = embeddings_result[0]
+            if embeddings is not None:
+                embeddings_result = embeddings.embed_documents([doc.page_content])
+                if embeddings_result and len(embeddings_result) > 0:
+                    embedding_vector = embeddings_result[0]
+                else:
+                    logger.error("Failed to generate embeddings")
+                    raise Exception("Embedding generation failed")
+            else:
+                logger.error("Embeddings not initialized")
+                return
 
-                # Get collection for current space
-                collection_name = get_space_collection_name(CURRENT_SPACE)
-                collection_id = None
+            # Get collection for current space
+            collection_name = get_space_collection_name(CURRENT_SPACE)
+            collection_id = None
 
-                # Find or create the collection
-                try:
+            # Find or create the collection
+            try:
                     list_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
                     list_response = api_session.get(list_url, timeout=10)
                     if list_response.status_code == 200:
@@ -278,49 +285,45 @@ def handle_learn_command(content: str):
                             )
                             raise Exception("Collection creation failed")
 
-                except Exception as e:
-                    logger.error(
-                        f"Error managing collection for space {CURRENT_SPACE}: {e}"
-                    )
-                    raise
-
-                # Add document to the space's collection
-                add_url = (
-                    f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/"
-                    f"tenants/default_tenant/databases/default_database/"
-                    f"collections/{collection_id}/add"
+            except Exception as e:
+                logger.error(
+                    f"Error managing collection for space {CURRENT_SPACE}: {e}"
                 )
+                raise
 
-                # Prepare the document data with embeddings
-                doc_id = f"doc_{len(doc.page_content)}_{int(datetime.now().timestamp() * 1000000)}"
-                payload = {
-                    "ids": [doc_id],
-                    "embeddings": [embedding_vector],
-                    "documents": [doc.page_content],
-                    "metadatas": [doc.metadata] if doc.metadata else [{}],
-                }
+            # Add document to the space's collection
+            add_url = (
+                f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/"
+                f"tenants/default_tenant/databases/default_database/"
+                f"collections/{collection_id}/add"
+            )
 
-                # Make the API call to add the document
-                headers = {"Content-Type": "application/json"}
-                response = api_session.post(
-                    add_url, json=payload, headers=headers, timeout=10
+            # Prepare the document data with embeddings
+            doc_id = f"doc_{len(doc.page_content)}_{int(datetime.now().timestamp() * 1000000)}"
+            payload = {
+                "ids": [doc_id],
+                "embeddings": [embedding_vector],
+                "documents": [doc.page_content],
+                "metadatas": [doc.metadata] if doc.metadata else [{}],
+            }
+
+            # Make the API call to add the document
+            headers = {"Content-Type": "application/json"}
+            response = api_session.post(
+                add_url, json=payload, headers=headers, timeout=10
+            )
+
+            if response.status_code == 201:
+                logger.info(
+                    f"Document added successfully to space {CURRENT_SPACE}: {doc_id}"
                 )
-
-                if response.status_code == 201:
-                    logger.info(
-                        f"Document added successfully to space {CURRENT_SPACE}: {doc_id}"
-                    )
-                else:
+            else:
                     logger.error(
                         f"Failed to add document to space {CURRENT_SPACE}: {
                             response.status_code
                         } - {response.text}"
                     )
                     raise Exception("Document addition failed")
-
-            else:
-                logger.error("Failed to generate embeddings")
-                raise Exception("Embedding generation failed")
 
         except Exception as e:
             logger.error(f"Error with direct ChromaDB v2 API: {e}")

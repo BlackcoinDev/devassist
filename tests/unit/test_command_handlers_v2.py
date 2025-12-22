@@ -4,8 +4,7 @@ Unit tests for command handlers, targeting coverage gaps in Phase 6.
 Focus: Legacy commands, Learning commands, Memory commands.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from src.commands.handlers.learning_commands import handle_learn, handle_web, handle_populate
 from src.commands.handlers.memory_commands import handle_memory, handle_clear, handle_mem0
 from src.commands.handlers.legacy_commands import handle_read_command, handle_write_command

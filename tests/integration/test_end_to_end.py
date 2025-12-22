@@ -2,14 +2,13 @@
 """
 End-to-End integration tests for AI Assistant.
 
-Simulates a full user session from startup to shutdown, 
+Simulates a full user session from startup to shutdown,
 verifying the integrity of the main loop and its components.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, call
-from src.core.context import reset_context, get_context
-from src.main import main, initialize_application, conversation_history
+from unittest.mock import MagicMock, patch
+from src.core.context import reset_context
+from src.main import main
 from langchain_core.messages import SystemMessage
 
 
@@ -21,17 +20,20 @@ class TestEndToEnd:
         reset_context()
         # Also clear the module-level conversation history in main.py
         import src.main
+
         src.main.conversation_history.clear()
 
-    @patch('src.main.initialize_application')
-    @patch('builtins.input')
-    @patch('builtins.print')
-    @patch('src.main.save_memory')
-    @patch('src.main.load_memory')
-    @patch('src.main.llm')
-    @patch('src.main.vectorstore', None)
-    @patch('src.main.user_memory', None)
-    def test_basic_session_flow(self, mock_llm, mock_load, mock_save, mock_print, mock_input, mock_init):
+    @patch("src.main.initialize_application")
+    @patch("builtins.input")
+    @patch("builtins.print")
+    @patch("src.main.save_memory")
+    @patch("src.main.load_memory")
+    @patch("src.main.llm")
+    @patch("src.main.vectorstore", None)
+    @patch("src.main.user_memory", None)
+    def test_basic_session_flow(
+        self, mock_llm, mock_load, mock_save, mock_print, mock_input, mock_init
+    ):
         """Test a simple session with two messages and a quit command."""
         # 1. Setup mocks
         mock_init.return_value = True
@@ -39,6 +41,7 @@ class TestEndToEnd:
 
         # Seed history
         import src.main
+
         src.main.conversation_history.append(SystemMessage(content="Hello"))
 
         # Sequence of user inputs:
@@ -51,7 +54,9 @@ class TestEndToEnd:
         mock_response1 = MagicMock()
         mock_response1.content = "Hello there! I'm your AI assistant."
         mock_response2 = MagicMock()
-        mock_response2.content = "I'm doing great, thank you for asking! How can I help you today?"
+        mock_response2.content = (
+            "I'm doing great, thank you for asking! How can I help you today?"
+        )
         mock_llm.invoke.side_effect = [mock_response1, mock_response2]
 
         # 2. Run the chat loop (mocked so it doesn't loop forever)
@@ -67,26 +72,37 @@ class TestEndToEnd:
 
         # Verify messages in conversation history
         from src.main import conversation_history as main_history
+
         assert len(main_history) == 5
         assert main_history[1].content == "Hello AI"
         assert main_history[2].content == "Hello there! I'm your AI assistant."
 
-    @patch('src.main.initialize_application')
-    @patch('builtins.input')
-    @patch('builtins.print')
-    @patch('src.main.handle_slash_command')
-    @patch('src.main.save_memory')
-    @patch('src.main.load_memory')
-    @patch('src.main.llm')
-    @patch('src.main.vectorstore', None)
-    @patch('src.main.user_memory', None)
-    def test_slash_command_flow(self, mock_llm, mock_load, mock_save, mock_handle, mock_print, mock_input, mock_init):
+    @patch("src.main.initialize_application")
+    @patch("builtins.input")
+    @patch("builtins.print")
+    @patch("src.main.handle_slash_command")
+    @patch("src.main.save_memory")
+    @patch("src.main.load_memory")
+    @patch("src.main.llm")
+    @patch("src.main.vectorstore", None)
+    @patch("src.main.user_memory", None)
+    def test_slash_command_flow(
+        self,
+        mock_llm,
+        mock_load,
+        mock_save,
+        mock_handle,
+        mock_print,
+        mock_input,
+        mock_init,
+    ):
         """Test that slash commands are intercepted and handled without LLM."""
         mock_init.return_value = True
         mock_load.return_value = [SystemMessage(content="Hello")]
 
         # Seed history
         import src.main
+
         src.main.conversation_history.append(SystemMessage(content="Hello"))
 
         # Sequence:
@@ -102,20 +118,23 @@ class TestEndToEnd:
         # Verify no LLM call was made (since slash command intercepts)
         assert not mock_llm.invoke.called
 
-    @patch('src.main.initialize_application')
-    @patch('builtins.input')
-    @patch('builtins.print')
-    @patch('src.main.save_memory')
-    @patch('src.main.load_memory')
-    @patch('src.main.vectorstore', None)
-    @patch('src.main.user_memory', None)
-    def test_empty_input_handling(self, mock_load, mock_save, mock_print, mock_input, mock_init):
+    @patch("src.main.initialize_application")
+    @patch("builtins.input")
+    @patch("builtins.print")
+    @patch("src.main.save_memory")
+    @patch("src.main.load_memory")
+    @patch("src.main.vectorstore", None)
+    @patch("src.main.user_memory", None)
+    def test_empty_input_handling(
+        self, mock_load, mock_save, mock_print, mock_input, mock_init
+    ):
         """Verify that empty inputs don't trigger AI calls."""
         mock_init.return_value = True
         mock_load.return_value = [SystemMessage(content="Hello")]
 
         # Seed history
         import src.main
+
         src.main.conversation_history.append(SystemMessage(content="Hello"))
 
         # Sequence:
@@ -128,4 +147,5 @@ class TestEndToEnd:
 
         # Verify zero messages were added beyond initial system msg
         from src.main import conversation_history as main_history
+
         assert len(main_history) == 1

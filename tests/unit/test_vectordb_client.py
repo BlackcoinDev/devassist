@@ -9,7 +9,6 @@ Tests cover:
 - Health check and error handling
 """
 
-import pytest
 import responses
 from unittest.mock import patch, MagicMock
 from src.vectordb.client import ChromaDBClient, get_chromadb_client

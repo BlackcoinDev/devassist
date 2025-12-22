@@ -88,6 +88,7 @@ def handle_read_command(file_path: str) -> None:
     content = result.get("content", "")
     file_info = result.get("file_info", {})
 
+    config = get_config()
     if config.verbose_logging:
         print(f"📄 File: {file_info.get('name', file_path)}")
         print(f"📊 Size: {file_info.get('size', 'unknown')} bytes")

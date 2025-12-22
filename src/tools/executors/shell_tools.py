@@ -116,7 +116,7 @@ def execute_shell(command: str, timeout: int = 30) -> Dict[str, Any]:
     if _is_gui_mode():
         return {
             "error": "Shell execution is disabled in GUI mode for security reasons. "
-                     "Please use the CLI interface for shell commands."
+            "Please use the CLI interface for shell commands."
         }
 
     # Validate command is not empty
@@ -149,9 +149,14 @@ def execute_shell(command: str, timeout: int = 30) -> Dict[str, Any]:
 
     # Execute the command
     try:
+        # Split command into arguments for safer execution
+        import shlex
+
+        cmd_parts = shlex.split(command)
+
         result = subprocess.run(
-            command,
-            shell=True,
+            cmd_parts,
+            shell=False,
             capture_output=True,
             text=True,
             timeout=timeout,

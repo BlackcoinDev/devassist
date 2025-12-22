@@ -55,7 +55,7 @@ class TestInputSanitization:
     def test_sanitize_handles_empty_input(self):
         """Test handling of None and empty strings."""
         assert InputSanitizer.sanitize_text("") == ""
-        assert InputSanitizer.sanitize_text(None) is None  # type: ignore[arg-type]
+        assert InputSanitizer.sanitize_text(None) is None
 
     def test_sanitize_length_limit(self):
         """Test that extremely long input is rejected."""

@@ -9,7 +9,6 @@ Tests cover:
 - Aliases (gs, gl, gd)
 """
 
-import pytest
 from unittest.mock import patch, MagicMock
 
 from src.commands.handlers.git_commands import (

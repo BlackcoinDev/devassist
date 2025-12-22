@@ -9,13 +9,13 @@ This suite verifies end-to-end space management operations:
 """
 
 import os
-import json
-import pytest
 import responses
 from unittest.mock import MagicMock, patch
 from src.vectordb.spaces import (
-    list_spaces, delete_space, switch_space,
-    save_current_space, load_current_space, get_space_collection_name
+    list_spaces,
+    delete_space,
+    switch_space,
+    load_current_space,
 )
 from src.core.context import get_context, reset_context
 from src.core.context_utils import add_to_knowledge_base, get_relevant_context
@@ -32,6 +32,7 @@ class TestSpaceWorkflows:
 
         # Reset the ChromaDB client singleton to ensure mock config is used
         import src.vectordb.client as client_module
+
         client_module._client = None
 
         self.host = "localhost"
@@ -47,11 +48,12 @@ class TestSpaceWorkflows:
 
         # Reset the ChromaDB client singleton
         import src.vectordb.client as client_module
+
         client_module._client = None
 
     @responses.activate
-    @patch('src.vectordb.client.get_config')
-    @patch('src.core.context_utils.get_config')
+    @patch("src.vectordb.client.get_config")
+    @patch("src.core.context_utils.get_config")
     def test_complete_space_lifecycle(self, mock_utils_config, mock_client_config):
         """Test creating, switching, listing, and deleting spaces."""
         # 1. Setup mocks
@@ -80,7 +82,7 @@ class TestSpaceWorkflows:
             responses.GET,
             self.coll_url,
             json=[{"name": "space_work", "id": "work-id"}],
-            status=200
+            status=200,
         )
         spaces = list_spaces()
         assert "default" in spaces
@@ -95,9 +97,11 @@ class TestSpaceWorkflows:
         assert delete_space("work") is True
 
     @responses.activate
-    @patch('src.core.context_utils.get_config')
-    @patch('src.vectordb.client.get_config')
-    def test_knowledge_isolation_between_spaces(self, mock_client_config, mock_utils_config):
+    @patch("src.core.context_utils.get_config")
+    @patch("src.vectordb.client.get_config")
+    def test_knowledge_isolation_between_spaces(
+        self, mock_client_config, mock_utils_config
+    ):
         """Verify that knowledge in one space is not visible in another."""
         # 1. Setup mocks
         mock_config = MagicMock()
@@ -123,7 +127,7 @@ class TestSpaceWorkflows:
             responses.GET,
             self.coll_url,
             json=[{"name": "space_space-a", "id": "a-id"}],
-            status=200
+            status=200,
         )
         responses.add(responses.POST, f"{self.coll_url}/a-id/add", status=201)
 
@@ -134,7 +138,7 @@ class TestSpaceWorkflows:
             responses.POST,
             f"{self.coll_url}/a-id/query",
             json={"documents": [["Secret project code: Alpha"]]},
-            status=200
+            status=200,
         )
         context_a = get_relevant_context("project code")
         assert "Alpha" in context_a
@@ -148,16 +152,16 @@ class TestSpaceWorkflows:
             self.coll_url,
             json=[
                 {"name": "space_space-a", "id": "a-id"},
-                {"name": "space_space-b", "id": "b-id"}
+                {"name": "space_space-b", "id": "b-id"},
             ],
-            status=200
+            status=200,
         )
         # Empty query results for space-b
         responses.add(
             responses.POST,
             f"{self.coll_url}/b-id/query",
             json={"documents": [[]]},
-            status=200
+            status=200,
         )
 
         # 5. Verify knowledge from 'space-a' is NOT in 'space-b'

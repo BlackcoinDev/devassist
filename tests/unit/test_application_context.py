@@ -9,10 +9,8 @@ Tests cover:
 - LLM and vector database integration
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from src.core.context import ApplicationContext, get_context, set_context, reset_context
-from src.core.config import Config
 
 
 class TestContextInitialization:

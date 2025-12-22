@@ -9,7 +9,6 @@ Tests cover:
 - Space switching and persistence
 """
 
-import pytest
 import os
 import json
 from unittest.mock import Mock, patch, MagicMock

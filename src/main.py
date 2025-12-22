@@ -94,23 +94,7 @@ INITIALIZATION SEQUENCE:
 # =============================================================================
 
 # Core LangChain components for AI chat functionality
-from src.commands.handlers.legacy_commands import (
-    handle_read_command,
-    handle_write_command,
-    handle_list_command,
-    handle_pwd_command,
-    show_memory,
-    handle_clear_command,
-    handle_learn_command,
-    show_vectordb,
-    show_mem0,
-    handle_populate_command,
-    show_model_info,
-    handle_context_command,
-    handle_learning_command,
-    handle_space_command,
-    handle_export_command,
-)
+
 from src.tools.executors.document_tools import execute_parse_document
 from src.tools import ToolRegistry
 
@@ -131,7 +115,6 @@ from src.storage import (
     initialize_database,
     load_memory,
     save_memory,
-    trim_history,
     load_embedding_cache,
     load_query_cache,
     save_query_cache,
@@ -139,46 +122,27 @@ from src.storage import (
 )
 from src.vectordb import (
     get_space_collection_name,
-    ensure_space_collection,
     list_spaces,
     delete_space,
     switch_space,
-    load_current_space,
-    save_current_space,
 )
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 import requests
 from src.core.context import get_context
-from src.core.config import get_config, get_logger, APP_VERSION
+from src.core.config import get_config, get_logger
 from src.core.utils import chunk_text
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import (
-    HumanMessage,
-    SystemMessage,
-    AIMessage,
-)  # Message types for chat
-
-# Base class for all message types
-# BaseMessage removed - not used
-from langchain_text_splitters import (
-    RecursiveCharacterTextSplitter,
-)  # Text chunking for documents
 
 # Standard library imports
 import os  # Environment variable and file system operations
 import sys  # System operations and exit handling
 
 # Standard library imports (kept for backwards compatibility and test mocking)
-import sqlite3
-import threading  # Thread synchronization for database operations
 from datetime import datetime  # Timestamps for learned knowledge
 
 # Type hints for better code clarity
 from typing import List, Optional, cast
-
-# Security and configuration
-from pydantic import SecretStr  # Kept for backwards compatibility
 
 # Mem0 for personalized memory
 try:
@@ -476,156 +440,6 @@ def handle_slash_command(command: str) -> bool:
     return True
 
 
-def handle_read_command(file_path: str):
-    """Handle /read command to read file contents."""
-    if not file_path:
-        print("\n❌ Usage: /read <file_path>")
-        print("Example: /read README.md\n")
-        return
-
-    try:
-        # Security: Only allow reading files in current directory and
-        # subdirectories
-        current_dir = os.getcwd()
-        full_path = os.path.abspath(file_path)
-
-        # Check if the file is within the current directory
-        if not full_path.startswith(current_dir):
-            print(f"\n❌ Access denied: Cannot read files outside current directory")
-            print(f"Current directory: {current_dir}\n")
-            return
-
-        if not os.path.exists(full_path):
-            print(f"\n❌ File not found: {file_path}\n")
-            return
-
-        if not os.path.isfile(full_path):
-            print(f"\n❌ Not a file: {file_path}\n")
-            return
-
-        # Check file size (limit to 1MB to prevent memory issues)
-        file_size = os.path.getsize(full_path)
-        if file_size > 1024 * 1024:  # 1MB limit
-            print(f"\n❌ File too large: {file_size} bytes (max 1MB)")
-            print("Use a text editor to view large files\n")
-            return
-
-        with open(full_path, "r", encoding="utf-8", errors="replace") as f:
-            content = f.read()
-
-        print(f"\n📄 File: {file_path}")
-        print(f"📊 Size: {file_size} bytes")
-        print("-" * 50)
-        print(content)
-        print("-" * 50)
-        print(f"✅ File read successfully\n")
-
-    except UnicodeDecodeError:
-        print(f"\n❌ Cannot read binary file: {file_path}")
-        print("This appears to be a binary file. Use /list to see file types.\n")
-    except Exception as e:
-        print(f"\n❌ Failed to read file: {e}\n")
-
-
-def handle_write_command(args: str):
-    """Handle /write command to write content to a file."""
-    if not args:
-        print("\n❌ Usage: /write <file_path> <content>")
-        print("Example: /write notes.txt This is my note\n")
-        return
-
-    # Split on first space to separate file path from content
-    parts = args.split(" ", 1)
-    if len(parts) < 2:
-        print("\n❌ Usage: /write <file_path> <content>")
-        print("Content is required\n")
-        return
-
-    file_path, content = parts
-
-    try:
-        # Security: Only allow writing files in current directory and
-        # subdirectories
-        current_dir = os.getcwd()
-        full_path = os.path.abspath(file_path)
-
-        # Check if the file is within the current directory
-        if not full_path.startswith(current_dir):
-            print(f"\n❌ Access denied: Cannot write files outside current directory")
-            print(f"Current directory: {current_dir}\n")
-            return
-
-        # Create directory if it doesn't exist
-        dir_path = os.path.dirname(full_path)
-        if dir_path and not os.path.exists(dir_path):
-            os.makedirs(dir_path, exist_ok=True)
-
-        with open(full_path, "w", encoding="utf-8") as f:
-            f.write(content)
-
-        print(f"\n✅ File written: {file_path}")
-        print(f"📊 Content length: {len(content)} characters\n")
-
-    except Exception as e:
-        print(f"\n❌ Failed to write file: {e}\n")
-
-
-def handle_list_command(dir_path: str = ""):
-    """Handle /list command to list directory contents."""
-    try:
-        if not dir_path:
-            target_dir = os.getcwd()
-        else:
-            # Security: Only allow listing directories in current directory
-            current_dir = os.getcwd()
-            full_path = os.path.abspath(dir_path)
-
-            if not full_path.startswith(current_dir):
-                print(
-                    f"\n❌ Access denied: Cannot list directories outside current directory"
-                )
-                print(f"Current directory: {current_dir}\n")
-                return
-
-            if not os.path.exists(full_path):
-                print(f"\n❌ Directory not found: {dir_path}\n")
-                return
-
-            if not os.path.isdir(full_path):
-                print(f"\n❌ Not a directory: {dir_path}\n")
-                return
-
-            target_dir = full_path
-
-        print(f"\n📁 Directory: {os.path.relpath(target_dir, os.getcwd()) or '.'}")
-        print("-" * 50)
-
-        items = os.listdir(target_dir)
-        if not items:
-            print("📂 (empty directory)")
-        else:
-            # Separate files and directories
-            dirs = []
-            files = []
-
-            for item in sorted(items):
-                full_item_path = os.path.join(target_dir, item)
-                if os.path.isdir(full_item_path):
-                    dirs.append(item + "/")
-                else:
-                    files.append(item)
-
-            # Display directories first, then files
-            for item in dirs + files:
-                print(f"  {item}")
-
-        print("-" * 50)
-        print(f"📊 Total items: {len(items)}\n")
-
-    except Exception as e:
-        print(f"\n❌ Failed to list directory: {e}\n")
-
-
 def handle_pwd_command():
     """Handle /pwd command to show current working directory."""
     try:
@@ -706,7 +520,10 @@ def handle_learn_command(content: str):
             # Import here to handle initialization order
             from src.main import embeddings
 
-            embeddings_result = embeddings.embed_documents([doc.page_content])
+            if embeddings is not None:
+                embeddings_result = embeddings.embed_documents([doc.page_content])
+            else:
+                embeddings_result = None
             if embeddings_result and len(embeddings_result) > 0:
                 embedding_vector = embeddings_result[0]
 
@@ -1263,10 +1080,10 @@ def handle_populate_command(dir_path: str):
         # ChromaDB doesn't provide easy count
 
         # Scan directory
-        directory = Path(directory)
+        directory_path = Path(directory)
         files_to_process = []
 
-        for file_path in directory.rglob("*"):
+        for file_path in directory_path.rglob("*"):
             if file_path.is_file() and True:
                 files_to_process.append(file_path)
 
@@ -1285,7 +1102,7 @@ def handle_populate_command(dir_path: str):
         print(f"⚡ Processing files in batches of {batch_size} chunks...")
 
         for file_path in files_to_process:
-            relative_path = file_path.relative_to(directory)
+            relative_path = file_path.relative_to(directory_path)
 
             try:
                 # Check if it's a document file that can be processed
@@ -1359,7 +1176,7 @@ def handle_populate_command(dir_path: str):
                             # Ensure chroma_client is initialized
                             if chroma_client is None:
                                 chroma_client = HttpClient(
-                                    host=cast(str, CHROMA_HOST), port=CHROMA_PORT
+                                    host=CHROMA_HOST, port=CHROMA_PORT
                                 )
 
                             if chroma_client is None or embeddings is None:
@@ -1416,7 +1233,7 @@ def handle_populate_command(dir_path: str):
                     # Ensure chroma_client is initialized
                     if chroma_client is None:
                         chroma_client = HttpClient(
-                            host=cast(str, CHROMA_HOST), port=CHROMA_PORT
+                            host=CHROMA_HOST, port=CHROMA_PORT
                         )
 
                     if chroma_client is None or embeddings is None:
@@ -1743,10 +1560,10 @@ def initialize_vectordb():
                     "keep_alive": self.keep_alive,
                 }
 
-        chroma_client = HttpClient(host=cast(str, CHROMA_HOST), port=CHROMA_PORT)
+        chroma_client = HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
         embeddings = CustomOllamaEmbeddings(
-            model=cast(str, EMBEDDING_MODEL),
-            base_url=cast(str, OLLAMA_BASE_URL),
+            model=EMBEDDING_MODEL,
+            base_url=OLLAMA_BASE_URL,
         )
 
         from src.vectordb.spaces import get_space_collection_name
@@ -1886,7 +1703,7 @@ execute_tool_call = ToolRegistry.execute_tool_call
 # to src/chat/loop.py, src/chat/message_handler.py, etc.
 
 
-def main():  # type: ignore[reportGeneralTypeIssues]
+def main():
     """
     Main entry point - now delegates to modular chat loop.
 

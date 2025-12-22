@@ -127,7 +127,11 @@ class ChatLoop:
 
         # Security: Sanitize user input
         try:
-            user_input = InputSanitizer.sanitize_text(user_input)
+            sanitized_input = InputSanitizer.sanitize_text(user_input)
+            if sanitized_input is None:
+                print("❌ Error: Input cannot be None")
+                return False
+            user_input = sanitized_input
         except SecurityError as e:
             print(f"Security Alert: {e}")
             print("Please enter valid input without dangerous content.")

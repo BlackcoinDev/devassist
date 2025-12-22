@@ -9,7 +9,6 @@ Tests cover:
 - Message reconstruction from database rows
 """
 
-import pytest
 from unittest.mock import Mock, patch, MagicMock
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from src.storage.memory import load_memory, save_memory, trim_history

@@ -33,8 +33,6 @@ Tests cover:
 - Registry introspection methods
 """
 
-import pytest
-import json
 from unittest.mock import Mock, patch, MagicMock
 from src.tools.registry import ToolRegistry, register_tool
 

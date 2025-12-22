@@ -89,7 +89,7 @@ class InputSanitizer:
     ]
 
     @classmethod
-    def sanitize_text(cls, text: str) -> str:
+    def sanitize_text(cls, text: str | None) -> str | None:
         """
         Sanitize text input to prevent injection attacks.
 
@@ -97,11 +97,13 @@ class InputSanitizer:
             text: Input text to sanitize
 
         Returns:
-            str: Sanitized text
+            str | None: Sanitized text or None if input was None
 
         Raises:
             SecurityError: If malicious content is detected
         """
+        if text is None:
+            return None
         if not text:
             return text
 

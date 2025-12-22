@@ -8,8 +8,8 @@ Tests cover:
 - Configuration accessors and immutability
 """
 
-import pytest
 import os
+import pytest
 from unittest.mock import Mock, patch, MagicMock
 from src.core.config import Config, get_config
 

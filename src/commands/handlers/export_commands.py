@@ -63,15 +63,16 @@ def handle_export(args: List[str]) -> None:
     try:
         if format_type == "json":
             # Export as JSON
+            messages_list: list[dict[str, object]] = []
             export_data = {
                 "export_timestamp": datetime.now().isoformat(),
                 "total_messages": len(ctx.conversation_history),
-                "messages": [],
+                "messages": messages_list,
             }
 
             for i, msg in enumerate(ctx.conversation_history):
                 msg_type = type(msg).__name__.replace("Message", "").lower()
-                export_data["messages"].append(
+                messages_list.append(
                     {
                         "index": i + 1,
                         "type": msg_type,
@@ -91,7 +92,9 @@ def handle_export(args: List[str]) -> None:
             # Export as Markdown
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# Conversation Export\n\n")
-                f.write(f"**Exported:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+                f.write(
+                    f"**Exported:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                )
                 f.write(f"**Total Messages:** {len(ctx.conversation_history)}\n\n")
                 f.write("---\n\n")
 

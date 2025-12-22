@@ -81,7 +81,6 @@ class TestPathSecurity:
 
     def test_validate_path_absolute_path(self):
         """Test validation of absolute paths."""
-        current_dir = os.getcwd()
         abs_path = os.path.abspath("README.md")
         safe_path = PathSecurity.validate_path(abs_path)
         assert safe_path == abs_path
@@ -211,7 +210,6 @@ class TestPathSecurityEdgeCases:
 
     def test_validate_file_read_binary_file(self):
         """Test binary file detection."""
-        import tempfile
 
         # Create a temporary binary file in current directory
         temp_path = "temp_binary_test.bin"
@@ -228,7 +226,7 @@ class TestPathSecurityEdgeCases:
 
     def test_validate_file_read_content_validation_error(self):
         """Test exception during file content validation."""
-        from unittest.mock import patch, mock_open
+        from unittest.mock import patch
 
         # Mock open to raise an exception
         with patch('builtins.open', side_effect=IOError("Read error")):

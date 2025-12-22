@@ -9,7 +9,6 @@ Tests cover:
 - Error handling for missing services
 """
 
-import pytest
 import responses
 from unittest.mock import Mock, patch, MagicMock
 from langchain_core.documents import Document

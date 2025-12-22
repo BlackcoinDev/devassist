@@ -9,7 +9,6 @@ Focuses on:
 """
 
 import time
-import pytest
 import responses
 from unittest.mock import MagicMock, patch
 from src.core.context import reset_context, get_context
@@ -27,11 +26,12 @@ class TestPerformance:
         """Measure the time taken to initialize core components."""
         start_time = time.time()
 
-        with patch('src.main.initialize_database'), \
-                patch('src.main.initialize_llm'), \
-                patch('src.main.initialize_vectordb'), \
-                patch('src.main.initialize_user_memory'):
-
+        with (
+            patch("src.main.initialize_database"),
+            patch("src.main.initialize_llm"),
+            patch("src.main.initialize_vectordb"),
+            patch("src.main.initialize_user_memory"),
+        ):
             initialize_application()
 
         duration = time.time() - start_time
@@ -40,7 +40,7 @@ class TestPerformance:
         print(f"\n⏱️ Startup latency (mocked): {duration:.4f}s")
 
     @responses.activate
-    @patch('src.core.context_utils.get_config')
+    @patch("src.core.context_utils.get_config")
     def test_context_retrieval_latency(self, mock_config):
         """Measure latency of context retrieval with mocked vectorstore."""
         mock_config_obj = MagicMock()
@@ -50,8 +50,18 @@ class TestPerformance:
 
         # Mock ChromaDB API endpoints
         base_url = "http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections"
-        responses.add(responses.GET, base_url, json=[{"name": "space_default", "id": "default-id"}], status=200)
-        responses.add(responses.POST, f"{base_url}/default-id/query", json={"documents": [["Result"]]}, status=200)
+        responses.add(
+            responses.GET,
+            base_url,
+            json=[{"name": "space_default", "id": "default-id"}],
+            status=200,
+        )
+        responses.add(
+            responses.POST,
+            f"{base_url}/default-id/query",
+            json={"documents": [["Result"]]},
+            status=200,
+        )
 
         ctx = get_context()
         ctx.vectorstore = MagicMock()
@@ -73,7 +83,7 @@ class TestPerformance:
         print(f"⏱️ Retrieval latency: {duration:.4f}s")
 
     @responses.activate
-    @patch('src.core.context_utils.get_config')
+    @patch("src.core.context_utils.get_config")
     def test_large_input_resilience(self, mock_config):
         """Verify the system handles unusually large inputs without crashing."""
         # Setup configuration and mocks
@@ -84,8 +94,18 @@ class TestPerformance:
 
         # Mock ChromaDB API endpoints
         base_url = "http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections"
-        responses.add(responses.GET, base_url, json=[{"name": "space_default", "id": "default-id"}], status=200)
-        responses.add(responses.POST, f"{base_url}/default-id/upsert", json={"status": "success"}, status=200)
+        responses.add(
+            responses.GET,
+            base_url,
+            json=[{"name": "space_default", "id": "default-id"}],
+            status=200,
+        )
+        responses.add(
+            responses.POST,
+            f"{base_url}/default-id/upsert",
+            json={"status": "success"},
+            status=200,
+        )
 
         ctx = get_context()
         ctx.vectorstore = MagicMock()
@@ -100,7 +120,7 @@ class TestPerformance:
         assert success is True
         print(f"✅ Large input (1MB) handled successfully")
 
-    @patch('src.core.context_utils.get_config')
+    @patch("src.core.context_utils.get_config")
     def test_memory_growth_performance(self, mock_config):
         """Measure performance degradation with increasing conversation history."""
         ctx = get_context()
@@ -115,7 +135,9 @@ class TestPerformance:
         # Simulate processing that involves history (e.g. context construction)
         # Current main loop keeps last 20 messages
         llm_context_limit = 20
-        enhanced_history = [ctx.conversation_history[0]] + ctx.conversation_history[-llm_context_limit:]
+        enhanced_history = [ctx.conversation_history[0]] + ctx.conversation_history[
+            -llm_context_limit:
+        ]
 
         duration = time.time() - start_time
         assert len(enhanced_history) == 21

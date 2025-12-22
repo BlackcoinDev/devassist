@@ -76,7 +76,6 @@ def mock_llm():
         MagicMock: Configured LLM mock with streaming capability
     """
     mock_llm = MagicMock()
-    mock_llm.stream = MagicMock(return_value=["Test response"])
     return mock_llm
 
 

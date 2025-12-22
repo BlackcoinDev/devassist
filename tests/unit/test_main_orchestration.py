@@ -4,7 +4,6 @@ Unit tests for src/main.py orchestration and error handling logic.
 Targeting gaps in initialize_application and the main chat loop.
 """
 
-import pytest
 from unittest.mock import Mock, patch, MagicMock
 from src.main import (
     initialize_llm,

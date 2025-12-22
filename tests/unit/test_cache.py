@@ -9,7 +9,6 @@ Tests cover:
 - Cache clearing and memory cleanup
 """
 
-import pytest
 import os
 import json
 import tempfile

@@ -33,7 +33,6 @@ Tests cover:
 - Registry introspection methods
 """
 
-import pytest
 from unittest.mock import Mock, patch
 from src.commands.registry import CommandRegistry, register_command
 

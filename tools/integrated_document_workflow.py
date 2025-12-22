@@ -27,14 +27,13 @@ This example shows how document processing tools work together with
 the embedding and ChromaDB knowledge management system.
 """
 
-import sys
-sys.path.append(".")
-
-from src.tools.executors.document_tools import execute_parse_document
 from src.tools.executors.knowledge_tools import (
     execute_learn_information,
     execute_search_knowledge,
 )
+from src.tools.executors.document_tools import execute_parse_document
+import sys
+sys.path.append(".")
 
 
 def demonstrate_integrated_workflow():
@@ -54,7 +53,8 @@ def demonstrate_integrated_workflow():
     print(f"Parse result: {parse_result}")
 
     if parse_result.get("success"):
-        extracted_content = parse_result.get("analysis", "Sample extracted content")
+        extracted_content = parse_result.get(
+            "analysis", "Sample extracted content")
 
         # Step 2: Learn the extracted information
         print("\n🧠 Step 2: Store in Knowledge Base")

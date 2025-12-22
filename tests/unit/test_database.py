@@ -10,7 +10,6 @@ Tests cover:
 """
 
 import sqlite3
-import pytest
 import os
 import tempfile
 from unittest.mock import Mock, patch, MagicMock

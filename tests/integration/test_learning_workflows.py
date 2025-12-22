@@ -8,7 +8,6 @@ Verifies the end-to-end learning flows:
 - Knowledge retrieval and verification
 """
 
-import pytest
 import responses
 from unittest.mock import MagicMock, patch
 from src.core.context import get_context, reset_context
@@ -32,7 +31,7 @@ class TestLearningWorkflows:
         reset_context()
 
     @responses.activate
-    @patch('src.core.context_utils.get_config')
+    @patch("src.core.context_utils.get_config")
     def test_learn_and_retrieve_workflow(self, mock_config):
         """Test learning a fact and then retrieving it using semantic search."""
         # 1. Setup mocks
@@ -56,7 +55,7 @@ class TestLearningWorkflows:
             responses.GET,
             self.coll_url,
             json=[{"name": "knowledge_base", "id": "kb-id"}],
-            status=200
+            status=200,
         )
         responses.add(responses.POST, f"{self.coll_url}/kb-id/add", status=201)
 
@@ -67,7 +66,7 @@ class TestLearningWorkflows:
             responses.POST,
             f"{self.coll_url}/kb-id/query",
             json={"documents": [["The secret ingredient is love"]]},
-            status=200
+            status=200,
         )
 
         result = get_relevant_context("What is the secret ingredient?")
@@ -75,10 +74,12 @@ class TestLearningWorkflows:
         assert "secret ingredient" in result
 
     @responses.activate
-    @patch('src.core.context_utils.get_config')
-    @patch('src.main.vectorstore', new_callable=MagicMock)
-    @patch('docling.document_converter.DocumentConverter')
-    def test_web_learning_workflow(self, mock_converter_class, mock_main_vectorstore, mock_config):
+    @patch("src.core.context_utils.get_config")
+    @patch("src.main.vectorstore", new_callable=MagicMock)
+    @patch("docling.document_converter.DocumentConverter")
+    def test_web_learning_workflow(
+        self, mock_converter_class, mock_main_vectorstore, mock_config
+    ):
         """Test learning from a web URL by mocking Docling and the vectorstore."""
         # 1. Setup mocks
         ctx = get_context()
@@ -92,7 +93,9 @@ class TestLearningWorkflows:
         # Mock Docling conversion
         mock_converter = mock_converter_class.return_value
         mock_result = MagicMock()
-        mock_result.document.export_to_markdown.return_value = "# Web Content\nRetrieved from URL."
+        mock_result.document.export_to_markdown.return_value = (
+            "# Web Content\nRetrieved from URL."
+        )
         mock_result.document.title = "Test Web Page"
         mock_converter.convert.return_value = mock_result
 
@@ -113,7 +116,7 @@ class TestLearningWorkflows:
         assert doc.metadata["source"] == "https://example.com"
 
     @responses.activate
-    @patch('src.core.context_utils.get_config')
+    @patch("src.core.context_utils.get_config")
     def test_learn_error_handling(self, mock_config):
         """Test how the learning workflow handles vector database failure."""
         ctx = get_context()

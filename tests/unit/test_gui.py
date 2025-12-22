@@ -162,10 +162,6 @@ class TestGUIConfiguration:
         from src.gui import (
             CONTEXT_MODE,
             LEARNING_MODE,
-            MODEL_NAME,
-            CHROMA_HOST,
-            CHROMA_PORT,
-            MAX_HISTORY_PAIRS,
         )
 
         # These should be defined (may be None if not set)

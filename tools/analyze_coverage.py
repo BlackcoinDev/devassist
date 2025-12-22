@@ -5,7 +5,8 @@ Analyze coverage.json to identify priority testing targets.
 
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List, Tuple
+
 
 def analyze_coverage() -> None:
     """Analyze coverage data and output priority testing targets."""
@@ -85,8 +86,18 @@ def analyze_coverage() -> None:
     print()
 
     # Calculate effort estimate
-    total_missing_critical = sum(total - covered for _, _, total, covered in critical_low)
-    total_missing_moderate = sum(total - covered for _, _, total, covered in moderate)
+    total_missing_critical = sum(
+        total -
+        covered for _,
+        _,
+        total,
+        covered in critical_low)
+    total_missing_moderate = sum(
+        total -
+        covered for _,
+        _,
+        total,
+        covered in moderate)
 
     # Rough estimate: 1 test per 10 lines of missing coverage
     tests_needed_critical = total_missing_critical // 10
@@ -95,10 +106,16 @@ def analyze_coverage() -> None:
     print("=" * 80)
     print("EFFORT ESTIMATE")
     print("=" * 80)
-    print(f"Critical modules: ~{total_missing_critical} lines uncovered → ~{tests_needed_critical} tests needed")
-    print(f"Moderate modules: ~{total_missing_moderate} lines uncovered → ~{tests_needed_moderate} tests needed")
-    print(f"Total estimated tests: ~{tests_needed_critical + tests_needed_moderate}")
+    print(
+        f"Critical modules: ~{total_missing_critical} lines uncovered → ~{tests_needed_critical} tests needed")
+    print(
+        f"Moderate modules: ~{total_missing_moderate} lines uncovered → ~{tests_needed_moderate} tests needed")
+    print(
+        f"Total estimated tests: ~{
+            tests_needed_critical +
+            tests_needed_moderate}")
     print()
+
 
 if __name__ == "__main__":
     analyze_coverage()
