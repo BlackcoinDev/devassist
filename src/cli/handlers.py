@@ -256,34 +256,34 @@ def handle_learn_command(content: str):
 
             # Find or create the collection
             try:
-                    list_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
-                    list_response = api_session.get(list_url, timeout=10)
-                    if list_response.status_code == 200:
-                        collections = list_response.json()
-                        for coll in collections:
-                            if coll.get("name") == collection_name:
-                                collection_id = coll.get("id")
-                                break
+                list_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
+                list_response = api_session.get(list_url, timeout=10)
+                if list_response.status_code == 200:
+                    collections = list_response.json()
+                    for coll in collections:
+                        if coll.get("name") == collection_name:
+                            collection_id = coll.get("id")
+                            break
 
-                    # If collection doesn't exist, create it
-                    if not collection_id:
-                        create_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
-                        create_payload = {"name": collection_name}
-                        create_response = api_session.post(
-                            create_url, json=create_payload, timeout=10
+                # If collection doesn't exist, create it
+                if not collection_id:
+                    create_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
+                    create_payload = {"name": collection_name}
+                    create_response = api_session.post(
+                        create_url, json=create_payload, timeout=10
+                    )
+                    if create_response.status_code == 201:
+                        collection_id = create_response.json().get("id")
+                        logger.info(
+                            f"Created new collection for space {CURRENT_SPACE}: {collection_name}"
                         )
-                        if create_response.status_code == 201:
-                            collection_id = create_response.json().get("id")
-                            logger.info(
-                                f"Created new collection for space {CURRENT_SPACE}: {collection_name}"
-                            )
-                        else:
-                            logger.error(
-                                f"Failed to create collection: HTTP {
-                                    create_response.status_code
-                                }"
-                            )
-                            raise Exception("Collection creation failed")
+                    else:
+                        logger.error(
+                            f"Failed to create collection: HTTP {
+                                create_response.status_code
+                            }"
+                        )
+                        raise Exception("Collection creation failed")
 
             except Exception as e:
                 logger.error(
@@ -318,12 +318,12 @@ def handle_learn_command(content: str):
                     f"Document added successfully to space {CURRENT_SPACE}: {doc_id}"
                 )
             else:
-                    logger.error(
-                        f"Failed to add document to space {CURRENT_SPACE}: {
-                            response.status_code
-                        } - {response.text}"
-                    )
-                    raise Exception("Document addition failed")
+                logger.error(
+                    f"Failed to add document to space {CURRENT_SPACE}: {
+                        response.status_code
+                    } - {response.text}"
+                )
+                raise Exception("Document addition failed")
 
         except Exception as e:
             logger.error(f"Error with direct ChromaDB v2 API: {e}")

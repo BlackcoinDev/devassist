@@ -9,7 +9,7 @@ Tests cover:
 - Aliases (gs, gl, gd)
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.commands.handlers.git_commands import (
     handle_git_status,

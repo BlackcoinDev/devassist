@@ -33,7 +33,7 @@ Tests cover:
 - Registry introspection methods
 """
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from src.tools.registry import ToolRegistry, register_tool
 
 

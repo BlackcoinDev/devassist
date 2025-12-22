@@ -80,7 +80,7 @@ if response.choices[0].message.tool_calls:
 
     final_response = client.chat.completions.create(
         model="qwen3-vl-30b",
-        messages=messages,
+        messages=messages,  # type: ignore[arg-type]
     )
 
     print(f"Final response: {final_response.choices[0].message.content}")

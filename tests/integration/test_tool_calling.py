@@ -12,7 +12,7 @@ Tests the integration between LLM and tool execution:
 from unittest.mock import patch, MagicMock
 
 # Import from modular architecture (v0.2.0)
-from src.tools import ToolRegistry, executors
+from src.tools import ToolRegistry
 import importlib
 import src.tools.executors.file_tools
 import src.tools.executors.knowledge_tools

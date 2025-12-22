@@ -11,7 +11,7 @@ Tests cover:
 
 import os
 import json
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from src.vectordb.spaces import (
     get_space_collection_name,
     list_spaces,

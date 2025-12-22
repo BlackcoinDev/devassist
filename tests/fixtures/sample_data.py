@@ -89,8 +89,8 @@ SAMPLE_VECTOR_CONTENT = [  # noqa: F841
     },
 ]
 
-# Sample file system structure for testing (future use)
-SAMPLE_FILE_STRUCTURE = {
+# Sample file system structure for testing (future use - intentionally unused)
+SAMPLE_FILE_STRUCTURE = {  # noqa: F841
     "src": {
         "src.main.py": "# Main application file",
         "gui.py": "# GUI application file",

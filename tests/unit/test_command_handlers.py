@@ -9,7 +9,7 @@ Tests cover:
 - Input validation and output formatting
 """
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from src.commands.handlers.config_commands import handle_context, handle_learning
 from src.commands.handlers.help_commands import handle_help, handle_model_info
 from src.commands.handlers.space_commands import handle_space
@@ -251,7 +251,7 @@ class TestFileHandlers:
     @patch('os.path.exists', return_value=True)
     @patch('os.path.isfile', return_value=True)
     @patch('os.path.getsize', return_value=100)
-    def test_handle_read_success(self, mock_size, mock_isfile, mock_exists, mock_abs, mock_cwd, mock_print):
+    def test_handle_read_success(self, mock_size, mock_print):
         """Test reading a file securely."""
         with patch('builtins.open', MagicMock(return_value=MagicMock(__enter__=lambda x: MagicMock(read=lambda: "file context")))):
             handle_read(["test.txt"])
@@ -262,7 +262,7 @@ class TestFileHandlers:
     @patch('os.getcwd', return_value="/mock/dir")
     @patch('os.path.abspath', side_effect=lambda x: f"/mock/dir/{x}")
     @patch('os.path.exists', return_value=True)
-    def test_handle_write_success(self, mock_exists, mock_abs, mock_cwd, mock_print):
+    def test_handle_write_success(self, mock_print):
         """Test writing to a file securely."""
         with patch('builtins.open', MagicMock()) as mock_open:
             handle_write(["test.txt", "hello", "world"])

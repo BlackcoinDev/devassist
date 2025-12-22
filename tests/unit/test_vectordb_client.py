@@ -10,7 +10,7 @@ Tests cover:
 """
 
 import responses
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from src.vectordb.client import ChromaDBClient, get_chromadb_client
 
 

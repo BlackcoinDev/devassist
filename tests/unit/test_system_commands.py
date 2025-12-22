@@ -9,7 +9,7 @@ Tests cover:
 - Error handling
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.commands.handlers.system_commands import handle_search, handle_shell
 
