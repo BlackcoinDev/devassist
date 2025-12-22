@@ -30,6 +30,10 @@ class TestSpaceWorkflows:
         if os.path.exists("space_settings.json"):
             os.remove("space_settings.json")
 
+        # Reset the ChromaDB client singleton to ensure mock config is used
+        import src.vectordb.client as client_module
+        client_module._client = None
+
         self.host = "localhost"
         self.port = 8000
         self.base_url = f"http://{self.host}:{self.port}/api/v2"
@@ -40,6 +44,10 @@ class TestSpaceWorkflows:
         reset_context()
         if os.path.exists("space_settings.json"):
             os.remove("space_settings.json")
+
+        # Reset the ChromaDB client singleton
+        import src.vectordb.client as client_module
+        client_module._client = None
 
     @responses.activate
     @patch('src.vectordb.client.get_config')

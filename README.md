@@ -829,7 +829,7 @@ You: quit
 
 ```
 
-### Slash Commands v0.2.0
+### Slash Commands v0.3.0
 
 | Command            | Description                                                    | Example                                    |
 | ------------------ | -------------------------------------------------------------- | ------------------------------------------ |
@@ -849,6 +849,11 @@ You: quit
 | `/write <file>`    | **Write content to file** (direct file editing)                | `/write notes.txt Hello world`             |
 | `/list [dir]`      | **List directory contents** (filesystem browsing)              | `/list src/`                               |
 | `/pwd`             | **Show current directory** (navigation)                        | `/pwd`                                     |
+| `/git-status`      | **Show git repository status** (aliases: `/gs`, `/status`)     | `/git-status`                              |
+| `/git-log [n]`     | **Show commit history** (aliases: `/gl`, `/log`)               | `/git-log 20`                              |
+| `/git-diff`        | **Show git changes** (aliases: `/gd`, `/diff`)                 | `/git-diff --staged`                       |
+| `/search <pat>`    | **Code search with ripgrep** (aliases: `/grep`, `/rg`)         | `/search "def main" --type py`             |
+| `/shell <cmd>`     | **Execute shell command** (CLI only, aliases: `/sh`, `/run`)   | `/shell npm test`                          |
 | `/help`            | **Show all commands**                                          | `/help`                                    |
 | `quit`             | **Exit application**                                           | `quit`                                     |
 

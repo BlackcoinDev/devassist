@@ -36,6 +36,7 @@ from src.security.exceptions import SecurityError, DatabaseError, RateLimitError
 from src.security.input_sanitizer import InputSanitizer
 from src.security.path_security import PathSecurity
 from src.security.rate_limiter import RateLimiter
+from src.security.shell_security import ShellSecurity
 
 __all__ = [
     "SecurityError",
@@ -44,4 +45,5 @@ __all__ = [
     "InputSanitizer",
     "PathSecurity",
     "RateLimiter",
+    "ShellSecurity",
 ]

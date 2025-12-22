@@ -39,6 +39,8 @@ from src.commands.handlers import config_commands
 from src.commands.handlers import space_commands
 from src.commands.handlers import file_commands
 from src.commands.handlers import export_commands
+from src.commands.handlers import git_commands
+from src.commands.handlers import system_commands
 
 __all__ = [
     "help_commands",
@@ -49,4 +51,6 @@ __all__ = [
     "space_commands",
     "file_commands",
     "export_commands",
+    "git_commands",
+    "system_commands",
 ]

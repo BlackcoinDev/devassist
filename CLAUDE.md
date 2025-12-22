@@ -62,7 +62,7 @@ python launcher.py
 
 ```bash
 
-# Run all tests (436 tests, ~35s execution)
+# Run all tests (555 tests, ~15s execution)
 
 uv run pytest
 
@@ -323,7 +323,7 @@ The qwen3-vl-30b model can autonomously call these tools:
 ```text
 
 tests/
-├── unit/              # ~300 tests (main, launcher, tools, commands, storage)
+├── unit/              # ~400 tests (main, launcher, tools, commands, storage)
 ├── integration/       # ~80 tests (app, tool calling, workflows)
 ├── security/          # ~40 tests (input sanitization, path security, rate limiting)
 ├── tools/             # Document parsing tests
@@ -367,7 +367,12 @@ When adding features:
 | `src/storage/database.py`      | SQLite connection management                | 120   |
 | `src/storage/memory.py`        | Conversation history persistence            | 205   |
 | `src/storage/cache.py`         | Embedding and query caching                 | 140   |
-| `src/security/shell_security.py`| Shell command validation (allowlist)       | 120   |
+| `src/security/shell_security.py`| Shell command validation (allowlist)       | 200   |
+| `src/tools/executors/shell_tools.py` | shell_execute AI tool                 | 160   |
+| `src/tools/executors/git_tools.py` | git_status, git_diff, git_log AI tools  | 270   |
+| `src/tools/executors/system_tools.py` | code_search AI tool (ripgrep)        | 200   |
+| `src/commands/handlers/git_commands.py` | /git-status, /git-log, /git-diff   | 160   |
+| `src/commands/handlers/system_commands.py` | /search, /shell slash commands  | 180   |
 | `src/mcp/client.py`            | MCP client manager                          | 250   |
 | `src/mcp/transports/`          | stdio, HTTP, SSE transports                 | ---   |
 
@@ -385,7 +390,7 @@ When adding features:
 
 1. Create handler function in `src/commands/handlers/[category]_commands.py` (choose appropriate category: help, config,
 
-   database, memory, learning, space, file, export)
+   database, memory, learning, space, file, export, git, system)
 
 2. Decorate with `@CommandRegistry.register("command_name", "Description", category="category", aliases=[])`
 3. Handler auto-registers on import—no central configuration needed
@@ -410,7 +415,7 @@ def handle_mycommand(args: str) -> None:
 
 1. Create executor function in `src/tools/executors/[category]_tools.py` (choose: file_tools, knowledge_tools,
 
-   document_tools, web_tools)
+   document_tools, web_tools, shell_tools, git_tools, system_tools)
 
 2. Define OpenAI function calling schema in `TOOL_DEFINITION` dictionary
 3. Decorate with `@ToolRegistry.register("tool_name", TOOL_DEFINITION)`
@@ -544,7 +549,7 @@ BLOCKED_COMMANDS: Set[str] = {
 
 ### Performance Expectations
 
-- **Test Suite**: ~35 seconds for 436 tests (426 passed, 10 GUI skipped)
+- **Test Suite**: ~15 seconds for 555 tests (545 passed, 10 GUI skipped)
 - **LLM Response Time**: 2-5 seconds (typical queries)
 - **Tool Operations**: 5-15 seconds (file/document operations)
 - **Memory Usage**: <8GB GPU memory (stable with qwen3-vl-30b)

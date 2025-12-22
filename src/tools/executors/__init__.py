@@ -34,5 +34,16 @@ from src.tools.executors import file_tools
 from src.tools.executors import knowledge_tools
 from src.tools.executors import document_tools
 from src.tools.executors import web_tools
+from src.tools.executors import shell_tools
+from src.tools.executors import git_tools
+from src.tools.executors import system_tools
 
-__all__ = ["file_tools", "knowledge_tools", "document_tools", "web_tools"]
+__all__ = [
+    "file_tools",
+    "knowledge_tools",
+    "document_tools",
+    "web_tools",
+    "shell_tools",
+    "git_tools",
+    "system_tools",
+]

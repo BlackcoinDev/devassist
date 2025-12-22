@@ -28,3 +28,8 @@ types-requests
 vulture
 mem0ai
 ddgs
+mcp[cli,rich]
+gitpython
+websocket-client
+tenacity
+cachetools
