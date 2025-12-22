@@ -400,8 +400,6 @@ def get_relevant_context(
 # Command handlers are now registered via decorators in their respective modules
 # No need to import them here as they're auto-registered
 
-# Import legacy command handlers (will be migrated to new system)
-
 # Note: Command handlers remain in this file for now.
 # They can be incrementally migrated to src/commands/handlers/ using:
 #   @register_command("help", "Show available commands")

@@ -56,8 +56,7 @@ parity between GUI and CLI interfaces.
 
 **Command System Refactoring:**
 
-- ✅ **Extracted 15 legacy command handlers** to `src/commands/handlers/legacy_commands.py`
-- ✅ **Reduced main.py complexity** by separating legacy functionality
+- ✅ **Reduced main.py complexity** by separating command functionality
 - ✅ **Maintained 100% backward compatibility** - all existing commands work unchanged
 - ✅ **All 240+ tests still passing** - no functionality lost
 
@@ -90,11 +89,10 @@ src/commands/handlers/
 ├── space_commands.py      # New command system
 ├── file_commands.py       # New command system
 ├── export_commands.py     # New command system
-└── legacy_commands.py     # 15 legacy handlers (23KB)
 ```
 
-**Migration Path:** Legacy commands will be gradually migrated to use `@CommandRegistry.register()` decorators for
-consistency with the new command system.
+**Migration Path:** Commands use `@CommandRegistry.register()` decorators for
+consistency across the command system.
 
 ## 📖 Documentation
 
@@ -438,7 +436,7 @@ All Python dependencies are listed in `requirements.txt`. Key libraries include:
 - **Embeddings**: `langchain-ollama==1.0.0`, `langchain-text-splitters==1.0.0`
 - **Configuration**: `python-dotenv==1.2.1`, `pydantic==2.12.5`, `pydantic-settings==2.12.0`
 - **GUI**: `PyQt6==6.10.1`, `markdown==3.10`
-- **Document Processing**: `docling==0.1.1` (unified processing), legacy packages kept for compatibility
+- **Document Processing**: `docling==0.1.1` (unified processing), packages kept for compatibility
 - **CLI Enhancement**: `rich==14.2.0`
 
 ### Development Dependencies (Optional)

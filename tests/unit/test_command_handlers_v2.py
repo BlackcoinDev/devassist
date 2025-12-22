@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
 Unit tests for command handlers, targeting coverage gaps in Phase 6.
-Focus: Legacy commands, Learning commands, Memory commands.
+Focus: Learning commands, Memory commands.
 """
 
 from unittest.mock import Mock, patch
 from src.commands.handlers.learning_commands import handle_learn, handle_web, handle_populate
 from src.commands.handlers.memory_commands import handle_memory, handle_clear, handle_mem0
-# from src.commands.handlers.legacy_commands import handle_read_command, handle_write_command
 from src.commands.handlers.config_commands import handle_context, handle_learning
 from src.core.context import ApplicationContext, get_context, set_context
 
