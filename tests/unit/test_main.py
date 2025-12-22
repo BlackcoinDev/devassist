@@ -482,7 +482,7 @@ class TestInitialization(unittest.TestCase):
         mock_llm.assert_called_once()
         mock_vdb.assert_called_once()
 
-    @patch("src.main.ChatOpenAI", side_effect=Exception("Connection failed"))
+    @patch("src.main.get_llm", side_effect=Exception("Connection failed"))
     def test_initialize_application_llm_failure(self, mock_llm):
         """Test initialization failure due to LLM connection issues."""
         with patch.dict(

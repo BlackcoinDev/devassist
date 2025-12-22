@@ -54,7 +54,7 @@ class TestApplicationIntegration:
 
     def test_memory_persistence_flow(self):
         """Test memory save/load persistence flow."""
-        from src.main import save_memory
+        from src.storage.memory import save_memory
 
         # Mock database connection and lock via context
         mock_ctx = MagicMock()
@@ -88,7 +88,7 @@ class TestApplicationIntegration:
 
     def test_space_management_integration(self):
         """Test space management integration."""
-        from src.main import get_space_collection_name, switch_space
+        from src.vectordb.spaces import get_space_collection_name, switch_space
 
         # Test collection naming
         assert get_space_collection_name("default") == "knowledge_base"

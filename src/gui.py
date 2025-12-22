@@ -173,8 +173,8 @@ class AIWorker(QThread):
         try:
             # Import configuration and core functions
             # These are used in various methods throughout the class
+            from src.storage.memory import save_memory
             from src.main import (
-                save_memory,
                 get_relevant_context,
                 get_llm,
                 get_vectorstore,
@@ -1492,7 +1492,7 @@ class AIAssistantGUI(QMainWindow):
 
     def handle_quit(self):
         """Handle quit commands."""
-        from src.main import save_memory
+        from src.storage.memory import save_memory
 
         formatted_response = self.markdown_to_html("Goodbye! Have a great day!")
         self.chat_display.append(f"<b>AI Assistant:</b><br>{formatted_response}<br>")
@@ -1509,6 +1509,9 @@ class AIAssistantGUI(QMainWindow):
         QTimer.singleShot(1000, self.close)
 
     def handle_slash_command(self, command_text):
+
+        from src.main import get_vectorstore
+        from src.storage.memory import save_memory
         """Handle slash commands locally (like CLI)."""
         command = command_text[1:].strip().lower()  # Remove leading slash and normalize
 
@@ -1518,11 +1521,6 @@ class AIAssistantGUI(QMainWindow):
                 "<b>AI Assistant:</b><br>❌ Backend not available for commands<br>"
             )
             return
-
-        from src.main import (
-            save_memory,
-            get_vectorstore,
-        )
 
         # Declare globals for mode variables
         global CONTEXT_MODE, LEARNING_MODE
@@ -2092,7 +2090,7 @@ Use Ctrl+C for immediate interruption.<br>
 
     def closeEvent(self, a0):
         """Handle application close."""
-        from src.main import save_memory
+        from src.storage.memory import save_memory
 
         try:
             if BACKEND_AVAILABLE:
