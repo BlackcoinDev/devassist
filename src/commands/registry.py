@@ -28,7 +28,7 @@ commands to be registered with decorators and dispatched by name.
 """
 
 import logging
-from typing import Callable, Dict, List, Optional, Any
+from typing import Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

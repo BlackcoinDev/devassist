@@ -38,7 +38,7 @@ Usage:
 import os
 import logging
 import warnings
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 # Application version

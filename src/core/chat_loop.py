@@ -7,7 +7,7 @@ to improve modularity and reduce the size of the main module.
 
 import logging
 import time
-from typing import List, Optional
+from typing import List
 from langchain_core.messages import (
     HumanMessage,
     AIMessage,

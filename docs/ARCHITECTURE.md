@@ -451,10 +451,19 @@ src/
 │       ├── space_commands.py
 │       ├── file_commands.py
 │       ├── export_commands.py
-│       └── legacy_commands.py  # 15 legacy handlers (being migrated)
+│       ├── git_commands.py     # /git-status, /git-log, /git-diff
+│       ├── system_commands.py  # /search, /shell
+│       └── legacy_commands.py  # Legacy handlers (being migrated)
 ├── tools/              # Tool plugin system
 │   ├── registry.py     # ToolRegistry dispatcher
 │   └── executors/      # Auto-registering executors
+│       ├── file_tools.py       # read_file, write_file, list_directory
+│       ├── knowledge_tools.py  # learn_information, search_knowledge
+│       ├── document_tools.py   # parse_document
+│       ├── web_tools.py        # search_web
+│       ├── shell_tools.py      # shell_execute
+│       ├── git_tools.py        # git_status, git_diff, git_log
+│       └── system_tools.py     # code_search
 ├── storage/            # Persistence layer
 ├── security/           # Security enforcement
 └── vectordb/           # Knowledge storage
@@ -596,10 +605,10 @@ def get_user_conversations(user_id: str, session_id: str = None):
 
 ### Test Suite Overview
 
-- **Unit Tests**: 171 tests covering individual modules
-- **Integration Tests**: 40 tests covering component interactions
-- **Security Tests**: 25 tests covering security modules
-- **Total**: 240+ tests with 90%+ coverage target
+- **Unit Tests**: ~400 tests covering individual modules
+- **Integration Tests**: ~80 tests covering component interactions
+- **Security Tests**: ~40 tests covering security modules
+- **Total**: 555 tests with 90%+ coverage target
 
 ### Test Component Integration
 
@@ -738,7 +747,6 @@ For more detailed information, refer to:
 - **MANUAL.md**: User-facing documentation and usage guides
 - **MIGRATION.md**: Migration instructions and breaking changes
 - **ROADMAP.md**: Future development plans and feature timeline
-- **AGENTS.md**: Comprehensive agent documentation and technical details
 
 This architecture document serves as the canonical reference for the system's
 design and components.

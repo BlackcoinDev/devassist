@@ -30,7 +30,7 @@ These functions are used by both command handlers and tool executors.
 """
 
 import logging
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
 import requests
 
@@ -142,7 +142,8 @@ def get_relevant_context(
             return ""
 
         # ChromaDB v2 API endpoint for querying
-        query_url = f"http://{config.chroma_host}:{config.chroma_port}/api/v2/tenants/default_tenant/databases/default_database/collections/{collection_id}/query"
+        base_url = f"http://{config.chroma_host}:{config.chroma_port}/api/v2"
+        query_url = f"{base_url}/tenants/default_tenant/databases/default_database/collections/{collection_id}/query"
 
         # Query payload with embedding
         payload = {"query_embeddings": [query_embedding], "n_results": k}

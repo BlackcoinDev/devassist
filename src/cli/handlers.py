@@ -6,28 +6,11 @@ for better code organization and maintainability.
 """
 
 import os
-import json
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-from pathlib import Path
 
 # Import necessary modules
-from src.storage import (
-    load_memory,
-    save_memory,
-    trim_history,
-    cleanup_memory,
-)
-from src.vectordb import (
-    list_spaces,
-    switch_space,
-    delete_space,
-    get_space_collection_name,
-    load_current_space,
-    save_current_space,
-)
-from src.core.config import APP_VERSION
-from src.core.context import get_context
+from src.storage import cleanup_memory
+from src.vectordb import get_space_collection_name
 
 # These will be imported from main when needed to avoid circular imports
 # conversation_history, vectorstore, embeddings, llm, chunk_text, get_relevant_context
@@ -375,5 +358,5 @@ def show_vectordb():
         print("\n❌ Vector database not available.\n")
         return
 
-    # Initialize variables that may be used in error handling
-    collection_name = get_space_collection_name(CURRENT_SPACE)
+    # Placeholder for future implementation
+    _ = get_space_collection_name(CURRENT_SPACE)  # noqa: F841

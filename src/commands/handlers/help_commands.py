@@ -30,7 +30,7 @@ displaying current model configuration.
 
 from typing import List
 from src.commands.registry import CommandRegistry
-from src.core.config import get_config, APP_VERSION
+from src.core.config import get_config
 
 # =============================================================================
 # COMMAND HANDLERS

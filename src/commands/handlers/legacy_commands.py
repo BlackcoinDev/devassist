@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# flake8: noqa: F841
 # MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
@@ -73,9 +74,6 @@ def handle_read_command(file_path: str) -> None:
     Args:
         file_path: Path to file to read
     """
-    ctx = get_context()
-    config = get_config()
-
     if not file_path:
         print("\n❌ Please specify a file path. Example: /read README.md\n")
         return

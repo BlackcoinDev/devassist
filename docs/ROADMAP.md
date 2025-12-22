@@ -45,7 +45,7 @@ For current security architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   2. Update database connection in `main.py` and `launcher.py`
   3. Add encryption key management (environment variable or secure input)
   4. Migrate existing data to encrypted format
-  5. Update AGENTS.md with security notes
+  5. Update documentation with security notes
 
 - **API Key Security**: Implement secure storage for service credentials.
 - **Integration Steps**:
@@ -102,7 +102,7 @@ ebooklib, openpyxl) after testing
   1. Add model selection to GUI settings panel
   2. Update model loading in `initialize_application()`
   3. Add model compatibility checks
-  4. Update AGENTS.md with supported models
+  4. Update documentation with supported models
 
 - **Local Model Switching**: Allow runtime model changes without restart
 - **Integration Steps**:
@@ -131,7 +131,7 @@ For current performance architecture, see [ARCHITECTURE.md](ARCHITECTURE.md).
   2. Configure Redis connection in environment
   3. Implement Redis for conversation session storage
   4. Add Redis-based caching for frequent queries
-  5. Update AGENTS.md with Redis setup instructions
+  5. Update documentation with Redis setup instructions
 
 - **Batch Processing**: Process multiple documents simultaneously
 - **Integration Steps**:
@@ -472,7 +472,7 @@ while maintaining its core values of accessibility and extensibility.
 
 ### Documentation Updates
 
-- Update AGENTS.md with new features
+- Update CLAUDE.md with new features
 - Add API documentation for new integrations
 - Update README.md with setup instructions
 
@@ -531,8 +531,8 @@ search_web)
 - **CI/CD Quality Gates**:
 - ✅ 90%+ code coverage including tool functions
 - ⚠️ Some linting checks need fixing (flake8, mypy, vulture)
-- ✅ Comprehensive tool functionality testing (8/8 tools)
-- ✅ Fast test execution (20.30s for 89 tests)
+- ✅ Comprehensive tool functionality testing (13/13 tools)
+- ✅ Fast test execution (~15s for 555 tests)
 
 **Integration Steps**:
 ✅ 1. Run autopep8 auto-formatting on main.py and tools/
@@ -543,14 +543,14 @@ search_web)
 ✅ 6. Implement test fixtures for tool mocking
 ⚠️ 7. Add pre-commit hooks for quality enforcement (planned)
 ⚠️ 8. Fix remaining linting issues (planned)
-✅ 9. Update AGENTS.md with new testing standards
+✅ 9. Update documentation with new testing standards
 
 **Benefits**: Clean, maintainable codebase with comprehensive test coverage,
 reliable tool functionality, and automated quality assurance.
 
 **Current Status**:
 
-- ✅ 89 tests total (79 active + 10 GUI)
+- ✅ 555 tests total (545 active + 10 GUI skipped)
 - ✅ 100% pass rate on all tests
 - ✅ 95%+ code coverage
 - ⚠️ Some linting issues remain (32 total issues)
