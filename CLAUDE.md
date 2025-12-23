@@ -268,18 +268,18 @@ The qwen3-vl-30b model can autonomously call these tools:
 | Tool                        | Purpose                                  | Test Status |
 | --------------------------- | ---------------------------------------- | ----------- |
 | `read_file()`               | Read file contents                       | ✅ Tested    |
-| `write_file()`              | Create/modify files                      | ✅ Ready     |
-| `list_directory()`          | Browse directories                       | ✅ Ready     |
+| `write_file()`              | Create/modify files                      | ✅ Tested    |
+| `list_directory()`          | Browse directories                       | ✅ Tested    |
 | `get_current_directory()`   | Show current path                        | ✅ Tested    |
-| `parse_document()`          | Extract text/tables/forms via Docling    | ✅ Ready     |
-| `learn_information()`       | Store in ChromaDB                        | ✅ Ready     |
-| `search_knowledge()`        | Query vector DB                          | ✅ Ready     |
-| `search_web()`              | DuckDuckGo search                        | ✅ Ready     |
-| `shell_execute()`           | Run shell commands (CLI only)            | ✅ Ready     |
-| `git_status()`              | Git repository status                    | ✅ Ready     |
-| `git_diff()`                | Show git changes                         | ✅ Ready     |
-| `git_log()`                 | Commit history                           | ✅ Ready     |
-| `code_search()`             | Regex code search (ripgrep)              | ✅ Ready     |
+| `parse_document()`          | Extract text/tables/forms via Docling    | ✅ Tested    |
+| `learn_information()`       | Store in ChromaDB                        | ✅ Tested    |
+| `search_knowledge()`        | Query vector DB                          | ✅ Tested    |
+| `search_web()`              | DuckDuckGo search                        | ✅ Tested    |
+| `shell_execute()`           | Run shell commands (CLI only)            | ✅ Tested    |
+| `git_status()`              | Git repository status                    | ✅ Tested    |
+| `git_diff()`                | Show git changes                         | ✅ Tested    |
+| `git_log()`                 | Commit history                           | ✅ Tested    |
+| `code_search()`             | Regex code search (ripgrep)              | ✅ Tested    |
 
 **Tool testing coverage:** 13/13 tools have comprehensive unit and integration tests.
 
