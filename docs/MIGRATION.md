@@ -3,6 +3,96 @@
 This guide covers the currently implemented database backends and important
 migration information for the AI Assistant application.
 
+## ⚠️ v0.3.0 Migration Notes
+
+### Backward Compatibility
+
+**v0.3.0 is fully backward compatible with v0.2.0 and earlier versions**:
+
+- ✅ **No breaking changes** - All existing functionality preserved
+- ✅ **Seamless upgrade** - No database migration required
+- ✅ **Feature addition only** - New features added without disrupting existing ones
+
+### New Features in v0.3.0
+
+The following features have been **added** and are **opt-in**:
+
+1. **Shell Execution (CLI Only)**
+   - AI can run shell commands with allowlist-based security
+   - Safe commands (git, npm, python, etc.) run without confirmation
+   - Unknown commands require user approval
+   - **No configuration required** - works out of the box
+
+2. **MCP (Model Context Protocol) Integration**
+   - External tool server connectivity (stdio, HTTP, SSE)
+   - Configuration via `config/mcp_servers.json`
+   - Tools prefixed with `mcp_servername_`
+   - **Opt-in only** - no external servers configured by default
+
+3. **Git Integration Tools**
+   - `git_status()` - Repository status
+   - `git_diff()` - Show changes
+   - `git_log()` - Commit history  
+   - Available as both AI tools and slash commands (`/git-status`, etc.)
+
+4. **Code Search Capability**
+   - `code_search()` tool using ripgrep
+   - Fast regex search across codebase
+   - Available as AI tool and `/search`slash command`
+
+5. **Tool Approval System**
+   - Per-tool permission controls: `always`, `ask`, `never`
+   - Configuration via `config/tool_approvals.json`
+   - Default settings provide secure defaults
+   - **No changes required** - sensible defaults provided
+
+### Configuration Changes (Optional)
+
+If you want to customize new features, add these optional files:
+
+```bash
+# Optional: Configure external MCP servers
+config/mcp_servers.json
+{
+  "servers": [
+    {
+      "name": "filesystem",
+      "transport": "stdio", 
+      "enabled": true,
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    }
+  ]
+}
+
+# Optional: Configure tool approval behavior
+config/tool_approvals.json
+{
+  "approvals": {
+    "shell_execute": "ask",
+    "write_file": "ask", 
+    "git_status": "always",
+    "code_search": "always",
+    "mcp_*": "ask"
+  }
+}
+```
+
+**Note:** These are **optional** - the application works perfectly without them.
+
+### Migration Checklist
+
+✅ **Version 0.3.0 upgrade steps:**
+
+1. Update dependencies (if needed): `uv pip install -r requirements.txt`
+2. Verify all services running: LM Studio, ChromaDB, Ollama
+3. Test new features: `/help` shows new commands (`/git-status`, `/search`, `/shell`, etc.)
+4. (Optional) Customize MCP or tool approval settings
+
+**No data migration required** - all existing conversations, learned knowledge, and spaces are fully compatible.
+
+---
+
 ## ⚠️ Breaking Changes in v0.2.0
 
 ### Configuration Requirements

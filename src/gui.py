@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 """
-AI Assistant GUI Application v0.2.0 - PyQt6 Graphical Interface
+AI Assistant GUI Application v0.3.0 - PyQt6 Graphical Interface
 
 GRAPHICAL USER INTERFACE for the intelligent AI assistant system, providing a modern,
 user-friendly alternative to the command-line interface with identical functionality.
@@ -32,7 +32,12 @@ an intuitive, modern interface for AI-assisted development and research.
 """
 
 from src.main import load_memory
-from src.vectordb import list_spaces, switch_space, delete_space, get_space_collection_name
+from src.vectordb import (
+    list_spaces,
+    switch_space,
+    delete_space,
+    get_space_collection_name,
+)
 from src.core.config import get_config
 import logging
 import os
@@ -325,7 +330,7 @@ class PopulateWorker(QThread):
 
                 try:
                     for i in range(0, total_chunks, batch_size):
-                        batch = all_docs[i: i + batch_size]
+                        batch = all_docs[i : i + batch_size]
                         batch_number = (i // batch_size) + 1
                         total_batches = (total_chunks + batch_size - 1) // batch_size
 
@@ -364,7 +369,7 @@ class PopulateWorker(QThread):
 
 class AIAssistantGUI(QMainWindow):
     """
-    Main GUI Window for AI Assistant v0.2.0
+    Main GUI Window for AI Assistant v0.3.0
 
     This class implements the complete PyQt6-based graphical interface for the AI assistant,
     providing a modern, user-friendly alternative to the CLI with identical functionality.
@@ -380,7 +385,7 @@ class AIAssistantGUI(QMainWindow):
 
     AI INTEGRATION:
     ===============
-    - Full access to all 8 AI tools (read_file, write_file, parse_document, search_web, etc.)
+     - Full access to all 13 AI tools (read_file, write_file, parse_document, search_web, shell_execute, git_status, git_diff, git_log, code_search, etc.)
     - Autonomous tool calling based on natural language understanding
     - Context-aware conversations using ChromaDB knowledge base
     - Document processing with qwen3-vl-30b multimodal analysis
@@ -441,7 +446,7 @@ class AIAssistantGUI(QMainWindow):
 
     def init_ui(self):
         """Initialize the user interface."""
-        self.setWindowTitle("AI Assistant v0.2.0 - Learning Edition")
+        self.setWindowTitle("AI Assistant v0.3.0 - Learning Edition")
         self.setGeometry(100, 100, 1000, 700)
 
         # Create central widget
@@ -1449,9 +1454,9 @@ class AIAssistantGUI(QMainWindow):
         QTimer.singleShot(1000, self.close)
 
     def handle_slash_command(self, command_text):
-
         from src.main import get_vectorstore
         from src.storage.memory import save_memory
+
         """Handle slash commands locally (like CLI)."""
         command = command_text[1:].strip().lower()  # Remove leading slash and normalize
 
@@ -2049,7 +2054,7 @@ def main():
 
     # Set application properties
     app.setApplicationName("AI Assistant")
-    app.setApplicationVersion("0.2.0")
+    app.setApplicationVersion("0.3.0")
     app.setOrganizationName("Blackcoin Development")
 
     # Initialize backend components (same as CLI)

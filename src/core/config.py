@@ -42,20 +42,25 @@ from dataclasses import dataclass
 from typing import Optional
 
 # Application version
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.3.0"
 
 
 def _setup_logging() -> logging.Logger:
     """Configure structured logging for the application."""
     logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s"
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
     )
     logger = logging.getLogger(__name__)
 
     # Suppress verbose HTTP logging from external libraries
-    for lib in ["httpx", "httpcore", "chromadb", "chromadb.telemetry",
-                "urllib3", "openai"]:
+    for lib in [
+        "httpx",
+        "httpcore",
+        "chromadb",
+        "chromadb.telemetry",
+        "urllib3",
+        "openai",
+    ]:
         logging.getLogger(lib).setLevel(logging.WARNING)
 
     return logger
@@ -65,6 +70,7 @@ def _load_dotenv() -> None:
     """Load environment variables from .env file."""
     try:
         from dotenv import load_dotenv
+
         load_dotenv()
 
         # Set OpenMP workaround if configured
@@ -181,22 +187,18 @@ class Config:
             lm_studio_url=_require_env("LM_STUDIO_URL"),
             lm_studio_key=_require_env("LM_STUDIO_KEY"),
             model_name=_require_env("MODEL_NAME"),
-
             # Conversation Settings
             max_history_pairs=_require_int("MAX_HISTORY_PAIRS"),
             temperature=_require_float("TEMPERATURE"),
             max_input_length=_require_int("MAX_INPUT_LENGTH"),
-
             # Database Configuration
             db_type=_require_env("DB_TYPE").lower(),
             db_path=_require_env("DB_PATH"),
-
             # Vector Database Configuration
             chroma_host=_require_env("CHROMA_HOST"),
             chroma_port=_require_int("CHROMA_PORT"),
             ollama_base_url=_require_env("OLLAMA_BASE_URL"),
             embedding_model=_require_env("EMBEDDING_MODEL"),
-
             # Logging Configuration
             verbose_logging=_get_bool("VERBOSE_LOGGING", False),
             show_llm_reasoning=_get_bool("SHOW_LLM_REASONING", True),

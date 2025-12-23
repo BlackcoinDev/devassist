@@ -1,4 +1,4 @@
-# AI Assistant Manual
+ # AI Assistant Manual v0.3.0
 
 Welcome to your local AI Assistant! This manual provides a comprehensive guide
 to understanding and using the advanced features of your AI companion, including

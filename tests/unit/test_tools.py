@@ -23,7 +23,7 @@
 """
 Comprehensive Tool Testing Suite
 
-Tests for all 8 AI tools with proper mocking and isolation:
+Tests for the first 8 of 13 AI tools with proper mocking and isolation:
 - read_file: File reading with security constraints
 - write_file: File creation/modification
 - list_directory: Directory browsing
@@ -32,11 +32,17 @@ Tests for all 8 AI tools with proper mocking and isolation:
 - learn_information: Knowledge base storage
 - search_knowledge: Semantic search
 - search_web: DuckDuckGo web search
+
+The remaining 5 tools (shell_execute, git_status, git_diff, git_log, code_search)
+are tested in separate test files:
+- test_shell_tools.py - shell_execute
+- test_git_tools.py - git_status, git_diff, git_log
+- test_system_tools.py - code_search
 """
 
 from unittest.mock import patch, mock_open, MagicMock, Mock
 
-# Import tool functions from modular architecture (v0.2.0)
+# Import tool functions from modular architecture (v0.3.0)
 from src.tools.executors.file_tools import (
     execute_read_file,
     execute_write_file,

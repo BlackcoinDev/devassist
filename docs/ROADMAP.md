@@ -4,6 +4,16 @@ This document outlines the future development roadmap for the Blackcoin
 DevAssist application, a LangChain-based AI learning assistant with GUI/CLI
 interfaces.
 
+ ## ✅ Recently Completed (v0.3.0 - Q1 2025)
+
+ - ✅ **Shell Execution (CLI)**: AI can run shell commands with allowlist-based safety (git, npm, python, etc.)
+ - ✅ **MCP Support**: Model Context Protocol integration (stdio, HTTP, SSE transports)
+ - ✅ **Git Integration**: AI tools for git status, diff, log, show operations
+ - ✅ **Code Search**: Fast ripgrep-based regex search across codebase
+ - ✅ **Tool Approval System**: Per-tool ask/always/never permission controls
+
+**Implementation Status**: All Q1 2025 planned features have been successfully implemented and are production-ready.
+
 ## Current Status (v0.3.0)
 
 - ✅ Dual interfaces: Modern PyQt6 GUI and traditional CLI

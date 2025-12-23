@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 """
-AI Assistant Launcher v0.2.0 - Unified Interface Selector
+AI Assistant Launcher v0.3.0 - Unified Interface Selector
 
 UNIFIED ENTRY POINT for the AI assistant application, providing seamless access to both
 graphical and command-line interfaces with identical functionality and configuration.
@@ -140,7 +140,7 @@ def main():
     the appropriate interface (GUI or CLI) for the AI assistant.
     """
     parser = argparse.ArgumentParser(
-        description="AI Assistant v0.2.0 - Learning Edition",
+        description="AI Assistant v0.3.0 - Learning Edition",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -162,7 +162,10 @@ The CLI provides the traditional terminal interface with:
     )
 
     parser.add_argument(
-        "--cli", "--terminal", action="store_true", help="Launch CLI (terminal) version (default)"
+        "--cli",
+        "--terminal",
+        action="store_true",
+        help="Launch CLI (terminal) version (default)",
     )
 
     parser.add_argument(
