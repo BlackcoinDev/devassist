@@ -25,10 +25,9 @@ interfaces.
 - ✅ Tool calling capabilities with 13 tools (file, shell, git, search, knowledge, web)
 - ✅ Conversation memory with SQLite
 - ✅ Markdown support in GUI
-- ✅ **Modular Architecture**: Refactored from monolithic (4,556 lines) to modular structure (3,175 +
-
-  8 focused modules)
-
+- ✅ **Modular Architecture**: Refactored from monolithic (4,556 lines) to modular structure
+- ✅ **Tool Approval System**: Centralized permission manager (ask/always/never)
+- ✅ **Modular Chat Loop**: Robust orchestrator with multi-turn tool support
 - ✅ **Plugin System**: CommandRegistry and ToolRegistry with self-registering decorators
 - ✅ **Dependency Injection**: ApplicationContext pattern replacing scattered globals
 
@@ -542,7 +541,7 @@ search_web)
 - ✅ 90%+ code coverage including tool functions
 - ⚠️ Some linting checks need fixing (flake8, mypy, vulture)
 - ✅ Comprehensive tool functionality testing (13/13 tools)
-- ✅ Fast test execution (~15s for 555 tests)
+- ✅ Fast test execution (~30s for 511 tests)
 
 **Integration Steps**:
 ✅ 1. Run autopep8 auto-formatting on main.py and tools/

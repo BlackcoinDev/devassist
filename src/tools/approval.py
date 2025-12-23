@@ -157,3 +157,32 @@ class ToolApprovalManager:
         # For auto policies, default to 'ask' in the registry.
         # The ChatLoop will refine this by calling requires_approval with more context.
         return ApprovalPolicy.ASK
+
+    def set_policy(self, tool_name: str, policy: str) -> bool:
+        """
+        Set and persist a policy for a tool.
+        """
+        if policy not in [p.value for p in ApprovalPolicy]:
+            logger.error(f"Invalid policy: {policy}")
+            return False
+
+        self.approvals[tool_name] = policy
+
+        try:
+            # Load existing file to preserve structure if possible
+            data = {"version": "1.0", "approvals": self.approvals, "defaults": self.defaults}
+            if self.config_path.exists():
+                with open(self.config_path, 'r') as f:
+                    try:
+                        existing = json.load(f)
+                        data["version"] = existing.get("version", "1.0")
+                        data["defaults"] = existing.get("defaults", self.defaults)
+                    except Exception:
+                        pass
+
+            with open(self.config_path, 'w') as f:
+                json.dump(data, f, indent=2)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save tool approval config: {e}")
+            return False

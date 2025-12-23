@@ -2,7 +2,7 @@
 
 **Document Version:** 2.0 - Updated for v0.3.0
 **Created:** 2025-12-18
-**Status:** Complete - All tests passing (555 tests total)
+**Status:** Complete - All tests passing (511 tests total)
 **Target Coverage:** 90%+ for all modular components (ACHIEVED)
 
 ---
@@ -16,8 +16,8 @@ into 37 focused modules, but currently has 0% test coverage for new components.
 
 **Current Test Status:**
 
-- **Total Tests:** 555 (545 active + 10 GUI skipped)
-- **Passing:** 555 passed (100% pass rate)
+- **Total Tests:** 511 (501 active + 10 GUI skipped)
+- **Passing:** 511 passed (100% pass rate)
 - **Broken:** 0 tests
 - **Coverage:** 90%+ overall (Core components verified at >85% coverage)
 
@@ -757,9 +757,9 @@ uv run pytest --cov=src --cov-fail-under=85 -q
 
 | Metric                  | Current | Target |
 | ----------------------- | ------- | ------ |
-| Total Tests             | 555     | 555✅   |
+| Total Tests             | 511     | 511✅   |
 | Test Coverage           | >90%    | >90%✅   |
-| Test Execution Time     | ~15s    | <60s✅   |
+| Test Execution Time     | ~30s    | <60s✅   |
 | Passing Rate            | 100%    | 100%✅   |
 | Flaky Test Rate         | 0%      | <1%✅    |
 | Security Test Coverage  | 100%    | 100%✅   |

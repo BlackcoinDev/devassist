@@ -260,6 +260,4 @@ tramp
 
 # Custom project files
 venv/
-CLAUDE.md
-AGENTS.md
 .claude/

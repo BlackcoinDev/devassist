@@ -31,10 +31,40 @@ and learning behavior modes.
 from typing import List
 from src.commands.registry import CommandRegistry
 from src.core.context import get_context, set_context_mode, set_learning_mode
+from src.tools.approval import ToolApprovalManager
 
 # =============================================================================
 # COMMAND HANDLERS
 # =============================================================================
+
+
+@CommandRegistry.register("approve", "Set tool approval mode (ask, always, never)", category="config")
+def handle_approve(args: List[str]) -> None:
+    """Handle /approve command."""
+    manager = ToolApprovalManager()
+
+    if not args or len(args) < 2:
+        print("\n🛡️ Tool Approval Management")
+        print("Usage: /approve <tool_name> <mode>")
+        print("Modes: always, ask, never, auto-conservative, auto-permissive")
+        print("\nExample: /approve shell_execute ask")
+        print("Example: /approve read_file always")
+
+        # List current custom rules
+        if manager.approvals:
+            print("\n📋 Custom Rules:")
+            for tool, mode in manager.approvals.items():
+                print(f"  - {tool}: {mode}")
+        print()
+        return
+
+    tool_name = args[0]
+    mode = args[1].lower()
+
+    if manager.set_policy(tool_name, mode):
+        print(f"\n✅ Approval policy for '{tool_name}' set to: {mode}\n")
+    else:
+        print(f"\n❌ Failed to set policy. Valid modes: always, ask, never, auto-conservative, auto-permissive\n")
 
 
 @CommandRegistry.register("context", "Control context integration", category="config")
