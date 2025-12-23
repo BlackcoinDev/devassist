@@ -155,7 +155,7 @@ def handle_space(args: List[str]) -> None:
 
         if delete_space(target_space):
             if _config.verbose_logging:
-                logger.info(f"   ✅ Successfully deleted space and collection")
+                logger.info("   ✅ Successfully deleted space and collection")
             print(f"\n✅ Deleted space: {target_space}\n")
         else:
             if _config.verbose_logging:

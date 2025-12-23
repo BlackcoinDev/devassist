@@ -138,7 +138,7 @@ def execute_learn_information(
             }
         else:
             if _config.show_tool_details:
-                logger.warning(f"   ❌ Failed to add to knowledge base")
+                logger.warning("   ❌ Failed to add to knowledge base")
             return {"error": "Failed to add information to knowledge base"}
 
     except Exception as e:

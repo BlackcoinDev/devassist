@@ -73,12 +73,12 @@ def handle_learn(args: List[str]) -> None:
 
     if success:
         if _config.verbose_logging:
-            logger.info(f"   ✅ Successfully added to knowledge base")
+            logger.info("   ✅ Successfully added to knowledge base")
         print(f"\n✅ Learned: {content[:50]}...\n")
     else:
         if _config.verbose_logging:
-            logger.warning(f"   ❌ Failed to add to knowledge base")
-        print(f"\n❌ Failed to learn information\n")
+            logger.warning("   ❌ Failed to add to knowledge base")
+        print("\n❌ Failed to learn information\n")
 
 
 @CommandRegistry.register("populate", "Bulk import codebase", category="learning")
@@ -125,7 +125,7 @@ def handle_web(args: List[str]) -> None:
         print(f"\n❌ Error: {result['error']}\n")
     elif result.get("success"):
         if _config.verbose_logging:
-            logger.info(f"   ✅ Successfully learned from URL")
+            logger.info("   ✅ Successfully learned from URL")
         print(f"\n✅ Successfully learned from {url}\n")
 
 

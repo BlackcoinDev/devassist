@@ -139,7 +139,7 @@ class TestPerformance:
         # This should handle the string without crashing
         success = add_to_knowledge_base(large_input)
         assert success is True
-        print(f"✅ Large input (1MB) handled successfully")
+        print("✅ Large input (1MB) handled successfully")
 
     @patch("src.core.context_utils.get_config")
     def test_memory_growth_performance(self, mock_config):

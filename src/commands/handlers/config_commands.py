@@ -64,7 +64,7 @@ def handle_approve(args: List[str]) -> None:
     if manager.set_policy(tool_name, mode):
         print(f"\n✅ Approval policy for '{tool_name}' set to: {mode}\n")
     else:
-        print(f"\n❌ Failed to set policy. Valid modes: always, ask, never, auto-conservative, auto-permissive\n")
+        print("\n❌ Failed to set policy. Valid modes: always, ask, never, auto-conservative, auto-permissive\n")
 
 
 @CommandRegistry.register("context", "Control context integration", category="config")

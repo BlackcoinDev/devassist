@@ -99,9 +99,10 @@ def handle_mem0(args: List[str]) -> None:
 
         # Get all memories for the user
         memories = ctx.user_memory.get_all(user_id="default_user")
+        results_count = len(memories.get("results", []))
 
         if config.verbose_logging:
-            print(f"🧠 Mem0: Retrieved {len(memories.get('results', []))} memories")
+            print(f"🧠 Mem0: Retrieved {results_count} memories")
 
         if not memories or not memories.get("results"):
             print("📊 No personalized memories stored yet.")
@@ -110,7 +111,7 @@ def handle_mem0(args: List[str]) -> None:
 
         results = memories["results"]
         print(f"📊 Memories: {len(results)}")
-        print(f"👤 User ID: user")
+        print("👤 User ID: user")
 
         if results:
             print("\n🧠 Sample Memories:")

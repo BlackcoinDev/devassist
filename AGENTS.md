@@ -225,7 +225,7 @@ uv run pytest --pdb
 
 ### Test Results Summary
 
-#### Current Status (v0.2.0)
+#### Current Status (v0.3.0)
 
 - **Total tests**: 511 (501 active + 10 GUI skipped)
 - **Pass rate**: 100% (501/501 active tests passing)

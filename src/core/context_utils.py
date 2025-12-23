@@ -267,7 +267,7 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
             # Add document to the space's collection
             add_url = (
                 f"http://{config.chroma_host}:{config.chroma_port}/api/v2/"
-                f"tenants/default_tenant/databases/default_database/"
+                "tenants/default_tenant/databases/default_database/"
                 f"collections/{collection_id}/add"
             )
 

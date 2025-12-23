@@ -95,10 +95,9 @@ def handle_vectordb(args: List[str]) -> None:
                 f"Using collection for space {ctx.current_space}: {collection_name} (ID: {collection_id})"
             )
 
-            # Get collection statistics
             count_url = (
                 f"http://{config.chroma_host}:{config.chroma_port}/api/v2/"
-                f"tenants/default_tenant/databases/default_database/"
+                "tenants/default_tenant/databases/default_database/"
                 f"collections/{collection_id}/count"
             )
             count_response = api_session.get(count_url, timeout=10)
@@ -145,7 +144,7 @@ def handle_vectordb(args: List[str]) -> None:
                                         except Exception:
                                             pass
 
-                            print(f"\n📋 Statistics:")
+                            print("\n📋 Statistics:")
                             print(f"   📄 Unique Sources: {len(sources)}")
                             if sources:
                                 print(
@@ -188,7 +187,7 @@ def handle_vectordb(args: List[str]) -> None:
                                         break
 
                             if sample_sources:
-                                print(f"\n🕒 Sample Sources:")
+                                print("\n🕒 Sample Sources:")
                                 for i, (source, added_at) in enumerate(sample_sources):
                                     print(f"   {i + 1}. {source} (added: {added_at})")
 
@@ -198,9 +197,9 @@ def handle_vectordb(args: List[str]) -> None:
                     except Exception as e:
                         print(f"\n❌ Error retrieving statistics: {e}")
                 else:
-                    print(f"\n  No chunks found in the knowledge base.")
+                    print("\n  No chunks found in the knowledge base.")
                     print(
-                        f"  Use /learn to add information or /populate to add codebases."
+                        "  Use /learn to add information or /populate to add codebases."
                     )
             else:
                 print(f"Failed to retrieve chunks: HTTP {count_response.status_code}")
@@ -217,7 +216,7 @@ def handle_vectordb(args: List[str]) -> None:
             # Get collection statistics instead of all documents
             count_url = (
                 f"http://{config.chroma_host}:{config.chroma_port}/api/v2/"
-                f"tenants/default_tenant/databases/default_database/"
+                "tenants/default_tenant/databases/default_database/"
                 f"collections/{collection_id}/count"
             )
             count_response = api_session.get(count_url, timeout=10)

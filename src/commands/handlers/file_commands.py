@@ -53,7 +53,7 @@ def handle_read(args: List[str]) -> None:
         full_path = os.path.abspath(file_path)
 
         if not full_path.startswith(current_dir):
-            print(f"\n❌ Access denied: Cannot read files outside current directory")
+            print("\n❌ Access denied: Cannot read files outside current directory")
             print(f"Current directory: {current_dir}\n")
             return
 
@@ -80,7 +80,7 @@ def handle_read(args: List[str]) -> None:
         print("-" * 50)
         print(content)
         print("-" * 50)
-        print(f"✅ File read successfully\n")
+        print("✅ File read successfully\n")
 
     except UnicodeDecodeError:
         print(f"\n❌ Cannot read binary file: {file_path}")
@@ -114,7 +114,7 @@ def handle_write(args: List[str]) -> None:
         full_path = os.path.abspath(file_path)
 
         if not full_path.startswith(current_dir):
-            print(f"\n❌ Access denied: Cannot write files outside current directory")
+            print("\n❌ Access denied: Cannot write files outside current directory")
             print(f"Current directory: {current_dir}\n")
             return
 
@@ -148,7 +148,7 @@ def handle_list(args: List[str]) -> None:
 
             if not full_path.startswith(current_dir):
                 print(
-                    f"\n❌ Access denied: Cannot list directories outside current directory"
+                    "\n❌ Access denied: Cannot list directories outside current directory"
                 )
                 print(f"Current directory: {current_dir}\n")
                 return

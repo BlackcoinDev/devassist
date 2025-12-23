@@ -91,7 +91,7 @@ def handle_export(args: List[str]) -> None:
         elif format_type in ["markdown", "md"]:
             # Export as Markdown
             with open(filename, "w", encoding="utf-8") as f:
-                f.write(f"# Conversation Export\n\n")
+                f.write("# Conversation Export\n\n")
                 f.write(
                     f"**Exported:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
                 )

@@ -53,7 +53,7 @@ def handle_read_command(file_path: str):
 
         # Check if the file is within the current directory
         if not full_path.startswith(current_dir):
-            print(f"\n❌ Access denied: Cannot read files outside current directory")
+            print("\n❌ Access denied: Cannot read files outside current directory")
             print(f"Current directory: {current_dir}\n")
             return
 
@@ -80,7 +80,7 @@ def handle_read_command(file_path: str):
         print("-" * 50)
         print(content)
         print("-" * 50)
-        print(f"✅ File read successfully\n")
+        print("✅ File read successfully\n")
 
     except UnicodeDecodeError:
         print(f"\n❌ Cannot read binary file: {file_path}")
@@ -113,7 +113,7 @@ def handle_write_command(args: str):
 
         # Check if the file is within the current directory
         if not full_path.startswith(current_dir):
-            print(f"\n❌ Access denied: Cannot write files outside current directory")
+            print("\n❌ Access denied: Cannot write files outside current directory")
             print(f"Current directory: {current_dir}\n")
             return
 
@@ -144,7 +144,7 @@ def handle_list_command(dir_path: str = ""):
 
             if not full_path.startswith(current_dir):
                 print(
-                    f"\n❌ Access denied: Cannot list directories outside current directory"
+                    "\n❌ Access denied: Cannot list directories outside current directory"
                 )
                 print(f"Current directory: {current_dir}\n")
                 return
@@ -316,7 +316,7 @@ def handle_learn_command(content: str):
             # Add document to the space's collection
             add_url = (
                 f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/"
-                f"tenants/default_tenant/databases/default_database/"
+                "tenants/default_tenant/databases/default_database/"
                 f"collections/{collection_id}/add"
             )
 
