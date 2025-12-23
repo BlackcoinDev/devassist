@@ -45,9 +45,11 @@ from src.vectordb import get_space_collection_name
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 import requests
+import sys
 from src.core.context import get_context, set_mcp_client
 from src.core.config import get_config, get_logger
 from src.mcp.client import MCPClient
+from src.core.chat_loop import ChatLoop
 
 # Standard library imports (kept for backwards compatibility and test mocking)
 from datetime import datetime  # Timestamps for learned knowledge
@@ -464,8 +466,50 @@ def handle_populate_command(dir_path: str):
 
 
 def run_main_chat_loop() -> bool:
-    """Run the main chat loop."""
-    # Implementation would be the main loop
+    """Run the main interactive chat loop."""
+    print("\n" + "=" * 60)
+    print("      AI Assistant Chat Interface v0.3.0")
+    print("=" * 60)
+    print(f"📍 Python: {sys.version.split()[0]} | Model: {_config.model_name}")
+    print(f"🌐 Space: {get_context().current_space}")
+    print("\nHello! I'm ready to help you. Type /help for commands.")
+    print("Type 'quit', 'exit', or 'q' to exit.\n")
+
+    chat_orchestrator = ChatLoop()
+
+    while True:
+        try:
+            # Get user input
+            user_input = input("You: ").strip()
+
+            if not user_input:
+                continue
+
+            # Check for exit commands
+            if user_input.lower() in ["quit", "exit", "q"]:
+                print("\n👋 Goodbye! Your conversation has been saved.\n")
+                break
+
+            # Handle slash commands
+            if user_input.startswith("/"):
+                handle_slash_command(user_input)
+                continue
+
+            # Process regular message through agentic loop
+            print("\n🤖 AI Assistant: ", end="", flush=True)
+            response = chat_orchestrator.run_iteration(user_input)
+            print(f"{response}\n")
+
+        except KeyboardInterrupt:
+            print("\n\n👋 Interrupted. Goodbye!\n")
+            break
+        except EOFError:
+            print("\n\n👋 Connection closed. Goodbye!\n")
+            break
+        except Exception as e:
+            logger.error(f"Error in chat loop: {e}")
+            print(f"\n❌ Error: {e}\n")
+
     return True
 
 

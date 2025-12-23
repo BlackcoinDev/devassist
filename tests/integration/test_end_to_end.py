@@ -33,12 +33,15 @@ class TestEndToEnd(unittest.TestCase):
     """Test end-to-end application flows."""
 
     @patch("src.main.initialize_application")
+    @patch("src.main.ChatLoop")
     @patch("builtins.input")
     @patch("builtins.print")
-    def test_basic_session_flow(self, mock_print, mock_input, mock_init):
+    def test_basic_session_flow(self, mock_print, mock_input, mock_chat_loop, mock_init):
         """Test application initialization and basic functionality."""
         # 1. Setup mocks for current architecture
         mock_init.return_value = True
+        mock_input.side_effect = ["Hi", "exit"]
+        mock_chat_loop.return_value.run_iteration.return_value = "Mock response"
 
         # 2. Test that main() runs without errors
         result = main()
@@ -49,10 +52,12 @@ class TestEndToEnd(unittest.TestCase):
         mock_init.assert_called_once()  # initialize_application should be called
 
     @patch("src.main.initialize_application")
+    @patch("src.main.handle_slash_command")
     @patch("builtins.input")
-    def test_slash_command_flow(self, mock_input, mock_init):
+    def test_slash_command_flow(self, mock_input, mock_slash, mock_init):
         """Test application responds to initialization request."""
         mock_init.return_value = True
+        mock_input.side_effect = ["/help", "exit"]
 
         # Test that main() runs without errors
         result = main()
@@ -60,12 +65,14 @@ class TestEndToEnd(unittest.TestCase):
         # Verify basic functionality
         assert result is True
         mock_init.assert_called_once()
+        mock_slash.assert_called_once()
 
     @patch("src.main.initialize_application")
     @patch("builtins.input")
     def test_empty_input_handling(self, mock_input, mock_init):
         """Test application handles empty input gracefully."""
         mock_init.return_value = True
+        mock_input.side_effect = ["", "exit"]
 
         # Test that main() runs without errors even with empty input
         result = main()

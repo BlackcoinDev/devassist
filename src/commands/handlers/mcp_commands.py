@@ -7,6 +7,7 @@ from src.core.context import get_mcp_client
 
 logger = logging.getLogger(__name__)
 
+
 @CommandRegistry.register("mcp", "Manage Model Context Protocol servers (list, connect)", category="system")
 def handle_mcp_command(args: str) -> None:
     """
@@ -21,7 +22,7 @@ def handle_mcp_command(args: str) -> None:
 
     parts = args.split(maxsplit=1)
     subcommand = parts[0].lower()
-    
+
     client = get_mcp_client()
     if not client:
         print("❌ MCP Client not initialized.")
@@ -34,7 +35,7 @@ def handle_mcp_command(args: str) -> None:
             print(f"🔌 Connected Servers: {len(client.servers)}")
             for name in client.servers:
                 print(f"  - {name}")
-                
+
             tools = client.tools
             if not tools:
                 print("No tools discovered.")
@@ -47,7 +48,7 @@ def handle_mcp_command(args: str) -> None:
         if len(parts) < 2:
             print("Usage: /mcp connect <server_name>")
             return
-        
+
         server_name = parts[1]
         print(f"Re-initializing MCP to connect to {server_name}...")
         client.initialize_sync()

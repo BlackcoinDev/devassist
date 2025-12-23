@@ -112,7 +112,7 @@ class ToolRegistry:
     @classmethod
     def execute(cls, name: str, args: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Execute a registered tool.
+        Execute a registered tool with approval checking.
 
         Args:
             name: Tool name
@@ -126,6 +126,27 @@ class ToolRegistry:
         executor = cls._tools.get(name)
         if executor is None:
             return {"error": f"Unknown tool: {name}"}
+
+        # Check approval
+        try:
+            from src.tools.approval import ToolApprovalManager
+            approval_manager = ToolApprovalManager()
+            mode = approval_manager.check_approval(name, args)
+
+            if mode == "never":
+                return {"error": f"Execution of tool '{name}' is blocked by security policy."}
+
+            if mode == "ask":
+                # Special return value to signal the UI/CLI to ask for confirmation
+                return {
+                    "requires_confirmation": True,
+                    "tool_name": name,
+                    "tool_args": args
+                }
+        except Exception as e:
+            logger.error(f"Approval check failed for tool '{name}': {e}")
+            # Safe default: if approval check fails, don't execute automatically
+            return {"error": f"Security validation error: {e}"}
 
         if cfg and cfg.show_tool_details:
             # Truncate args for display

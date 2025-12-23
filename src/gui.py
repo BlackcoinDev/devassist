@@ -58,10 +58,10 @@ from PyQt6.QtWidgets import (
     QLabel,
 )
 from PyQt6.QtGui import QPalette, QColor, QTextCursor
-from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer
+from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer, QWaitCondition, QMutex
 from datetime import datetime
 from typing import List, cast, Any
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import BaseMessage, SystemMessage
 
 # Type alias for conversation history
 ConversationHistory = List[BaseMessage]
@@ -109,112 +109,66 @@ class AIWorker(QThread):
     response_ready = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
     finished = pyqtSignal()
+    confirmation_required = pyqtSignal(str, dict)  # tool_name, args
 
     def __init__(self, user_input):
         super().__init__()
         self.user_input = user_input
+        self._mutex = QMutex()
+        self._wait_condition = QWaitCondition()
+        self._confirmation_result = False
+
+    def ask_confirmation(self, tool_name: str, args: dict) -> bool:
+        """Called by ChatLoop to request user approval."""
+        self._mutex.lock()
+        self.confirmation_required.emit(tool_name, args)
+        self._wait_condition.wait(self._mutex)
+        result = self._confirmation_result
+        self._mutex.unlock()
+        return result
+
+    def set_confirmation_result(self, approved: bool):
+        """Called by GUI thread to resume worker."""
+        self._mutex.lock()
+        self._confirmation_result = approved
+        self._wait_condition.wakeAll()
+        self._mutex.unlock()
 
     def run(self):
         try:
-            # Import configuration and core functions
-            # These are used in various methods throughout the class
-            from src.storage.memory import save_memory
-            from src.main import (
-                get_relevant_context,
-                get_llm,
-                get_vectorstore,
-                CONTEXT_MODE,
-                conversation_history,
-                MAX_HISTORY_PAIRS,
-                VERBOSE_LOGGING,
-            )
-            from src.storage.memory import trim_history
+            from src.core.chat_loop import ChatLoop
+            from src.main import get_llm
 
             if not BACKEND_AVAILABLE:
-                logger.error("AIWorker: Backend not available")
-                self.response_ready.emit(
-                    "❌ Backend not available. Please run main.py first to set up the environment."
-                )
+                self.error_occurred.emit("❌ Backend not available.")
                 return
 
-            current_llm = get_llm()
-            if current_llm is None:
-                logger.error("AIWorker: LLM not available")
-                self.response_ready.emit(
-                    "❌ LLM not available. Please ensure LM Studio is running with a model loaded."
-                )
+            if get_llm() is None:
+                self.error_occurred.emit("❌ LLM not available.")
                 return
 
-            # Add user message to history
-            conversation_history.append(
-                cast(HumanMessage, HumanMessage(content=self.user_input))
-            )
+            orchestrator = ChatLoop(confirmation_callback=self.ask_confirmation)
+            response_content = orchestrator.run_iteration(self.user_input)
 
-            # Get context if available
-            current_vectorstore = get_vectorstore()
-            context = (
-                get_relevant_context(self.user_input) if current_vectorstore else ""
-            )
+            self.response_ready.emit(response_content)
 
-            # Simple context integration (can be enhanced)
-            if context and CONTEXT_MODE != "off":
-                # Add context to conversation
-                conversation_history.append(
-                    cast(HumanMessage, HumanMessage(content=f"Context: {context}"))
-                )
-                if VERBOSE_LOGGING:
-                    logger.info(f"Added context to conversation ({len(context)} chars)")
-
-            # Generate response
-            response = current_llm.invoke(conversation_history)
-            conversation_history.append(
-                cast(AIMessage, AIMessage(content=response.content))
-            )
-            self.response_ready.emit(response.content)
-
-            # Trim conversation history to prevent memory bloat
-            trimmed = trim_history(conversation_history, MAX_HISTORY_PAIRS)
-            conversation_history[:] = cast(List[BaseMessage], trimmed)
-
-            # Auto-save conversation
-            save_memory(conversation_history)
-
-            # MEM0 TEACHING (Background Thread) - Store user input as memory
+            # MEM0 TEACHING (Background Thread)
             from src.main import user_memory
-
             if user_memory:
-
                 def run_mem0_add(text):
                     try:
-                        if user_memory is not None:
-                            # Mem0 expects messages as list of dicts with
-                            # role/content
-                            messages = [{"role": "user", "content": text}]
-                            user_memory.add(messages, user_id="default_user")
-                            if VERBOSE_LOGGING:
-                                logger.info(
-                                    f"Mem0: Stored memory from GUI: '{text[:50]}...'"
-                                )
-                    except Exception as ex:
-                        # Only log Mem0 errors if verbose logging is enabled
-                        if VERBOSE_LOGGING:
-                            logger.warning(f"Mem0 GUI background add failed: {ex}")
-
-                # Run learning in background to not block GUI
+                        messages = [{"role": "user", "content": text}]
+                        user_memory.add(messages, user_id="default_user")
+                    except Exception:
+                        pass
                 import threading
-
                 threading.Thread(target=run_mem0_add, args=(self.user_input,)).start()
 
-            if VERBOSE_LOGGING:
-                logger.info(
-                    f"AIWorker: Successfully processed response ({
-                        len(response.content)
-                    } chars)"
-                )
-
         except Exception as e:
-            logger.error(f"AIWorker: Error processing request: {e}")
-            self.error_occurred.emit(f"Error: {str(e)}")
+            logger.error(f"AIWorker Error: {e}")
+            self.error_occurred.emit(str(e))
+        finally:
+            self.finished.emit()
 
 
 class PopulateWorker(QThread):
@@ -330,7 +284,7 @@ class PopulateWorker(QThread):
 
                 try:
                     for i in range(0, total_chunks, batch_size):
-                        batch = all_docs[i : i + batch_size]
+                        batch = all_docs[i: i + batch_size]
                         batch_number = (i // batch_size) + 1
                         total_batches = (total_chunks + batch_size - 1) // batch_size
 
@@ -385,7 +339,8 @@ class AIAssistantGUI(QMainWindow):
 
     AI INTEGRATION:
     ===============
-     - Full access to all 13 AI tools (read_file, write_file, parse_document, search_web, shell_execute, git_status, git_diff, git_log, code_search, etc.)
+     - Full access to all 13 AI tools (read_file, write_file, parse_document,
+       search_web, shell_execute, git_status, git_diff, git_log, etc.)
     - Autonomous tool calling based on natural language understanding
     - Context-aware conversations using ChromaDB knowledge base
     - Document processing with qwen3-vl-30b multimodal analysis
@@ -1086,6 +1041,7 @@ class AIAssistantGUI(QMainWindow):
             self.worker.response_ready.connect(self.on_response_chunk)
             self.worker.error_occurred.connect(self.on_error)
             self.worker.finished.connect(self.on_processing_finished)
+            self.worker.confirmation_required.connect(self.handle_confirmation)
             self.worker.start()
         except Exception as e:
             print(f"ERROR in send_message: {e}")
@@ -1096,6 +1052,27 @@ class AIAssistantGUI(QMainWindow):
             self.input_field.setEnabled(True)
             self.send_button.setEnabled(True)
             self.status_label.setText("Error")
+
+    def handle_confirmation(self, tool_name: str, args: dict):
+        """Show a dialog to confirm tool execution."""
+        from PyQt6.QtWidgets import QMessageBox
+
+        msg = "<b>Security Approval Required</b><br><br>"
+        msg += f"The AI wants to use the tool: <code>{tool_name}</code><br>"
+        msg += f"Arguments: <code>{args}</code><br><br>"
+        msg += "Do you want to allow this action?"
+
+        reply = QMessageBox.question(
+            self,
+            "Tool Execution Approval",
+            msg,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        approved = reply == QMessageBox.StandardButton.Yes
+        if self.worker:
+            self.worker.set_confirmation_result(approved)
 
     def send_command(self, command):
         """Send a slash command."""

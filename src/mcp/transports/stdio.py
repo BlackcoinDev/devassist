@@ -10,6 +10,7 @@ from .base import Transport
 
 logger = logging.getLogger(__name__)
 
+
 class StdioTransport(Transport):
     """Transport over standard input/output of a subprocess."""
 
@@ -50,7 +51,7 @@ class StdioTransport(Transport):
         """Send message to subprocess stdin."""
         if not self.process or not self.process.stdin:
             raise ConnectionError("Not connected")
-        
+
         try:
             json_str = json.dumps(message) + "\n"
             self.process.stdin.write(json_str.encode("utf-8"))

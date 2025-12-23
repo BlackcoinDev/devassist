@@ -57,8 +57,10 @@ class TestToolCallExecution:
         """Set up tests by ensuring tools are registered."""
         ensure_tools_registered()
 
-    def test_execute_read_file_tool(self):
+    @patch("src.tools.approval.ToolApprovalManager")
+    def test_execute_read_file_tool(self, mock_approval):
         """Test executing read_file tool call."""
+        mock_approval.return_value.check_approval.return_value = "always"
         tool_call = {
             "id": "test_123",
             "name": "read_file",
@@ -75,8 +77,10 @@ class TestToolCallExecution:
             assert result["result"]["success"] is True
             mock_execute.assert_called_once_with(file_path="test.txt")
 
-    def test_execute_write_file_tool(self):
+    @patch("src.tools.approval.ToolApprovalManager")
+    def test_execute_write_file_tool(self, mock_approval):
         """Test executing write_file tool call."""
+        mock_approval.return_value.check_approval.return_value = "always"
         tool_call = {
             "id": "test_456",
             "name": "write_file",
@@ -93,8 +97,10 @@ class TestToolCallExecution:
                 file_path="output.txt", content="new content"
             )
 
-    def test_execute_list_directory_tool(self):
+    @patch("src.tools.approval.ToolApprovalManager")
+    def test_execute_list_directory_tool(self, mock_approval):
         """Test executing list_directory tool call."""
+        mock_approval.return_value.check_approval.return_value = "always"
         tool_call = {
             "id": "test_789",
             "name": "list_directory",
@@ -109,9 +115,11 @@ class TestToolCallExecution:
             assert result["result"]["success"] is True
             mock_execute.assert_called_once_with(directory_path="/tmp")
 
-    def test_execute_get_current_directory_tool(self):
+    @patch("src.tools.approval.ToolApprovalManager")
+    def test_execute_get_current_directory_tool(self, mock_approval):
         """Test executing get_current_directory tool call."""
-        tool_call = {"id": "test_cwd", "name": "get_current_directory", "args": {}}
+        mock_approval.return_value.check_approval.return_value = "always"
+        tool_call = {"id": "test_789", "name": "get_current_directory", "args": {}}
 
         mock_execute = MagicMock(
             return_value={"success": True, "current_directory": "/home/user"}
@@ -123,8 +131,10 @@ class TestToolCallExecution:
             assert result["result"]["success"] is True
             mock_execute.assert_called_once()
 
-    def test_execute_parse_document_tool(self):
+    @patch("src.tools.approval.ToolApprovalManager")
+    def test_execute_parse_document_tool(self, mock_approval):
         """Test executing parse_document tool call."""
+        mock_approval.return_value.check_approval.return_value = "always"
         tool_call = {
             "id": "test_doc",
             "name": "parse_document",
@@ -143,8 +153,10 @@ class TestToolCallExecution:
                 file_path="document.pdf", extract_type="text"
             )
 
-    def test_execute_learn_information_tool(self):
+    @patch("src.tools.approval.ToolApprovalManager")
+    def test_execute_learn_information_tool(self, mock_approval):
         """Test executing learn_information tool call."""
+        mock_approval.return_value.check_approval.return_value = "always"
         tool_call = {
             "id": "test_learn",
             "name": "learn_information",
@@ -161,8 +173,10 @@ class TestToolCallExecution:
             assert result["result"]["success"] is True
             mock_execute.assert_called_once_with(information="Python is great")
 
-    def test_execute_search_knowledge_tool(self):
+    @patch("src.tools.approval.ToolApprovalManager")
+    def test_execute_search_knowledge_tool(self, mock_approval):
         """Test executing search_knowledge tool call."""
+        mock_approval.return_value.check_approval.return_value = "always"
         tool_call = {
             "id": "test_search",
             "name": "search_knowledge",
@@ -177,8 +191,10 @@ class TestToolCallExecution:
             assert result["result"]["success"] is True
             mock_execute.assert_called_once_with(query="Python basics", limit=3)
 
-    def test_execute_search_web_tool(self):
+    @patch("src.tools.approval.ToolApprovalManager")
+    def test_execute_search_web_tool(self, mock_approval):
         """Test executing search_web tool call."""
+        mock_approval.return_value.check_approval.return_value = "always"
         tool_call = {
             "id": "test_web",
             "name": "search_web",

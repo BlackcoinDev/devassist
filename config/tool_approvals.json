@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "approvals": {
+    "read_file": "always",
+    "git_status": "always",
+    "git_log": "always",
+    "git_diff": "always",
+    "code_search": "always",
+    "get_current_directory": "always",
+    "list_directory": "always",
+    "search_knowledge": "always",
+    "search_web": "always",
+    "parse_document": "always",
+    "write_file": "ask",
+    "shell_execute": "ask",
+    "learn_information": "always",
+    "mcp_*": "ask"
+  },
+  "defaults": {
+    "builtin": "always",
+    "mcp": "ask"
+  }
+}

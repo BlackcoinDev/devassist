@@ -2,7 +2,8 @@
 Base transport classes for MCP.
 """
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, AsyncIterator
+from typing import Any, Dict, Optional
+
 
 class Transport(ABC):
     """Abstract base class for MCP transports."""

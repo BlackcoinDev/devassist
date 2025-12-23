@@ -9,16 +9,17 @@ within a synchronous application.
 import asyncio
 import json
 import logging
-import os
 import threading
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from pathlib import Path
 
 from src.mcp.transports.stdio import StdioTransport
 from src.mcp.transports.http import HttpTransport
+from src.mcp.transports.base import Transport
 from src.tools.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
+
 
 class MCPClient:
     """
@@ -26,10 +27,10 @@ class MCPClient:
     """
 
     def __init__(self):
-        self.servers: Dict[str, Any] = {} # name -> transport
+        self.servers: Dict[str, Any] = {}  # name -> transport
         self.tools: Dict[str, Dict] = {}  # mcp_server_tool -> definition
         self.config_path = Path("config/mcp_servers.json")
-        
+
         # Start background loop
         self._loop = asyncio.new_event_loop()
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
@@ -57,11 +58,11 @@ class MCPClient:
         try:
             with open(self.config_path, 'r') as f:
                 config = json.load(f)
-            
+
             for server_conf in config.get("servers", []):
                 if server_conf.get("enabled", False):
                     await self.connect_server(server_conf)
-                    
+
         except Exception as e:
             logger.error(f"Error initializing MCP client: {e}")
 
@@ -69,9 +70,9 @@ class MCPClient:
         """Connect to a single server and register its tools."""
         name = config["name"]
         transport_type = config.get("transport", "stdio")
-        
+
         try:
-            transport = None
+            transport: Optional[Transport] = None
             if transport_type == "stdio":
                 transport = StdioTransport(
                     command=config["command"],
@@ -83,15 +84,15 @@ class MCPClient:
                     url=config["url"],
                     headers=config.get("headers")
                 )
-            
+
             if transport:
                 await transport.connect()
                 self.servers[name] = transport
                 logger.info(f"✅ Connected to MCP server: {name}")
-                
+
                 # Discover tools
                 await self._discover_tools(name, transport)
-                
+
         except Exception as e:
             logger.error(f"Failed to connect to MCP server {name}: {e}")
 
@@ -104,27 +105,27 @@ class MCPClient:
             "id": 1,
             "params": {}
         }
-        
+
         await transport.send_message(request)
         response = await transport.receive_message()
-        
+
         if response and "result" in response:
             tools = response["result"].get("tools", [])
             for tool in tools:
                 tool_name = tool["name"]
                 prefixed_name = f"mcp_{server_name}_{tool_name}"
-                
+
                 # Register locally for tracking
                 self.tools[prefixed_name] = tool
-                
+
                 # Register with ToolRegistry
                 self._register_tool(prefixed_name, tool, server_name, tool_name)
-                
+
                 logger.info(f"   🔧 Discovered tool: {prefixed_name}")
 
     def _register_tool(self, registered_name: str, tool_def: Dict, server_name: str, original_name: str):
         """Register tool with ToolRegistry."""
-        
+
         # Create execution wrapper
         def executor(**kwargs):
             # Run in the background loop
@@ -136,17 +137,17 @@ class MCPClient:
 
         # Update definition to include function name if missing
         if "function" not in tool_def:
-             # Convert MCP tool def to OpenAI def if needed
-             # MCP: {name, description, inputSchema}
-             # OpenAI: {type: function, function: {name, description, parameters}}
-             openai_def = {
-                 "type": "function",
-                 "function": {
-                     "name": registered_name,
-                     "description": tool_def.get("description", ""),
-                     "parameters": tool_def.get("inputSchema", {})
-                 }
-             }
+            # Convert MCP tool def to OpenAI def if needed
+            # MCP: {name, description, inputSchema}
+            # OpenAI: {type: function, function: {name, description, parameters}}
+            openai_def = {
+                "type": "function",
+                "function": {
+                    "name": registered_name,
+                    "description": tool_def.get("description", ""),
+                    "parameters": tool_def.get("inputSchema", {})
+                }
+            }
         else:
             openai_def = tool_def
 
@@ -168,10 +169,10 @@ class MCPClient:
                 "arguments": args
             }
         }
-        
+
         await transport.send_message(request)
         response = await transport.receive_message()
-        
+
         if response and "result" in response:
             return response["result"]
         elif response and "error" in response:
@@ -190,10 +191,10 @@ class MCPClient:
 
         # 2. Stop loop
         self._loop.call_soon_threadsafe(self._loop.stop)
-        
+
         # 3. Join thread
         if self._thread.is_alive() and threading.current_thread() != self._thread:
-             self._thread.join(timeout=2)
+            self._thread.join(timeout=2)
 
     async def _cleanup(self):
         """Async cleanup of transports."""
