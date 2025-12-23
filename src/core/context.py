@@ -94,6 +94,7 @@ class ApplicationContext:
     embeddings: Optional[Any] = None
     chroma_client: Optional[Any] = None
     user_memory: Optional[Any] = None
+    mcp_client: Optional[Any] = None
 
     # Database (initialized during startup)
     db_conn: Optional[Any] = None
@@ -256,6 +257,17 @@ def set_user_memory(value: Any) -> None:
     """Set the user memory (Mem0) instance in context."""
     get_context().user_memory = value
     _log_component_set("Mem0 user memory", value)
+
+
+def get_mcp_client() -> Optional[Any]:
+    """Get the MCP client from context."""
+    return get_context().mcp_client
+
+
+def set_mcp_client(value: Any) -> None:
+    """Set the MCP client in context."""
+    get_context().mcp_client = value
+    _log_component_set("MCP client", value)
 
 
 def get_db_conn() -> Optional[Any]:

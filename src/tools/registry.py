@@ -94,6 +94,22 @@ class ToolRegistry:
         return decorator
 
     @classmethod
+    def register_dynamic(cls, name: str, definition: Dict, executor: Callable) -> None:
+        """
+        Register a tool dynamically at runtime.
+
+        Args:
+            name: Tool name
+            definition: OpenAI function definition
+            executor: Callable to execute the tool
+        """
+        cls._tools[name] = executor
+        cls._definitions[name] = definition
+        cfg = _get_config()
+        if cfg and cfg.show_tool_details:
+            logger.debug(f"🔧 Registered dynamic tool: {name}")
+
+    @classmethod
     def execute(cls, name: str, args: Dict[str, Any]) -> Dict[str, Any]:
         """
         Execute a registered tool.

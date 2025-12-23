@@ -45,8 +45,9 @@ from src.vectordb import get_space_collection_name
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 import requests
-from src.core.context import get_context
+from src.core.context import get_context, set_mcp_client
 from src.core.config import get_config, get_logger
+from src.mcp.client import MCPClient
 
 # Standard library imports (kept for backwards compatibility and test mocking)
 from datetime import datetime  # Timestamps for learned knowledge
@@ -429,12 +430,28 @@ def initialize_user_memory():
         return False
 
 
+def initialize_mcp() -> bool:
+    """Initialize MCP client."""
+    try:
+        ctx = get_context()
+        if ctx.mcp_client is None:
+            logger.info("Initializing MCP Client...")
+            client = MCPClient()
+            client.initialize_sync()
+            set_mcp_client(client)
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to initialize MCP: {e}")
+        return False
+
+
 def initialize_application() -> bool:
     """Initialize the entire application."""
     try:
         initialize_llm()
         initialize_vectordb()
         initialize_user_memory()
+        initialize_mcp()
         return True
     except Exception:
         return False
