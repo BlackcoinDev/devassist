@@ -32,6 +32,11 @@ from typing import List
 from src.commands.registry import CommandRegistry
 from src.tools.executors.system_tools import execute_code_search
 
+__all__ = [
+    "handle_search",
+    "handle_shell",
+]
+
 # =============================================================================
 # COMMAND HANDLERS
 # =============================================================================
@@ -41,7 +46,7 @@ from src.tools.executors.system_tools import execute_code_search
     "search",
     "Search code with ripgrep",
     category="system",
-    aliases=["grep", "rg", "find-code"]
+    aliases=["grep", "rg", "find-code"],
 )
 def handle_search(args: List[str]) -> None:
     """
@@ -175,7 +180,7 @@ def handle_search(args: List[str]) -> None:
     "shell",
     "Execute shell command (use with caution)",
     category="system",
-    aliases=["sh", "exec", "run"]
+    aliases=["sh", "exec", "run"],
 )
 def handle_shell(args: List[str]) -> None:
     """
@@ -208,6 +213,7 @@ def handle_shell(args: List[str]) -> None:
 
     # Check if running in GUI mode
     import os
+
     if os.getenv("DEVASSIST_INTERFACE", "cli").lower() == "gui":
         print("\n❌ Shell execution is disabled in GUI mode for security.\n")
         return

@@ -34,6 +34,10 @@ from datetime import datetime
 from src.commands.registry import CommandRegistry
 from src.core.context import get_context
 
+__all__ = [
+    "handle_export",
+]
+
 # =============================================================================
 # COMMAND HANDLERS
 # =============================================================================

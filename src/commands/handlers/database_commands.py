@@ -40,13 +40,18 @@ from src.vectordb import get_space_collection_name
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "handle_vectordb",
+]
 
 # =============================================================================
 # COMMAND HANDLERS
 # =============================================================================
 
 
-@CommandRegistry.register("vectordb", "Show vector database contents", category="database")
+@CommandRegistry.register(
+    "vectordb", "Show vector database contents", category="database"
+)
 def handle_vectordb(args: List[str]) -> None:
     """Display vector database contents."""
     """

@@ -33,10 +33,19 @@ from typing import List
 from src.commands.registry import CommandRegistry
 from src.core.context import get_context
 from src.core.config import get_config
-from src.vectordb import list_spaces, switch_space, delete_space, get_space_collection_name
+from src.vectordb import (
+    list_spaces,
+    switch_space,
+    delete_space,
+    get_space_collection_name,
+)
 
 logger = logging.getLogger(__name__)
 _config = get_config()
+
+__all__ = [
+    "handle_space",
+]
 
 # =============================================================================
 # COMMAND HANDLERS
@@ -96,7 +105,9 @@ def handle_space(args: List[str]) -> None:
 
         if switch_space(new_space):
             if _config.verbose_logging:
-                logger.info(f"   ✅ Created space with collection: {get_space_collection_name(new_space)}")
+                logger.info(
+                    f"   ✅ Created space with collection: {get_space_collection_name(new_space)}"
+                )
             print(f"\n✅ Created and switched to space: {new_space}")
             print(f"Collection: {get_space_collection_name(new_space)}\n")
         else:
@@ -120,7 +131,9 @@ def handle_space(args: List[str]) -> None:
 
         if switch_space(target_space):
             if _config.verbose_logging:
-                logger.info(f"   ✅ Switched to collection: {get_space_collection_name(target_space)}")
+                logger.info(
+                    f"   ✅ Switched to collection: {get_space_collection_name(target_space)}"
+                )
             print(f"\n✅ Switched to space: {target_space}")
             print(f"Collection: {get_space_collection_name(target_space)}\n")
         else:

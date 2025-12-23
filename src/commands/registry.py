@@ -32,11 +32,17 @@ from typing import Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "CommandRegistry",
+    "register_command",
+]
+
 
 def _get_config():
     """Lazily get config to avoid circular imports."""
     try:
         from src.core.config import get_config
+
         return get_config()
     except Exception:
         return None
@@ -68,7 +74,7 @@ class CommandRegistry:
         name: str,
         description: str = "",
         category: str = "general",
-        aliases: Optional[List[str]] = None
+        aliases: Optional[List[str]] = None,
     ) -> Callable:
         """
         Decorator to register a command handler.
@@ -87,6 +93,7 @@ class CommandRegistry:
             def handle_help(args):
                 ...
         """
+
         def decorator(func: Callable) -> Callable:
             cls._commands[name] = func
             cls._descriptions[name] = description
@@ -107,6 +114,7 @@ class CommandRegistry:
                 logger.debug(f"📋 Registered command: /{name}{alias_str}")
 
             return func
+
         return decorator
 
     @classmethod
@@ -178,7 +186,7 @@ def register_command(
     name: str,
     description: str = "",
     category: str = "general",
-    aliases: Optional[List[str]] = None
+    aliases: Optional[List[str]] = None,
 ) -> Callable:
     """
     Convenience function for registering commands.

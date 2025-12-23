@@ -36,6 +36,12 @@ from src.core.context import get_context
 from src.core.config import get_config
 from src.storage.memory import save_memory
 
+__all__ = [
+    "handle_memory",
+    "handle_clear",
+    "handle_mem0",
+]
+
 # =============================================================================
 # COMMAND HANDLERS
 # =============================================================================
@@ -50,9 +56,7 @@ def handle_memory(args: List[str]) -> None:
         print("\n📝 No conversation history available.\n")
         return
 
-    print(
-        f"\n📝 Conversation History ({len(ctx.conversation_history)} messages):\n"
-    )
+    print(f"\n📝 Conversation History ({len(ctx.conversation_history)} messages):\n")
     for i, msg in enumerate(ctx.conversation_history):
         msg_type = type(msg).__name__.replace("Message", "")
         content = str(msg.content)
@@ -74,7 +78,9 @@ def handle_clear(args: List[str]) -> None:
         print("\nConversation memory cleared. Starting fresh.\n")
 
         # Add a new system message for the fresh start
-        ctx.conversation_history = cast(List[BaseMessage], [SystemMessage(content="Lets get some coding done..")])
+        ctx.conversation_history = cast(
+            List[BaseMessage], [SystemMessage(content="Lets get some coding done..")]
+        )
         save_memory(ctx.conversation_history)
     else:
         print("\n❌ Clear cancelled\n")

@@ -32,6 +32,13 @@ import os
 from typing import List
 from src.commands.registry import CommandRegistry
 
+__all__ = [
+    "handle_read",
+    "handle_write",
+    "handle_list",
+    "handle_pwd",
+]
+
 # =============================================================================
 # COMMAND HANDLERS
 # =============================================================================

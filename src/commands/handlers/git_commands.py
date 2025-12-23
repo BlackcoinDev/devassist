@@ -36,16 +36,19 @@ from src.tools.executors.git_tools import (
     execute_git_log,
 )
 
+__all__ = [
+    "handle_git_status",
+    "handle_git_log",
+    "handle_git_diff",
+]
+
 # =============================================================================
 # COMMAND HANDLERS
 # =============================================================================
 
 
 @CommandRegistry.register(
-    "git-status",
-    "Show git repository status",
-    category="git",
-    aliases=["gs", "status"]
+    "git-status", "Show git repository status", category="git", aliases=["gs", "status"]
 )
 def handle_git_status(args: List[str]) -> None:
     """Handle /git-status command to show repository status."""
@@ -89,14 +92,13 @@ def handle_git_status(args: List[str]) -> None:
                 print(f"   ... and {len(untracked) - 10} more")
 
     print("-" * 50)
-    print(f"📊 Summary: {len(staged)} staged, {len(unstaged)} unstaged, {len(untracked)} untracked\n")
+    print(
+        f"📊 Summary: {len(staged)} staged, {len(unstaged)} unstaged, {len(untracked)} untracked\n"
+    )
 
 
 @CommandRegistry.register(
-    "git-log",
-    "Show git commit history",
-    category="git",
-    aliases=["gl", "log"]
+    "git-log", "Show git commit history", category="git", aliases=["gl", "log"]
 )
 def handle_git_log(args: List[str]) -> None:
     """
@@ -156,10 +158,7 @@ def handle_git_log(args: List[str]) -> None:
 
 
 @CommandRegistry.register(
-    "git-diff",
-    "Show git diff",
-    category="git",
-    aliases=["gd", "diff"]
+    "git-diff", "Show git diff", category="git", aliases=["gd", "diff"]
 )
 def handle_git_diff(args: List[str]) -> None:
     """

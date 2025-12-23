@@ -32,6 +32,11 @@ from typing import List
 from src.commands.registry import CommandRegistry
 from src.core.config import get_config
 
+__all__ = [
+    "handle_help",
+    "handle_model_info",
+]
+
 # =============================================================================
 # COMMAND HANDLERS
 # =============================================================================

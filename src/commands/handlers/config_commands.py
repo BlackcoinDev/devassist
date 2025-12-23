@@ -33,12 +33,20 @@ from src.commands.registry import CommandRegistry
 from src.core.context import get_context, set_context_mode, set_learning_mode
 from src.tools.approval import ToolApprovalManager
 
+__all__ = [
+    "handle_approve",
+    "handle_context",
+    "handle_learning",
+]
+
 # =============================================================================
 # COMMAND HANDLERS
 # =============================================================================
 
 
-@CommandRegistry.register("approve", "Set tool approval mode (ask, always, never)", category="config")
+@CommandRegistry.register(
+    "approve", "Set tool approval mode (ask, always, never)", category="config"
+)
 def handle_approve(args: List[str]) -> None:
     """Handle /approve command."""
     manager = ToolApprovalManager()
@@ -64,7 +72,9 @@ def handle_approve(args: List[str]) -> None:
     if manager.set_policy(tool_name, mode):
         print(f"\n✅ Approval policy for '{tool_name}' set to: {mode}\n")
     else:
-        print("\n❌ Failed to set policy. Valid modes: always, ask, never, auto-conservative, auto-permissive\n")
+        print(
+            "\n❌ Failed to set policy. Valid modes: always, ask, never, auto-conservative, auto-permissive\n"
+        )
 
 
 @CommandRegistry.register("context", "Control context integration", category="config")

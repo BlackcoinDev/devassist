@@ -1,14 +1,21 @@
 """
 MCP command handlers.
 """
+
 import logging
 from src.commands.registry import CommandRegistry
 from src.core.context import get_mcp_client
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "handle_mcp_command",
+]
 
-@CommandRegistry.register("mcp", "Manage Model Context Protocol servers (list, connect)", category="system")
+
+@CommandRegistry.register(
+    "mcp", "Manage Model Context Protocol servers (list, connect)", category="system"
+)
 def handle_mcp_command(args: str) -> None:
     """
     Handle /mcp command.

@@ -108,6 +108,14 @@ def _get_bool(name: str, default: bool = False) -> bool:
     return os.getenv(name, str(default)).lower() == "true"
 
 
+__all__ = [
+    "Config",
+    "get_config",
+    "APP_VERSION",
+    "_ConfigProxy",
+]
+
+
 @dataclass
 class Config:
     """

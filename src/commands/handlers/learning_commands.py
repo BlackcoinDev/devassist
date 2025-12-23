@@ -38,12 +38,20 @@ from src.core.config import get_config
 logger = logging.getLogger(__name__)
 _config = get_config()
 
+__all__ = [
+    "handle_learn",
+    "handle_populate",
+    "handle_web",
+]
+
 # =============================================================================
 # COMMAND HANDLERS
 # =============================================================================
 
 
-@CommandRegistry.register("learn", "Add information to knowledge base", category="learning")
+@CommandRegistry.register(
+    "learn", "Add information to knowledge base", category="learning"
+)
 def handle_learn(args: List[str]) -> None:
     """Handle /learn command."""
     ctx = get_context()

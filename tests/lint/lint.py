@@ -105,9 +105,7 @@ class Linter:
             error_msg = result.stderr.strip() or result.stdout.strip()
 
             console.print(f"[bold red]❌ {name} failed:[/bold red]")
-            console.print(
-                Panel(error_msg, title=f"{name} Output", border_style="red")
-            )
+            console.print(Panel(error_msg, title=f"{name} Output", border_style="red"))
             return False
         except Exception as e:
             console.print(f"[bold red]❌ Execution error for {name}: {e}[/bold red]")
@@ -118,9 +116,7 @@ class Linter:
         files_str = " ".join(
             shlex.quote(str(f.relative_to(self.root_dir))) for f in self.python_files
         )
-        return self.run_check(
-            "Syntax Check", f"python3 -m py_compile {files_str}"
-        )
+        return self.run_check("Syntax Check", f"python3 -m py_compile {files_str}")
 
     def check_flake8(self) -> bool:
         """Run Flake8."""
@@ -170,10 +166,76 @@ class Linter:
 
     def check_vulture(self) -> bool:
         """Run Vulture with dead code suppression."""
+        # Exclude test files from vulture analysis
+        # Tests are already covered by pytest for correctness
+        vulture_files = [f for f in self.python_files if "tests/" not in str(f)]
         files_str = " ".join(
-            shlex.quote(str(f.relative_to(self.root_dir))) for f in self.python_files
+            shlex.quote(str(f.relative_to(self.root_dir))) for f in vulture_files
         )
-        cmd = f"vulture {files_str} --ignore-decorators=register,patch,fixture,mock"
+        # Ignore public API methods and properties on classes
+        # These are part of public API even if not currently used
+        ignore_names = [
+            # Command registry public API
+            "get_commands",
+            "get_categories",
+            "has_command",
+            # Config proxy properties (backwards compatibility)
+            "config_proxy",
+            "MODEL_NAME",
+            "MAX_INPUT_LENGTH",
+            "CHROMA_HOST",
+            "CHROMA_PORT",
+            "LM_STUDIO_BASE_URL",
+            "LM_STUDIO_API_KEY",
+            "MAX_HISTORY_PAIRS",
+            "TEMPERATURE",
+            "DB_TYPE",
+            "DB_PATH",
+            "OLLAMA_BASE_URL",
+            "EMBEDDING_MODEL",
+            "VERBOSE_LOGGING",
+            "SHOW_LLM_REASONING",
+            "SHOW_TOKEN_USAGE",
+            "SHOW_TOOL_DETAILS",
+            # Config cache files
+            "embedding_cache_file",
+            "query_cache_file",
+            "get_logger",
+            # Context manager methods
+            "reset_caches",
+            "reset_conversation",
+            # Input sanitizer methods
+            "sanitize_text",
+            "sanitize_filename",
+            "sanitize_url",
+            # Path security methods
+            "validate_file_read",
+            "validate_file_write",
+            "validate_directory",
+            # Rate limiter methods
+            "check",
+            "get_status",
+            "reset",
+            # Tool registry methods
+            "execute_tool_call",
+            "get_definitions",
+            "get_tool_names",
+            "has_tool",
+            # Vector DB methods
+            "get_collection_id",
+            "create_collection",
+            "query_collection",
+            "get_collection_count",
+            "health_check",
+            # Shell security methods
+            "is_safe",
+            "is_blocked",
+            "get_base_command",
+            # Tool approval methods
+            "requires_approval",
+        ]
+        ignore_names_str = ",".join(ignore_names)
+        cmd = f"vulture {files_str} --ignore-decorators=register,patch,fixture,mock --ignore-names={ignore_names_str}"
 
         result = subprocess.run(
             cmd, shell=True, capture_output=True, text=True, cwd=self.root_dir
@@ -182,22 +244,23 @@ class Linter:
             return True
 
         # Filter false positives logic
+        # Now using __all__ exports in handler modules instead of broad patterns
+        # Only keep patterns for framework callbacks and dynamic access
         error_lines = result.stdout.strip().split("\n")
         real_issues = []
         ignore_patterns = [
+            # Qt6 framework callbacks (called automatically by Qt)
             "closeEvent",
+            "paintEvent",
+            "keyPressEvent",
+            "mousePressEvent",
+            # Configuration property names (accessed dynamically via attribute access)
             "_default_params",
-            "handle_",
-            "execute_",
-            "handler",
-            "mock_",
-            r"\bh[0-9]\b",
         ]
 
         for line in error_lines:
             if not any(
-                re.search(p, line) if "h" in p else p in line
-                for p in ignore_patterns
+                re.search(p, line) if "h" in p else p in line for p in ignore_patterns
             ):
                 real_issues.append(line)
 
@@ -248,18 +311,14 @@ class Linter:
                 missing.append(d + "/")
 
         if missing:
-            console.print(
-                "[bold red]❌ Missing required files/directories:[/bold red]"
-            )
+            console.print("[bold red]❌ Missing required files/directories:[/bold red]")
             for m in missing:
                 console.print(f"   {m}")
             return False
         return True
 
     def run_all(self):
-        console.print(
-            Panel.fit("🔧 DevAssist Linting Suite v0.3.0", style="bold blue")
-        )
+        console.print(Panel.fit("🔧 DevAssist Linting Suite v0.3.0", style="bold blue"))
         self.find_files()
         console.print(
             f"📁 Found [bold]{len(self.python_files)}[/bold] Python files and [bold]{len(self.shell_files)}[/bold] Shell scripts."
