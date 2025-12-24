@@ -2,11 +2,11 @@
 MCP command handlers.
 """
 
-import logging
 from src.commands.registry import CommandRegistry
 from src.core.context import get_mcp_client
+from src.core.config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger()
 
 __all__ = [
     "handle_mcp_command",

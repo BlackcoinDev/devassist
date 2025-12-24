@@ -23,13 +23,25 @@
 """
 Tools module for DevAssist.
 
-This module provides the AI tool system including:
+This module provides a AI tool system including:
 - Tool registry for registration and execution
 - Tool definitions for LLM binding
 - Individual tool executor implementations
+
+Import this module to make all tools available for AI tool calling.
 """
 
 from src.tools.registry import ToolRegistry, register_tool
+
+# Import all tool executors to trigger registration
+# Each executor module uses @ToolRegistry.register() decorator which registers on import
+from src.tools.executors import file_tools
+from src.tools.executors import knowledge_tools
+from src.tools.executors import document_tools
+from src.tools.executors import web_tools
+from src.tools.executors import shell_tools
+from src.tools.executors import git_tools
+from src.tools.executors import system_tools
 
 __all__ = [
     "ToolRegistry",

@@ -47,11 +47,18 @@ APP_VERSION = "0.3.0"
 
 def _setup_logging() -> logging.Logger:
     """Configure structured logging for the application."""
-    # Set DEBUG level to show all verbose logging including debug messages
-    logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
     logger = logging.getLogger(__name__)
+
+    # Only configure logging if not already configured
+    # Check if root logger has any handlers
+    if not logging.getLogger().handlers:
+        logging.basicConfig(
+            level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+        )
+
+    # Ensure this logger has a handler
+    if not logger.handlers:
+        logger.addHandler(logging.StreamHandler())
 
     # Suppress verbose HTTP logging from external libraries
     for lib in [

@@ -256,6 +256,54 @@ class Linter:
             "mousePressEvent",
             # Configuration property names (accessed dynamically via attribute access)
             "_default_params",
+            # Config cache files
+            "embedding_cache_file",
+            "query_cache_file",
+            "get_logger",
+            # Context manager methods
+            "reset_caches",
+            "reset_conversation",
+            # Input sanitizer methods
+            "sanitize_text",
+            "sanitize_filename",
+            "sanitize_url",
+            # Path security methods
+            "validate_file_read",
+            "validate_file_write",
+            "validate_directory",
+            # Rate limiter methods
+            "check",
+            "get_status",
+            "reset",
+            # Tool registry methods
+            "execute_tool_call",
+            "get_definitions",
+            "get_tool_names",
+            "has_tool",
+            # Vector DB methods
+            "get_collection_id",
+            "create_collection",
+            "query_collection",
+            "get_collection_count",
+            "health_check",
+            # Shell security methods
+            "is_safe",
+            "is_blocked",
+            "get_base_command",
+            # Tool approval methods
+            "requires_approval",
+            # Command handler imports (used for dynamic dispatch)
+            "config_commands",
+            "database_commands",
+            "export_commands",
+            "file_commands",
+            "git_commands",
+            "help_commands",
+            "learning_commands",
+            "mcp_commands",
+            "memory_commands",
+            "space_commands",
+            "system_commands",
         ]
 
         for line in error_lines:

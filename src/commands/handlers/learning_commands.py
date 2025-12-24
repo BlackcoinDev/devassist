@@ -28,14 +28,13 @@ This module provides command handlers for learning information via
 /learn, bulk importing codebases via /populate, and learning from web pages.
 """
 
-import logging
 from typing import List
 from src.commands.registry import CommandRegistry
 from src.core.context import get_context
 from src.core.context_utils import add_to_knowledge_base
-from src.core.config import get_config
+from src.core.config import get_config, get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger()
 _config = get_config()
 
 __all__ = [
@@ -61,9 +60,7 @@ def handle_learn(args: List[str]) -> None:
 
     # Check if embeddings are available (needed for learning)
     if ctx.embeddings is None:
-        print(
-            "\nEmbeddings not available. Ollama is required for learning features.\n"
-        )
+        print("\nEmbeddings not available. Ollama is required for learning features.\n")
         return
 
     # Get content from args

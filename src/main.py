@@ -31,10 +31,23 @@ and document processing capabilities. Built specifically for the qwen3-vl-30b + 
 # =============================================================================
 # IMPORTS
 # =============================================================================
-# Command handlers - import to trigger auto-registration via decorators
+# Standard library imports
+import sys
+from datetime import datetime
+from typing import Optional
+
+# Third-party imports
+import requests  # noqa: F401
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
+
+# Application imports
+from src.core.config import get_config, get_logger
+from src.core.context import get_context, set_mcp_client
+from src.mcp.client import MCPClient
+from src.core.chat_loop import ChatLoop
 from src.commands import CommandRegistry
-# Import command handlers to trigger auto-registration via decorators
-from src.commands.handlers import (
+from src.commands.handlers import (  # noqa: F401 (side-effect imports for decorator registration)
     config_commands,
     database_commands,
     export_commands,
@@ -56,20 +69,9 @@ from src.storage import (
     cleanup_memory,
 )
 from src.vectordb import get_space_collection_name
-from urllib3.util.retry import Retry
-from requests.adapters import HTTPAdapter
-import requests
-import sys
-from src.core.context import get_context, set_mcp_client
-from src.core.config import get_config, get_logger
-from src.mcp.client import MCPClient
-from src.core.chat_loop import ChatLoop
 
-# Standard library imports (kept for backwards compatibility and test mocking)
-from datetime import datetime  # Timestamps for learned knowledge
-
-# Type hints for better code clarity
-from typing import Optional
+# Setup logging FIRST (before any other imports that use logging)
+logger = get_logger()
 
 
 # =============================================================================
@@ -86,9 +88,6 @@ from typing import Optional
 # Import configuration from dedicated module
 
 # Import application context (dependency injection)
-
-# Setup logging
-logger = get_logger()
 
 # Load configuration (validates all required env vars)
 _config = get_config()
@@ -250,7 +249,9 @@ def get_relevant_context(
 
             logger.info("🔍 Calling embed_query...")
             query_embedding = ctx.embeddings.embed_query(query)
-            logger.info(f"🔍 Generated embedding with {len(query_embedding)} dimensions")
+            logger.info(
+                f"🔍 Generated embedding with {len(query_embedding)} dimensions"
+            )
             logger.info("🔍 Proceeding to collection lookup...")
         except Exception as e:
             logger.error(f"🔍 Embedding generation failed: {e}")
@@ -271,7 +272,9 @@ def get_relevant_context(
                 collections = list_response.json()
                 logger.info(f"🔍 Found {len(collections)} collections")
                 for coll in collections:
-                    logger.info(f"🔍 Collection: {coll.get('name')} (id: {coll.get('id')})")
+                    logger.info(
+                        f"🔍 Collection: {coll.get('name')} (id: {coll.get('id')})"
+                    )
                     if coll.get("name") == collection_name:
                         collection_id = coll.get("id")
                         logger.info(f"🔍 Found matching collection: {collection_id}")
@@ -298,7 +301,9 @@ def get_relevant_context(
             data = response.json()
             logger.info(f"🔍 Query response data keys: {list(data.keys())}")
             if "documents" in data:
-                logger.info(f"🔍 Documents in response: {len(data['documents']) if data['documents'] else 0}")
+                logger.info(
+                    f"🔍 Documents in response: {len(data['documents']) if data['documents'] else 0}"
+                )
 
             # Extract documents from response
             docs = []
@@ -437,20 +442,33 @@ def execute_learn_url(url: str) -> dict:
         return {"error": str(e)}
 
 
-def initialize_llm():
-    """Initialize the LLM connection."""
+def initialize_llm() -> bool:
+    """Initialize LLM connection."""
     try:
+        if logger.handlers:
+            logger.info("🧠 Initializing LLM connection...")
+            logger.debug("🧠 Initializing LLM connection...")
+            _config = get_config()
+            logger.debug(f"   LM Studio URL: {_config.lm_studio_url}")
+            logger.debug(f"   Model: {_config.model_name}")
+            logger.debug(f"   Temperature: {_config.temperature}")
         from langchain_openai import ChatOpenAI
         from pydantic import SecretStr
 
         ctx = get_context()
         if ctx.llm is None:
+            logger.debug("   Creating ChatOpenAI instance...")
+            logger.debug(f"   Base URL: {_config.lm_studio_url}")
+            logger.debug(f"   API Key: ***")  # Don't log the actual key
+            logger.debug(f"   Model: {_config.model_name}")
+            logger.debug(f"   Temperature: {_config.temperature}")
             ctx.llm = ChatOpenAI(
-                base_url=LM_STUDIO_BASE_URL,
+                base_url=_config.lm_studio_url,
                 api_key=SecretStr(LM_STUDIO_API_KEY),
-                model=MODEL_NAME,
-                temperature=TEMPERATURE,
+                model=_config.model_name,
+                temperature=_config.temperature,
             )
+            logger.debug("   LLM instance created successfully")
         return True
     except Exception as e:
         logger.error(f"Failed to initialize LLM: {e}")
@@ -458,17 +476,27 @@ def initialize_llm():
 
 
 def initialize_vectordb():
-    """Initialize the vector database connection."""
+    """Initialize   vector database connection."""
     try:
+        if logger.handlers:
+            logger.info("🌐 Initializing ChromaDB vector database...")
+            logger.debug("🌐 Initializing ChromaDB vector database...")
+            logger.debug(f"   ChromaDB Host: {config.chroma_host}")
+            logger.debug(f"   ChromaDB Port: {config.chroma_port}")
+            logger.info("🧮 Initializing Ollama embeddings...")
+            logger.debug("🧮 Initializing Ollama embeddings...")
+            logger.debug(f"   Ollama URL: {config.ollama_base_url}")
+            logger.debug(f"   Embedding Model: {config.embedding_model}")
+            logger.debug("   Creating OllamaEmbeddings instance...")
         from langchain_ollama import OllamaEmbeddings
 
         ctx = get_context()
         if ctx.embeddings is None:
-            # Initialize embeddings
             ctx.embeddings = OllamaEmbeddings(
-                model=EMBEDDING_MODEL,
-                base_url=OLLAMA_BASE_URL,
+                model=config.embedding_model,
+                base_url=config.ollama_base_url,
             )
+            logger.debug("   OllamaEmbeddings instance created successfully")
         return True
     except Exception as e:
         logger.error(f"Failed to initialize vector database: {e}")
@@ -476,14 +504,30 @@ def initialize_vectordb():
 
 
 def initialize_user_memory():
-    """Initialize user memory system."""
+    """Initialize user memory system (SQLite + Mem0 local)."""
     try:
-        ctx = get_context()
-        if ctx.user_memory is None:
-            # Initialize Mem0 if available
-            pass
+        if logger.handlers:
+            logger.info("💾 Loading conversation history...")
+            logger.debug("🧠 Initializing Mem0 local personalized memory...")
+
+        _config = get_config()
+        logger.debug(f"   ChromaDB Host: {_config.chroma_host}:{_config.chroma_port}")
+
+        from src.storage.mem0_local import initialize_mem0_local
+
+        mem0_status = initialize_mem0_local()
+
+        if isinstance(mem0_status, dict):
+            logger.debug(
+                f"   Mem0 tables: {mem0_status.get('mem0_preferences', '❌')}/{mem0_status.get('mem0_memories', '❌')}"
+            )
+            logger.info("💾 Loaded SQLite conversation history with 0 messages")
+            logger.info("🧠 Mem0 local personalized memory initialized successfully")
+        else:
+            logger.error(f"Failed to initialize Mem0 local: {mem0_status}")
         return True
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to initialize user memory: {e}")
         return False
 
 
@@ -509,9 +553,19 @@ def initialize_application() -> bool:
         initialize_vectordb()
         initialize_user_memory()
         initialize_mcp()
+        initialize_tools()
         return True
     except Exception:
         return False
+
+
+def initialize_tools() -> None:
+    """Initialize all AI tools by importing tool executors."""
+    from src.tools import ToolRegistry
+
+    logger.info(
+        f"🛠️ Tool Registry initialized with {len(ToolRegistry._tools)} tools available"
+    )
 
 
 def handle_populate_command(dir_path: str):
