@@ -445,10 +445,10 @@ def execute_learn_url(url: str) -> dict:
 def initialize_llm() -> bool:
     """Initialize LLM connection."""
     try:
+        _config = get_config()
         if logger.handlers:
             logger.info("🧠 Initializing LLM connection...")
             logger.debug("🧠 Initializing LLM connection...")
-            _config = get_config()
             logger.debug(f"   LM Studio URL: {_config.lm_studio_url}")
             logger.debug(f"   Model: {_config.model_name}")
             logger.debug(f"   Temperature: {_config.temperature}")
@@ -459,7 +459,7 @@ def initialize_llm() -> bool:
         if ctx.llm is None:
             logger.debug("   Creating ChatOpenAI instance...")
             logger.debug(f"   Base URL: {_config.lm_studio_url}")
-            logger.debug(f"   API Key: ***")  # Don't log the actual key
+            logger.debug("   API Key: ***")  # Don't log the actual key
             logger.debug(f"   Model: {_config.model_name}")
             logger.debug(f"   Temperature: {_config.temperature}")
             ctx.llm = ChatOpenAI(
@@ -476,8 +476,9 @@ def initialize_llm() -> bool:
 
 
 def initialize_vectordb():
-    """Initialize   vector database connection."""
+    """Initialize vector database connection."""
     try:
+        config = get_config()
         if logger.handlers:
             logger.info("🌐 Initializing ChromaDB vector database...")
             logger.debug("🌐 Initializing ChromaDB vector database...")

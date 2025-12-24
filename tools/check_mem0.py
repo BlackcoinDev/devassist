@@ -9,21 +9,22 @@ from dotenv import load_dotenv
 # Add src directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 
+
 def check_mem0():
     """Check if Mem0 is properly installed and configured."""
     print("🔍 Checking Mem0 Integration...")
-    
+
     # 1. Check Import
     try:
-        from mem0 import Memory
+        from mem0 import Memory  # type: ignore
         print("✅ Mem0 library found")
     except ImportError:
         print("❌ Mem0 library NOT installed. Run: pip install -r requirements.txt")
         return False
-    
+
     # 2. Load Environment
     load_dotenv()
-    
+
     # 3. Check Environment Variables
     lm_studio_url = os.getenv("LM_STUDIO_URL")
     ollama_url = os.getenv("OLLAMA_BASE_URL")
@@ -31,18 +32,18 @@ def check_mem0():
     embedding_model = os.getenv("EMBEDDING_MODEL")
     chroma_host = os.getenv("CHROMA_HOST")
     chroma_port = os.getenv("CHROMA_PORT", "8000")
-    
+
     if not all([lm_studio_url, ollama_url, model_name, embedding_model, chroma_host]):
         print("❌ Missing environment variables. Check your .env file.")
         print("   Required: LM_STUDIO_URL, OLLAMA_BASE_URL, MODEL_NAME, EMBEDDING_MODEL, CHROMA_HOST")
         return False
-    
+
     # 4. Test Configuration
-    print(f"\n📋 Configuration Check:")
+    print("\n📋 Configuration Check:")
     print(f"   LLM: {model_name} at {lm_studio_url}")
     print(f"   Ollama: {embedding_model} at {ollama_url}")
     print(f"   ChromaDB: {chroma_host}:{chroma_port}")
-    
+
     # 5. Test Memory Initialization with ChromaDB vector store
     print("\n🔄 Testing Mem0 Initialization with ChromaDB vector store...")
     try:
@@ -72,17 +73,17 @@ def check_mem0():
                 }
             }
         }
-        
+
         m = Memory.from_config(mem0_config)
         print("✅ Mem0 initialized with ChromaDB vector store")
-        
+
         # 6. Test Memory Write
         print("\n📝 Testing Mem0 Write...")
         try:
             # Test adding a user preference
-            m.add(msgs=[{"role": "user", "content": "My preferred model is qwen3-vl-30b"}], user_id="default_user")
+            m.add(messages=[{"role": "user", "content": "My preferred model is qwen3-vl-30b"}], user_id="default_user")
             print("✅ Added user preference")
-            
+
             # Test retrieving from memory
             results = m.search("What is my preferred model?", user_id="default_user")
             if isinstance(results, dict) and 'results' in results:
@@ -94,9 +95,13 @@ def check_mem0():
         except Exception as e:
             print(f"❌ Memory test failed: {e}")
             return False
-    
+    except Exception as e:
+        print(f"❌ Mem0 initialization failed: {e}")
+        return False
+
     print("\n🎉 Mem0 Integration Check Complete!")
     return True
+
 
 if __name__ == "__main__":
     success = check_mem0()

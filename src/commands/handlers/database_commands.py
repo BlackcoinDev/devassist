@@ -256,70 +256,70 @@ def handle_vectordb(args: List[str]) -> None:
                         else:
                             chroma_client = ctx.vectorstore._client
                             collection = chroma_client.get_collection(collection_name)
-                        results = collection.get(
-                            limit=3, include=["documents", "metadatas"]
-                        )
+                            results = collection.get(
+                                limit=3, include=["documents", "metadatas"]
+                            )
 
-                        if results and "documents" in results and results["documents"]:
-                            docs = results["documents"]
-                            metadatas = results.get("metadatas") or [{}] * len(docs)
+                            if results and "documents" in results and results["documents"]:
+                                docs = results["documents"]
+                                metadatas = results.get("metadatas") or [{}] * len(docs)
 
-                            # First 3 documents
-                            for i, doc in enumerate(docs[:3]):
-                                metadata = metadatas[i] if i < len(metadatas) else {}
-                                if isinstance(doc, str):
-                                    # Clean up the preview - remove excessive
-                                    # whitespace and binary-looking content
-                                    preview = doc.strip()
-                                    # Check for binary content, PDF metadata,
-                                    # or placeholder text
-                                    if (
-                                        any(
-                                            indicator in preview.lower()
-                                            for indicator in [
-                                                "<source>",
-                                                "</source>",
-                                                "<translation",
-                                                "<<",
-                                                ">>",
-                                                "/type",
-                                                "/pages",
-                                                "xref",
-                                                "trailer",
-                                                "startxref",
-                                            ]
+                                # First 3 documents
+                                for i, doc in enumerate(docs[:3]):
+                                    metadata = metadatas[i] if i < len(metadatas) else {}
+                                    if isinstance(doc, str):
+                                        # Clean up the preview - remove excessive
+                                        # whitespace and binary-looking content
+                                        preview = doc.strip()
+                                        # Check for binary content, PDF metadata,
+                                        # or placeholder text
+                                        if (
+                                            any(
+                                                indicator in preview.lower()
+                                                for indicator in [
+                                                    "<source>",
+                                                    "</source>",
+                                                    "<translation",
+                                                    "<<",
+                                                    ">>",
+                                                    "/type",
+                                                    "/pages",
+                                                    "xref",
+                                                    "trailer",
+                                                    "startxref",
+                                                ]
+                                            )
+                                            or any(
+                                                ord(c) < 32 and c not in "\n\t"
+                                                for c in preview[:100]
+                                            )
+                                            or preview.startswith("[Binary file:")
+                                            or "[Binary file:" in preview
+                                        ):
+                                            preview = "[Binary file - content not shown]"
+                                        elif len(preview) > 200:
+                                            preview = preview[:200] + "..."
+                                        elif not preview:
+                                            preview = "[empty content]"
+
+                                        source = (
+                                            metadata.get("source", "unknown")
+                                            if metadata
+                                            else "unknown"
                                         )
-                                        or any(
-                                            ord(c) < 32 and c not in "\n\t"
-                                            for c in preview[:100]
+                                        added_at = (
+                                            metadata.get("added_at", "unknown")
+                                            if metadata
+                                            else "unknown"
                                         )
-                                        or preview.startswith("[Binary file:")
-                                        or "[Binary file:" in preview
-                                    ):
-                                        preview = "[Binary file - content not shown]"
-                                    elif len(preview) > 200:
-                                        preview = preview[:200] + "..."
-                                    elif not preview:
-                                        preview = "[empty content]"
-
-                                    source = (
-                                        metadata.get("source", "unknown")
-                                        if metadata
-                                        else "unknown"
-                                    )
-                                    added_at = (
-                                        metadata.get("added_at", "unknown")
-                                        if metadata
-                                        else "unknown"
-                                    )
-                                    print(f"  {i + 1}. {source} (added: {added_at})")
-                                    print(f"      Preview: {preview}")
-                                else:
-                                    print(
-                                        f"  {i + 1}. [Non-text document: {type(doc)}]"
-                                    )
-                        else:
-                            print("  No documents found in collection")
+                                        print(f"  {i + 1}. {source} (added: {added_at})")
+                                        print(f"      Preview: {preview}")
+                                    else:
+                                        print(
+                                            f"  {i + 1}. [Non-text document: {type(doc)}]"
+                                        )
+                            else:
+                                print("  No documents found in collection")
                     except Exception as e:
                         print(f"  Could not retrieve sample documents: {str(e)[:100]}")
                         print(

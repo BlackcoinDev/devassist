@@ -187,7 +187,7 @@ def get_relevant_context(
         payload = {"query_embeddings": [query_embedding], "n_results": k}
 
         if config.verbose_logging:
-            logger.debug(f"🌐 Querying ChromaDB API")
+            logger.debug("🌐 Querying ChromaDB API")
             logger.debug(f"   URL: {query_url}")
             logger.debug(f"   Payload: n_results={k}, embedding_length={len(query_embedding)}")
         response = api_session.post(query_url, json=payload, timeout=10)
@@ -197,7 +197,7 @@ def get_relevant_context(
         if response.status_code == 200:
             data = response.json()
             if config.verbose_logging:
-                logger.debug(f"📄 Processing ChromaDB response")
+                logger.debug("📄 Processing ChromaDB response")
                 logger.debug(f"   Response keys: {list(data.keys())}")
 
             # Extract documents from response
@@ -261,7 +261,7 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
     config = get_config()
 
     if config.verbose_logging:
-        logger.debug(f"📚 add_to_knowledge_base called")
+        logger.debug("📚 add_to_knowledge_base called")
         logger.debug(f"   Content: '{content}' ({len(content)} chars)")
         logger.debug(f"   Metadata: {metadata}")
 
@@ -276,6 +276,7 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
 
     if config.verbose_logging:
         logger.debug(f"🏢 Adding to space: {ctx.current_space}")
+        from src.vectordb.spaces import get_space_collection_name
         logger.debug(f"   Space collection: {get_space_collection_name(ctx.current_space)}")
 
     try:
@@ -380,7 +381,7 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
 
             # Make the API call to add the document
             if config.verbose_logging:
-                logger.debug(f"📤 Adding document to ChromaDB")
+                logger.debug("📤 Adding document to ChromaDB")
                 logger.debug(f"   URL: {add_url}")
                 logger.debug(f"   Document ID: {doc_id}")
                 logger.debug(f"   Content length: {len(doc.page_content)} chars")

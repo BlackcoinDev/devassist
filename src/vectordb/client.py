@@ -105,9 +105,6 @@ class ChromaDBClient:
         except Exception as e:
             logger.error(f"Error listing collections: {e}")
             return []
-        except Exception as e:
-            logger.error(f"Error listing collections: {e}")
-            return []
 
     def get_collection_id(self, name: str, timeout: int = 10) -> Optional[str]:
         """
