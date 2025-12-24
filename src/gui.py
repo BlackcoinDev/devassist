@@ -32,15 +32,8 @@ an intuitive, modern interface for AI-assisted development and research.
 """
 
 from src.main import load_memory
-from src.vectordb import (
-    list_spaces,
-    switch_space,
-    delete_space,
-    get_space_collection_name,
-)
 from src.core.config import get_config
 import logging
-import os
 import sys
 
 from PyQt6.QtWidgets import (
@@ -60,8 +53,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QPalette, QColor, QTextCursor
 from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer, QWaitCondition, QMutex
 from datetime import datetime
-from typing import List, cast, Any
-from langchain_core.messages import BaseMessage, SystemMessage
+from typing import List, Any
+from langchain_core.messages import BaseMessage
 
 # Type alias for conversation history
 ConversationHistory = List[BaseMessage]
@@ -1362,6 +1355,8 @@ class AIAssistantGUI(QMainWindow):
 
     def change_space(self, space_name):
         """Change current workspace/space."""
+        from src.vectordb.spaces import switch_space, list_spaces
+
         global CURRENT_SPACE
         if switch_space(space_name):
             CURRENT_SPACE = space_name
@@ -1431,578 +1426,63 @@ class AIAssistantGUI(QMainWindow):
         QTimer.singleShot(1000, self.close)
 
     def handle_slash_command(self, command_text):
-        from src.main import get_vectorstore
-        from src.storage.memory import save_memory
-
-        """Handle slash commands locally (like CLI)."""
-        command = command_text[1:].strip().lower()  # Remove leading slash and normalize
-
-        # Import required functions if backend is available
+        """Handle slash commands using CommandRegistry (shared with CLI)."""
         if not BACKEND_AVAILABLE:
             self.chat_display.append(
                 "<b>AI Assistant:</b><br>❌ Backend not available for commands<br>"
             )
             return
 
-        # Declare globals for mode variables
-        global CONTEXT_MODE, LEARNING_MODE
-
         try:
-            # /memory - Display current conversation history
-            if command == "memory":
-                self.chat_display.append(
-                    "<b>AI Assistant:</b><br>--- Conversation Memory ---<br>"
-                )
-                for i, msg in enumerate(conversation_history):
-                    if hasattr(msg, "type"):
-                        msg_type = (
-                            "System"
-                            if msg.type == "system"
-                            else ("User" if msg.type == "human" else "AI")
-                        )
-                        content = str(msg.content) if msg.content else ""
-                        preview = (
-                            content[:100] + "..." if len(content) > 100 else content
-                        )
-                        # Escape HTML characters in preview
-                        preview = (
-                            preview.replace("&", "&amp;")
-                            .replace("<", "&lt;")
-                            .replace(">", "&gt;")
-                        )
-                        self.chat_display.append(f"{i + 1}. [{msg_type}] {preview}<br>")
-                    else:
-                        content = str(msg)
-                        preview = (
-                            content[:100] + "..." if len(content) > 100 else content
-                        )
-                        # Escape HTML characters in preview
-                        preview = (
-                            preview.replace("&", "&amp;")
-                            .replace("<", "&lt;")
-                            .replace(">", "&gt;")
-                        )
-                        self.chat_display.append(f"{i + 1}. {preview}<br>")
-                self.chat_display.append(
-                    f"Total messages: {
-                        len(conversation_history)
-                    }<br>--- End Memory ---<br>"
-                )
+            import io
+            import sys
+            from src.commands.registry import CommandRegistry
 
-            # /clear - Reset conversation memory
-            elif command == "clear":
-                # Clear conversation history
-                conversation_history[:] = []
+            # Parse command: remove leading '/', split into name and args
+            cmd_text = command_text.lstrip("/").strip()
+            parts = cmd_text.split(maxsplit=1)
+            if not parts:
+                return
 
-                # Save the cleared state
-                save_memory(conversation_history)
+            cmd_name = parts[0]
+            cmd_args = parts[1].split() if len(parts) > 1 else []
 
-                # Clear display and show confirmation
-                self.chat_display.clear()
-                self.chat_display.append(
-                    "<b>AI Assistant:</b><br>Conversation memory cleared. Starting fresh.<br>"
-                )
+            # Capture stdout from command handlers
+            captured_output = io.StringIO()
+            old_stdout = sys.stdout
+            try:
+                sys.stdout = captured_output
+                handled = CommandRegistry.dispatch(cmd_name, cmd_args)
+            finally:
+                sys.stdout = old_stdout
 
-                # Add a new system message for the fresh start
-                conversation_history.append(
-                    cast(
-                        SystemMessage,
-                        SystemMessage(content="Lets get some coding done.."),
+            # Get output from command handler
+            output = captured_output.getvalue()
+
+            if handled:
+                if output:
+                    # Escape HTML characters for safe display
+                    result_html = (
+                        output.replace("&", "&amp;")
+                        .replace("<", "&lt;")
+                        .replace(">", "&gt;")
+                        .replace("\n", "<br>")
                     )
-                )
-                save_memory(conversation_history)
-
-            # /export - Export conversation history
-            elif command.startswith("export"):
-                export_format = command[7:].strip() if len(command) > 7 else "json"
-                if not conversation_history:
-                    self.chat_display.append(
-                        "<b>AI Assistant:</b><br>No conversation history to export.<br>"
-                    )
-                else:
-                    # Generate filename with timestamp
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"conversation_export_{timestamp}.{
-                        export_format if export_format != 'markdown' else 'md'
-                    }"
-
-                    try:
-                        if export_format == "json":
-                            # Export as JSON
-                            import json
-
-                            export_data = {
-                                "export_timestamp": datetime.now().isoformat(),
-                                "total_messages": len(conversation_history),
-                                "messages": [],
-                            }
-
-                            for i, msg in enumerate(conversation_history):
-                                msg_type = (
-                                    type(msg).__name__.replace("Message", "").lower()
-                                )
-                                export_data["messages"].append(
-                                    {
-                                        "index": i + 1,
-                                        "type": msg_type,
-                                        "content": str(msg.content),
-                                        "timestamp": datetime.now().isoformat(),
-                                    }
-                                )
-
-                            with open(filename, "w", encoding="utf-8") as f:
-                                json.dump(export_data, f, indent=2, ensure_ascii=False)
-
-                        else:  # markdown
-                            # Export as Markdown
-                            with open(filename, "w", encoding="utf-8") as f:
-                                f.write("# AI Assistant Conversation Export\n\n")
-                                f.write(
-                                    f"**Export Date:** {
-                                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                                    }\n"
-                                )
-                                f.write(
-                                    f"**Total Messages:** {
-                                        len(conversation_history)
-                                    }\n\n"
-                                )
-                                f.write("---\n\n")
-
-                                for i, msg in enumerate(conversation_history):
-                                    msg_type = type(msg).__name__.replace("Message", "")
-                                    content = str(msg.content)
-
-                                    # Format based on message type
-                                    if msg_type == "Human":
-                                        f.write(
-                                            f"## User Message {i + 1}\n\n{content}\n\n"
-                                        )
-                                    elif msg_type == "AI":
-                                        f.write(
-                                            f"## AI Response {i + 1}\n\n{content}\n\n"
-                                        )
-                                    elif msg_type == "System":
-                                        f.write(
-                                            f"### System Message {i + 1}\n\n*{
-                                                content
-                                            }*\n\n"
-                                        )
-                                    else:
-                                        f.write(
-                                            f"## {msg_type} Message {i + 1}\n\n{
-                                                content
-                                            }\n\n"
-                                        )
-
-                                    f.write("---\n\n")
-
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>✅ Conversation exported to: {filename}<br>"
-                        )
-                        self.chat_display.append(
-                            f"📊 Messages exported: {len(conversation_history)}<br>"
-                        )
-                        self.chat_display.append(f"📄 Format: {export_format}<br>")
-
-                    except Exception as e:
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Failed to export conversation: {e}<br>"
-                        )
-
-            # /space - Space/workspace management
-            elif command.startswith("space"):
-                space_cmd = command[6:].strip()  # Remove 'space ' prefix
-
-                if not space_cmd:
-                    # Show current space
-                    self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current space: {CURRENT_SPACE}<br>"
-                    )
-                    self.chat_display.append(
-                        f"Collection: {get_space_collection_name(CURRENT_SPACE)}<br>"
-                    )
-                    self.chat_display.append("<br><b>Usage:</b><br>")
-                    self.chat_display.append(
-                        "  /space list &nbsp;&nbsp;&nbsp;&nbsp; - List all spaces<br>"
-                    )
-                    self.chat_display.append(
-                        "  /space create &lt;name&gt; - Create new space<br>"
-                    )
-                    self.chat_display.append(
-                        "  /space switch &lt;name&gt; - Switch to space<br>"
-                    )
-                    self.chat_display.append(
-                        "  /space delete &lt;name&gt; - Delete space<br>"
-                    )
-                    self.chat_display.append(
-                        "  /space current &nbsp;&nbsp; - Show current space<br><br>"
-                    )
-                    return
-
-                if space_cmd == "list":
-                    spaces = list_spaces()
-                    self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Available spaces ({len(spaces)}):<br>"
-                    )
-                    for space in spaces:
-                        marker = " ← current" if space == CURRENT_SPACE else ""
-                        self.chat_display.append(f"  • {space}{marker}<br>")
-                    self.chat_display.append("<br>")
-
-                elif space_cmd == "current":
-                    self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current space: {CURRENT_SPACE}<br>"
-                    )
-                    self.chat_display.append(
-                        f"Collection: {
-                            get_space_collection_name(CURRENT_SPACE)
-                        }<br><br>"
-                    )
-
-                elif space_cmd.startswith("create "):
-                    new_space = space_cmd[7:].strip()
-                    if not new_space:
-                        self.chat_display.append(
-                            "<b>AI Assistant:</b><br>❌ Usage: /space create &lt;name&gt;<br><br>"
-                        )
-                        return
-
-                    if new_space in list_spaces():
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Space '{new_space}' already exists<br><br>"
-                        )
-                        return
-
-                    if switch_space(new_space):
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>✅ Created and switched to space: {new_space}<br>"
-                        )
-                        self.chat_display.append(
-                            f"Collection: {
-                                get_space_collection_name(new_space)
-                            }<br><br>"
-                        )
-                        # Update the space combo box
-                        self.space_combo.clear()
-                        self.space_combo.addItems(list_spaces())
-                        self.space_combo.setCurrentText(CURRENT_SPACE)
-                    else:
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Failed to create space: {new_space}<br><br>"
-                        )
-
-                elif space_cmd.startswith("switch "):
-                    target_space = space_cmd[7:].strip()
-                    if not target_space:
-                        self.chat_display.append(
-                            "<b>AI Assistant:</b><br>❌ Usage: /space switch &lt;name&gt;<br><br>"
-                        )
-                        return
-
-                    if target_space not in list_spaces():
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Space '{target_space}' does not exist<br>"
-                        )
-                        self.chat_display.append(
-                            f"Use '/space create {target_space}' to create it first<br><br>"
-                        )
-                        return
-
-                    if switch_space(target_space):
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>✅ Switched to space: {target_space}<br>"
-                        )
-                        self.chat_display.append(
-                            f"Collection: {
-                                get_space_collection_name(target_space)
-                            }<br><br>"
-                        )
-                        # Update the space combo box
-                        self.space_combo.setCurrentText(CURRENT_SPACE)
-                    else:
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Failed to switch to space: {target_space}<br><br>"
-                        )
-
-                elif space_cmd.startswith("delete "):
-                    target_space = space_cmd[7:].strip()
-                    if not target_space:
-                        self.chat_display.append(
-                            "<b>AI Assistant:</b><br>❌ Usage: /space delete &lt;name&gt;<br><br>"
-                        )
-                        return
-
-                    if target_space == "default":
-                        self.chat_display.append(
-                            "<b>AI Assistant:</b><br>❌ Cannot delete the default space<br><br>"
-                        )
-                        return
-
-                    if target_space not in list_spaces():
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Space '{target_space}' does not exist<br><br>"
-                        )
-                        return
-
-                    # For GUI, we'll just delete without confirmation for
-                    # simplicity
-                    if delete_space(target_space):
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>✅ Deleted space: {target_space}<br><br>"
-                        )
-                        # Update the space combo box
-                        self.space_combo.clear()
-                        self.space_combo.addItems(list_spaces())
-                        if CURRENT_SPACE not in list_spaces():
-                            # If current space was deleted, switch to default
-                            switch_space("default")
-                            self.space_combo.setCurrentText(CURRENT_SPACE)
-                    else:
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Failed to delete space: {target_space}<br><br>"
-                        )
-
+                    self.chat_display.append(f"<b>AI Assistant:</b><br>{result_html}<br>")
                 else:
                     self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>❌ Unknown space command: {space_cmd}<br>"
+                        "<b>AI Assistant:</b><br>Command executed successfully<br>"
                     )
-                    self.chat_display.append("Use '/space' for help<br><br>")
-
-            # /vectordb - Show vector database contents
-            elif command == "vectordb":
-                self.display_vector_database()
-
-            # /mem0 - Show personalized memory contents
-            elif command == "mem0":
-                self.display_mem0_memory()
-
-            # /learn - Add information to knowledge base
-            elif command.startswith("learn"):
-                learn_text = command[5:].strip()  # Remove 'learn' prefix
-                if not learn_text:
-                    self.chat_display.append(
-                        "<b>AI Assistant:</b><br>❌ Usage: /learn &lt;information to remember&gt;<br><br>"
-                    )
-                    return
-
-                current_vectorstore = get_vectorstore()
-                if not current_vectorstore:
-                    self.chat_display.append(
-                        "<b>AI Assistant:</b><br>❌ Vector database not available.<br>"
-                    )
-                    self.chat_display.append(
-                        "ChromaDB is required for learning features.<br><br>"
-                    )
-                    return
-
-                try:
-                    # Import required classes
-                    from langchain_core.documents import Document
-
-                    # Create document with metadata
-                    metadata = {
-                        "source": "user-input",
-                        "added_at": str(datetime.now()),
-                        "space": CURRENT_SPACE,
-                    }
-
-                    doc = Document(page_content=learn_text, metadata=metadata)
-
-                    # Add to vector database
-                    current_vectorstore.add_documents([doc])
-
-                    # Save memory
-                    save_memory(conversation_history)
-
-                    self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>✅ Learned: {learn_text[:50]}"
-                    )
-                    if len(learn_text) > 50:
-                        self.chat_display.append("...")
-                    self.chat_display.append("<br><br>")
-
-                except Exception as e:
-                    self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>❌ Failed to learn: {str(e)}<br><br>"
-                    )
-
-            # /populate - Populate vector database with code files
-            elif command.startswith("populate"):
-                if not POPULATION_AVAILABLE:
-                    self.chat_display.append(
-                        "<b>AI Assistant:</b><br>❌ Population functionality not available.<br>"
-                    )
-                    self.chat_display.append(
-                        "Required langchain modules could not be imported.<br>"
-                    )
-                    return
-
-                dir_path = command[8:].strip()  # Remove 'populate' prefix
-                if not dir_path:
-                    self.chat_display.append(
-                        "<b>AI Assistant:</b><br><b>Usage:</b> /populate /path/to/directory<br>"
-                    )
-                    self.chat_display.append(
-                        "<b>Example:</b> /populate /Users/username/projects/myapp<br>"
-                    )
-                    self.chat_display.append("<b>Example:</b> /populate src/<br><br>")
-                    self.chat_display.append(
-                        "For advanced options (--dry-run, --direct-api), use the tools/populate_codebase.py script.<br>"
-                    )
-                    self.chat_display.append(
-                        "This will recursively scan and add all code files to the vector database.<br>"
-                    )
-                else:
-                    # Validate directory exists
-                    if not os.path.exists(dir_path):
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Directory not found: {dir_path}<br>"
-                        )
-                        return
-
-                    if not os.path.isdir(dir_path):
-                        self.chat_display.append(
-                            f"<b>AI Assistant:</b><br>❌ Path is not a directory: {dir_path}<br>"
-                        )
-                        return
-
-                    # Start population in background thread
-                    self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>🔍 Starting codebase population from: {dir_path}<br>"
-                    )
-                    self.chat_display.append(
-                        "This may take a while depending on the codebase size...<br>"
-                    )
-
-                    # Disable input during population
-                    self.input_field.setEnabled(False)
-                    self.send_button.setEnabled(False)
-                    self.status_label.setText("Populating database...")
-
-                    # Start population worker
-                    current_vectorstore = get_vectorstore()
-                    self.populate_worker = PopulateWorker(dir_path, current_vectorstore)
-                    self.populate_worker.progress.connect(self.on_populate_progress)
-                    self.populate_worker.finished.connect(self.on_populate_finished)
-                    self.populate_worker.error.connect(self.on_populate_error)
-                    self.populate_worker.start()
-
-            # /model - Show current model information
-            elif command == "model":
-                model_info = f"Current model: {MODEL_NAME}<br>"
-                model_info += "To use a different model:<br>"
-                model_info += "1. Load the model in LM Studio<br>"
-                model_info += "2. Set MODEL_NAME in .env file<br>"
-                model_info += "3. Restart the application<br>"
-                self.chat_display.append(f"<b>AI Assistant:</b><br>{model_info}")
-
-            # /context - Control context integration
-            elif command.startswith("context"):
-                mode = command[7:].strip()
-                if mode in ["auto", "on", "off"]:
-                    CONTEXT_MODE = mode
-                    self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Context integration mode set to: <b>{mode}</b><br>"
-                    )
-                    if mode == "auto":
-                        self.chat_display.append(
-                            "AI will automatically decide when to use context from knowledge base.<br>"
-                        )
-                    elif mode == "on":
-                        self.chat_display.append(
-                            "AI will always include relevant context from knowledge base.<br>"
-                        )
-                    elif mode == "off":
-                        self.chat_display.append(
-                            "AI will never include context from knowledge base.<br>"
-                        )
-                else:
-                    self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current context mode: <b>{CONTEXT_MODE}</b><br>"
-                    )
-                    self.chat_display.append("Usage: /context auto|on|off<br>")
-                    self.chat_display.append(
-                        "&nbsp;&nbsp;auto - AI decides when to use context (default)<br>"
-                    )
-                    self.chat_display.append(
-                        "&nbsp;&nbsp;on &nbsp;&nbsp; - Always include relevant context<br>"
-                    )
-                    self.chat_display.append(
-                        "&nbsp;&nbsp;off &nbsp; - Never include context from knowledge base<br>"
-                    )
-
-            # /learning - Control learning behavior
-            elif command.startswith("learning"):
-                mode = command[8:].strip()
-                if mode in ["normal", "strict", "off"]:
-                    LEARNING_MODE = mode
-                    self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Learning mode set to: <b>{mode}</b><br>"
-                    )
-                    if mode == "normal":
-                        self.chat_display.append(
-                            "AI will learn from /learn commands and provide context when relevant.<br>"
-                        )
-                    elif mode == "strict":
-                        self.chat_display.append(
-                            "AI will only use learned information for explicit learning queries.<br>"
-                        )
-                    elif mode == "off":
-                        self.chat_display.append(
-                            "AI will not use or reference learned information.<br>"
-                        )
-                else:
-                    self.chat_display.append(
-                        f"<b>AI Assistant:</b><br>Current learning mode: <b>{LEARNING_MODE}</b><br>"
-                    )
-                    self.chat_display.append("Usage: /learning normal|strict|off<br>")
-                    self.chat_display.append(
-                        "&nbsp;&nbsp;normal - Balanced learning and context usage (default)<br>"
-                    )
-                    self.chat_display.append(
-                        "&nbsp;&nbsp;strict - Minimal context, focused on learning queries<br>"
-                    )
-                    self.chat_display.append(
-                        "&nbsp;&nbsp;off &nbsp;&nbsp;&nbsp; - Disable all learning and context features<br>"
-                    )
-
-            # /help - Display available commands
-            elif command in ["help", "h", "?"]:
-                help_html = """--- Available Commands ---<br>
-/memory &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Show conversation history<br>
-/vectordb &nbsp;&nbsp;&nbsp;&nbsp; - Show knowledge base statistics<br>
-/mem0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Show personalized memory contents<br>
-/model &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Show current model information<br>
-/space &lt;cmd&gt; &nbsp;&nbsp;&nbsp; - Space/workspace management (list/create/switch/delete)<br>
-/context &lt;mode&gt; - Control context integration (auto/on/off)<br>
-/learning &lt;mode&gt; - Control learning behavior (normal/strict/off)<br>
-/populate &lt;path&gt; - Add code files from directory to vector DB<br>
-/clear &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Clear conversation history<br>
-/learn &lt;text&gt; &nbsp;&nbsp; - Add information to knowledge base<br>
-/export &lt;fmt&gt; &nbsp; - Export conversation (json/markdown)<br>
-/help &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Show this help message<br>
-<br>
-Regular commands (no slash needed):<br>
-quit &nbsp;&nbsp;&nbsp; - Exit the application<br>
-exit &nbsp;&nbsp;&nbsp; - Exit the application<br>
-q &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Exit the application<br>
-<br>
-Note: Quit commands work after AI finishes responding.<br>
-Use Ctrl+C for immediate interruption.<br>
---- End Help ---"""
-                self.chat_display.append(f"<b>AI Assistant:</b><br>{help_html}")
-
-            # Unknown command
             else:
                 self.chat_display.append(
-                    f"<b>AI Assistant:</b><br>Unknown command: /{command}<br>"
+                    f"<b>AI Assistant:</b><br>❌ Unknown command: /{cmd_name}<br>"
                 )
                 self.chat_display.append("Type /help for available commands<br>")
 
         except Exception as e:
+            logger.error(f"Error handling slash command: {e}")
             self.chat_display.append(
-                f"<b>AI Assistant:</b><br>Error processing command: {str(e)}<br>"
+                f"<b>AI Assistant:</b><br>❌ Error: {str(e)}<br>"
             )
 
         # Scroll to bottom
