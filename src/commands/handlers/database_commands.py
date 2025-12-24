@@ -117,7 +117,13 @@ def handle_vectordb(args: List[str]) -> None:
                 if chunk_count > 0:
                     try:
                         # Get metadata for statistics
-                        chroma_client = ctx.vectorstore._client
+                        if ctx.vectorstore is None:
+                            print("\n📋 Statistics: Vector store not initialized")
+                            return
+                        if not hasattr(ctx.vectorstore, '_client') or ctx.vectorstore._client is None:
+                            print("\n📋 Statistics: ChromaDB client not available")
+                            return
+                        chroma_client = ctx.vectorstore._client  # type: ignore
                         collection = chroma_client.get_collection(collection_name)
                         results = collection.get(
                             limit=min(chunk_count, 1000),  # Sample up to 1000 for stats
@@ -238,8 +244,11 @@ def handle_vectordb(args: List[str]) -> None:
                     try:
                         # Try to get sample documents using ChromaDB client
                         # directly
-                        chroma_client = ctx.vectorstore._client
-                        collection = chroma_client.get_collection(collection_name)
+                        if ctx.vectorstore is None or not hasattr(ctx.vectorstore, '_client') or ctx.vectorstore._client is None:
+                            print("  Vector store not available for sample documents")
+                        else:
+                            chroma_client = ctx.vectorstore._client
+                            collection = chroma_client.get_collection(collection_name)
                         results = collection.get(
                             limit=3, include=["documents", "metadatas"]
                         )

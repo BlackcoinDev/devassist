@@ -47,8 +47,9 @@ APP_VERSION = "0.3.0"
 
 def _setup_logging() -> logging.Logger:
     """Configure structured logging for the application."""
+    # Set DEBUG level to show all verbose logging including debug messages
     logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+        level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
     )
     logger = logging.getLogger(__name__)
 

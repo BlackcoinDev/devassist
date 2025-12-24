@@ -33,7 +33,7 @@ and document processing capabilities. Built specifically for the qwen3-vl-30b + 
 # =============================================================================
 # Command handlers - import to trigger auto-registration via decorators
 from src.commands import CommandRegistry
-# Import all command handlers to register them
+# Import command handlers to trigger auto-registration via decorators
 from src.commands.handlers import (
     config_commands,
     database_commands,
@@ -254,10 +254,6 @@ def get_relevant_context(
             logger.info("🔍 Proceeding to collection lookup...")
         except Exception as e:
             logger.error(f"🔍 Embedding generation failed: {e}")
-            return ""
-
-        except (AttributeError, NameError, Exception) as e:
-            logger.warning(f"Embeddings not available for context retrieval: {e}")
             return ""
 
         # Find collection for the specified space
