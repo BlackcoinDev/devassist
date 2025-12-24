@@ -83,22 +83,35 @@ def get_relevant_context(
     ctx = get_context()
     config = get_config()
 
+    if config.verbose_logging:
+        logger.info(f"🔍 get_relevant_context called with query: '{query[:50]}...' (k={k})")
+
     # Use current space if not specified
     if space_name is None:
         space_name = ctx.current_space
+
+    if config.verbose_logging:
+        logger.info(f"🏢 Using space: {space_name}")
 
     # Check query cache first
     cache_key = f"{space_name}:{query}:{k}"
     if cache_key in ctx.query_cache:
         cached_results = ctx.query_cache[cache_key]
         if cached_results:
+            if config.verbose_logging:
+                logger.info(f"💾 Cache hit for query: {len(cached_results)} cached results")
             context = "\n\n".join(
                 [f"From knowledge base:\n{doc}" for doc in cached_results]
             )
             return f"\n\nRelevant context:\n{context}\n\n"
 
+    if config.verbose_logging:
+        logger.info("💾 Cache miss, querying vector database")
+
     # Return empty context if vector database not available
     if ctx.vectorstore is None:
+        if config.verbose_logging:
+            logger.warning("❌ Vectorstore not available for context retrieval")
         return ""
 
     try:
@@ -108,7 +121,11 @@ def get_relevant_context(
                 logger.warning("Embeddings not initialized for context retrieval")
                 return ""
 
+            if config.verbose_logging:
+                logger.info("🧮 Generating embeddings for query")
             query_embedding = ctx.embeddings.embed_query(query)
+            if config.verbose_logging:
+                logger.info(f"✅ Generated embedding vector (length: {len(query_embedding)})")
         except (AttributeError, NameError, Exception) as e:
             logger.warning(f"Embeddings not available for context retrieval: {e}")
             return ""
@@ -123,6 +140,8 @@ def get_relevant_context(
         try:
             list_url = f"http://{config.chroma_host}:{config.chroma_port}/api/v2/tenants/default_tenant/databases/default_database/collections"
             api_session = _get_api_session()
+            if config.verbose_logging:
+                logger.info(f"🔍 Finding collection for space: {space_name}")
             list_response = api_session.get(list_url, timeout=10)
             if list_response.status_code == 200:
                 collections = list_response.json()
@@ -130,6 +149,8 @@ def get_relevant_context(
                     if coll.get("name") == collection_name:
                         collection_id = coll.get("id")
                         break
+                if config.verbose_logging:
+                    logger.info(f"✅ Found collection: {collection_name} (ID: {collection_id})")
         except Exception as e:
             logger.warning(f"Error finding collection for space {space_name}: {e}")
 
@@ -148,6 +169,8 @@ def get_relevant_context(
         # Query payload with embedding
         payload = {"query_embeddings": [query_embedding], "n_results": k}
 
+        if config.verbose_logging:
+            logger.info(f"🌐 Querying ChromaDB API: {query_url}")
         response = api_session.post(query_url, json=payload, timeout=10)
 
         if response.status_code == 200:
@@ -160,8 +183,13 @@ def get_relevant_context(
                 for doc_content in documents:
                     docs.append(doc_content)
 
+            if config.verbose_logging:
+                logger.info(f"📄 Retrieved {len(docs)} documents from ChromaDB")
+
             # Return empty if no relevant documents found
             if not docs:
+                if config.verbose_logging:
+                    logger.info("📄 No relevant documents found")
                 return ""
 
             # Cache the results
@@ -170,6 +198,8 @@ def get_relevant_context(
                 _save_query_cache()
 
             context = "\n\n".join([f"From knowledge base:\n{doc}" for doc in docs])
+            if config.verbose_logging:
+                logger.info(f"✅ Returning context ({len(context)} chars)")
             return f"\n\nRelevant context:\n{context}\n\n"
         else:
             logger.error(f"ChromaDB query failed: {response.status_code}")
@@ -195,11 +225,10 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
     ctx = get_context()
     config = get_config()
 
-    # Check if vector database is available
-    if ctx.vectorstore is None:
-        logger.error("Vector database not available for learning")
-        return False
+    if config.verbose_logging:
+        logger.info(f"📚 add_to_knowledge_base called with content: {content[:50]}...")
 
+    # Check if embeddings are available (we don't need vectorstore for direct API calls)
     if ctx.embeddings is None:
         logger.error("Embeddings not available for learning")
         return False
@@ -207,6 +236,9 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
     if not content:
         logger.error("Cannot add empty content to knowledge base")
         return False
+
+    if config.verbose_logging:
+        logger.info(f"🏢 Adding to space: {ctx.current_space}")
 
     try:
         # Set default metadata if not provided
@@ -221,12 +253,16 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
 
         # Generate embeddings using Ollama
         try:
+            if config.verbose_logging:
+                logger.info("🧮 Generating embeddings for document")
             embeddings_result = ctx.embeddings.embed_documents([doc.page_content])
             if not embeddings_result or len(embeddings_result) == 0:
                 logger.error("Failed to generate embeddings")
                 return False
 
             embedding_vector = embeddings_result[0]
+            if config.verbose_logging:
+                logger.info(f"✅ Generated embedding vector (length: {len(embedding_vector)})")
 
             # Get collection for current space
             from src.vectordb.spaces import get_space_collection_name
@@ -236,6 +272,8 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
             # Find or create the collection
             api_session = _get_api_session()
             list_url = f"http://{config.chroma_host}:{config.chroma_port}/api/v2/tenants/default_tenant/databases/default_database/collections"
+            if config.verbose_logging:
+                logger.info(f"🔍 Finding/creating collection: {collection_name}")
             list_response = api_session.get(list_url, timeout=10)
 
             if list_response.status_code == 200:
@@ -247,6 +285,8 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
 
             # If collection doesn't exist, create it
             if not collection_id:
+                if config.verbose_logging:
+                    logger.info(f"🏗️ Creating new collection: {collection_name}")
                 create_url = f"http://{config.chroma_host}:{config.chroma_port}/api/v2/tenants/default_tenant/databases/default_database/collections"
                 create_payload = {"name": collection_name}
                 create_response = api_session.post(
@@ -256,13 +296,16 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
                     collection_id = create_response.json().get("id")
                     if config.verbose_logging:
                         logger.info(
-                            f"Created new collection for space {ctx.current_space}: {collection_name}"
+                            f"✅ Created new collection for space {ctx.current_space}: {collection_name} (ID: {collection_id})"
                         )
                 else:
                     logger.error(
                         f"Failed to create collection: HTTP {create_response.status_code}"
                     )
                     return False
+            else:
+                if config.verbose_logging:
+                    logger.info(f"✅ Found existing collection: {collection_name} (ID: {collection_id})")
 
             # Add document to the space's collection
             add_url = (
@@ -281,6 +324,8 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
             }
 
             # Make the API call to add the document
+            if config.verbose_logging:
+                logger.info(f"📤 Adding document to ChromaDB: {add_url}")
             headers = {"Content-Type": "application/json"}
             response = api_session.post(
                 add_url, json=payload, headers=headers, timeout=10
@@ -289,7 +334,7 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
             if response.status_code == 201:
                 if config.verbose_logging:
                     logger.info(
-                        f"Document added successfully to space {ctx.current_space}: {doc_id}"
+                        f"✅ Document added successfully to space {ctx.current_space}: {doc_id}"
                     )
                 return True
             else:
@@ -302,10 +347,14 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
             logger.error(f"Error with direct ChromaDB v2 API: {e}")
             # Fallback to LangChain method
             try:
-                ctx.vectorstore.add_documents([doc])
-                if config.verbose_logging:
-                    logger.debug("Used LangChain fallback for document addition")
-                return True
+                if ctx.vectorstore is not None:
+                    ctx.vectorstore.add_documents([doc])
+                    if config.verbose_logging:
+                        logger.debug("Used LangChain fallback for document addition")
+                    return True
+                else:
+                    logger.error("No vectorstore available for fallback")
+                    return False
             except Exception as fallback_e:
                 logger.error(f"LangChain fallback also failed: {fallback_e}")
                 return False

@@ -36,7 +36,7 @@ import logging
 import json
 import time
 from typing import Dict, Any, Optional, Callable
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import HumanMessage, ToolMessage
 from src.core.context import get_context
 from src.tools.registry import ToolRegistry
 from src.tools.approval import ToolApprovalManager
@@ -83,11 +83,19 @@ class ChatLoop:
         # 2. Get context (RAG)
         from src.main import get_relevant_context
         if self.ctx.context_mode != "off":
+            logger.info(f"📚 ChatLoop: Getting context for query: '{user_input}'")
             context = get_relevant_context(user_input)
+            logger.info(f"📚 ChatLoop: Got context (length {len(context) if context else 0}): '{context if context else 'None'}'")
             if context:
+                # Add context as part of the user message instead of system message
+                # This ensures the AI definitely sees the context
+                enhanced_user_input = f"{user_input}\n\nContext from knowledge base:\n{context}"
+                logger.info(f"📚 ChatLoop: Enhanced user input with context ({len(context)} chars)")
+                logger.info(f"📚 ChatLoop: Context content: '{context}'")
                 if self.config.verbose_logging:
                     logger.info(f"📚 ChatLoop: Injected context ({len(context)} chars)")
-                self.ctx.conversation_history.append(SystemMessage(content=f"Relevant context: {context}"))
+                user_input = enhanced_user_input
+                logger.info(f"📚 ChatLoop: Using enhanced input: '{user_input[:200]}...'")
 
         # 3. Enter the Tool Loop (Maximum 5 iterations to prevent infinite loops)
         max_iterations = 5

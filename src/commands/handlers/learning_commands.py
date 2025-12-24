@@ -59,10 +59,10 @@ def handle_learn(args: List[str]) -> None:
     if _config.verbose_logging:
         logger.debug(f"/learn command invoked with {len(args)} args")
 
-    # Check if vector database is available
-    if ctx.vectorstore is None:
+    # Check if embeddings are available (needed for learning)
+    if ctx.embeddings is None:
         print(
-            "\nVector database not available. ChromaDB is required for learning features.\n"
+            "\nEmbeddings not available. Ollama is required for learning features.\n"
         )
         return
 
@@ -77,16 +77,17 @@ def handle_learn(args: List[str]) -> None:
         logger.info(f"📚 Learning content: {len(content)} chars")
 
     # Use shared utility to add to knowledge base
+    print(f"\n📚 Learning: {content}")
     success = add_to_knowledge_base(content)
 
     if success:
         if _config.verbose_logging:
             logger.info("   ✅ Successfully added to knowledge base")
-        print(f"\n✅ Learned: {content[:50]}...\n")
+        print(f"✅ Learned: {content[:50]}...\n")
     else:
         if _config.verbose_logging:
             logger.warning("   ❌ Failed to add to knowledge base")
-        print("\n❌ Failed to learn information\n")
+        print("❌ Failed to learn information\n")
 
 
 @CommandRegistry.register("populate", "Bulk import codebase", category="learning")

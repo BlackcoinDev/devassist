@@ -131,8 +131,12 @@ class CommandRegistry:
         """
         cfg = _get_config()
 
+        logger.info(f"📋 CommandRegistry: Looking for command '{command}'")
+        logger.info(f"📋 Available commands: {list(cls._commands.keys())}")
+
         handler = cls._commands.get(command)
         if handler is None:
+            logger.warning(f"📋 Command '{command}' not found")
             return False
 
         if cfg and cfg.verbose_logging:
@@ -140,6 +144,7 @@ class CommandRegistry:
             logger.info(f"📋 Dispatching command: /{command} {args_str}")
 
         try:
+            logger.info(f"📋 Executing handler for '{command}'")
             handler(args)
             if cfg and cfg.verbose_logging:
                 logger.debug(f"   ✅ Command /{command} completed")

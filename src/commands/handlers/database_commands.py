@@ -63,10 +63,6 @@ def handle_vectordb(args: List[str]) -> None:
     ctx = get_context()
     config = get_config()
 
-    if ctx.vectorstore is None:
-        print("\n❌ Vector database not available.\n")
-        return
-
     # Initialize variables that may be used in error handling
     collection_name = get_space_collection_name(ctx.current_space)
     collection_id = None

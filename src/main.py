@@ -33,6 +33,20 @@ and document processing capabilities. Built specifically for the qwen3-vl-30b + 
 # =============================================================================
 # Command handlers - import to trigger auto-registration via decorators
 from src.commands import CommandRegistry
+# Import all command handlers to register them
+from src.commands.handlers import (
+    config_commands,
+    database_commands,
+    export_commands,
+    file_commands,
+    git_commands,
+    help_commands,
+    learning_commands,
+    mcp_commands,
+    memory_commands,
+    space_commands,
+    system_commands,
+)
 from src.storage import (
     initialize_database,
     load_memory,
@@ -200,9 +214,13 @@ def get_relevant_context(
     query: str, k: int = 3, space_name: Optional[str] = None
 ) -> str:
     """Get relevant context from vector database with caching."""
+    logger.info(f"🔍 get_relevant_context called with query: '{query}'")
+
     # Use current space if not specified
     if space_name is None:
         space_name = CURRENT_SPACE
+
+    logger.info(f"🔍 Using space: {space_name}")
 
     # Check query cache first
     cache_key = f"{space_name}:{query}:{k}"
@@ -212,23 +230,32 @@ def get_relevant_context(
             context = "\n\n".join(
                 [f"From knowledge base:\n{doc}" for doc in cached_results]
             )
+            logger.info(f"🔍 Found cached results: {len(cached_results)} items")
             return f"\n\nRelevant context:\n{context}\n\n"
 
-    # Return empty context if vector database not available
-    if vectorstore is None:
-        return ""
+    logger.info("🔍 No cache hit, proceeding with direct API calls...")
 
     try:
+        logger.info("🔍 Generating embedding for query...")
+
         # Generate embedding for the query - embeddings will be available at
         # runtime
         try:
-            # Use global embeddings variable (initialized during application
-            # startup)
-            if embeddings is None:
+            # Get embeddings from context (initialized during application startup)
+            ctx = get_context()
+            logger.info(f"🔍 Embeddings object: {ctx.embeddings}")
+            if ctx.embeddings is None:
                 logger.warning("Embeddings not initialized for context retrieval")
                 return ""
 
-            query_embedding = embeddings.embed_query(query)
+            logger.info("🔍 Calling embed_query...")
+            query_embedding = ctx.embeddings.embed_query(query)
+            logger.info(f"🔍 Generated embedding with {len(query_embedding)} dimensions")
+            logger.info("🔍 Proceeding to collection lookup...")
+        except Exception as e:
+            logger.error(f"🔍 Embedding generation failed: {e}")
+            return ""
+
         except (AttributeError, NameError, Exception) as e:
             logger.warning(f"Embeddings not available for context retrieval: {e}")
             return ""
@@ -236,16 +263,22 @@ def get_relevant_context(
         # Find collection for the specified space
         collection_id = None
         collection_name = get_space_collection_name(space_name)
+        logger.info(f"🔍 Looking for collection: {collection_name}")
 
         # Try to find the collection by name
         try:
             list_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
+            logger.info(f"🔍 Listing collections from: {list_url}")
             list_response = requests.get(list_url, timeout=10)
+            logger.info(f"🔍 List response status: {list_response.status_code}")
             if list_response.status_code == 200:
                 collections = list_response.json()
+                logger.info(f"🔍 Found {len(collections)} collections")
                 for coll in collections:
+                    logger.info(f"🔍 Collection: {coll.get('name')} (id: {coll.get('id')})")
                     if coll.get("name") == collection_name:
                         collection_id = coll.get("id")
+                        logger.info(f"🔍 Found matching collection: {collection_id}")
                         break
         except Exception as e:
             logger.warning(f"Error finding collection for space {space_name}: {e}")
@@ -260,17 +293,25 @@ def get_relevant_context(
         # Query payload with embedding
         payload = {"query_embeddings": [query_embedding], "n_results": k}
 
+        logger.info(f"🔍 Querying ChromaDB at: {query_url}")
+        logger.info(f"🔍 Query payload: {payload}")
         response = api_session.post(query_url, json=payload, timeout=10)
+        logger.info(f"🔍 Query response status: {response.status_code}")
 
         if response.status_code == 200:
             data = response.json()
+            logger.info(f"🔍 Query response data keys: {list(data.keys())}")
+            if "documents" in data:
+                logger.info(f"🔍 Documents in response: {len(data['documents']) if data['documents'] else 0}")
 
             # Extract documents from response
             docs = []
             if "documents" in data and data["documents"] and len(data["documents"]) > 0:
                 documents = data["documents"][0]  # First query result
+                logger.info(f"🔍 Found {len(documents)} documents in first result")
                 for doc_content in documents:
                     docs.append(doc_content)
+                    logger.info(f"🔍 Document content: {doc_content[:100]}...")
 
             # Return empty if no relevant documents found
             if not docs:
@@ -282,7 +323,9 @@ def get_relevant_context(
                 save_query_cache()
 
             context = "\n\n".join([f"From knowledge base:\n{doc}" for doc in docs])
-            return f"\n\nRelevant context:\n{context}\n\n"
+            result = f"\n\nRelevant context:\n{context}\n\n"
+            logger.info(f"🔍 Returning context: {result[:200]}...")
+            return result
         else:
             print(f"ChromaDB query failed: {response.status_code}")
             return ""
@@ -401,22 +444,38 @@ def execute_learn_url(url: str) -> dict:
 def initialize_llm():
     """Initialize the LLM connection."""
     try:
+        from langchain_openai import ChatOpenAI
+        from pydantic import SecretStr
+
         ctx = get_context()
         if ctx.llm is None:
-            ctx.llm = get_llm()
+            ctx.llm = ChatOpenAI(
+                base_url=LM_STUDIO_BASE_URL,
+                api_key=SecretStr(LM_STUDIO_API_KEY),
+                model=MODEL_NAME,
+                temperature=TEMPERATURE,
+            )
         return True
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to initialize LLM: {e}")
         return False
 
 
 def initialize_vectordb():
     """Initialize the vector database connection."""
     try:
+        from langchain_ollama import OllamaEmbeddings
+
         ctx = get_context()
-        if ctx.vectorstore is None:
-            ctx.vectorstore = get_vectorstore()
+        if ctx.embeddings is None:
+            # Initialize embeddings
+            ctx.embeddings = OllamaEmbeddings(
+                model=EMBEDDING_MODEL,
+                base_url=OLLAMA_BASE_URL,
+            )
         return True
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to initialize vector database: {e}")
         return False
 
 
@@ -491,7 +550,9 @@ def run_main_chat_loop() -> bool:
                 break
 
             # Handle slash commands
+            logger.info(f"📋 Main loop: Processing input: '{user_input}'")
             if user_input.startswith("/"):
+                logger.info("📋 Main loop: Detected slash command, dispatching...")
                 handle_slash_command(user_input)
                 continue
 
