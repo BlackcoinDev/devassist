@@ -50,8 +50,8 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # Import functions to test - these are the core business logic functions
 from src.storage import save_memory
+from src.vectordb import get_space_collection_name
 from src.main import (
-    get_space_collection_name,
     load_embedding_cache,
     cleanup_memory,
     load_memory,

@@ -180,6 +180,103 @@ def _format_context_results(docs: list) -> str:
     return f"\n\nRelevant context:\n{context}\n\n"
 
 
+def _check_cache_for_context(cache_key: str) -> Optional[str]:
+    """
+    Check query cache and return formatted results if hit.
+
+    Args:
+        cache_key: Cache key for query
+
+    Returns:
+        Formatted context string if cache hit, None if cache miss
+    """
+    ctx = get_context()
+    config = get_config()
+
+    if config.verbose_logging:
+        logger.debug(f"💾 Checking cache with key: {cache_key}")
+
+    if cache_key in ctx.query_cache:
+        cached_results = ctx.query_cache[cache_key]
+        if cached_results:
+            if config.verbose_logging:
+                logger.debug(f"💾 Cache hit: {len(cached_results)} cached results found")
+                for i, result in enumerate(cached_results):
+                    logger.debug(f"   Result {i+1}: {result[:100]}...")
+            return _format_context_results(cached_results)
+
+    if config.verbose_logging:
+        logger.debug("💾 Cache miss, proceeding with vector database query")
+    return None
+
+
+def _generate_query_embedding(query: str) -> Optional[list]:
+    """
+    Generate embedding vector for a search query.
+
+    Args:
+        query: Search query string
+
+    Returns:
+        Embedding vector or None if generation fails
+    """
+    ctx = get_context()
+    config = get_config()
+
+    if ctx.embeddings is None:
+        logger.warning("Embeddings not initialized for context retrieval")
+        return None
+
+    if config.verbose_logging:
+        logger.debug("🧮 Initializing embedding generation for query")
+        logger.debug(f"   Query length: {len(query)} characters")
+
+    try:
+        query_embedding = ctx.embeddings.embed_query(query)
+        if config.verbose_logging:
+            logger.debug(f"✅ Generated embedding vector (length: {len(query_embedding)})")
+            logger.debug(f"   First 5 values: {query_embedding[:5] if len(query_embedding) >= 5 else query_embedding}")
+        return query_embedding
+    except Exception as e:
+        logger.warning(f"Failed to generate query embedding: {e}")
+        return None
+
+
+def _retrieve_and_cache_context(
+    query_embedding: list, collection_id: str, k: int, cache_key: str, space_name: str
+) -> str:
+    """
+    Query ChromaDB and cache results.
+
+    Args:
+        query_embedding: Embedding vector for query
+        collection_id: ChromaDB collection ID
+        k: Number of results to return
+        cache_key: Cache key for storing results
+        space_name: Space name for logging
+
+    Returns:
+        Formatted context string
+    """
+    ctx = get_context()
+    config = get_config()
+
+    # Query the database
+    docs = _query_chromadb(collection_id, query_embedding, k)
+
+    # Cache and return results
+    if docs:
+        ctx.query_cache[cache_key] = docs
+        if config.verbose_logging:
+            logger.debug(f"💾 Cached results under key: {cache_key}")
+        if len(ctx.query_cache) % 50 == 0:
+            _save_query_cache()
+            if config.verbose_logging:
+                logger.debug("💾 Saved query cache to disk (50+ entries)")
+
+    return _format_context_results(docs)
+
+
 def get_relevant_context(
     query: str, k: int = 3, space_name: Optional[str] = None
 ) -> str:
@@ -209,21 +306,11 @@ def get_relevant_context(
         if config.verbose_logging:
             logger.debug(f"🏢 Using specified space: {space_name}")
 
-    # Check query cache first
+    # Check cache first
     cache_key = f"{space_name}:{query}:{k}"
-    if config.verbose_logging:
-        logger.debug(f"💾 Checking cache with key: {cache_key}")
-    if cache_key in ctx.query_cache:
-        cached_results = ctx.query_cache[cache_key]
-        if cached_results:
-            if config.verbose_logging:
-                logger.debug(f"💾 Cache hit: {len(cached_results)} cached results found")
-                for i, result in enumerate(cached_results):
-                    logger.debug(f"   Result {i+1}: {result[:100]}...")
-            return _format_context_results(cached_results)
-
-    if config.verbose_logging:
-        logger.debug("💾 Cache miss, proceeding with vector database query")
+    cached_context = _check_cache_for_context(cache_key)
+    if cached_context is not None:
+        return cached_context
 
     # Return empty context if vector database not available
     if ctx.vectorstore is None:
@@ -233,17 +320,9 @@ def get_relevant_context(
 
     try:
         # Generate embedding for the query
-        if ctx.embeddings is None:
-            logger.warning("Embeddings not initialized for context retrieval")
+        query_embedding = _generate_query_embedding(query)
+        if query_embedding is None:
             return ""
-
-        if config.verbose_logging:
-            logger.debug("🧮 Initializing embedding generation for query")
-            logger.debug(f"   Query length: {len(query)} characters")
-        query_embedding = ctx.embeddings.embed_query(query)
-        if config.verbose_logging:
-            logger.debug(f"✅ Generated embedding vector (length: {len(query_embedding)})")
-            logger.debug(f"   First 5 values: {query_embedding[:5] if len(query_embedding) >= 5 else query_embedding}")
 
         # Find collection for the specified space
         from src.vectordb.spaces import get_space_collection_name
@@ -254,20 +333,8 @@ def get_relevant_context(
             logger.warning(f"Could not find collection for space {space_name}")
             return ""
 
-        # Query the database
-        docs = _query_chromadb(collection_id, query_embedding, k)
-
-        # Cache and return results
-        if docs:
-            ctx.query_cache[cache_key] = docs
-            if config.verbose_logging:
-                logger.debug(f"💾 Cached results under key: {cache_key}")
-            if len(ctx.query_cache) % 50 == 0:
-                _save_query_cache()
-                if config.verbose_logging:
-                    logger.debug("💾 Saved query cache to disk (50+ entries)")
-
-        return _format_context_results(docs)
+        # Query and cache results
+        return _retrieve_and_cache_context(query_embedding, collection_id, k, cache_key, space_name)
 
     except (AttributeError, NameError, Exception) as e:
         logger.warning(f"Failed to retrieve context: {e}")
@@ -452,6 +519,97 @@ def _store_document_in_chromadb(
         return False
 
 
+def _validate_learning_inputs(content: str) -> bool:
+    """
+    Validate that learning is possible.
+
+    Args:
+        content: Text content to learn
+
+    Returns:
+        True if valid, False otherwise
+    """
+    ctx = get_context()
+
+    if ctx.embeddings is None:
+        logger.error("Embeddings not available for learning")
+        return False
+
+    if not content:
+        logger.error("Cannot add empty content to knowledge base")
+        return False
+
+    return True
+
+
+def _prepare_document_for_learning(content: str, metadata: Optional[dict] = None) -> Optional[tuple]:
+    """
+    Prepare document and generate embeddings for learning.
+
+    Args:
+        content: Text content to learn
+        metadata: Optional metadata dict
+
+    Returns:
+        (Document, embedding_vector) tuple or None if generation fails
+    """
+    # Set default metadata if not provided
+    if metadata is None:
+        metadata = {
+            "source": "user-input",
+            "added_at": str(datetime.now()),
+        }
+
+    # Create document
+    doc = Document(page_content=content, metadata=metadata)
+
+    # Generate embeddings
+    embedding_vector = _generate_embeddings(doc.page_content)
+    if embedding_vector is None:
+        return None
+
+    return (doc, embedding_vector)
+
+
+def _store_in_chromadb_with_fallback(
+    doc: Document, embedding_vector: list, collection_name: str, collection_id: str
+) -> bool:
+    """
+    Store document in ChromaDB with fallback to LangChain.
+
+    Args:
+        doc: Document to store
+        embedding_vector: Generated embedding vector
+        collection_name: ChromaDB collection name
+        collection_id: ChromaDB collection ID
+
+    Returns:
+        True if successful, False otherwise
+    """
+    ctx = get_context()
+    config = get_config()
+
+    try:
+        # Try direct API method
+        if _store_document_in_chromadb(collection_id, doc.page_content, embedding_vector, doc.metadata, collection_name):
+            return True
+
+        # API returned an error (not an exception), don't try fallback
+        return False
+
+    except Exception as api_e:
+        # API raised an exception, try LangChain fallback
+        logger.warning(f"Direct API call failed with exception, trying LangChain fallback: {api_e}")
+        if ctx.vectorstore is not None:
+            ctx.vectorstore.add_documents([doc])
+            if config.verbose_logging:
+                logger.debug("Used LangChain fallback for document addition")
+            return True
+        else:
+            logger.error("No vectorstore available for fallback")
+            return False
+
+
 def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool:
     """
     Add information to the current space's knowledge base.
@@ -472,12 +630,7 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
         logger.debug(f"   Metadata: {metadata}")
 
     # Validate inputs
-    if ctx.embeddings is None:
-        logger.error("Embeddings not available for learning")
-        return False
-
-    if not content:
-        logger.error("Cannot add empty content to knowledge base")
+    if not _validate_learning_inputs(content):
         return False
 
     if config.verbose_logging:
@@ -485,55 +638,47 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
         from src.vectordb.spaces import get_space_collection_name
         logger.debug(f"   Space collection: {get_space_collection_name(ctx.current_space)}")
 
+    # Prepare document and embeddings
+    result = _prepare_document_for_learning(content, metadata)
+    if result is None:
+        return False
+
+    doc, embedding_vector = result
+
     try:
-        # Set default metadata if not provided
-        if metadata is None:
-            metadata = {
-                "source": "user-input",
-                "added_at": str(datetime.now()),
-            }
-
-        # Create document
-        doc = Document(page_content=content, metadata=metadata)
-
-        # Generate embeddings
-        embedding_vector = _generate_embeddings(doc.page_content)
-        if embedding_vector is None:
-            return False
-
-        # Get collection for current space
+        # Try API-based storage
         from src.vectordb.spaces import get_space_collection_name
         collection_name = get_space_collection_name(ctx.current_space)
+        collection_id = _find_or_create_collection(collection_name, ctx.current_space)
 
-        try:
-            collection_id = _find_or_create_collection(collection_name, ctx.current_space)
-
-            if not collection_id:
-                logger.error(f"Could not find or create collection for space {ctx.current_space}")
-                return False
-
-            # Try direct API method
-            if _store_document_in_chromadb(collection_id, doc.page_content, embedding_vector, doc.metadata, ctx.current_space):
-                return True
-
-            # API returned an error (not an exception), don't try fallback
-            return False
-
-        except Exception as api_e:
-            # API raised an exception, try LangChain fallback
-            logger.warning(f"Direct API call failed with exception, trying LangChain fallback: {api_e}")
+        if not collection_id:
+            logger.error(f"Could not find or create collection for space {ctx.current_space}")
+            # Try fallback before failing
             if ctx.vectorstore is not None:
                 ctx.vectorstore.add_documents([doc])
                 if config.verbose_logging:
-                    logger.debug("Used LangChain fallback for document addition")
+                    logger.debug("Used LangChain fallback after failed collection creation")
                 return True
-            else:
-                logger.error("No vectorstore available for fallback")
-                return False
+            return False
+
+        # Store document with fallback
+        return _store_in_chromadb_with_fallback(doc, embedding_vector, collection_name, collection_id)
 
     except Exception as e:
-        logger.error(f"Failed to add to knowledge base: {e}")
-        return False
+        # API failed, try LangChain fallback
+        logger.warning(f"API call failed, attempting LangChain fallback: {e}")
+        if ctx.vectorstore is not None:
+            try:
+                ctx.vectorstore.add_documents([doc])
+                if config.verbose_logging:
+                    logger.debug("Successfully used LangChain fallback")
+                return True
+            except Exception as fallback_e:
+                logger.error(f"Both API and fallback failed: {fallback_e}")
+                return False
+        else:
+            logger.error("No vectorstore available for fallback")
+            return False
 
 
 def _save_query_cache():

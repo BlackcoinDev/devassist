@@ -339,10 +339,10 @@ class TestKnowledgeBaseFunctions:
 
     @responses.activate
     def test_add_to_knowledge_base_collection_creation_failure(self):
-        """Test behavior when collection creation fails."""
+        """Test behavior when collection creation fails (no fallback available)."""
         ctx = get_context()
         ctx.current_space = "default"
-        ctx.vectorstore = MagicMock()
+        ctx.vectorstore = None  # No fallback available
 
         # Mock embeddings
         mock_embeddings = MagicMock()

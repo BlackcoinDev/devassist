@@ -34,7 +34,6 @@ and document processing capabilities. Built specifically for the qwen3-vl-30b + 
 # Standard library imports
 import sys
 from datetime import datetime
-from typing import Optional
 
 # Third-party imports
 import requests  # noqa: F401
@@ -65,11 +64,9 @@ from src.storage import (
     load_memory,
     load_embedding_cache,
     load_query_cache,
-    save_query_cache,
     cleanup_memory,
 )
-from src.vectordb import get_space_collection_name
-from src.core.context_utils import get_relevant_context  # Backwards compatibility
+from src.core.context_utils import get_relevant_context  # noqa: F401 Backwards compatibility
 
 # Setup logging FIRST (before any other imports that use logging)
 logger = get_logger()
@@ -137,9 +134,6 @@ _ctx = get_context()
 CONTEXT_MODE = _ctx.context_mode
 LEARNING_MODE = _ctx.learning_mode
 CURRENT_SPACE = _ctx.current_space
-
-# Caches - now backed by context
-QUERY_CACHE = _ctx.query_cache
 
 # Core services - now backed by context
 # Use get_llm()/set_llm() etc. for access
