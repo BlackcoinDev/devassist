@@ -38,6 +38,7 @@ class TestLearningCommands:
     def setup_method(self):
         ctx = ApplicationContext()
         ctx.vectorstore = Mock()  # mock vectorstore to simulate availability
+        ctx.embeddings = Mock()  # mock embeddings to simulate availability
         set_context(ctx)
 
     @patch('src.commands.handlers.learning_commands.add_to_knowledge_base')
@@ -50,11 +51,11 @@ class TestLearningCommands:
         assert any("✅ Learned:" in str(call) for call in mock_print.call_args_list)
 
     @patch('builtins.print')
-    def test_learn_command_no_vectorstore(self, mock_print):
-        """Test /learn command when vectorstore unavailable."""
-        get_context().vectorstore = None
+    def test_learn_command_no_embeddings(self, mock_print):
+        """Test /learn command when embeddings unavailable."""
+        get_context().embeddings = None
         handle_learn(["data"])
-        mock_print.assert_any_call("\nVector database not available. ChromaDB is required for learning features.\n")
+        mock_print.assert_any_call("\nEmbeddings not available. Ollama is required for learning features.\n")
 
     @patch('builtins.print')
     def test_learn_command_empty(self, mock_print):
@@ -85,9 +86,7 @@ class TestLearningCommands:
         """Test /learn command when adding to knowledge base fails."""
         mock_add.return_value = False
         handle_learn(["test", "information"])
-        """Test /web command without URL argument."""
-        handle_web([])
-        mock_print.assert_any_call("\nUsage: /web <url>\n")
+        assert any("❌ Failed to learn" in str(call) for call in mock_print.call_args_list)
 
 
 class TestMemoryCommands:

@@ -131,6 +131,8 @@ class TestSpaceHandlers:
     @patch('src.commands.handlers.space_commands.list_spaces')
     def test_handle_space_list(self, mock_list_spaces, mock_print):
         """Test listing available spaces."""
+        ctx = get_context()
+        ctx.current_space = "default"
         mock_list_spaces.return_value = ["default", "work", "personal"]
 
         handle_space(["list"])
@@ -139,27 +141,25 @@ class TestSpaceHandlers:
         assert "work" in output
 
     @patch('builtins.print')
-    @patch('src.commands.handlers.space_commands.switch_space')
-    @patch('src.commands.handlers.space_commands.list_spaces')
-    def test_handle_space_create(self, mock_list, mock_switch, mock_print):
+    @patch('src.commands.handlers.space_commands.ensure_space_collection')
+    def test_handle_space_create(self, mock_ensure, mock_print):
         """Test creating a new space."""
-        mock_list.return_value = ["default"]
-        mock_switch.return_value = True
+        ctx = get_context()
+        ctx.current_space = "default"
 
         handle_space(["create", "new-project"])
 
-        mock_switch.assert_called_with("new-project")
+        mock_ensure.assert_called_with("new-project")
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
         assert "Created and switched to space: new-project" in output
 
     @patch('builtins.print')
     @patch('builtins.input', return_value="yes")
     @patch('src.commands.handlers.space_commands.delete_space')
-    @patch('src.commands.handlers.space_commands.list_spaces')
-    def test_handle_space_delete(self, mock_list, mock_delete, mock_input, mock_print):
+    def test_handle_space_delete(self, mock_delete, mock_input, mock_print):
         """Test deleting an existing space with confirmation."""
-        mock_list.return_value = ["default", "old-space"]
-        mock_delete.return_value = True
+        ctx = get_context()
+        ctx.current_space = "default"
 
         handle_space(["delete", "old-space"])
 
@@ -212,6 +212,7 @@ class TestLearningHandlers:
     def test_handle_learn_success(self, mock_add, mock_print):
         """Test the /learn command."""
         ctx = get_context()
+        ctx.embeddings = MagicMock()
         ctx.vectorstore = MagicMock()
         mock_add.return_value = True
 
@@ -219,12 +220,13 @@ class TestLearningHandlers:
 
         mock_add.assert_called_with("some new fact")
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
-        assert "Learned: some new fact" in output
+        assert "Learning: some new fact" in output
 
     @patch('builtins.print')
     def test_handle_learn_no_args(self, mock_print):
         """Test /learn without arguments."""
         ctx = get_context()
+        ctx.embeddings = MagicMock()
         ctx.vectorstore = MagicMock()
         handle_learn([])
         output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)

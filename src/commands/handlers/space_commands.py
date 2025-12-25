@@ -33,7 +33,7 @@ Provides slash commands for managing spaces:
 """
 
 import logging
-from typing import List, Optional, Union
+from typing import List, Union
 
 from src.commands.registry import CommandRegistry
 from src.core.context import get_context
@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
     category="space",
     aliases=["sp"],
 )
-def handle_space(args: Union[str, List[str]]) -> Optional[str]:
+def handle_space(args: Union[str, List[str]]) -> None:
     """
     Handle space management commands.
 
@@ -65,9 +65,6 @@ def handle_space(args: Union[str, List[str]]) -> Optional[str]:
 
     Args:
         args: Command arguments as a string or list
-
-    Returns:
-        Status message or None
     """
     ctx = get_context()
 
@@ -77,7 +74,8 @@ def handle_space(args: Union[str, List[str]]) -> Optional[str]:
 
     if not args or args.strip() == "":
         # Show current space
-        return f"Current space: **{ctx.current_space}**"
+        print(f"Current space: {ctx.current_space}")
+        return
 
     parts = args.strip().split()
     command = parts[0].lower() if parts else ""
@@ -87,64 +85,78 @@ def handle_space(args: Union[str, List[str]]) -> Optional[str]:
         try:
             spaces = list_spaces()
             if not spaces:
-                return "No spaces found. Create one with: `/space create <name>`"
+                print("No spaces found. Create one with: `/space create <name>`")
+                return
 
             current = ctx.current_space
-            space_list = "\n".join(
-                f"  • **{space}**{'  ← current' if space == current else ''}"
-                for space in spaces
-            )
-            return f"Available spaces:\n{space_list}"
+            space_count = len(spaces)
+            print(f"\nAvailable spaces ({space_count}):")
+            for space in spaces:
+                marker = "  ← current" if space == current else ""
+                print(f"  • {space}{marker}")
+            print()
         except Exception as e:
             logger.error(f"Failed to list spaces: {e}")
-            return f"Error listing spaces: {e}"
+            print(f"Error listing spaces: {e}")
 
     elif command == "create":
         # Create new space
         if len(parts) < 2:
-            return "Usage: `/space create <name>`"
+            print("Usage: `/space create <name>`")
+            return
 
         space_name = parts[1]
         try:
             ensure_space_collection(space_name)
+            ctx.current_space = space_name
             logger.info(f"Created space: {space_name}")
-            return f"Space **{space_name}** created successfully"
+            print(f"Created and switched to space: {space_name}")
         except Exception as e:
             logger.error(f"Failed to create space: {e}")
-            return f"Error creating space: {e}"
+            print(f"Error creating space: {e}")
 
     elif command == "switch":
         # Switch to space
         if len(parts) < 2:
-            return "Usage: `/space switch <name>`"
+            print("Usage: `/space switch <name>`")
+            return
 
         space_name = parts[1]
         try:
             ctx.current_space = space_name
-            return f"Switched to space: **{space_name}**"
+            print(f"Switched to space: {space_name}")
         except Exception as e:
             logger.error(f"Failed to switch space: {e}")
-            return f"Error switching space: {e}"
+            print(f"Error switching space: {e}")
 
     elif command == "delete":
         # Delete space
         if len(parts) < 2:
-            return "Usage: `/space delete <name>`"
+            print("Usage: `/space delete <name>`")
+            return
 
         space_name = parts[1]
         if space_name == ctx.current_space:
-            return "Cannot delete the current space. Switch to another space first."
+            print("Cannot delete the current space. Switch to another space first.")
+            return
 
         try:
+            # Confirm deletion
+            confirm = input(f"Delete space '{space_name}'? (yes/no): ").strip().lower()
+            if confirm != "yes":
+                print("Deletion cancelled.")
+                return
+
             delete_space(space_name)
             logger.info(f"Deleted space: {space_name}")
-            return f"Space **{space_name}** deleted successfully"
+            print(f"Deleted space: {space_name}")
         except Exception as e:
             logger.error(f"Failed to delete space: {e}")
-            return f"Error deleting space: {e}"
+            print(f"Error deleting space: {e}")
 
     else:
-        return f"Unknown space command: {command}\nUsage: `/space [list|create|switch|delete] [name]`"
+        print(f"Unknown space command: {command}")
+        print("Usage: `/space [list|create|switch|delete] [name]`")
 
 
 __all__ = ["handle_space"]

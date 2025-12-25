@@ -37,14 +37,14 @@ from src.main import (
 class TestMainInitialization:
     """Test initialization failure modes."""
 
-    @patch("src.main.get_llm", side_effect=Exception("LLM failure"))
-    def test_initialize_llm_failure(self, mock_llm):
+    @patch("src.main.get_config", side_effect=Exception("Config failure"))
+    def test_initialize_llm_failure(self, mock_config):
         """Test initialize_llm failure."""
         result = initialize_llm()
         assert result is False  # Function returns False on failure
 
-    @patch("src.main.get_vectorstore", side_effect=Exception("Vectordb failure"))
-    def test_initialize_vectordb_failure(self, mock_vdb):
+    @patch("src.main.get_config", side_effect=Exception("Config failure"))
+    def test_initialize_vectordb_failure(self, mock_config):
         """Test initialize_vectordb failure."""
         result = initialize_vectordb()
         assert result is False  # Function returns False on failure

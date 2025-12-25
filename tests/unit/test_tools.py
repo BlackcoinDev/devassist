@@ -40,7 +40,7 @@ are tested in separate test files:
 - test_system_tools.py - code_search
 """
 
-from unittest.mock import patch, mock_open, MagicMock, Mock
+from unittest.mock import patch, mock_open, MagicMock
 
 # Import tool functions from modular architecture (v0.3.0)
 from src.tools.executors.file_tools import (
@@ -471,37 +471,27 @@ class TestDocumentProcessingTools:
 class TestKnowledgeManagementTools:
     """Test knowledge base operations."""
 
-    @patch("src.core.context_utils.get_context")
-    def test_learn_information_success(self, mock_get_context):
+    @patch("src.tools.executors.knowledge_tools.add_to_knowledge_base")
+    def test_learn_information_success(self, mock_add):
         """Test successful information learning."""
-        # Mock context with vectorstore
-        mock_context = Mock()
-        mock_vectorstore = Mock()
-        mock_vectorstore.add_texts.return_value = ["doc_id_1"]
-        mock_context.vectorstore = mock_vectorstore
-        mock_get_context.return_value = mock_context
+        mock_add.return_value = True
 
         result = execute_learn_information("Python is a programming language")
 
         assert result["success"] is True
         assert result["learned"] is True
+        mock_add.assert_called_once_with("Python is a programming language", None)
 
-    @patch("src.core.context_utils.get_context")
-    def test_learn_information_failure(self, mock_get_context):
-        """Test learning information with fallback behavior."""
-        # Mock context with vectorstore that fails
-        mock_context = Mock()
-        mock_vectorstore = Mock()
-        mock_vectorstore.add_texts.side_effect = Exception("Storage error")
-        mock_context.vectorstore = mock_vectorstore
-        mock_get_context.return_value = mock_context
+    @patch("src.tools.executors.knowledge_tools.add_to_knowledge_base")
+    def test_learn_information_failure(self, mock_add):
+        """Test learning information failure."""
+        mock_add.return_value = False
 
         result = execute_learn_information("test info")
 
-        # The function has fallback behavior - it should still succeed
-        # because it tries multiple methods
-        assert result["success"] is True
-        assert result["learned"] is True
+        # Function returns error on failure
+        assert "error" in result
+        assert result["error"] == "Failed to add information to knowledge base"
 
     @patch("src.tools.executors.knowledge_tools.get_relevant_context")
     def test_search_knowledge_success(self, mock_get_context):

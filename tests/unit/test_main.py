@@ -373,57 +373,64 @@ class TestSpaceCommands(unittest.TestCase):
     """Test space management commands."""
 
     @patch("src.commands.handlers.space_commands.list_spaces", return_value=["default", "test"])
-    @patch("src.commands.handlers.space_commands.get_context")
-    def test_handle_space_command_list(self, mock_ctx, mock_list):
+    def test_handle_space_command_list(self, mock_list):
         """Test /space list command."""
+        from src.core.context import reset_context, get_context
         import io
         from contextlib import redirect_stdout
+        from src.commands.handlers.space_commands import handle_space
 
-        mock_ctx.return_value.current_space = "default"
+        reset_context()
+        ctx = get_context()
+        ctx.current_space = "default"
 
         f = io.StringIO()
         with redirect_stdout(f):
-            handle_space_command(["list"])
+            handle_space(["list"])
         output = f.getvalue()
 
         self.assertIn("Available spaces", output)
         mock_list.assert_called()  # Verify spaces were listed
 
-    @patch("src.commands.handlers.space_commands.list_spaces", return_value=["default"])
-    @patch("src.commands.handlers.space_commands.switch_space", return_value=True)
-    @patch("src.commands.handlers.space_commands.get_context")
-    def test_handle_space_command_create(self, mock_ctx, mock_switch, mock_list):
+    @patch("src.commands.handlers.space_commands.ensure_space_collection")
+    def test_handle_space_command_create(self, mock_ensure):
         """Test /space create command."""
+        from src.core.context import reset_context, get_context
         import io
         from contextlib import redirect_stdout
+        from src.commands.handlers.space_commands import handle_space
 
-        mock_ctx.return_value.current_space = "default"
+        reset_context()
+        ctx = get_context()
+        ctx.current_space = "default"
 
         f = io.StringIO()
         with redirect_stdout(f):
-            handle_space_command(["create", "newspace"])
+            handle_space(["create", "newspace"])
         output = f.getvalue()
 
         self.assertIn("Created and switched", output)
-        mock_switch.assert_called_once_with("newspace")  # Verify space was switched
+        mock_ensure.assert_called_once_with("newspace")
 
-    @patch("src.commands.handlers.space_commands.list_spaces", return_value=["default", "test"])
-    @patch("src.commands.handlers.space_commands.switch_space", return_value=True)
-    @patch("src.commands.handlers.space_commands.get_context")
-    def test_handle_space_command_switch(self, mock_ctx, mock_switch, mock_list):
+    def test_handle_space_command_switch(self):
         """Test /space switch command."""
+        from src.core.context import reset_context, get_context
         import io
         from contextlib import redirect_stdout
+        from src.commands.handlers.space_commands import handle_space
 
-        mock_ctx.return_value.current_space = "default"
+        reset_context()
+        ctx = get_context()
+        ctx.current_space = "default"
 
         f = io.StringIO()
         with redirect_stdout(f):
-            handle_space_command(["switch", "test"])
+            handle_space(["switch", "test"])
         output = f.getvalue()
 
         self.assertIn("Switched to space", output)
-        mock_switch.assert_called_once_with("test")  # Verify space was switched
+        # Verify current space was updated
+        self.assertEqual(ctx.current_space, "test")
 
 
 class TestExportCommand(unittest.TestCase):
