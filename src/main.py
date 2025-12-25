@@ -69,6 +69,7 @@ from src.storage import (
     cleanup_memory,
 )
 from src.vectordb import get_space_collection_name
+from src.core.context_utils import get_relevant_context  # Backwards compatibility
 
 # Setup logging FIRST (before any other imports that use logging)
 logger = get_logger()
@@ -207,134 +208,6 @@ def get_llm():
 def get_vectorstore():
     """Get the current vectorstore instance. Used by GUI to access initialized vectorstore."""
     return get_context().vectorstore
-
-
-def get_relevant_context(
-    query: str, k: int = 3, space_name: Optional[str] = None
-) -> str:
-    """Get relevant context from vector database with caching."""
-    logger.info(f"🔍 get_relevant_context called with query: '{query}'")
-
-    # Use current space if not specified
-    if space_name is None:
-        space_name = CURRENT_SPACE
-
-    logger.info(f"🔍 Using space: {space_name}")
-
-    # Check query cache first
-    cache_key = f"{space_name}:{query}:{k}"
-    if cache_key in QUERY_CACHE:
-        cached_results = QUERY_CACHE[cache_key]
-        if cached_results:
-            context = "\n\n".join(
-                [f"From knowledge base:\n{doc}" for doc in cached_results]
-            )
-            logger.info(f"🔍 Found cached results: {len(cached_results)} items")
-            return f"\n\nRelevant context:\n{context}\n\n"
-
-    logger.info("🔍 No cache hit, proceeding with direct API calls...")
-
-    try:
-        logger.info("🔍 Generating embedding for query...")
-
-        # Generate embedding for the query - embeddings will be available at
-        # runtime
-        try:
-            # Get embeddings from context (initialized during application startup)
-            ctx = get_context()
-            logger.info(f"🔍 Embeddings object: {ctx.embeddings}")
-            if ctx.embeddings is None:
-                logger.warning("Embeddings not initialized for context retrieval")
-                return ""
-
-            logger.info("🔍 Calling embed_query...")
-            query_embedding = ctx.embeddings.embed_query(query)
-            logger.info(
-                f"🔍 Generated embedding with {len(query_embedding)} dimensions"
-            )
-            logger.info("🔍 Proceeding to collection lookup...")
-        except Exception as e:
-            logger.error(f"🔍 Embedding generation failed: {e}")
-            return ""
-
-        # Find collection for the specified space
-        collection_id = None
-        collection_name = get_space_collection_name(space_name)
-        logger.info(f"🔍 Looking for collection: {collection_name}")
-
-        # Try to find the collection by name
-        try:
-            list_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections"
-            logger.info(f"🔍 Listing collections from: {list_url}")
-            list_response = requests.get(list_url, timeout=10)
-            logger.info(f"🔍 List response status: {list_response.status_code}")
-            if list_response.status_code == 200:
-                collections = list_response.json()
-                logger.info(f"🔍 Found {len(collections)} collections")
-                for coll in collections:
-                    logger.info(
-                        f"🔍 Collection: {coll.get('name')} (id: {coll.get('id')})"
-                    )
-                    if coll.get("name") == collection_name:
-                        collection_id = coll.get("id")
-                        logger.info(f"🔍 Found matching collection: {collection_id}")
-                        break
-        except Exception as e:
-            logger.warning(f"Error finding collection for space {space_name}: {e}")
-
-        if not collection_id:
-            logger.warning(f"Could not find collection for space {space_name}")
-            return ""
-
-        # ChromaDB v2 API endpoint for querying
-        query_url = f"http://{CHROMA_HOST}:{CHROMA_PORT}/api/v2/tenants/default_tenant/databases/default_database/collections/{collection_id}/query"
-
-        # Query payload with embedding
-        payload = {"query_embeddings": [query_embedding], "n_results": k}
-
-        logger.info(f"🔍 Querying ChromaDB at: {query_url}")
-        logger.info(f"🔍 Query payload: {payload}")
-        response = api_session.post(query_url, json=payload, timeout=10)
-        logger.info(f"🔍 Query response status: {response.status_code}")
-
-        if response.status_code == 200:
-            data = response.json()
-            logger.info(f"🔍 Query response data keys: {list(data.keys())}")
-            if "documents" in data:
-                logger.info(
-                    f"🔍 Documents in response: {len(data['documents']) if data['documents'] else 0}"
-                )
-
-            # Extract documents from response
-            docs = []
-            if "documents" in data and data["documents"] and len(data["documents"]) > 0:
-                documents = data["documents"][0]  # First query result
-                logger.info(f"🔍 Found {len(documents)} documents in first result")
-                for doc_content in documents:
-                    docs.append(doc_content)
-                    logger.info(f"🔍 Document content: {doc_content[:100]}...")
-
-            # Return empty if no relevant documents found
-            if not docs:
-                return ""
-
-            # Cache the results
-            QUERY_CACHE[cache_key] = docs
-            if len(QUERY_CACHE) % 50 == 0:
-                save_query_cache()
-
-            context = "\n\n".join([f"From knowledge base:\n{doc}" for doc in docs])
-            result = f"\n\nRelevant context:\n{context}\n\n"
-            logger.info(f"🔍 Returning context: {result[:200]}...")
-            return result
-        else:
-            print(f"ChromaDB query failed: {response.status_code}")
-            return ""
-
-    except Exception as e:
-        # Log error but don't crash - AI can still respond without context
-        logger.warning(f"Failed to retrieve context: {e}")
-        return ""
 
 
 # =============================================================================

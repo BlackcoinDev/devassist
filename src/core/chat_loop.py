@@ -81,7 +81,7 @@ class ChatLoop:
         self.ctx.conversation_history.append(HumanMessage(content=user_input))
 
         # 2. Get context (RAG)
-        from src.main import get_relevant_context
+        from src.core.context_utils import get_relevant_context
         if self.ctx.context_mode != "off":
             logger.info(f"📚 ChatLoop: Getting context for query: '{user_input}'")
             context = get_relevant_context(user_input)

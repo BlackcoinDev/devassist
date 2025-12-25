@@ -108,7 +108,7 @@ class TestApplicationIntegration:
     @patch("src.main.vectorstore")
     def test_context_retrieval_flow(self, mock_vectorstore):
         """Test context retrieval flow."""
-        from src.main import get_relevant_context
+        from src.core.context_utils import get_relevant_context
 
         mock_vectorstore = MagicMock()
         mock_embeddings = MagicMock()
