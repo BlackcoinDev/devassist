@@ -29,7 +29,7 @@ database contents and statistics.
 """
 
 from src.core.context_utils import _get_api_session
-from typing import List
+from typing import List, Dict, Optional
 from datetime import datetime
 import logging
 
@@ -45,6 +45,162 @@ __all__ = [
 ]
 
 # =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+
+
+def _find_collection_for_space(collection_name: str, ctx, config) -> Optional[str]:
+    """Find collection ID for current space via API."""
+    try:
+        list_url = f"http://{config.chroma_host}:{config.chroma_port}/api/v2/tenants/default_tenant/databases/default_database/collections"
+        api_session = _get_api_session()
+        list_response = api_session.get(list_url, timeout=10)
+
+        if list_response.status_code == 200:
+            collections = list_response.json()
+            for coll in collections:
+                if coll.get("name") == collection_name:
+                    return coll.get("id")
+        return None
+    except Exception as e:
+        logger.warning(f"Error finding collection: {e}")
+        return None
+
+
+def _get_collection_count(collection_id: str, config) -> Optional[int]:
+    """Get document count from collection."""
+    try:
+        count_url = (
+            f"http://{config.chroma_host}:{config.chroma_port}/api/v2/"
+            "tenants/default_tenant/databases/default_database/"
+            f"collections/{collection_id}/count"
+        )
+        api_session = _get_api_session()
+        count_response = api_session.get(count_url, timeout=10)
+
+        if count_response.status_code == 200:
+            count_data = count_response.json()
+            return (
+                count_data
+                if isinstance(count_data, int)
+                else count_data.get("count", 0)
+            )
+        return None
+    except Exception as e:
+        logger.warning(f"Error getting collection count: {e}")
+        return None
+
+
+def _analyze_collection_metadata(collection_name: str, chunk_count: int, ctx) -> Dict[str, object]:
+    """Analyze metadata from collection for statistics."""
+    stats: Dict[str, object] = {
+        "sources": set(),
+        "content_types": set(),
+        "date_range": None,
+        "sample_sources": [],
+    }
+
+    try:
+        if ctx.vectorstore is None or not hasattr(ctx.vectorstore, "_client") or ctx.vectorstore._client is None:
+            return stats
+
+        chroma_client = ctx.vectorstore._client
+        collection = chroma_client.get_collection(collection_name)
+        results = collection.get(
+            limit=min(chunk_count, 1000),  # Sample up to 1000 for stats
+            include=["metadatas"],
+        )
+
+        if results and "metadatas" in results and results["metadatas"]:
+            metadatas = results["metadatas"]
+            dates: List[str] = []
+
+            for metadata in metadatas:
+                if metadata:
+                    if "source" in metadata:
+                        sources_set = stats["sources"]
+                        if isinstance(sources_set, set):
+                            sources_set.add(metadata["source"])
+                    if "content_type" in metadata:
+                        content_types_set = stats["content_types"]
+                        if isinstance(content_types_set, set):
+                            content_types_set.add(metadata["content_type"])
+                    if "added_at" in metadata:
+                        dates.append(metadata["added_at"])
+
+            # Calculate date range
+            if dates:
+                try:
+                    date_objs = [
+                        datetime.fromisoformat(d.replace("Z", "+00:00"))
+                        for d in dates
+                        if d
+                    ]
+                    if date_objs:
+                        earliest = min(date_objs)
+                        latest = max(date_objs)
+                        stats["date_range"] = (earliest, latest)
+                except Exception:
+                    pass
+
+            # Get sample sources
+            sample_sources_list = stats["sample_sources"]
+            if isinstance(sample_sources_list, list):
+                for metadata in metadatas[:5]:
+                    if metadata and metadata.get("source"):
+                        sample_sources_list.append(
+                            (
+                                metadata.get("source"),
+                                metadata.get("added_at", "unknown"),
+                            )
+                        )
+                        if len(sample_sources_list) >= 3:
+                            break
+    except Exception as e:
+        logger.warning(f"Error analyzing metadata: {e}")
+
+    return stats
+
+
+def _format_statistics_output(collection_name: str, chunk_count: int, current_space: str, stats: Dict[str, object]) -> str:
+    """Format statistics for display."""
+    output = f"📊 Collection: {collection_name}\n"
+    output += f"📈 Chunks: {chunk_count}\n"
+    output += f"🏢 Space: {current_space}\n\n"
+
+    if chunk_count > 0:
+        output += "📋 Statistics:\n"
+        sources = stats.get("sources", set())
+        content_types = stats.get("content_types", set())
+        date_range = stats.get("date_range")
+        sample_sources = stats.get("sample_sources", [])
+
+        if isinstance(sources, set):
+            output += f"   📄 Unique Sources: {len(sources)}\n"
+            if sources:
+                sources_list = ", ".join(list(sources)[:5])
+                sources_str = sources_list + ("..." if len(sources) > 5 else "")
+                output += f"   🔗 Sources: {sources_str}\n"
+
+        if isinstance(content_types, set) and content_types:
+            output += f"   📝 Content Types: {', '.join(content_types)}\n"
+
+        if date_range and isinstance(date_range, tuple):
+            earliest, latest = date_range
+            output += f"   📅 Date Range: {earliest.strftime('%Y-%m-%d')} to {latest.strftime('%Y-%m-%d')}\n"
+
+        if isinstance(sample_sources, list) and sample_sources:
+            output += "\n🕒 Sample Sources:\n"
+            for i, (source, added_at) in enumerate(sample_sources):
+                output += f"   {i + 1}. {source} (added: {added_at})\n"
+    else:
+        output += "  No chunks found in the knowledge base.\n"
+        output += "  Use /learn to add information or /populate to add codebases.\n"
+
+    return output
+
+
+# =============================================================================
 # COMMAND HANDLERS
 # =============================================================================
 
@@ -53,7 +209,6 @@ __all__ = [
     "vectordb", "Show vector database contents", category="database"
 )
 def handle_vectordb(args: List[str]) -> None:
-    """Display vector database contents."""
     """
     Display information about the current vector database contents.
 
@@ -63,274 +218,37 @@ def handle_vectordb(args: List[str]) -> None:
     ctx = get_context()
     config = get_config()
 
-    # Initialize variables that may be used in error handling
+    print("\n--- Vector Database Contents ---")
+
+    # Get collection name for current space
     collection_name = get_space_collection_name(ctx.current_space)
-    collection_id = None
-    api_session = None
 
-    try:
-        print("\n--- Vector Database Contents ---")
+    # Find the collection
+    collection_id = _find_collection_for_space(collection_name, ctx, config)
+    if not collection_id:
+        print(f"❌ No collection found for current space '{ctx.current_space}'")
+        print("The space may not have any documents yet.")
+        return
 
-        # Try to get documents from ChromaDB via direct API
-        try:
-            # Find collection for current space
-            # collection_name and collection_id are already initialized above
+    logger.info(
+        f"Using collection for space {ctx.current_space}: {collection_name} (ID: {collection_id})"
+    )
 
-            list_url = f"http://{config.chroma_host}:{config.chroma_port}/api/v2/tenants/default_tenant/databases/default_database/collections"
-            api_session = _get_api_session()
-            list_response = api_session.get(list_url, timeout=10)
+    # Get document count
+    chunk_count = _get_collection_count(collection_id, config)
+    if chunk_count is None:
+        print("Failed to retrieve chunks from collection")
+        print("Vector database connection may have issues.")
+        return
 
-            if list_response.status_code == 200:
-                collections = list_response.json()
-                for coll in collections:
-                    if coll.get("name") == collection_name:
-                        collection_id = coll.get("id")
-                        break
+    # Analyze metadata and get statistics
+    stats = _analyze_collection_metadata(collection_name, chunk_count, ctx)
 
-            if not collection_id:
-                print(f"❌ No collection found for current space '{ctx.current_space}'")
-                print("The space may not have any documents yet.")
-                return
+    # Format and display output
+    output = _format_statistics_output(collection_name, chunk_count, ctx.current_space, stats)
+    print(output)
 
-            logger.info(
-                f"Using collection for space {ctx.current_space}: {collection_name} (ID: {collection_id})"
-            )
-
-            count_url = (
-                f"http://{config.chroma_host}:{config.chroma_port}/api/v2/"
-                "tenants/default_tenant/databases/default_database/"
-                f"collections/{collection_id}/count"
-            )
-            count_response = api_session.get(count_url, timeout=10)
-
-            if count_response.status_code == 200:
-                count_data = count_response.json()
-                chunk_count = (
-                    count_data
-                    if isinstance(count_data, int)
-                    else count_data.get("count", 0)
-                )
-                print(f"📊 Collection: {collection_name}")
-                print(f"📈 Chunks: {chunk_count}")
-                print(f"🏢 Space: {ctx.current_space}")
-
-                if chunk_count > 0:
-                    try:
-                        # Get metadata for statistics
-                        if ctx.vectorstore is None:
-                            print("\n📋 Statistics: Vector store not initialized")
-                            return
-                        if (
-                            not hasattr(ctx.vectorstore, "_client")
-                            or ctx.vectorstore._client is None
-                        ):
-                            print("\n📋 Statistics: ChromaDB client not available")
-                            return
-                        chroma_client = ctx.vectorstore._client
-                        collection = chroma_client.get_collection(collection_name)
-                        results = collection.get(
-                            limit=min(chunk_count, 1000),  # Sample up to 1000 for stats
-                            include=["metadatas"],
-                        )
-
-                        if results and "metadatas" in results and results["metadatas"]:
-                            metadatas = results["metadatas"]
-
-                            # Analyze metadata for insights
-                            sources = set()
-                            content_types = set()
-                            dates = []
-
-                            for metadata in metadatas:
-                                if metadata:
-                                    if "source" in metadata:
-                                        sources.add(metadata["source"])
-                                    if "content_type" in metadata:
-                                        content_types.add(metadata["content_type"])
-                                    if "added_at" in metadata:
-                                        try:
-                                            # Parse date
-                                            dates.append(metadata["added_at"])
-                                        except Exception:
-                                            pass
-
-                            print("\n📋 Statistics:")
-                            print(f"   📄 Unique Sources: {len(sources)}")
-                            if sources:
-                                print(
-                                    f"   🔗 Sources: {', '.join(list(sources)[:5])}{'...' if len(sources) > 5 else ''}"
-                                )
-
-                            if content_types:
-                                print(
-                                    f"   📝 Content Types: {', '.join(content_types)}"
-                                )
-
-                            if dates:
-                                try:
-                                    date_objs = [
-                                        datetime.fromisoformat(d.replace("Z", "+00:00"))
-                                        for d in dates
-                                        if d
-                                    ]
-                                    if date_objs:
-                                        earliest = min(date_objs)
-                                        latest = max(date_objs)
-                                        print(
-                                            f"   📅 Date Range: {earliest.strftime('%Y-%m-%d')} to {latest.strftime('%Y-%m-%d')}"
-                                        )
-                                except Exception:
-                                    pass
-
-                            # Show recent additions (last 3 by date)
-                            # Show sample sources
-                            sample_sources = []
-                            for metadata in metadatas[:5]:  # Check first 5 for examples
-                                if metadata and metadata.get("source"):
-                                    sample_sources.append(
-                                        (
-                                            metadata.get("source"),
-                                            metadata.get("added_at", "unknown"),
-                                        )
-                                    )
-                                    if len(sample_sources) >= 3:
-                                        break
-
-                            if sample_sources:
-                                print("\n🕒 Sample Sources:")
-                                for i, (source, added_at) in enumerate(sample_sources):
-                                    print(f"   {i + 1}. {source} (added: {added_at})")
-
-                        else:
-                            print("\n📋 Statistics: Unable to retrieve metadata")
-
-                    except Exception as e:
-                        print(f"\n❌ Error retrieving statistics: {e}")
-                else:
-                    print("\n  No chunks found in the knowledge base.")
-                    print(
-                        "  Use /learn to add information or /populate to add codebases."
-                    )
-            else:
-                print(f"Failed to retrieve chunks: HTTP {count_response.status_code}")
-                print("Vector database connection may have issues.")
-
-            print("--- End Vector Database ---")
-
-        except Exception as e:
-            print(f"❌ Error displaying vector database: {str(e)}")
-
-            if api_session is None:
-                return
-
-            # Get collection statistics instead of all documents
-            count_url = (
-                f"http://{config.chroma_host}:{config.chroma_port}/api/v2/"
-                "tenants/default_tenant/databases/default_database/"
-                f"collections/{collection_id}/count"
-            )
-            count_response = api_session.get(count_url, timeout=10)
-
-            if count_response.status_code == 200:
-                count_data = count_response.json()
-                count = (
-                    count_data
-                    if isinstance(count_data, int)
-                    else count_data.get("count", 0)
-                )
-                print(f"📊 Collection: {collection_name}")
-                print(f"📈 Documents: {count}")
-                print(f"🏢 Space: {ctx.current_space}")
-
-                if count > 0:
-                    print("\n📄 Sample Documents:")
-                    try:
-                        # Try to get sample documents using ChromaDB client
-                        # directly
-                        if (
-                            ctx.vectorstore is None
-                            or not hasattr(ctx.vectorstore, "_client")
-                            or ctx.vectorstore._client is None
-                        ):
-                            print("  Vector store not available for sample documents")
-                        else:
-                            chroma_client = ctx.vectorstore._client
-                            collection = chroma_client.get_collection(collection_name)
-                            results = collection.get(
-                                limit=3, include=["documents", "metadatas"]
-                            )
-
-                            if results and "documents" in results and results["documents"]:
-                                docs = results["documents"]
-                                metadatas = results.get("metadatas") or [{}] * len(docs)
-
-                                # First 3 documents
-                                for i, doc in enumerate(docs[:3]):
-                                    metadata = metadatas[i] if i < len(metadatas) else {}
-                                    if isinstance(doc, str):
-                                        # Clean up the preview - remove excessive
-                                        # whitespace and binary-looking content
-                                        preview = doc.strip()
-                                        # Check for binary content, PDF metadata,
-                                        # or placeholder text
-                                        if (
-                                            any(
-                                                indicator in preview.lower()
-                                                for indicator in [
-                                                    "<source>",
-                                                    "</source>",
-                                                    "<translation",
-                                                    "<<",
-                                                    ">>",
-                                                    "/type",
-                                                    "/pages",
-                                                    "xref",
-                                                    "trailer",
-                                                    "startxref",
-                                                ]
-                                            )
-                                            or any(
-                                                ord(c) < 32 and c not in "\n\t"
-                                                for c in preview[:100]
-                                            )
-                                            or preview.startswith("[Binary file:")
-                                            or "[Binary file:" in preview
-                                        ):
-                                            preview = "[Binary file - content not shown]"
-                                        elif len(preview) > 200:
-                                            preview = preview[:200] + "..."
-                                        elif not preview:
-                                            preview = "[empty content]"
-
-                                        source = (
-                                            metadata.get("source", "unknown")
-                                            if metadata
-                                            else "unknown"
-                                        )
-                                        added_at = (
-                                            metadata.get("added_at", "unknown")
-                                            if metadata
-                                            else "unknown"
-                                        )
-                                        print(f"  {i + 1}. {source} (added: {added_at})")
-                                        print(f"      Preview: {preview}")
-                                    else:
-                                        print(
-                                            f"  {i + 1}. [Non-text document: {type(doc)}]"
-                                        )
-                            else:
-                                print("  No documents found in collection")
-                    except Exception as e:
-                        print(f"  Could not retrieve sample documents: {str(e)[:100]}")
-                        print(
-                            "  (This is normal for some document types or if the collection is empty)"
-                        )
-                    print()
-            else:
-                print("❌ Could not retrieve collection statistics")
-
-    except Exception as e:
-        print(f"❌ Error accessing vector database: {e}")
+    print("--- End Vector Database ---")
 
 
 __all__ = ["handle_vectordb"]
