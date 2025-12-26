@@ -33,6 +33,7 @@ from typing import List, Optional, Sequence
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage
 
 from src.core.config import get_config
+from src.core.constants import SYSTEM_PROMPT
 from src.core.context import get_context
 
 logger = logging.getLogger(__name__)
@@ -70,28 +71,37 @@ def load_memory() -> List[BaseMessage]:
                 """)
                 rows = cursor.fetchall()
 
-            if not rows:
-                if config.verbose_logging:
-                    logger.debug(
-                        "No conversation history found in database, starting fresh"
-                    )
-                return [SystemMessage(content="Lets get some coding done..")]
+            if not rows and config.verbose_logging:
+                logger.debug(
+                    "No conversation history found in database, starting fresh"
+                )
 
             # Reconstruct message objects from database rows
-            history: List[BaseMessage] = []
+            # We explicitly IGNORE stored SystemMessages to ensure the AI always
+            # uses the latest definitions/capabilities defined in code.
+            user_ai_history: List[BaseMessage] = []
             for msg_type, content in rows:
-                if msg_type == "SystemMessage":
-                    history.append(SystemMessage(content=content))
-                elif msg_type == "HumanMessage":
-                    history.append(HumanMessage(content=content))
+                if msg_type == "HumanMessage":
+                    user_ai_history.append(HumanMessage(content=content))
                 elif msg_type == "AIMessage":
-                    history.append(AIMessage(content=content))
+                    user_ai_history.append(AIMessage(content=content))
+                elif msg_type == "SystemMessage":
+                    # Skip stored system prompts so we can inject the fresh one
+                    pass
                 else:
                     logger.warning(f"Unknown message type: {msg_type}, skipping")
 
             if config.verbose_logging:
-                logger.debug(f"Loaded {len(history)} messages from database")
-            return history
+                logger.debug(f"Loaded {len(user_ai_history)} user/AI messages from database")
+
+            # Prepend the authoritative system prompt
+            import json
+            from src.tools.registry import ToolRegistry
+
+            tool_json = json.dumps(ToolRegistry.get_definitions(), indent=2)
+
+            system_prompt = SystemMessage(content=SYSTEM_PROMPT + f"\n\nAVAILABLE TOOLS:\n{tool_json}\n")
+            return [system_prompt] + user_ai_history
 
         else:
             # Database not available - return empty history for tests/development

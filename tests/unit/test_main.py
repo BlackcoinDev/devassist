@@ -54,9 +54,9 @@ from src.vectordb import get_space_collection_name
 from src.main import (
     load_embedding_cache,
     cleanup_memory,
-    load_memory,
     handle_slash_command,
 )
+from src.storage.memory import load_memory
 from src.commands.handlers.memory_commands import handle_clear
 from src.commands.handlers.config_commands import handle_context, handle_learning
 from src.commands.handlers.space_commands import handle_space
@@ -479,7 +479,7 @@ class TestInitialization(unittest.TestCase):
     @patch("src.main.initialize_vectordb", return_value=True)
     @patch("src.main.initialize_user_memory", return_value=True)
     @patch("src.main.initialize_database")
-    @patch("src.main.load_memory", return_value=[])
+    @patch("src.storage.memory.load_memory", return_value=[])
     def test_initialize_application_success(
         self, mock_load, mock_db, mock_mem0, mock_vdb, mock_llm
     ):

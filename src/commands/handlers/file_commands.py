@@ -89,6 +89,19 @@ def handle_read(args: List[str]) -> None:
         print("-" * 50)
         print("✅ File read successfully\n")
 
+        # Automatically add to AI context
+        try:
+            from src.core.context import get_context
+            from langchain_core.messages import HumanMessage
+            from src.storage.memory import save_memory
+
+            ctx = get_context()
+            msg_content = f"User ran /read {file_path}. File content:\n```\n{content}\n```"
+            ctx.conversation_history.append(HumanMessage(content=msg_content))
+            save_memory(ctx.conversation_history)
+        except Exception:
+            pass  # Fail silently if context update fails (e.g. in tests)
+
     except UnicodeDecodeError:
         print(f"\n❌ Cannot read binary file: {file_path}")
         print("This appears to be a binary file.\n")

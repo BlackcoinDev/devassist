@@ -33,6 +33,7 @@ class TestChatLoopBasic(unittest.TestCase):
         mock_get_ctx.return_value = mock_ctx
 
         mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm  # Mock the binding to return self
         mock_llm.invoke.return_value = AIMessage(content="Hello there!")
         mock_ctx.llm = mock_llm
 
@@ -63,6 +64,8 @@ class TestChatLoopBasic(unittest.TestCase):
         # Second call returns final answer
         final_msg = AIMessage(content="Tool result is 2")
 
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_llm.bind_tools.return_value = mock_llm
         mock_llm.invoke.side_effect = [msg_with_tool, final_msg]
         mock_ctx.llm = mock_llm
 
@@ -104,6 +107,7 @@ class TestChatLoopMultiTool(unittest.TestCase):
         # Third call: AI provides final answer
         final_msg = AIMessage(content="Combined result is 3")
 
+        mock_llm.bind_tools.return_value = mock_llm
         mock_llm.invoke.side_effect = [msg_with_tool1, msg_with_tool2, final_msg]
         mock_ctx.llm = mock_llm
 
@@ -139,6 +143,7 @@ class TestChatLoopMultiTool(unittest.TestCase):
         # Final answer
         final_msg = AIMessage(content="Both tools executed")
 
+        mock_llm.bind_tools.return_value = mock_llm
         mock_llm.invoke.side_effect = [msg_with_tools, final_msg]
         mock_ctx.llm = mock_llm
 
@@ -176,6 +181,8 @@ class TestChatLoopToolApproval(unittest.TestCase):
         # Tool gets rejected (execute returns None or empty)
         final_msg = AIMessage(content="Tool was rejected by user")
 
+        mock_llm.bind_tools.return_value = mock_llm
+        mock_llm.bind_tools.return_value = mock_llm
         mock_llm.invoke.side_effect = [msg_with_tool, final_msg]
         mock_ctx.llm = mock_llm
 
@@ -213,6 +220,7 @@ class TestChatLoopErrorHandling(unittest.TestCase):
         # Recovery message
         recovery_msg = AIMessage(content="Tool failed, but I can work around it")
 
+        mock_llm.bind_tools.return_value = mock_llm
         mock_llm.invoke.side_effect = [msg_with_tool, recovery_msg]
         mock_ctx.llm = mock_llm
 
@@ -239,6 +247,7 @@ class TestChatLoopErrorHandling(unittest.TestCase):
 
         mock_llm = MagicMock()
         # LLM raises an exception
+        mock_llm.bind_tools.return_value = mock_llm
         mock_llm.invoke.side_effect = Exception("LLM connection failed")
         mock_ctx.llm = mock_llm
 
@@ -268,6 +277,7 @@ class TestChatLoopContext(unittest.TestCase):
         mock_get_ctx.return_value = mock_ctx
 
         mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
         mock_llm.invoke.return_value = AIMessage(content="Python answer")
         mock_ctx.llm = mock_llm
 
@@ -290,6 +300,7 @@ class TestChatLoopContext(unittest.TestCase):
         mock_get_ctx.return_value = mock_ctx
 
         mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
         mock_llm.invoke.return_value = AIMessage(content="Answer without context")
         mock_ctx.llm = mock_llm
 
@@ -320,6 +331,7 @@ class TestChatLoopMemory(unittest.TestCase):
         mock_get_ctx.return_value = mock_ctx
 
         mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
         mock_llm.invoke.return_value = AIMessage(content="Response")
         mock_ctx.llm = mock_llm
 
@@ -348,6 +360,7 @@ class TestChatLoopMemory(unittest.TestCase):
         mock_get_ctx.return_value = mock_ctx
 
         mock_llm = MagicMock()
+        mock_llm.bind_tools.return_value = mock_llm
         mock_llm.invoke.return_value = AIMessage(content="Response")
         mock_ctx.llm = mock_llm
 
@@ -381,6 +394,8 @@ class TestChatLoopVerboseLogging(unittest.TestCase):
                         mock_get_ctx.return_value = mock_ctx
 
                         mock_llm = MagicMock()
+                        mock_llm = MagicMock()
+                        mock_llm.bind_tools.return_value = mock_llm
                         mock_llm.invoke.return_value = AIMessage(content="Response")
                         mock_ctx.llm = mock_llm
 

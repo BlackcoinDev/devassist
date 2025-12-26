@@ -36,7 +36,7 @@ import logging
 import json
 import time
 from typing import Dict, Any, Optional, Callable
-from langchain_core.messages import HumanMessage, ToolMessage
+from langchain_core.messages import HumanMessage, ToolMessage, SystemMessage
 from src.core.context import get_context
 from src.tools.registry import ToolRegistry
 from src.tools.approval import ToolApprovalManager
@@ -112,9 +112,25 @@ class ChatLoop:
 
                 if self.config.verbose_logging:
                     logger.info("🤖 Sending prompt to LLM...")
+                    # DEBUG: Log the System Prompt being sent to verify injection
+                    if self.ctx.conversation_history and isinstance(self.ctx.conversation_history[0], SystemMessage):
+                        pass
 
                 start_time = time.time()
-                response = self.ctx.llm.invoke(self.ctx.conversation_history)
+                # Bind tools to the LLM
+                # We get the raw dict definitions from the registry
+                # and bind them to the model for this interaction
+                tool_definitions = ToolRegistry.get_definitions()
+                llm_with_tools = self.ctx.llm.bind_tools(tool_definitions)
+
+                if self.config.verbose_logging:
+                    logger.debug(f"🔧 Bound {len(tool_definitions)} tools to LLM")
+                    # Log the tool names
+                    tool_names = [t["function"]["name"] for t in tool_definitions]
+                    logger.debug(f"🔧 Tool Names: {tool_names}")
+
+                start_time = time.time()
+                response = llm_with_tools.invoke(self.ctx.conversation_history)
                 elapsed = time.time() - start_time
 
                 if self.config.verbose_logging:
@@ -136,6 +152,8 @@ class ChatLoop:
                 # Check for tool calls
                 tool_calls = getattr(response, "tool_calls", [])
                 if not tool_calls:
+                    if self.config.verbose_logging:
+                        logger.warning("⚠️ LLM decided NOT to use any tools for this request.")
                     final_answer = response.content
                     break
 
@@ -156,6 +174,16 @@ class ChatLoop:
                         content=json.dumps(result),
                         tool_call_id=call_id
                     ))
+
+                    # AUTOMATIC CONTEXT INJECTION FOR FILE READS
+                    # If the tool was `read_file` and successful, also add it as a HumanMessage
+                    # so the AI definitely "sees" the content in its context window for reasoning.
+                    if name == "read_file_content" and isinstance(result, dict) and result.get("success"):
+                        content = result.get("content", "")
+                        file_path = result.get("file_path", "unknown")
+                        if content:
+                            msg = f"Output of reading file {file_path}:\n```\n{content}\n```"
+                            self.ctx.conversation_history.append(HumanMessage(content=msg))
 
             except Exception as e:
                 logger.error(f"Error in chat loop iteration: {e}")

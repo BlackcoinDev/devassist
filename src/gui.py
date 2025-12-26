@@ -31,7 +31,7 @@ The GUI maintains complete feature parity with the CLI while providing
 an intuitive, modern interface for AI-assisted development and research.
 """
 
-from src.main import load_memory
+from src.storage.memory import load_memory
 from src.core.config import get_config
 import logging
 import sys

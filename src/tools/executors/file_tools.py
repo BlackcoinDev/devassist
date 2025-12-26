@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 READ_FILE_DEFINITION = {
     "type": "function",
     "function": {
-        "name": "read_file",
+        "name": "read_file_content",
         "description": "Read the contents of a file in the current directory",
         "parameters": {
             "type": "object",
@@ -114,7 +114,7 @@ GET_CURRENT_DIRECTORY_DEFINITION = {
 # =============================================================================
 
 
-@ToolRegistry.register("read_file", READ_FILE_DEFINITION)
+@ToolRegistry.register("read_file_content", READ_FILE_DEFINITION)
 def execute_read_file(file_path: str) -> Dict[str, Any]:
     """
     Execute file reading tool with security checks.

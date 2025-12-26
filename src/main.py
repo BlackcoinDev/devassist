@@ -61,7 +61,7 @@ from src.commands.handlers import (  # noqa: F401 (side-effect imports for decor
 )
 from src.storage import (
     initialize_database,
-    load_memory,
+
     load_embedding_cache,
     load_query_cache,
     cleanup_memory,
@@ -184,9 +184,10 @@ load_embedding_cache()
 load_query_cache()
 
 # Load conversation history (now uses context-backed storage)
-_initial_history = load_memory()
-get_context().conversation_history = _initial_history
-conversation_history = get_context().conversation_history
+# Memory is now loaded in initialize_user_memory() to ensure tools are ready
+# _initial_history = load_memory()
+# get_context().conversation_history = _initial_history
+# conversation_history = get_context().conversation_history
 
 # Backwards-compatible exports for db_conn and db_lock
 # Tests may patch these, so we need to expose them at module level
@@ -365,6 +366,27 @@ def initialize_vectordb():
                 base_url=config.ollama_base_url,
             )
             logger.debug("   OllamaEmbeddings instance created successfully")
+
+        # Initialize Vector Store
+        from langchain_chroma import Chroma
+        import chromadb
+
+        if ctx.vectorstore is None and ctx.embeddings:
+            # Use native HttpClient for LangChain compatibility
+            # The custom wrapper in src.vectordb.client is mainly for direct API calls,
+            # but LangChain expects the official client structure.
+            native_client = chromadb.HttpClient(
+                host=config.chroma_host,
+                port=config.chroma_port
+            )
+
+            ctx.vectorstore = Chroma(
+                client=native_client,
+                collection_name="devassist_knowledge",
+                embedding_function=ctx.embeddings,
+            )
+            logger.debug("   Vector Store initialized successfully")
+
         return True
     except Exception as e:
         logger.error(f"Failed to initialize vector database: {e}")
@@ -385,18 +407,39 @@ def initialize_user_memory():
 
         mem0_status = initialize_mem0_local()
 
+        # Load conversation history AFTER tools are initialized
+        from src.storage.memory import load_memory
+        ctx = get_context()
+        ctx.conversation_history = load_memory()
+
         if isinstance(mem0_status, dict):
             logger.debug(
                 f"   Mem0 tables: {mem0_status.get('mem0_preferences', '❌')}/{mem0_status.get('mem0_memories', '❌')}"
             )
-            logger.info("💾 Loaded SQLite conversation history with 0 messages")
+            count = len(ctx.conversation_history)
+            logger.info(f"💾 Loaded SQLite conversation history with {count} messages")
             logger.info("🧠 Mem0 local personalized memory initialized successfully")
         else:
             logger.error(f"Failed to initialize Mem0 local: {mem0_status}")
         return True
     except Exception as e:
         logger.error(f"Failed to initialize user memory: {e}")
-        return False
+        logger.warning("⚠️ Memory load failed. Initializing with fresh System Prompt fallback.")
+
+        # Fallback: Construct system prompt manually if DB fails
+        from langchain_core.messages import SystemMessage
+        from src.tools.registry import ToolRegistry
+        from src.core.constants import SYSTEM_PROMPT
+        import json
+
+        tool_defs = ToolRegistry.get_definitions()
+        tool_json = json.dumps(tool_defs, indent=2)
+
+        # Verify we are using the authoritative prompt
+        fallback_content = SYSTEM_PROMPT + f"\n\nAVAILABLE TOOLS:\n{tool_json}\n"
+        ctx = get_context()
+        ctx.conversation_history = [SystemMessage(content=fallback_content)]
+        return True
 
 
 def initialize_mcp() -> bool:
@@ -417,11 +460,11 @@ def initialize_mcp() -> bool:
 def initialize_application() -> bool:
     """Initialize the entire application."""
     try:
+        initialize_tools()  # Tools must be initialized first for System Prompt injection
         initialize_llm()
         initialize_vectordb()
         initialize_user_memory()
         initialize_mcp()
-        initialize_tools()
         return True
     except Exception:
         return False
