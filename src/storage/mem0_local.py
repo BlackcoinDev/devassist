@@ -12,6 +12,7 @@ def initialize_mem0_local() -> Dict[str, str]:
 
     config = get_config()
     db_path = config.db_path
+    conn = None
 
     try:
         logger.debug(f"Initializing Mem0 local at {db_path}")
@@ -23,6 +24,7 @@ def initialize_mem0_local() -> Dict[str, str]:
             CREATE TABLE IF NOT EXISTS mem0_preferences (
                 key TEXT PRIMARY KEY,
                 value TEXT,
+                user_id TEXT DEFAULT 'default_user',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -39,7 +41,6 @@ def initialize_mem0_local() -> Dict[str, str]:
         logger.debug("Created mem0_memories table")
 
         conn.commit()
-        conn.close()
 
         status = {
             "mem0_preferences": "✅ Created",
@@ -57,6 +58,9 @@ def initialize_mem0_local() -> Dict[str, str]:
             "mem0_memories": "❌ Failed",
             "database": db_path,
         }
+    finally:
+        if conn:
+            conn.close()
 
 
 def add_preference(key: str, value: str, user_id: str = "default_user") -> bool:
@@ -64,6 +68,7 @@ def add_preference(key: str, value: str, user_id: str = "default_user") -> bool:
 
     config = get_config()
     db_path = config.db_path
+    conn = None
 
     try:
         conn = sqlite3.connect(db_path)
@@ -75,7 +80,6 @@ def add_preference(key: str, value: str, user_id: str = "default_user") -> bool:
         """, (key, value, user_id))
 
         conn.commit()
-        conn.close()
 
         logger.debug(f"Set preference {key}={value} for user {user_id}")
         return True
@@ -83,6 +87,9 @@ def add_preference(key: str, value: str, user_id: str = "default_user") -> bool:
     except Exception as e:
         logger.error(f"Failed to add preference: {e}")
         return False
+    finally:
+        if conn:
+            conn.close()
 
 
 def get_preference(key: str, user_id: str = "default_user") -> Optional[str]:
@@ -90,6 +97,7 @@ def get_preference(key: str, user_id: str = "default_user") -> Optional[str]:
 
     config = get_config()
     db_path = config.db_path
+    conn = None
 
     try:
         conn = sqlite3.connect(db_path)
@@ -100,8 +108,6 @@ def get_preference(key: str, user_id: str = "default_user") -> Optional[str]:
             WHERE key = ? AND user_id = ?
         """, (key, user_id))
         result = cursor.fetchone()
-
-        conn.close()
 
         if result:
             value = result[0]
@@ -114,6 +120,9 @@ def get_preference(key: str, user_id: str = "default_user") -> Optional[str]:
     except Exception as e:
         logger.error(f"Failed to get preference: {e}")
         return None
+    finally:
+        if conn:
+            conn.close()
 
 
 def add_memory(content: str, user_id: str = "default_user") -> bool:
@@ -121,6 +130,7 @@ def add_memory(content: str, user_id: str = "default_user") -> bool:
 
     config = get_config()
     db_path = config.db_path
+    conn = None
 
     try:
         conn = sqlite3.connect(db_path)
@@ -132,7 +142,6 @@ def add_memory(content: str, user_id: str = "default_user") -> bool:
         """, (user_id, content))
 
         conn.commit()
-        conn.close()
 
         logger.debug(f"Added memory for user {user_id}: {content[:50]}...")
         return True
@@ -140,6 +149,9 @@ def add_memory(content: str, user_id: str = "default_user") -> bool:
     except Exception as e:
         logger.error(f"Failed to add memory: {e}")
         return False
+    finally:
+        if conn:
+            conn.close()
 
 
 def get_memories(user_id: str = "default_user") -> List[Dict]:
@@ -147,6 +159,7 @@ def get_memories(user_id: str = "default_user") -> List[Dict]:
 
     config = get_config()
     db_path = config.db_path
+    conn = None
 
     try:
         conn = sqlite3.connect(db_path)
@@ -161,8 +174,6 @@ def get_memories(user_id: str = "default_user") -> List[Dict]:
 
         rows = cursor.fetchall()
 
-        conn.close()
-
         memories = [
             {"id": row[0], "content": row[1], "created_at": row[2]}
             for row in rows
@@ -174,6 +185,9 @@ def get_memories(user_id: str = "default_user") -> List[Dict]:
     except Exception as e:
         logger.error(f"Failed to get memories: {e}")
         return []
+    finally:
+        if conn:
+            conn.close()
 
 
 def search_memories(query: str, user_id: str = "default_user") -> List[Dict]:
@@ -181,6 +195,7 @@ def search_memories(query: str, user_id: str = "default_user") -> List[Dict]:
 
     config = get_config()
     db_path = config.db_path
+    conn = None
 
     try:
         conn = sqlite3.connect(db_path)
@@ -197,8 +212,6 @@ def search_memories(query: str, user_id: str = "default_user") -> List[Dict]:
 
         rows = cursor.fetchall()
 
-        conn.close()
-
         memories = [
             {"id": row[0], "content": row[1], "created_at": row[2]}
             for row in rows
@@ -210,6 +223,9 @@ def search_memories(query: str, user_id: str = "default_user") -> List[Dict]:
     except Exception as e:
         logger.error(f"Failed to search memories: {e}")
         return []
+    finally:
+        if conn:
+            conn.close()
 
 
 __all__ = [

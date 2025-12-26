@@ -12,6 +12,7 @@ import unittest
 import requests
 import json
 import uuid
+import pytest
 from typing import Dict, Any, Optional
 
 
@@ -103,6 +104,7 @@ class MCPJsonRpcClient:
         })
 
 
+@pytest.mark.mcp
 class TestDeepWikiMCPConnectivity(unittest.TestCase):
     """Test basic connectivity to DeepWiki MCP server."""
 
@@ -134,6 +136,7 @@ class TestDeepWikiMCPConnectivity(unittest.TestCase):
             self.skipTest(f"DeepWiki MCP endpoint not accessible: {e}")
 
 
+@pytest.mark.mcp
 class TestDeepWikiMCPProtocol(unittest.TestCase):
     """Test MCP protocol with DeepWiki server."""
 
@@ -187,6 +190,7 @@ class TestDeepWikiMCPProtocol(unittest.TestCase):
             self.skipTest(f"Network error: {e}")
 
 
+@pytest.mark.mcp
 class TestDeepWikiBlackcoinMore(unittest.TestCase):
     """Test DeepWiki MCP with blackcoin-more repository wiki."""
 
@@ -263,6 +267,7 @@ class TestDeepWikiBlackcoinMore(unittest.TestCase):
             print(f"Tool call error (may be expected): {e}")
 
 
+@pytest.mark.mcp
 class TestDeepWikiMCPToolDiscovery(unittest.TestCase):
     """Test tool discovery and schema validation."""
 
