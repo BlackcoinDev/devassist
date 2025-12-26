@@ -9,7 +9,9 @@ class TestChatLoopInjection(unittest.TestCase):
     @patch("src.core.chat_loop.ToolRegistry")
     @patch("src.core.chat_loop.save_memory")
     @patch("src.core.context_utils.get_relevant_context", return_value="")
-    def test_file_read_injects_context(self, mock_rag, mock_save, mock_registry, mock_get_ctx):
+    def test_file_read_injects_context(
+        self, mock_rag, mock_save, mock_registry, mock_get_ctx
+    ):
         """Test that read_file tool execution injects content as HumanMessage."""
         mock_ctx = MagicMock()
         mock_ctx.conversation_history = []
@@ -23,7 +25,11 @@ class TestChatLoopInjection(unittest.TestCase):
         mock_get_ctx.return_value = mock_ctx
 
         # 1. AI decides to read a file
-        tool_call = {"name": "read_file_content", "args": {"file_path": "test.txt"}, "id": "call_1"}
+        tool_call = {
+            "name": "read_file_content",
+            "args": {"file_path": "test.txt"},
+            "id": "call_1",
+        }
         msg_tool_call = AIMessage(content="", tool_calls=[tool_call])
 
         # 2. AI responds after reading
@@ -35,7 +41,7 @@ class TestChatLoopInjection(unittest.TestCase):
         mock_registry.execute.return_value = {
             "success": True,
             "content": "SECRET_CONTENT_123",
-            "file_path": "test.txt"
+            "file_path": "test.txt",
         }
 
         loop = ChatLoop()

@@ -74,7 +74,7 @@ class TestChromaDBClient:
             responses.POST,
             self.coll_url,
             json={"id": "new-id", "name": "new-coll"},
-            status=201
+            status=201,
         )
 
         coll_id = self.client.create_collection("new-coll")
@@ -95,7 +95,7 @@ class TestChromaDBClient:
         query_url = f"{self.coll_url}/coll-id/query"
         mock_response = {
             "documents": [["doc1", "doc2"]],
-            "metadatas": [[{"source": "f1"}, {"source": "f2"}]]
+            "metadatas": [[{"source": "f1"}, {"source": "f2"}]],
         }
         responses.add(responses.POST, query_url, json=mock_response, status=200)
 
@@ -115,7 +115,7 @@ class TestChromaDBClient:
             collection_id="coll-id",
             documents=["text"],
             embeddings=[[0.1, 0.2]],
-            metadatas=[{"src": "test"}]
+            metadatas=[{"src": "test"}],
         )
         assert success is True
 
@@ -223,7 +223,7 @@ class TestChromaDBClient:
             collection_id="coll-id",
             documents=["text"],
             embeddings=[[0.1, 0.2]],
-            metadatas=[{"src": "test"}]
+            metadatas=[{"src": "test"}],
         )
         assert success is False
 
@@ -237,7 +237,7 @@ class TestChromaDBClient:
             collection_id="coll-id",
             documents=["text"],
             embeddings=[[0.1, 0.2]],
-            metadatas=[{"src": "test"}]
+            metadatas=[{"src": "test"}],
         )
         assert success is False
 
@@ -273,7 +273,9 @@ class TestChromaDBClient:
     def test_query_collection_missing_fields(self):
         """Test query_collection with missing fields in response."""
         query_url = f"{self.coll_url}/coll-id/query"
-        responses.add(responses.POST, query_url, json={"other_field": "value"}, status=200)
+        responses.add(
+            responses.POST, query_url, json={"other_field": "value"}, status=200
+        )
 
         docs, meta = self.client.query_collection("coll-id", [0.1, 0.2])
         assert docs == []
@@ -290,6 +292,6 @@ class TestChromaDBClient:
             documents=["text"],
             embeddings=[[0.1, 0.2]],
             metadatas=None,
-            ids=None
+            ids=None,
         )
         assert success is True

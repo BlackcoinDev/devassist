@@ -37,7 +37,9 @@ from src.core.context import get_context, set_db_conn, set_db_lock
 logger = logging.getLogger(__name__)
 
 
-def initialize_database() -> Tuple[Optional[sqlite3.Connection], Optional[threading.Lock]]:
+def initialize_database() -> (
+    Tuple[Optional[sqlite3.Connection], Optional[threading.Lock]]
+):
     """
     Initialize the SQLite database connection.
 
@@ -61,9 +63,7 @@ def initialize_database() -> Tuple[Optional[sqlite3.Connection], Optional[thread
     try:
         # Create connection with check_same_thread=False for multi-threaded access
         # timeout=30.0 prevents hanging on locked database
-        db_conn = sqlite3.connect(
-            config.db_path, check_same_thread=False, timeout=30.0
-        )
+        db_conn = sqlite3.connect(config.db_path, check_same_thread=False, timeout=30.0)
         db_lock = threading.Lock()
 
         # Create conversations table and configure database
@@ -75,7 +75,8 @@ def initialize_database() -> Tuple[Optional[sqlite3.Connection], Optional[thread
             cursor.execute("PRAGMA journal_mode=WAL")
             cursor.execute("PRAGMA synchronous=NORMAL")
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS conversations (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     session_id TEXT NOT NULL,
@@ -83,13 +84,16 @@ def initialize_database() -> Tuple[Optional[sqlite3.Connection], Optional[thread
                     content TEXT NOT NULL,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Create index for faster queries by session_id
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_conversations_session
                 ON conversations(session_id, timestamp)
-            """)
+            """
+            )
 
             db_conn.commit()
 
@@ -105,7 +109,9 @@ def initialize_database() -> Tuple[Optional[sqlite3.Connection], Optional[thread
         return None, None
 
 
-def get_database_connection() -> Tuple[Optional[sqlite3.Connection], Optional[threading.Lock]]:
+def get_database_connection() -> (
+    Tuple[Optional[sqlite3.Connection], Optional[threading.Lock]]
+):
     """
     Get the current database connection from context.
 

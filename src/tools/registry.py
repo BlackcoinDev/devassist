@@ -38,6 +38,7 @@ def _get_config():
     """Lazily get config to avoid circular imports."""
     try:
         from src.core.config import get_config
+
         return get_config()
     except Exception:
         return None
@@ -82,6 +83,7 @@ class ToolRegistry:
             def execute_read_file(file_path: str) -> dict:
                 return {"content": "..."}
         """
+
         def decorator(func: Callable) -> Callable:
             cls._tools[name] = func
             if definition:
@@ -90,6 +92,7 @@ class ToolRegistry:
             if cfg and cfg.show_tool_details:
                 logger.debug(f"🔧 Registered tool: {name}")
             return func
+
         return decorator
 
     @classmethod
@@ -129,18 +132,21 @@ class ToolRegistry:
         # Check approval
         try:
             from src.tools.approval import ToolApprovalManager
+
             approval_manager = ToolApprovalManager()
             mode = approval_manager.check_approval(name, args)
 
             if mode == "never":
-                return {"error": f"Execution of tool '{name}' is blocked by security policy."}
+                return {
+                    "error": f"Execution of tool '{name}' is blocked by security policy."
+                }
 
             if mode == "ask":
                 # Special return value to signal the UI/CLI to ask for confirmation
                 return {
                     "requires_confirmation": True,
                     "tool_name": name,
-                    "tool_args": args
+                    "tool_args": args,
                 }
         except Exception as e:
             logger.error(f"Approval check failed for tool '{name}': {e}")
@@ -180,13 +186,17 @@ class ToolRegistry:
             Dictionary containing 'function_name' and 'result'
         """
         try:
-            name = tool_call.get("name") if isinstance(tool_call, dict) else tool_call.name
-            args_raw = tool_call.get("args") if isinstance(tool_call, dict) else tool_call.args
+            name = (
+                tool_call.get("name") if isinstance(tool_call, dict) else tool_call.name
+            )
+            args_raw = (
+                tool_call.get("args") if isinstance(tool_call, dict) else tool_call.args
+            )
 
             if name is None:
                 return {
                     "function_name": "unknown",
-                    "result": {"error": "Tool call missing 'name' field"}
+                    "result": {"error": "Tool call missing 'name' field"},
                 }
 
             # Parse args if string
@@ -196,22 +206,16 @@ class ToolRegistry:
                 args = args_raw or {}
 
             result = cls.execute(name, args)
-            return {
-                "function_name": name,
-                "result": result
-            }
+            return {"function_name": name, "result": result}
 
         except json.JSONDecodeError as e:
             return {
                 "function_name": "unknown",
-                "result": {"error": f"Invalid JSON arguments: {e}"}
+                "result": {"error": f"Invalid JSON arguments: {e}"},
             }
         except Exception as e:
             logger.error(f"Error processing tool call: {e}")
-            return {
-                "function_name": "unknown",
-                "result": {"error": str(e)}
-            }
+            return {"function_name": "unknown", "result": {"error": str(e)}}
 
     @classmethod
     def get_definitions(cls) -> List[Dict]:
@@ -222,6 +226,7 @@ class ToolRegistry:
             List of OpenAI function definitions (deep copies to prevent modification)
         """
         import copy
+
         return [copy.deepcopy(definition) for definition in cls._definitions.values()]
 
     @classmethod

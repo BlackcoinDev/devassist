@@ -31,10 +31,12 @@ class MCPJsonRpcClient:
     def __init__(self, url: str):
         self.url = url
         self.session = requests.Session()
-        self.session.headers.update({
-            "Content-Type": "application/json",
-            "Accept": "application/json, text/event-stream",
-        })
+        self.session.headers.update(
+            {
+                "Content-Type": "application/json",
+                "Accept": "application/json, text/event-stream",
+            }
+        )
         self.session_id: Optional[str] = None
 
     def _parse_sse_response(self, text: str) -> Optional[Dict[str, Any]]:
@@ -49,14 +51,16 @@ class MCPJsonRpcClient:
                         continue
         return None
 
-    def call(self, method: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def call(
+        self, method: str, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Make a JSON-RPC call to the MCP server."""
         request_id = str(uuid.uuid4())
         payload = {
             "jsonrpc": "2.0",
             "id": request_id,
             "method": method,
-            "params": params or {}
+            "params": params or {},
         }
 
         # Include session ID if we have one
@@ -64,7 +68,9 @@ class MCPJsonRpcClient:
         if self.session_id:
             headers["Mcp-Session-Id"] = self.session_id
 
-        response = self.session.post(self.url, json=payload, headers=headers, timeout=30)
+        response = self.session.post(
+            self.url, json=payload, headers=headers, timeout=30
+        )
         response.raise_for_status()
 
         # Capture session ID from response headers
@@ -83,14 +89,14 @@ class MCPJsonRpcClient:
 
     def initialize(self) -> Dict[str, Any]:
         """Initialize MCP connection."""
-        return self.call("initialize", {
-            "protocolVersion": "2024-11-05",
-            "capabilities": {},
-            "clientInfo": {
-                "name": "devassist-test",
-                "version": "1.0.0"
-            }
-        })
+        return self.call(
+            "initialize",
+            {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "devassist-test", "version": "1.0.0"},
+            },
+        )
 
     def list_tools(self) -> Dict[str, Any]:
         """List available tools."""
@@ -98,10 +104,7 @@ class MCPJsonRpcClient:
 
     def call_tool(self, name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Call a tool with arguments."""
-        return self.call("tools/call", {
-            "name": name,
-            "arguments": arguments
-        })
+        return self.call("tools/call", {"name": name, "arguments": arguments})
 
 
 @pytest.mark.mcp
@@ -112,9 +115,7 @@ class TestDeepWikiMCPConnectivity(unittest.TestCase):
         """Test that the DeepWiki MCP server is reachable."""
         try:
             response = requests.get(
-                "https://mcp.deepwiki.com/",
-                timeout=10,
-                allow_redirects=True
+                "https://mcp.deepwiki.com/", timeout=10, allow_redirects=True
             )
             # Server should respond (any status code)
             self.assertIsNotNone(response)
@@ -128,7 +129,7 @@ class TestDeepWikiMCPConnectivity(unittest.TestCase):
                 DEEPWIKI_MCP_URL,
                 json={"jsonrpc": "2.0", "id": "test", "method": "ping"},
                 headers={"Content-Type": "application/json"},
-                timeout=10
+                timeout=10,
             )
             # Should get a response (even if error)
             self.assertIsNotNone(response)
@@ -205,9 +206,9 @@ class TestDeepWikiBlackcoinMore(unittest.TestCase):
     def test_read_wiki_structure_blackcoin(self):
         """Test reading wiki structure for blackcoin-more."""
         try:
-            result = self.client.call_tool("read_wiki_structure", {
-                "repo_name": TEST_REPO
-            })
+            result = self.client.call_tool(
+                "read_wiki_structure", {"repo_name": TEST_REPO}
+            )
 
             print(f"Wiki structure result: {json.dumps(result, indent=2)[:500]}")
 
@@ -225,10 +226,10 @@ class TestDeepWikiBlackcoinMore(unittest.TestCase):
     def test_ask_question_about_blackcoin(self):
         """Test asking a question about blackcoin-more."""
         try:
-            result = self.client.call_tool("ask_question", {
-                "repo_name": TEST_REPO,
-                "question": "What is Blackcoin?"
-            })
+            result = self.client.call_tool(
+                "ask_question",
+                {"repo_name": TEST_REPO, "question": "What is Blackcoin?"},
+            )
 
             print(f"Question result: {json.dumps(result, indent=2)[:500]}")
 
@@ -245,9 +246,9 @@ class TestDeepWikiBlackcoinMore(unittest.TestCase):
     def test_read_wiki_contents_blackcoin(self):
         """Test reading wiki contents for blackcoin-more."""
         try:
-            result = self.client.call_tool("read_wiki_contents", {
-                "repo_name": TEST_REPO
-            })
+            result = self.client.call_tool(
+                "read_wiki_contents", {"repo_name": TEST_REPO}
+            )
 
             print(f"Wiki contents result: {json.dumps(result, indent=2)[:500]}")
 

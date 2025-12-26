@@ -63,11 +63,13 @@ def load_memory() -> List[BaseMessage]:
             # Load from SQLite database with thread safety
             with ctx.db_lock:
                 cursor = ctx.db_conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT message_type, content FROM conversations
                     WHERE session_id = 'default'
                     ORDER BY timestamp ASC
-                """)
+                """
+                )
                 rows = cursor.fetchall()
 
             if not rows and config.verbose_logging:
@@ -91,7 +93,9 @@ def load_memory() -> List[BaseMessage]:
                     logger.warning(f"Unknown message type: {msg_type}, skipping")
 
             if config.verbose_logging:
-                logger.debug(f"Loaded {len(user_ai_history)} user/AI messages from database")
+                logger.debug(
+                    f"Loaded {len(user_ai_history)} user/AI messages from database"
+                )
 
             # Prepend the authoritative system prompt
             import json
@@ -99,7 +103,9 @@ def load_memory() -> List[BaseMessage]:
 
             tool_json = json.dumps(ToolRegistry.get_definitions(), indent=2)
 
-            system_prompt = SystemMessage(content=SYSTEM_PROMPT + f"\n\nAVAILABLE TOOLS:\n{tool_json}\n")
+            system_prompt = SystemMessage(
+                content=SYSTEM_PROMPT + f"\n\nAVAILABLE TOOLS:\n{tool_json}\n"
+            )
             return [system_prompt] + user_ai_history
 
         else:
@@ -158,7 +164,9 @@ def save_memory(history: Sequence[BaseMessage]) -> None:
                     )
                     ctx.db_conn.commit()
                     if config.verbose_logging:
-                        logger.debug(f"Saved {len(data_to_insert)} messages to database")
+                        logger.debug(
+                            f"Saved {len(data_to_insert)} messages to database"
+                        )
                 except Exception:
                     ctx.db_conn.rollback()
                     raise

@@ -144,8 +144,9 @@ class TestMemories(unittest.TestCase):
         # Verify in database
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT content FROM mem0_memories WHERE user_id = ?",
-                       ("default_user",))
+        cursor.execute(
+            "SELECT content FROM mem0_memories WHERE user_id = ?", ("default_user",)
+        )
         rows = cursor.fetchall()
         conn.close()
 

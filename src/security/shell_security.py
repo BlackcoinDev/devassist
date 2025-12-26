@@ -49,21 +49,72 @@ class ShellSecurity:
         # Version control
         "git",
         # Package managers
-        "npm", "npx", "yarn", "pnpm", "pip", "uv",
+        "npm",
+        "npx",
+        "yarn",
+        "pnpm",
+        "pip",
+        "uv",
         # Python
-        "python", "python3", "pytest", "mypy", "flake8", "black", "ruff",
+        "python",
+        "python3",
+        "pytest",
+        "mypy",
+        "flake8",
+        "black",
+        "ruff",
         # Read-only utilities
-        "cat", "ls", "pwd", "echo", "head", "tail", "wc", "sort", "uniq",
-        "grep", "rg", "find", "which", "whereis", "file", "stat", "date",
-        "whoami", "hostname", "uname", "env", "printenv",
+        "cat",
+        "ls",
+        "pwd",
+        "echo",
+        "head",
+        "tail",
+        "wc",
+        "sort",
+        "uniq",
+        "grep",
+        "rg",
+        "find",
+        "which",
+        "whereis",
+        "file",
+        "stat",
+        "date",
+        "whoami",
+        "hostname",
+        "uname",
+        "env",
+        "printenv",
         # Development tools
-        "node", "deno", "bun", "cargo", "go", "make", "cmake",
+        "node",
+        "deno",
+        "bun",
+        "cargo",
+        "go",
+        "make",
+        "cmake",
         # Text processing
-        "awk", "sed", "cut", "tr", "diff", "less", "more",
+        "awk",
+        "sed",
+        "cut",
+        "tr",
+        "diff",
+        "less",
+        "more",
         # Network (read-only)
-        "curl", "wget", "ping", "dig", "nslookup", "host",
+        "curl",
+        "wget",
+        "ping",
+        "dig",
+        "nslookup",
+        "host",
         # Archive (read-only)
-        "tar", "zip", "unzip", "gzip", "gunzip",
+        "tar",
+        "zip",
+        "unzip",
+        "gzip",
+        "gunzip",
         # Docker (read operations)
         "docker",
     }
@@ -71,43 +122,79 @@ class ShellSecurity:
     # Commands that are always blocked (dangerous operations)
     BLOCKED_COMMANDS: set[str] = {
         # Destructive file operations
-        "rm", "rmdir", "shred",
+        "rm",
+        "rmdir",
+        "shred",
         # Privilege escalation
-        "sudo", "su", "doas", "pkexec",
+        "sudo",
+        "su",
+        "doas",
+        "pkexec",
         # Permission changes
-        "chmod", "chown", "chgrp",
+        "chmod",
+        "chown",
+        "chgrp",
         # Disk operations
-        "dd", "mkfs", "fdisk", "parted", "mount", "umount",
+        "dd",
+        "mkfs",
+        "fdisk",
+        "parted",
+        "mount",
+        "umount",
         # System modification
-        "systemctl", "service", "init", "shutdown", "reboot", "halt",
+        "systemctl",
+        "service",
+        "init",
+        "shutdown",
+        "reboot",
+        "halt",
         # User management
-        "useradd", "userdel", "usermod", "passwd", "adduser", "deluser",
+        "useradd",
+        "userdel",
+        "usermod",
+        "passwd",
+        "adduser",
+        "deluser",
         # Network configuration
-        "iptables", "ip6tables", "ufw", "firewall-cmd",
+        "iptables",
+        "ip6tables",
+        "ufw",
+        "firewall-cmd",
         # Package management (system-wide)
-        "apt", "apt-get", "yum", "dnf", "pacman", "brew",
+        "apt",
+        "apt-get",
+        "yum",
+        "dnf",
+        "pacman",
+        "brew",
         # Shell manipulation
-        "eval", "exec", "source",
+        "eval",
+        "exec",
+        "source",
         # Process control
-        "kill", "killall", "pkill",
+        "kill",
+        "killall",
+        "pkill",
         # Dangerous utilities
-        "nc", "netcat", "ncat",
+        "nc",
+        "netcat",
+        "ncat",
     }
 
     # Dangerous shell operators and patterns
     DANGEROUS_PATTERNS: list[str] = [
-        "&&",       # Command chaining
-        "||",       # Conditional execution
-        ";",        # Command separator
-        "|",        # Pipe (can be dangerous)
-        ">",        # Output redirection
-        ">>",       # Append redirection
-        "<",        # Input redirection
-        "`",        # Command substitution
-        "$(",       # Command substitution
-        "${",       # Variable expansion
-        "\\n",      # Newline injection
-        "\n",       # Literal newline
+        "&&",  # Command chaining
+        "||",  # Conditional execution
+        ";",  # Command separator
+        "|",  # Pipe (can be dangerous)
+        ">",  # Output redirection
+        ">>",  # Append redirection
+        "<",  # Input redirection
+        "`",  # Command substitution
+        "$(",  # Command substitution
+        "${",  # Variable expansion
+        "\\n",  # Newline injection
+        "\n",  # Literal newline
     ]
 
     @classmethod
@@ -154,23 +241,15 @@ class ShellSecurity:
             return (
                 "blocked",
                 f"Command '{base_command}' is blocked for security reasons",
-                False
+                False,
             )
 
         # Check if command is in safe list
         if base_command in cls.SAFE_COMMANDS:
-            return (
-                "safe",
-                f"Command '{base_command}' is in the safe list",
-                False
-            )
+            return ("safe", f"Command '{base_command}' is in the safe list", False)
 
         # Unknown command - requires user approval
-        return (
-            "unknown",
-            f"Command '{base_command}' is not in the safe list",
-            True
-        )
+        return ("unknown", f"Command '{base_command}' is not in the safe list", True)
 
     @classmethod
     def is_safe(cls, command: str) -> bool:

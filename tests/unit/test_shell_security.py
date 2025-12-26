@@ -47,7 +47,9 @@ class TestShellSecurityValidation:
 
     def test_safe_command_python(self):
         """Test that python commands are considered safe."""
-        status, reason, requires_approval = ShellSecurity.validate_command("python --version")
+        status, reason, requires_approval = ShellSecurity.validate_command(
+            "python --version"
+        )
 
         assert status == "safe"
         assert not requires_approval
@@ -68,20 +70,26 @@ class TestShellSecurityValidation:
 
     def test_blocked_command_sudo(self):
         """Test that sudo command is blocked."""
-        status, reason, requires_approval = ShellSecurity.validate_command("sudo apt update")
+        status, reason, requires_approval = ShellSecurity.validate_command(
+            "sudo apt update"
+        )
 
         assert status == "blocked"
         assert not requires_approval
 
     def test_blocked_command_chmod(self):
         """Test that chmod command is blocked."""
-        status, reason, requires_approval = ShellSecurity.validate_command("chmod 777 file.txt")
+        status, reason, requires_approval = ShellSecurity.validate_command(
+            "chmod 777 file.txt"
+        )
 
         assert status == "blocked"
 
     def test_unknown_command_requires_approval(self):
         """Test that unknown commands require approval."""
-        status, reason, requires_approval = ShellSecurity.validate_command("custom_script.sh")
+        status, reason, requires_approval = ShellSecurity.validate_command(
+            "custom_script.sh"
+        )
 
         assert status == "unknown"
         assert requires_approval

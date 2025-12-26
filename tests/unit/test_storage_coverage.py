@@ -40,7 +40,7 @@ class TestDatabaseCoverage:
     def setup_method(self):
         reset_context()
 
-    @patch('src.storage.database.sqlite3.connect')
+    @patch("src.storage.database.sqlite3.connect")
     def test_initialize_database_failure(self, mock_connect):
         """Test database initialization failure handling."""
         mock_connect.side_effect = sqlite3.Error("Connection failed")
@@ -72,7 +72,7 @@ class TestMemoryCoverage:
         ctx.db_lock = Mock()
 
         # Mock config to enable sqlite
-        with patch('src.storage.memory.get_config') as mock_config_get:
+        with patch("src.storage.memory.get_config") as mock_config_get:
             mock_config = Mock()
             mock_config.db_type = "sqlite"
             mock_config_get.return_value = mock_config
@@ -92,7 +92,7 @@ class TestMemoryCoverage:
         ctx.db_conn = mock_conn
         ctx.db_lock = Mock()
 
-        with patch('src.storage.memory.get_config') as mock_config_get:
+        with patch("src.storage.memory.get_config") as mock_config_get:
             mock_config = Mock()
             mock_config.db_type = "sqlite"
             mock_config_get.return_value = mock_config
@@ -107,12 +107,14 @@ class TestMemoryCoverage:
         ctx = get_context()
         ctx.db_conn = None  # Ensure no DB
 
-        with patch('src.storage.memory.get_config') as mock_config_get:
+        with patch("src.storage.memory.get_config") as mock_config_get:
             mock_config = Mock()
             mock_config.db_type = "sqlite"
             mock_config_get.return_value = mock_config
 
-            with pytest.raises(RuntimeError, match="Database required but not available"):
+            with pytest.raises(
+                RuntimeError, match="Database required but not available"
+            ):
                 save_memory([HumanMessage(content="hi")])
 
     def test_save_memory_exception_reraise(self):
@@ -127,7 +129,7 @@ class TestMemoryCoverage:
         ctx.db_conn = mock_conn
         ctx.db_lock = MagicMock()  # Needs to be a context manager
 
-        with patch('src.storage.memory.get_config') as mock_config_get:
+        with patch("src.storage.memory.get_config") as mock_config_get:
             mock_config = Mock()
             mock_config.db_type = "sqlite"
             mock_config_get.return_value = mock_config

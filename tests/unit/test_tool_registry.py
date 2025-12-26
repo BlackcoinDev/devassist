@@ -45,12 +45,10 @@ SAMPLE_TOOL_DEFINITION = {
         "description": "A test tool",
         "parameters": {
             "type": "object",
-            "properties": {
-                "arg1": {"type": "string", "description": "First argument"}
-            },
-            "required": ["arg1"]
-        }
-    }
+            "properties": {"arg1": {"type": "string", "description": "First argument"}},
+            "required": ["arg1"],
+        },
+    },
 }
 
 
@@ -67,6 +65,7 @@ class TestToolRegistration:
 
     def test_register_simple_tool(self):
         """Test registering a basic tool without definition."""
+
         @ToolRegistry.register("test_tool")
         def execute_test(arg1: str) -> dict:
             return {"result": arg1}
@@ -76,6 +75,7 @@ class TestToolRegistration:
 
     def test_register_with_definition(self):
         """Test registering tool with LLM definition."""
+
         @ToolRegistry.register("test_tool", SAMPLE_TOOL_DEFINITION)
         def execute_test(arg1: str) -> dict:
             return {"result": arg1}
@@ -86,6 +86,7 @@ class TestToolRegistration:
 
     def test_register_tool_convenience_function(self):
         """Test using register_tool convenience function."""
+
         @register_tool("test_tool", SAMPLE_TOOL_DEFINITION)
         def execute_test(arg1: str) -> dict:
             return {"result": arg1}
@@ -94,6 +95,7 @@ class TestToolRegistration:
 
     def test_register_multiple_tools(self):
         """Test registering multiple tools."""
+
         @ToolRegistry.register("tool1")
         def execute_tool1() -> dict:
             return {}
@@ -120,6 +122,7 @@ class TestToolExecution:
 
     def test_execute_registered_tool(self):
         """Test executing a registered tool."""
+
         @ToolRegistry.register("test_tool")
         def execute_test(arg1: str, arg2: int) -> dict:
             return {"result": f"{arg1}-{arg2}"}
@@ -137,6 +140,7 @@ class TestToolExecution:
 
     def test_execute_with_error_handling(self):
         """Test that errors during execution are caught."""
+
         @ToolRegistry.register("error_tool")
         def execute_error(arg1: str) -> dict:
             raise ValueError("Test error")
@@ -150,20 +154,20 @@ class TestToolExecution:
 
     def test_execute_with_keyword_args(self):
         """Test that args dict is unpacked as keyword arguments."""
+
         @ToolRegistry.register("test_tool")
         def execute_test(name: str, age: int, active: bool = True) -> dict:
             return {"name": name, "age": age, "active": active}
 
-        result = ToolRegistry.execute("test_tool", {
-            "name": "Alice",
-            "age": 30,
-            "active": False
-        })
+        result = ToolRegistry.execute(
+            "test_tool", {"name": "Alice", "age": 30, "active": False}
+        )
 
         assert result == {"name": "Alice", "age": 30, "active": False}
 
     def test_execute_with_missing_args(self):
         """Test execution with missing required arguments."""
+
         @ToolRegistry.register("test_tool")
         def execute_test(required_arg: str) -> dict:
             return {"result": required_arg}
@@ -190,10 +194,7 @@ class TestToolCallExecution:
 
     def test_execute_tool_call_with_dict(self):
         """Test execute_tool_call with dict-based tool call."""
-        tool_call = {
-            "name": "read_file",
-            "args": {"file_path": "test.txt"}
-        }
+        tool_call = {"name": "read_file", "args": {"file_path": "test.txt"}}
 
         result = ToolRegistry.execute_tool_call(tool_call)
 
@@ -214,10 +215,7 @@ class TestToolCallExecution:
 
     def test_execute_tool_call_with_string_args(self):
         """Test execute_tool_call with JSON string arguments."""
-        tool_call = {
-            "name": "read_file",
-            "args": '{"file_path": "test.txt"}'
-        }
+        tool_call = {"name": "read_file", "args": '{"file_path": "test.txt"}'}
 
         result = ToolRegistry.execute_tool_call(tool_call)
 
@@ -226,10 +224,7 @@ class TestToolCallExecution:
 
     def test_execute_tool_call_with_invalid_json(self):
         """Test execute_tool_call with invalid JSON in args."""
-        tool_call = {
-            "name": "read_file",
-            "args": "{invalid json}"
-        }
+        tool_call = {"name": "read_file", "args": "{invalid json}"}
 
         result = ToolRegistry.execute_tool_call(tool_call)
 
@@ -239,6 +234,7 @@ class TestToolCallExecution:
 
     def test_execute_tool_call_with_none_args(self):
         """Test execute_tool_call with None args (uses empty dict)."""
+
         @ToolRegistry.register("no_args_tool")
         def execute_no_args() -> dict:
             return {"result": "success"}
@@ -297,6 +293,7 @@ class TestDefinitionManagement:
 
     def test_register_without_definition(self):
         """Test that tools without definitions are not in get_definitions."""
+
         @ToolRegistry.register("no_def_tool")
         def execute_no_def() -> dict:
             return {}
@@ -381,6 +378,7 @@ class TestEdgeCases:
 
     def test_reregister_same_tool_overwrites(self):
         """Test that re-registering a tool overwrites previous."""
+
         @ToolRegistry.register("test_tool")
         def handler1(arg: str) -> dict:
             return {"version": "first"}
@@ -394,6 +392,7 @@ class TestEdgeCases:
 
     def test_execute_with_empty_args(self):
         """Test executing tool with empty args dict."""
+
         @ToolRegistry.register("no_args_tool")
         def execute_no_args() -> dict:
             return {"result": "success"}
@@ -403,6 +402,7 @@ class TestEdgeCases:
 
     def test_tool_with_return_value_errors(self):
         """Test tool that returns non-dict causes error."""
+
         @ToolRegistry.register("bad_return_tool")
         def execute_bad_return(arg: str):
             return "not a dict"  # Should return dict

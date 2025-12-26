@@ -1,6 +1,7 @@
 """
 HTTP transport for MCP (SSE).
 """
+
 import aiohttp
 import logging
 from typing import Any, Dict, Optional
@@ -42,4 +43,6 @@ class HttpTransport(Transport):
         # For this prototype, we'll assume a request-response model or
         # simplified polling if needed.
         # In full MCP, this would use a persistent connection.
-        raise NotImplementedError("HTTP/SSE receive not fully implemented in this version")
+        raise NotImplementedError(
+            "HTTP/SSE receive not fully implemented in this version"
+        )

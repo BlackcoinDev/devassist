@@ -12,6 +12,7 @@ Tests cover:
 - Conversation memory persistence
 - Verbose logging
 """
+
 import unittest
 from unittest.mock import MagicMock, patch
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, SystemMessage
@@ -25,7 +26,9 @@ class TestChatLoopBasic(unittest.TestCase):
     @patch("src.core.chat_loop.ToolRegistry")
     @patch("src.core.chat_loop.save_memory")
     @patch("src.core.context_utils.get_relevant_context", return_value="")
-    def test_run_iteration_no_tools(self, mock_rag, mock_save, mock_registry, mock_get_ctx):
+    def test_run_iteration_no_tools(
+        self, mock_rag, mock_save, mock_registry, mock_get_ctx
+    ):
         """Test simple iteration without tool calls."""
         mock_ctx = MagicMock()
         mock_ctx.conversation_history = []
@@ -49,7 +52,9 @@ class TestChatLoopBasic(unittest.TestCase):
     @patch("src.core.chat_loop.ToolRegistry")
     @patch("src.core.chat_loop.save_memory")
     @patch("src.core.context_utils.get_relevant_context", return_value="")
-    def test_run_iteration_with_single_tool(self, mock_rag, mock_save, mock_registry, mock_get_ctx):
+    def test_run_iteration_with_single_tool(
+        self, mock_rag, mock_save, mock_registry, mock_get_ctx
+    ):
         """Test iteration with a single tool call."""
         mock_ctx = MagicMock()
         mock_ctx.conversation_history = []
@@ -87,7 +92,9 @@ class TestChatLoopMultiTool(unittest.TestCase):
     @patch("src.core.chat_loop.ToolRegistry")
     @patch("src.core.chat_loop.save_memory")
     @patch("src.core.context_utils.get_relevant_context", return_value="")
-    def test_run_iteration_multi_tool_chain(self, mock_rag, mock_save, mock_registry, mock_get_ctx):
+    def test_run_iteration_multi_tool_chain(
+        self, mock_rag, mock_save, mock_registry, mock_get_ctx
+    ):
         """Test iteration with multiple sequential tool calls."""
         mock_ctx = MagicMock()
         mock_ctx.conversation_history = []
@@ -124,7 +131,9 @@ class TestChatLoopMultiTool(unittest.TestCase):
     @patch("src.core.chat_loop.ToolRegistry")
     @patch("src.core.chat_loop.save_memory")
     @patch("src.core.context_utils.get_relevant_context", return_value="")
-    def test_run_iteration_parallel_tools(self, mock_rag, mock_save, mock_registry, mock_get_ctx):
+    def test_run_iteration_parallel_tools(
+        self, mock_rag, mock_save, mock_registry, mock_get_ctx
+    ):
         """Test iteration with parallel tool calls (same message)."""
         mock_ctx = MagicMock()
         mock_ctx.conversation_history = []
@@ -136,7 +145,7 @@ class TestChatLoopMultiTool(unittest.TestCase):
         # AI makes two tool calls in same message
         tool_calls = [
             {"name": "tool1", "args": {"x": 1}, "id": "1"},
-            {"name": "tool2", "args": {"y": 2}, "id": "2"}
+            {"name": "tool2", "args": {"y": 2}, "id": "2"},
         ]
         msg_with_tools = AIMessage(content="", tool_calls=tool_calls)
 
@@ -154,7 +163,9 @@ class TestChatLoopMultiTool(unittest.TestCase):
 
         self.assertEqual(response, "Both tools executed")
         # Both tool results should be in history
-        tool_messages = [m for m in mock_ctx.conversation_history if isinstance(m, ToolMessage)]
+        tool_messages = [
+            m for m in mock_ctx.conversation_history if isinstance(m, ToolMessage)
+        ]
         self.assertEqual(len(tool_messages), 2)
 
 
@@ -165,7 +176,9 @@ class TestChatLoopToolApproval(unittest.TestCase):
     @patch("src.core.chat_loop.ToolRegistry")
     @patch("src.core.chat_loop.save_memory")
     @patch("src.core.context_utils.get_relevant_context", return_value="")
-    def test_tool_approval_rejection(self, mock_rag, mock_save, mock_registry, mock_get_ctx):
+    def test_tool_approval_rejection(
+        self, mock_rag, mock_save, mock_registry, mock_get_ctx
+    ):
         """Test handling of tool approval rejection."""
         mock_ctx = MagicMock()
         mock_ctx.conversation_history = []
@@ -187,7 +200,9 @@ class TestChatLoopToolApproval(unittest.TestCase):
         mock_ctx.llm = mock_llm
 
         # Registry returns error on rejected tool
-        mock_registry.execute.return_value = {"error": "Tool execution rejected by user"}
+        mock_registry.execute.return_value = {
+            "error": "Tool execution rejected by user"
+        }
 
         loop = ChatLoop()
         response = loop.run_iteration("Write file")
@@ -204,7 +219,9 @@ class TestChatLoopErrorHandling(unittest.TestCase):
     @patch("src.core.chat_loop.ToolRegistry")
     @patch("src.core.chat_loop.save_memory")
     @patch("src.core.context_utils.get_relevant_context", return_value="")
-    def test_tool_error_recovery(self, mock_rag, mock_save, mock_registry, mock_get_ctx):
+    def test_tool_error_recovery(
+        self, mock_rag, mock_save, mock_registry, mock_get_ctx
+    ):
         """Test handling of tool execution errors."""
         mock_ctx = MagicMock()
         mock_ctx.conversation_history = []
@@ -268,7 +285,10 @@ class TestChatLoopContext(unittest.TestCase):
     @patch("src.core.chat_loop.get_context")
     @patch("src.core.chat_loop.ToolRegistry")
     @patch("src.core.chat_loop.save_memory")
-    @patch("src.core.context_utils.get_relevant_context", return_value="Relevant context: Python is a language")
+    @patch(
+        "src.core.context_utils.get_relevant_context",
+        return_value="Relevant context: Python is a language",
+    )
     def test_context_injection(self, mock_rag, mock_save, mock_registry, mock_get_ctx):
         """Test that context is injected when context_mode is on."""
         mock_ctx = MagicMock()
@@ -292,7 +312,9 @@ class TestChatLoopContext(unittest.TestCase):
     @patch("src.core.chat_loop.ToolRegistry")
     @patch("src.core.chat_loop.save_memory")
     @patch("src.core.context_utils.get_relevant_context", return_value="")
-    def test_no_context_when_disabled(self, mock_rag, mock_save, mock_registry, mock_get_ctx):
+    def test_no_context_when_disabled(
+        self, mock_rag, mock_save, mock_registry, mock_get_ctx
+    ):
         """Test that context is not injected when context_mode is off."""
         mock_ctx = MagicMock()
         mock_ctx.conversation_history = []
@@ -319,7 +341,9 @@ class TestChatLoopMemory(unittest.TestCase):
     @patch("src.core.chat_loop.ToolRegistry")
     @patch("src.core.chat_loop.save_memory")
     @patch("src.core.context_utils.get_relevant_context", return_value="")
-    def test_conversation_memory_persistence(self, mock_rag, mock_save, mock_registry, mock_get_ctx, mock_mem_config):
+    def test_conversation_memory_persistence(
+        self, mock_rag, mock_save, mock_registry, mock_get_ctx, mock_mem_config
+    ):
         """Test that conversation is saved to memory after each iteration."""
         # Mock config for memory trimming
         mock_mem_config.return_value.max_history_pairs = 10
@@ -349,7 +373,9 @@ class TestChatLoopMemory(unittest.TestCase):
     @patch("src.core.chat_loop.ToolRegistry")
     @patch("src.core.chat_loop.save_memory")
     @patch("src.core.context_utils.get_relevant_context", return_value="")
-    def test_multiple_iterations_accumulate_history(self, mock_rag, mock_save, mock_registry, mock_get_ctx, mock_mem_config):
+    def test_multiple_iterations_accumulate_history(
+        self, mock_rag, mock_save, mock_registry, mock_get_ctx, mock_mem_config
+    ):
         """Test that multiple iterations accumulate conversation history."""
         # Mock config for memory trimming
         mock_mem_config.return_value.max_history_pairs = 10
@@ -387,7 +413,9 @@ class TestChatLoopVerboseLogging(unittest.TestCase):
         with patch("src.core.chat_loop.get_context") as mock_get_ctx:
             with patch("src.core.chat_loop.ToolRegistry"):
                 with patch("src.core.chat_loop.save_memory"):
-                    with patch("src.core.context_utils.get_relevant_context", return_value=""):
+                    with patch(
+                        "src.core.context_utils.get_relevant_context", return_value=""
+                    ):
                         mock_ctx = MagicMock()
                         mock_ctx.conversation_history = []
                         mock_ctx.context_mode = "off"

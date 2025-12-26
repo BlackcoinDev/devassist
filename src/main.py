@@ -60,12 +60,10 @@ from src.commands.handlers import (  # noqa: F401 (side-effect imports for decor
 )
 from src.storage import (
     initialize_database,
-
     load_embedding_cache,
     load_query_cache,
     cleanup_memory,
 )
-from src.core.context_utils import get_relevant_context  # noqa: F401 Backwards compatibility
 
 # Setup logging FIRST (before any other imports that use logging)
 logger = get_logger()
@@ -375,8 +373,7 @@ def initialize_vectordb():
             # The custom wrapper in src.vectordb.client is mainly for direct API calls,
             # but LangChain expects the official client structure.
             native_client = chromadb.HttpClient(
-                host=config.chroma_host,
-                port=config.chroma_port
+                host=config.chroma_host, port=config.chroma_port
             )
 
             ctx.vectorstore = Chroma(
@@ -408,6 +405,7 @@ def initialize_user_memory():
 
         # Load conversation history AFTER tools are initialized
         from src.storage.memory import load_memory
+
         ctx = get_context()
         ctx.conversation_history = load_memory()
 
@@ -423,7 +421,9 @@ def initialize_user_memory():
         return True
     except Exception as e:
         logger.error(f"Failed to initialize user memory: {e}")
-        logger.warning("⚠️ Memory load failed. Initializing with fresh System Prompt fallback.")
+        logger.warning(
+            "⚠️ Memory load failed. Initializing with fresh System Prompt fallback."
+        )
 
         # Fallback: Construct system prompt manually if DB fails
         from langchain_core.messages import SystemMessage

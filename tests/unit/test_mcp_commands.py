@@ -113,7 +113,7 @@ class TestMCPListServers(unittest.TestCase):
         mock_client.servers = {
             "database": {"enabled": True},
             "web": {"enabled": True},
-            "file": {"enabled": True}
+            "file": {"enabled": True},
         }
         mock_client.tools = {}
         mock_get_client.return_value = mock_client
@@ -177,7 +177,7 @@ class TestMCPListServers(unittest.TestCase):
             "mcp_database_query": {},
             "mcp_database_insert": {},
             "mcp_web_fetch": {},
-            "mcp_web_search": {}
+            "mcp_web_search": {},
         }
         mock_get_client.return_value = mock_client
 

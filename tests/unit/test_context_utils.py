@@ -84,13 +84,13 @@ class TestKnowledgeBaseFunctions:
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
 
-        with patch('src.core.context_utils.get_config', return_value=mock_config):
+        with patch("src.core.context_utils.get_config", return_value=mock_config):
             # 1. Mock listing collections to find 'knowledge_base' (default)
             responses.add(
                 responses.GET,
                 self.coll_url,
                 json=[{"id": "kb-id", "name": "knowledge_base"}],
-                status=200
+                status=200,
             )
 
             # 2. Mock query endpoint
@@ -99,7 +99,7 @@ class TestKnowledgeBaseFunctions:
                 responses.POST,
                 query_url,
                 json={"documents": [["doc from api"]]},
-                status=200
+                status=200,
             )
 
             result = get_relevant_context("query")
@@ -125,13 +125,13 @@ class TestKnowledgeBaseFunctions:
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
 
-        with patch('src.core.context_utils.get_config', return_value=mock_config):
+        with patch("src.core.context_utils.get_config", return_value=mock_config):
             # 1. Mock listing collections
             responses.add(
                 responses.GET,
                 self.coll_url,
                 json=[{"id": "kb-id", "name": "knowledge_base"}],
-                status=200
+                status=200,
             )
 
             # 2. Mock add endpoint
@@ -153,7 +153,9 @@ class TestKnowledgeBaseFunctions:
         ctx.embeddings = mock_embeddings
 
         # Force an exception in the API part
-        with patch('src.core.context_utils._get_api_session', side_effect=Exception("API Down")):
+        with patch(
+            "src.core.context_utils._get_api_session", side_effect=Exception("API Down")
+        ):
             success = add_to_knowledge_base("fallback knowledge")
 
             # Should have used LangChain fallback
@@ -210,14 +212,9 @@ class TestKnowledgeBaseFunctions:
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
 
-        with patch('src.core.context_utils.get_config', return_value=mock_config):
+        with patch("src.core.context_utils.get_config", return_value=mock_config):
             # Mock listing collections - empty list
-            responses.add(
-                responses.GET,
-                self.coll_url,
-                json=[],
-                status=200
-            )
+            responses.add(responses.GET, self.coll_url, json=[], status=200)
 
             result = get_relevant_context("query")
             assert result == ""
@@ -238,13 +235,13 @@ class TestKnowledgeBaseFunctions:
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
 
-        with patch('src.core.context_utils.get_config', return_value=mock_config):
+        with patch("src.core.context_utils.get_config", return_value=mock_config):
             # Mock listing collections
             responses.add(
                 responses.GET,
                 self.coll_url,
                 json=[{"id": "kb-id", "name": "knowledge_base"}],
-                status=200
+                status=200,
             )
 
             # Mock query endpoint failure
@@ -270,22 +267,19 @@ class TestKnowledgeBaseFunctions:
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
 
-        with patch('src.core.context_utils.get_config', return_value=mock_config):
+        with patch("src.core.context_utils.get_config", return_value=mock_config):
             # Mock listing collections
             responses.add(
                 responses.GET,
                 self.coll_url,
                 json=[{"id": "kb-id", "name": "knowledge_base"}],
-                status=200
+                status=200,
             )
 
             # Mock query endpoint with empty documents
             query_url = f"{self.coll_url}/kb-id/query"
             responses.add(
-                responses.POST,
-                query_url,
-                json={"documents": [[]]},
-                status=200
+                responses.POST, query_url, json={"documents": [[]]}, status=200
             )
 
             result = get_relevant_context("query")
@@ -317,7 +311,7 @@ class TestKnowledgeBaseFunctions:
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
 
-        with patch('src.core.context_utils.get_config', return_value=mock_config):
+        with patch("src.core.context_utils.get_config", return_value=mock_config):
             # Mock listing collections - empty (collection doesn't exist)
             responses.add(responses.GET, self.coll_url, json=[], status=200)
 
@@ -327,7 +321,7 @@ class TestKnowledgeBaseFunctions:
                 responses.POST,
                 create_url,
                 json={"id": "new-kb-id", "name": "knowledge_base"},
-                status=201
+                status=201,
             )
 
             # Mock add endpoint
@@ -353,7 +347,7 @@ class TestKnowledgeBaseFunctions:
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
 
-        with patch('src.core.context_utils.get_config', return_value=mock_config):
+        with patch("src.core.context_utils.get_config", return_value=mock_config):
             # Mock listing collections - empty (collection doesn't exist)
             responses.add(responses.GET, self.coll_url, json=[], status=200)
 
@@ -380,13 +374,13 @@ class TestKnowledgeBaseFunctions:
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
 
-        with patch('src.core.context_utils.get_config', return_value=mock_config):
+        with patch("src.core.context_utils.get_config", return_value=mock_config):
             # Mock listing collections
             responses.add(
                 responses.GET,
                 self.coll_url,
                 json=[{"id": "kb-id", "name": "knowledge_base"}],
-                status=200
+                status=200,
             )
 
             # Mock add endpoint failure
@@ -424,13 +418,13 @@ class TestKnowledgeBaseFunctions:
         mock_config.chroma_host = self.host
         mock_config.chroma_port = self.port
 
-        with patch('src.core.context_utils.get_config', return_value=mock_config):
+        with patch("src.core.context_utils.get_config", return_value=mock_config):
             # Mock listing collections
             responses.add(
                 responses.GET,
                 f"http://{self.host}:{self.port}/api/v2/tenants/default_tenant/databases/default_database/collections",
                 json=[{"id": "kb-id", "name": "knowledge_base"}],
-                status=200
+                status=200,
             )
 
             # Mock query endpoint
@@ -439,11 +433,14 @@ class TestKnowledgeBaseFunctions:
                 responses.POST,
                 query_url,
                 json={"documents": [["doc from api"]]},
-                status=200
+                status=200,
             )
 
             # Mock _save_query_cache to raise exception
-            with patch('src.storage.cache.save_query_cache', side_effect=Exception("Save error")):
+            with patch(
+                "src.storage.cache.save_query_cache",
+                side_effect=Exception("Save error"),
+            ):
                 result = get_relevant_context("query")
                 assert "Relevant context:" in result
                 assert "doc from api" in result

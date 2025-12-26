@@ -56,13 +56,15 @@ class TestPathSecurity:
             "../../etc/passwd",
             "../secret.txt",
             "/etc/passwd",
-            "~/.ssh/id_rsa"
+            "~/.ssh/id_rsa",
         ]
 
         for path in traversal_paths:
             with pytest.raises(SecurityError) as excinfo:
                 PathSecurity.validate_path(path)
-            assert "Path traversal attempt" in str(excinfo.value) or "Dangerous path pattern" in str(excinfo.value)
+            assert "Path traversal attempt" in str(
+                excinfo.value
+            ) or "Dangerous path pattern" in str(excinfo.value)
 
     def test_validate_file_read_limits(self):
         """Test file read validation with size limits."""
@@ -191,7 +193,7 @@ class TestPathSecurityEdgeCases:
         # Use a mock to force TypeError during path construction
         from unittest.mock import patch
 
-        with patch('os.path.abspath', side_effect=TypeError("Invalid type")):
+        with patch("os.path.abspath", side_effect=TypeError("Invalid type")):
             with pytest.raises(SecurityError) as excinfo:
                 PathSecurity.validate_path("somepath")
             assert "Invalid path" in str(excinfo.value)
@@ -208,14 +210,16 @@ class TestPathSecurityEdgeCases:
         import tempfile
 
         # Create a temporary large file
-        with tempfile.NamedTemporaryFile(delete=False, mode='wb') as f:
+        with tempfile.NamedTemporaryFile(delete=False, mode="wb") as f:
             # Write more than 1MB
-            f.write(b'x' * (PathSecurity.MAX_FILE_SIZE + 1))
+            f.write(b"x" * (PathSecurity.MAX_FILE_SIZE + 1))
             temp_path = f.name
 
         try:
             with pytest.raises(SecurityError) as excinfo:
-                PathSecurity.validate_file_read(temp_path, base_dir=os.path.dirname(temp_path))
+                PathSecurity.validate_file_read(
+                    temp_path, base_dir=os.path.dirname(temp_path)
+                )
             assert "File too large" in str(excinfo.value)
         finally:
             os.remove(temp_path)
@@ -224,7 +228,7 @@ class TestPathSecurityEdgeCases:
         """Test OSError during file size check."""
         from unittest.mock import patch
 
-        with patch('os.path.getsize', side_effect=OSError("Permission denied")):
+        with patch("os.path.getsize", side_effect=OSError("Permission denied")):
             with pytest.raises(SecurityError) as excinfo:
                 PathSecurity.validate_file_read("README.md")
             assert "Cannot access file" in str(excinfo.value)
@@ -235,8 +239,8 @@ class TestPathSecurityEdgeCases:
         # Create a temporary binary file in current directory
         temp_path = "temp_binary_test.bin"
         try:
-            with open(temp_path, 'wb') as f:
-                f.write(b'\x00\x01\x02\x03' * 256)  # Binary content with null bytes
+            with open(temp_path, "wb") as f:
+                f.write(b"\x00\x01\x02\x03" * 256)  # Binary content with null bytes
 
             with pytest.raises(SecurityError) as excinfo:
                 PathSecurity.validate_file_read(temp_path)
@@ -250,7 +254,7 @@ class TestPathSecurityEdgeCases:
         from unittest.mock import patch
 
         # Mock open to raise an exception
-        with patch('builtins.open', side_effect=IOError("Read error")):
+        with patch("builtins.open", side_effect=IOError("Read error")):
             with pytest.raises(SecurityError) as excinfo:
                 PathSecurity.validate_file_read("README.md")
             assert "Cannot validate file content" in str(excinfo.value)

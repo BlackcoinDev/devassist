@@ -39,7 +39,7 @@ from src.vectordb.spaces import (
     delete_space,
     switch_space,
     save_current_space,
-    load_current_space
+    load_current_space,
 )
 from src.core.context import get_context, reset_context
 
@@ -68,10 +68,10 @@ class TestSpaceManagement:
             {"name": "knowledge_base"},
             {"name": "some_other_coll"},
             {"name": "space_project_a"},
-            {"name": "space_project_b"}
+            {"name": "space_project_b"},
         ]
 
-        with patch('src.vectordb.spaces.get_chromadb_client') as mock_get_client:
+        with patch("src.vectordb.spaces.get_chromadb_client") as mock_get_client:
             mock_client = mock_get_client.return_value
             mock_client.list_collections.return_value = mock_collections
 
@@ -88,7 +88,7 @@ class TestSpaceManagement:
 
     def test_delete_space_calls_client(self):
         """Test that delete_space calls the underlying client."""
-        with patch('src.vectordb.spaces.get_chromadb_client') as mock_get_client:
+        with patch("src.vectordb.spaces.get_chromadb_client") as mock_get_client:
             mock_client = mock_get_client.return_value
             mock_client.delete_collection.return_value = True
 
@@ -192,7 +192,7 @@ class TestSpaceErrors:
 
     def test_list_spaces_exception(self):
         """Test list_spaces with client exception."""
-        with patch('src.vectordb.spaces.get_chromadb_client') as mock_get_client:
+        with patch("src.vectordb.spaces.get_chromadb_client") as mock_get_client:
             mock_client = mock_get_client.return_value
             mock_client.list_collections.side_effect = Exception("Connection error")
 
@@ -203,7 +203,7 @@ class TestSpaceErrors:
 
     def test_delete_space_exception(self):
         """Test delete_space with client exception."""
-        with patch('src.vectordb.spaces.get_chromadb_client') as mock_get_client:
+        with patch("src.vectordb.spaces.get_chromadb_client") as mock_get_client:
             mock_client = mock_get_client.return_value
             mock_client.delete_collection.side_effect = Exception("Delete failed")
 

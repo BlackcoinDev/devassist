@@ -44,8 +44,7 @@ class TestSearchCommand:
         handle_search([])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "Usage" in output
         assert "--type" in output
@@ -75,8 +74,7 @@ class TestSearchCommand:
             case_sensitive=False,
         )
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "src/main.py" in output
         assert "def main():" in output
@@ -184,8 +182,7 @@ class TestSearchCommand:
         handle_search(["nonexistent_pattern_xyz"])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "No matches found" in output
 
@@ -198,14 +195,16 @@ class TestSearchCommand:
             "match_count": 50,
             "total_found": 100,
             "truncated": True,
-            "matches": [{"file": f"file{i}.py", "line": i, "content": "match"} for i in range(50)],
+            "matches": [
+                {"file": f"file{i}.py", "line": i, "content": "match"}
+                for i in range(50)
+            ],
         }
 
         handle_search(["pattern"])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "truncated" in output.lower()
 
@@ -218,8 +217,7 @@ class TestSearchCommand:
         handle_search(["pattern"])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "ripgrep" in output
 
@@ -229,8 +227,7 @@ class TestSearchCommand:
         handle_search(["pattern", "--limit", "abc"])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "Invalid limit" in output
 
@@ -244,8 +241,7 @@ class TestShellCommand:
         handle_shell([])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "Usage" in output
         assert "Examples" in output
@@ -267,8 +263,7 @@ class TestShellCommand:
 
         mock_execute.assert_called_with("echo Hello World")
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "Hello World" in output
         assert "successfully" in output.lower()
@@ -289,8 +284,7 @@ class TestShellCommand:
         handle_shell(["false"])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "failed" in output.lower() or "exit code" in output.lower()
 
@@ -305,8 +299,7 @@ class TestShellCommand:
         handle_shell(["rm", "-rf", "/"])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "blocked" in output.lower()
 
@@ -319,8 +312,7 @@ class TestShellCommand:
         handle_shell(["ls"])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "disabled" in output.lower() or "GUI" in output
 
@@ -333,6 +325,7 @@ class TestSystemCommandAliases:
         # Force reload to re-register after any registry.clear() calls
         import importlib
         from src.commands.handlers import system_commands
+
         importlib.reload(system_commands)
         from src.commands.registry import CommandRegistry
 
@@ -346,6 +339,7 @@ class TestSystemCommandAliases:
         # Force reload to re-register after any registry.clear() calls
         import importlib
         from src.commands.handlers import system_commands
+
         importlib.reload(system_commands)
         from src.commands.registry import CommandRegistry
 

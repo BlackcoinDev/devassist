@@ -86,10 +86,10 @@ class TestRateLimiting:
         # Get status
         status = limiter.get_status()
 
-        assert status['calls_in_period'] == 3
-        assert status['max_calls'] == 5
-        assert status['remaining'] == 2
-        assert status['period_seconds'] == 60
+        assert status["calls_in_period"] == 3
+        assert status["max_calls"] == 5
+        assert status["remaining"] == 2
+        assert status["period_seconds"] == 60
 
     def test_rate_limit_reset(self):
         """Test resetting the rate limiter."""

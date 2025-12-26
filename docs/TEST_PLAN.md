@@ -848,17 +848,330 @@ def test_example():
 
 **Overall Achievement:** ✅ **81.72% coverage achieved** (exceeds 80% requirement)
 
-### 8.7 Lint and Quality Checks
+### 8.7 Type Checking and Linting
 
+#### Pyright Configuration (Primary Type Checker):
 ```bash
-# Run comprehensive linting and security checks
+# Run Pyright for comprehensive type checking
+uv run pyright src/
+
+# Check specific modules
+uv run pyright src/core/
+uv run pyright src/tools/executors/
+
+# With strict settings
+uv run pyright src/ --strict
+```
+
+#### MyPy (Legacy - Still Supported):
+```bash
+# Run MyPy for type checking
+uv run mypy src/
+
+# Check with strict settings
+uv run mypy src/ --strict
+```
+
+#### Flake8 (Code Style):
+```bash
+# Check code style and potential errors
+uv run flake8 src/
+
+# With specific config
+uv run flake8 src/ --config=.flake8
+
+# Check specific directories
+uv run flake8 src/core/
+uv run src/tools/executors/
+```
+
+#### Bandit (Security Analysis):
+```bash
+# Security vulnerability scanning
+uv run bandit -r src/
+
+# JSON output for CI/CD
+uv run bandit -r src/ -f json
+
+# Skip specific tests
+uv run bandit -r src/ -ll
+```
+
+#### Vulture (Dead Code Detection):
+```bash
+# Find unused code
+uv run vulture src/
+
+# With confidence threshold
+uv run vulture src/ --min-confidence 80
+
+# Find only high-confidence dead code
+uv run vulture src/ --min-confidence 90
+```
+
+#### Autopep8 (Auto-formatting):
+```bash
+# Format code automatically
+uv run autopep8 --in-place src/**/*.py
+
+# Check what would be changed
+uv run autopep8 --diff src/**/*.py
+
+# Aggressive formatting
+uv run autopep8 --in-place --aggressive src/**/*.py
+```
+
+#### Codespell (Spelling):
+```bash
+# Check spelling in comments and strings
+uv run codespell src/
+
+# Skip specific files
+uv run codespell src/ --skip="*.pyc,*.md"
+
+# Interactive correction
+uv run codespell src/ -i 3
+```
+
+#### ShellCheck (Shell Scripts):
+```bash
+# Lint shell scripts
+shellcheck scripts/*.sh
+
+# Check specific script
+shellcheck scripts/test.sh
+
+# All shell scripts in project
+find . -name "*.sh" -exec shellcheck {} \;
+```
+
+#### Comprehensive Linting (Automated):
+```bash
+# Run all linting checks (recommended)
 uv run python tests/lint/lint.py
 
-# Individual checks
-uv run flake8 src/
-uv run mypy src/
-uv run bandit -r src/
-uv run vulture src/
+# This executes:
+# - Structure validation
+# - Syntax checking  
+# - Flake8 style check
+# - Autopep8 formatting check
+# - MyPy type checking
+# - Bandit security scan
+# - Vulture dead code detection
+# - Codespell spelling check
+# - ShellCheck shell script validation
+```
+
+#### Pyright Configuration File:
+The project uses `pyproject.toml` for Pyright configuration:
+
+```toml
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "basic"
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportImportCycles = true
+reportUnusedImport = true
+reportUnusedClass = true
+reportUnusedFunction = true
+reportUnusedVariable = true
+reportDuplicateImport = true
+reportUnnecessaryIsInstance = true
+reportUnnecessaryCast = true
+reportUnnecessaryComparison = true
+reportAssertAlwaysTrue = true
+reportSelfClsParameterName = true
+reportImplicitStringConcatenation = true
+reportInvalidStubStatement = true
+reportIncompleteStub = true
+reportUnsupportedDunderAll = true
+reportUntypedNamedTuple = true
+reportUntypedClassDecorator = true
+reportUntypedFunctionDecorator = true
+reportUntypedBaseClass = true
+reportPrivateUsage = true
+reportTypeCommentUsage = true
+reportGeneralTypeIssues = true
+reportAttributeAccessIssue = true
+reportReturnType = true
+reportGlobalVariableType = true
+reportFunctionMemberAccess = true
+reportIncompatibleMethodOverride = true
+reportIncompatibleVariableOverride = true
+reportOverlappingOverloads = true
+
+[tool.pyright.ignoredFiles]
+"**/venv/*" = true
+"**/.*" = true
+"**/__pycache__/*" = true
+
+[tool.pyright.include]
+"src" = true
+
+[tool.pyright.exclude]
+"**/node_modules"
+"**/__pycache__"
+"**/.*"
+```
+
+#### Type Checking Best Practices:
+
+1. **Progressive Type Adoption:**
+   ```bash
+   # Start with basic checking
+   uv run pyright src/ --typeCheckingMode=basic
+   
+   # Move to strict for new code
+   uv run pyright src/ --typeCheckingMode=strict
+   ```
+
+2. **Gradual Migration from MyPy:**
+   ```bash
+   # Run both during transition
+   uv run mypy src/  # Legacy
+   uv run pyright src/  # Primary
+   
+   # Fix issues in this order:
+   # 1. Missing imports
+   # 2. Type annotations
+   # 3. Type compatibility
+   ```
+
+3. **Configuration Per Module:**
+   ```python
+   # src/core/config.py
+   from typing import Any, Dict, Optional  # Explicit imports required
+   
+   def get_config() -> Dict[str, Any]:  # Return type required
+       """Get configuration with type hints."""
+       ...
+   ```
+
+4. **Stub Files for External Libraries:**
+   ```bash
+   # Install type stubs for better IDE support
+   uv add types-requests types-PyYAML
+   
+   # Pyright auto-discovers stubs
+   uv run pyright src/
+   ```
+
+#### Pyright Integration in CI/CD:
+
+```yaml
+# .github/workflows/quality.yml
+name: Quality Checks
+on: [push, pull_request]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.13'
+    
+    - name: Install dependencies
+      run: |
+        pip install uv
+        uv pip install -r requirements.txt
+    
+    - name: Type checking (Pyright)
+      run: uv run pyright src/
+    
+    - name: Code style (Flake8)
+      run: uv run flake8 src/
+    
+    - name: Security (Bandit)
+      run: uv run bandit -r src/ -f json
+    
+    - name: Tests
+      run: uv run pytest tests/ -q
+    
+    - name: Coverage
+      run: uv run pytest --cov=src --cov-fail-under=80
+```
+
+#### Common Pyright Issues and Solutions:
+
+1. **Missing type stubs:**
+   ```bash
+   # Install commonly needed type stubs
+   uv add types-requests types-PyYAML types-redis types-python-dateutil
+   ```
+
+2. **Import resolution:**
+   ```bash
+   # Ensure proper Python path
+   export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
+   uv run pyright src/
+   ```
+
+3. **Third-party library types:**
+   ```bash
+   # Use ignore comments for external libraries
+   # pyright: ignore[import]
+   from external_lib import something  # type: ignore
+   ```
+
+4. **Complex generic types:**
+   ```python
+   # Use TypeVar for complex generics
+   from typing import TypeVar, Generic, List
+   
+   T = TypeVar('T')
+   
+   class Container(Generic[T]):
+       def __init__(self) -> None:
+           self.items: List[T] = []
+   ```
+
+#### Integration with IDEs:
+
+**VS Code:**
+```json
+// .vscode/settings.json
+{
+    "python.defaultInterpreterPath": "./venv/bin/python",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.linting.enabled": true,
+    "python.linting.pyrightEnabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.formatting.provider": "autopep8"
+}
+```
+
+**PyCharm:**
+- Enable Pyright in Settings → Languages & Frameworks → Python → Type Checker
+- Configure as primary type checker
+- Set interpreter to project virtual environment
+
+This comprehensive type checking setup ensures code quality and catches type-related bugs early in development.
+
+#### Linting Integration in Development Workflow:
+
+```bash
+# Pre-commit quality check
+pre-commit run --all-files
+
+# Individual quality tools
+uv run pyright src/          # Type checking
+uv run flake8 src/           # Code style
+uv run bandit -r src/        # Security
+uv run vulture src/          # Dead code
+uv run codespell src/        # Spelling
+
+# Automatic formatting
+uv run autopep8 --in-place src/**/*.py
+uv run isort src/            # Import sorting
+
+# Check formatting without changes
+black --check src/
+isort --check-only src/
+autopep8 --diff src/
 ```
 
 ---
@@ -889,11 +1202,17 @@ uv run python tests/lint/lint.py
 # Run unit tests (fast)
 uv run pytest tests/unit/ -q
 
-# Run linting
+# Run comprehensive linting (includes Pyright, Flake8, Bandit, etc.)
 uv run python tests/lint/lint.py
 
 # Check coverage
 uv run pytest --cov=src --cov-fail-under=80 -q
+
+# Individual linting checks (alternative)
+uv run pyright src/          # Type checking
+uv run flake8 src/           # Code style
+uv run bandit -r src/        # Security analysis
+uv run codespell src/        # Spelling check
 ```
 
 ### 9.3 CI/CD Requirements
@@ -902,10 +1221,36 @@ uv run pytest --cov=src --cov-fail-under=80 -q
 
 - ✅ All tests must pass (668/668)
 - ✅ Coverage must be ≥80% (ACHIEVED - 81.72%)
-- ✅ No linting errors
+- ✅ No linting errors (Pyright, Flake8, etc.)
 - ✅ No security test failures
+- ✅ No type checking errors (Pyright/MyPy)
+- ✅ No security vulnerabilities (Bandit)
+- ✅ No dead code warnings (Vulture)
+- ✅ No spelling errors (Codespell)
 - ✅ Performance tests within thresholds
 - ✅ All security improvements verified
+
+**Required Quality Gates:**
+
+```bash
+# Type checking must pass
+uv run pyright src/
+
+# Code style must pass
+uv run flake8 src/
+
+# Security scan must pass
+uv run bandit -r src/ -f json
+
+# Dead code detection must be clean
+uv run vulture src/ --min-confidence 80
+
+# Spelling must be correct
+uv run codespell src/
+
+# All tests must pass
+uv run pytest tests/ -q
+```
 
 ### 9.4 Security Testing Integration
 
@@ -922,6 +1267,62 @@ uv run pytest tests/unit/test_mcp_client.py -v
 # Comprehensive security audit
 uv run python tests/lint/lint.py
 uv run bandit -r src/
+uv run pyright src/  # Type safety
+```
+
+### 9.5 Quality Gate Integration
+
+**Comprehensive Quality Check Script:**
+```bash
+#!/bin/bash
+# quality-gate.sh
+
+set -e
+
+echo "🔍 Running comprehensive quality checks..."
+
+# 1. Type checking (Pyright primary, MyPy backup)
+echo "📝 Type checking..."
+uv run pyright src/ || uv run mypy src/
+
+# 2. Code style
+echo "🎨 Code style..."
+uv run flake8 src/
+
+# 3. Security analysis
+echo "🔒 Security analysis..."
+uv run bandit -r src/
+
+# 4. Dead code detection
+echo "💀 Dead code detection..."
+uv run vulture src/ --min-confidence 80
+
+# 5. Spelling check
+echo "✏️ Spelling check..."
+uv run codespell src/
+
+# 6. Shell script linting
+echo "🐚 Shell scripts..."
+find . -name "*.sh" -exec shellcheck {} \;
+
+# 7. Tests
+echo "🧪 Tests..."
+uv run pytest tests/ -q
+
+# 8. Coverage
+echo "📊 Coverage..."
+uv run pytest --cov=src --cov-fail-under=80
+
+echo "✅ All quality gates passed!"
+```
+
+**Usage:**
+```bash
+# Run full quality gate
+./quality-gate.sh
+
+# Or run individual checks
+uv run python tests/lint/lint.py  # Comprehensive check
 ```
 
 ---
@@ -1038,9 +1439,13 @@ uv run bandit -r src/
 - **pytest-mock** - Mocking utilities
 - **pytest-xdist** - Parallel test execution
 - **flake8** - Code style checking
-- **mypy** - Type checking
+- **mypy** - Type checking (legacy)
+- **pyright** - Primary type checker (Microsoft's Python type checker)
 - **bandit** - Security analysis
 - **vulture** - Dead code detection
+- **autopep8** - Automatic PEP8 formatting
+- **codespell** - Spelling checker
+- **shellcheck** - Shell script linting
 
 ### 11.4 Security Testing Tools
 

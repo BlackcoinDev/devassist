@@ -57,7 +57,7 @@ class TestConversationPersistence:
         mock_cursor = ctx.db_conn.cursor.return_value
         mock_cursor.fetchall.return_value = []
 
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch("src.core.config.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.db_type = "sqlite"
             mock_get_config.return_value = mock_config
@@ -78,13 +78,13 @@ class TestConversationPersistence:
         rows = [
             ("SystemMessage", "Sys prompt"),
             ("HumanMessage", "Hello"),
-            ("AIMessage", "Hi there")
+            ("AIMessage", "Hi there"),
         ]
 
         mock_cursor = ctx.db_conn.cursor.return_value
         mock_cursor.fetchall.return_value = rows
 
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch("src.core.config.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.db_type = "sqlite"
             mock_get_config.return_value = mock_config
@@ -102,7 +102,7 @@ class TestConversationPersistence:
         ctx = get_context()
         ctx.db_conn = None  # No connection
 
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch("src.core.config.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.db_type = "sqlite"
             mock_get_config.return_value = mock_config
@@ -117,12 +117,9 @@ class TestConversationPersistence:
         ctx.db_lock = MagicMock()
         mock_cursor = ctx.db_conn.cursor.return_value
 
-        history = [
-            SystemMessage(content="Sys"),
-            HumanMessage(content="User")
-        ]
+        history = [SystemMessage(content="Sys"), HumanMessage(content="User")]
 
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch("src.core.config.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.db_type = "sqlite"
             mock_get_config.return_value = mock_config
@@ -130,7 +127,9 @@ class TestConversationPersistence:
             save_memory(history)
 
             # Verify existing messages were deleted
-            mock_cursor.execute.assert_any_call("DELETE FROM conversations WHERE session_id = 'default'")
+            mock_cursor.execute.assert_any_call(
+                "DELETE FROM conversations WHERE session_id = 'default'"
+            )
 
             # Verify bulk insert was called
             assert mock_cursor.executemany.called
@@ -147,7 +146,11 @@ class TestHistoryTrimming:
 
     def test_trim_history_no_trim_needed(self):
         """Test that history is not trimmed if it's within limits."""
-        history = [SystemMessage(content="S"), HumanMessage(content="H"), AIMessage(content="A")]
+        history = [
+            SystemMessage(content="S"),
+            HumanMessage(content="H"),
+            AIMessage(content="A"),
+        ]
 
         # Limit is 2 pairs (total 5 msgs)
         trimmed = trim_history(history, max_pairs=2)
@@ -164,7 +167,7 @@ class TestHistoryTrimming:
             HumanMessage(content="H2"),
             AIMessage(content="A2"),
             HumanMessage(content="H3"),
-            AIMessage(content="A3")
+            AIMessage(content="A3"),
         ]
 
         # Limit to 1 pair (total 1 + 2 = 3 msgs)
@@ -179,7 +182,7 @@ class TestHistoryTrimming:
         """Test that trim_history uses the default limit from config."""
         history = [SystemMessage(content="S")] + [HumanMessage(content="H")] * 20
 
-        with patch('src.storage.memory.get_config') as mock_get_config:
+        with patch("src.storage.memory.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.max_history_pairs = 5
             mock_get_config.return_value = mock_config

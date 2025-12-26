@@ -46,7 +46,7 @@ class TestInputSanitization:
             "SELECT * FROM users; --",
             "eval('print(\"hack\")')",
             "javascript:alert(1)",
-            "../../etc/passwd"
+            "../../etc/passwd",
         ]
 
         for pattern in dangerous_patterns:
@@ -59,7 +59,7 @@ class TestInputSanitization:
             "Hello, this is safe text!",
             "Normal query about python",
             "User input with some (parentheses) and [brackets]",
-            "Email: user@example.com"
+            "Email: user@example.com",
         ]
 
         for safe_input in safe_inputs:
@@ -96,8 +96,13 @@ class TestInputSanitization:
 
     def test_sanitize_url(self):
         """Test URL sanitization."""
-        assert InputSanitizer.sanitize_url("https://example.com") == "https://example.com"
-        assert InputSanitizer.sanitize_url("http://localhost:8080/path?q=1") == "http://localhost:8080/path?q=1"
+        assert (
+            InputSanitizer.sanitize_url("https://example.com") == "https://example.com"
+        )
+        assert (
+            InputSanitizer.sanitize_url("http://localhost:8080/path?q=1")
+            == "http://localhost:8080/path?q=1"
+        )
 
         with pytest.raises(SecurityError):
             InputSanitizer.sanitize_url("javascript:alert(1)")

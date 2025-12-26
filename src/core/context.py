@@ -149,9 +149,12 @@ def get_context() -> ApplicationContext:
                 # Log context creation (import config lazily to avoid circular imports)
                 try:
                     from src.core.config import get_config
+
                     _cfg = get_config()
                     if _cfg.verbose_logging:
-                        logger.info("📦 ApplicationContext: Created new context singleton")
+                        logger.info(
+                            "📦 ApplicationContext: Created new context singleton"
+                        )
                 except Exception:
                     pass  # Config not yet initialized
     return _context
@@ -187,6 +190,7 @@ def _log_component_set(component_name: str, value: Any) -> None:
     """Log when a component is set in context (if verbose logging enabled)."""
     try:
         from src.core.config import get_config
+
         _cfg = get_config()
         if _cfg.verbose_logging:
             status = "initialized" if value is not None else "cleared"

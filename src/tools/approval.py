@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 class ApprovalPolicy(str, Enum):
     """Available approval policies."""
+
     ALWAYS = "always"
     NEVER = "never"
     ASK = "ask"
@@ -59,18 +60,20 @@ class ToolApprovalManager:
         self.defaults: Dict[str, str] = {
             "builtin": "always",
             "mcp": "ask",
-            "global": "ask"
+            "global": "ask",
         }
         self.load_config()
 
     def load_config(self) -> None:
         """Load approval settings from JSON config file."""
         if not self.config_path.exists():
-            logger.info(f"Tool approval config not found at {self.config_path}. Using defaults.")
+            logger.info(
+                f"Tool approval config not found at {self.config_path}. Using defaults."
+            )
             return
 
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, "r") as f:
                 data = json.load(f)
                 self.approvals = data.get("approvals", {})
                 self.defaults.update(data.get("defaults", {}))
@@ -97,7 +100,13 @@ class ToolApprovalManager:
 
         return self.defaults.get("builtin", "always")
 
-    def requires_approval(self, tool_name: str, tool_args: Dict[str, Any], baseline: bool = False, llm_guess: Optional[bool] = None) -> bool:
+    def requires_approval(
+        self,
+        tool_name: str,
+        tool_args: Dict[str, Any],
+        baseline: bool = False,
+        llm_guess: Optional[bool] = None,
+    ) -> bool:
         """
         Determine if a tool call requires user confirmation based on policy.
 
@@ -130,7 +139,9 @@ class ToolApprovalManager:
 
         return True  # Default to secure 'ask'
 
-    def check_approval(self, tool_name: str, tool_args: Optional[Dict[str, Any]] = None) -> str:
+    def check_approval(
+        self, tool_name: str, tool_args: Optional[Dict[str, Any]] = None
+    ) -> str:
         """
         High-level check used by ToolRegistry.
         Returns 'always', 'ask', or 'never'.
@@ -142,6 +153,7 @@ class ToolApprovalManager:
             # For shell_execute, ask 'ShellSecurity' first
             if tool_name == "shell_execute" and tool_args:
                 from src.security.shell_security import ShellSecurity
+
                 command = tool_args.get("command", "")
                 try:
                     status, _, _ = ShellSecurity.validate_command(command)
@@ -169,9 +181,13 @@ class ToolApprovalManager:
 
         try:
             # Load existing file to preserve structure if possible
-            data = {"version": "1.0", "approvals": self.approvals, "defaults": self.defaults}
+            data = {
+                "version": "1.0",
+                "approvals": self.approvals,
+                "defaults": self.defaults,
+            }
             if self.config_path.exists():
-                with open(self.config_path, 'r') as f:
+                with open(self.config_path, "r") as f:
                     try:
                         existing = json.load(f)
                         data["version"] = existing.get("version", "1.0")
@@ -179,7 +195,7 @@ class ToolApprovalManager:
                     except Exception:
                         pass
 
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 json.dump(data, f, indent=2)
             return True
         except Exception as e:

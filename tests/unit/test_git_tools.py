@@ -97,9 +97,7 @@ class TestGitStatus:
         """Test status when not in a git repository."""
         mock_getcwd.return_value = "/tmp/not-a-repo"
         mock_run.return_value = MagicMock(
-            returncode=128,
-            stdout="",
-            stderr="fatal: not a git repository"
+            returncode=128, stdout="", stderr="fatal: not a git repository"
         )
 
         result = execute_git_status()

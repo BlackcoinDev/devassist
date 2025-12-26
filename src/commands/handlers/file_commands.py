@@ -95,7 +95,9 @@ def handle_read(args: List[str]) -> None:
             from src.storage.memory import save_memory
 
             ctx = get_context()
-            msg_content = f"User ran /read {file_path}. File content:\n```\n{content}\n```"
+            msg_content = (
+                f"User ran /read {file_path}. File content:\n```\n{content}\n```"
+            )
             ctx.conversation_history.append(HumanMessage(content=msg_content))
             save_memory(ctx.conversation_history)
         except Exception:

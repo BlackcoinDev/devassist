@@ -194,7 +194,7 @@ class TestSpaceSwitch(unittest.TestCase):
         # Simulate property setter raising exception
         type(mock_ctx).current_space = property(
             lambda self: "default",
-            lambda self, val: (_ for _ in ()).throw(Exception("Switch failed"))
+            lambda self, val: (_ for _ in ()).throw(Exception("Switch failed")),
         )
         mock_get_ctx.return_value = mock_ctx
 

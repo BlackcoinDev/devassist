@@ -58,7 +58,7 @@ class TestDatabaseConnection:
 
     def test_initialize_database_creates_file(self):
         """Test that initialize_database creates the database file and schema."""
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch("src.core.config.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.db_type = "sqlite"
             mock_config.db_path = self.temp_db.name
@@ -72,12 +72,14 @@ class TestDatabaseConnection:
 
             # Check if table exists
             cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='conversations'")
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='conversations'"
+            )
             assert cursor.fetchone() is not None
 
     def test_initialize_database_updates_context(self):
         """Test that initialize_database correctly updates the ApplicationContext."""
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch("src.core.config.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.db_type = "sqlite"
             mock_config.db_path = self.temp_db.name
@@ -104,7 +106,7 @@ class TestDatabaseConnection:
 
     def test_initialize_database_unsupported_type(self):
         """Test behavior when an unsupported database type is configured."""
-        with patch('src.storage.database.get_config') as mock_get_config:
+        with patch("src.storage.database.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.db_type = "postgres"  # Unsupported
             mock_get_config.return_value = mock_config
@@ -134,7 +136,7 @@ class TestDatabaseOperations:
 
     def test_schema_columns(self):
         """Verify the conversations table has the expected columns."""
-        with patch('src.core.config.get_config') as mock_get_config:
+        with patch("src.core.config.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.db_type = "sqlite"
             mock_config.db_path = self.temp_db.name
@@ -146,6 +148,12 @@ class TestDatabaseOperations:
             cursor.execute("PRAGMA table_info(conversations)")
             columns = [info[1] for info in cursor.fetchall()]
 
-            expected_columns = ['id', 'session_id', 'message_type', 'content', 'timestamp']
+            expected_columns = [
+                "id",
+                "session_id",
+                "message_type",
+                "content",
+                "timestamp",
+            ]
             for col in expected_columns:
                 assert col in columns

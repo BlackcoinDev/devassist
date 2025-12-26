@@ -51,21 +51,19 @@ class TestCodeSearchBasic:
         mock_exists.return_value = True
 
         # Ripgrep JSON output format
-        rg_output = json.dumps({
-            "type": "match",
-            "data": {
-                "path": {"text": "/tmp/project/src/main.py"},
-                "line_number": 10,
-                "lines": {"text": "def main():\n"},
-                "submatches": [{"match": {"text": "main"}}]
+        rg_output = json.dumps(
+            {
+                "type": "match",
+                "data": {
+                    "path": {"text": "/tmp/project/src/main.py"},
+                    "line_number": 10,
+                    "lines": {"text": "def main():\n"},
+                    "submatches": [{"match": {"text": "main"}}],
+                },
             }
-        })
-
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout=rg_output,
-            stderr=""
         )
+
+        mock_run.return_value = MagicMock(returncode=0, stdout=rg_output, stderr="")
 
         result = execute_code_search("main")
 
@@ -78,18 +76,16 @@ class TestCodeSearchBasic:
     @patch("subprocess.run")
     @patch("os.getcwd")
     @patch("os.path.exists")
-    def test_code_search_no_matches(self, mock_exists, mock_getcwd, mock_run, mock_which):
+    def test_code_search_no_matches(
+        self, mock_exists, mock_getcwd, mock_run, mock_which
+    ):
         """Test search with no matches."""
         mock_which.return_value = "/usr/bin/rg"
         mock_getcwd.return_value = "/tmp/project"
         mock_exists.return_value = True
 
         # Return code 1 = no matches (not an error for rg)
-        mock_run.return_value = MagicMock(
-            returncode=1,
-            stdout="",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="")
 
         result = execute_code_search("nonexistent_pattern_xyz")
 
@@ -291,20 +287,22 @@ class TestCodeSearchMaxResults:
         # Create 10 matches
         matches = []
         for i in range(10):
-            matches.append(json.dumps({
-                "type": "match",
-                "data": {
-                    "path": {"text": f"/tmp/project/file{i}.py"},
-                    "line_number": i + 1,
-                    "lines": {"text": f"line {i}\n"},
-                    "submatches": [{"match": {"text": "pattern"}}]
-                }
-            }))
+            matches.append(
+                json.dumps(
+                    {
+                        "type": "match",
+                        "data": {
+                            "path": {"text": f"/tmp/project/file{i}.py"},
+                            "line_number": i + 1,
+                            "lines": {"text": f"line {i}\n"},
+                            "submatches": [{"match": {"text": "pattern"}}],
+                        },
+                    }
+                )
+            )
 
         mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="\n".join(matches),
-            stderr=""
+            returncode=0, stdout="\n".join(matches), stderr=""
         )
 
         result = execute_code_search("pattern", max_results=5)
@@ -321,9 +319,7 @@ class TestCodeSearchErrorHandling:
     @patch("subprocess.run")
     @patch("os.getcwd")
     @patch("os.path.exists")
-    def test_code_search_timeout(
-        self, mock_exists, mock_getcwd, mock_run, mock_which
-    ):
+    def test_code_search_timeout(self, mock_exists, mock_getcwd, mock_run, mock_which):
         """Test timeout handling."""
         mock_which.return_value = "/usr/bin/rg"
         mock_getcwd.return_value = "/tmp/project"
@@ -347,9 +343,7 @@ class TestCodeSearchErrorHandling:
         mock_getcwd.return_value = "/tmp/project"
         mock_exists.return_value = True
         mock_run.return_value = MagicMock(
-            returncode=2,  # Error code
-            stdout="",
-            stderr="rg: unrecognized option"
+            returncode=2, stdout="", stderr="rg: unrecognized option"  # Error code
         )
 
         result = execute_code_search("pattern")
@@ -392,30 +386,32 @@ class TestCodeSearchOutputParsing:
         mock_exists.return_value = True
 
         matches = [
-            json.dumps({
-                "type": "match",
-                "data": {
-                    "path": {"text": "/tmp/project/a.py"},
-                    "line_number": 1,
-                    "lines": {"text": "def foo():\n"},
-                    "submatches": [{"match": {"text": "foo"}}]
+            json.dumps(
+                {
+                    "type": "match",
+                    "data": {
+                        "path": {"text": "/tmp/project/a.py"},
+                        "line_number": 1,
+                        "lines": {"text": "def foo():\n"},
+                        "submatches": [{"match": {"text": "foo"}}],
+                    },
                 }
-            }),
-            json.dumps({
-                "type": "match",
-                "data": {
-                    "path": {"text": "/tmp/project/b.py"},
-                    "line_number": 5,
-                    "lines": {"text": "def bar():\n"},
-                    "submatches": [{"match": {"text": "bar"}}]
+            ),
+            json.dumps(
+                {
+                    "type": "match",
+                    "data": {
+                        "path": {"text": "/tmp/project/b.py"},
+                        "line_number": 5,
+                        "lines": {"text": "def bar():\n"},
+                        "submatches": [{"match": {"text": "bar"}}],
+                    },
                 }
-            }),
+            ),
         ]
 
         mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="\n".join(matches),
-            stderr=""
+            returncode=0, stdout="\n".join(matches), stderr=""
         )
 
         result = execute_code_search("def")
@@ -436,25 +432,25 @@ class TestCodeSearchOutputParsing:
         mock_getcwd.return_value = "/tmp/project"
         mock_exists.return_value = True
 
-        output = "\n".join([
-            json.dumps({"type": "begin", "data": {"path": {"text": "file.py"}}}),
-            json.dumps({
-                "type": "match",
-                "data": {
-                    "path": {"text": "/tmp/project/file.py"},
-                    "line_number": 1,
-                    "lines": {"text": "content\n"},
-                    "submatches": []
-                }
-            }),
-            json.dumps({"type": "end", "data": {"path": {"text": "file.py"}}}),
-        ])
-
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout=output,
-            stderr=""
+        output = "\n".join(
+            [
+                json.dumps({"type": "begin", "data": {"path": {"text": "file.py"}}}),
+                json.dumps(
+                    {
+                        "type": "match",
+                        "data": {
+                            "path": {"text": "/tmp/project/file.py"},
+                            "line_number": 1,
+                            "lines": {"text": "content\n"},
+                            "submatches": [],
+                        },
+                    }
+                ),
+                json.dumps({"type": "end", "data": {"path": {"text": "file.py"}}}),
+            ]
         )
+
+        mock_run.return_value = MagicMock(returncode=0, stdout=output, stderr="")
 
         result = execute_code_search("content")
 
@@ -473,21 +469,19 @@ class TestCodeSearchOutputParsing:
         mock_getcwd.return_value = "/tmp/project"
         mock_exists.return_value = True
 
-        output = "not valid json\n" + json.dumps({
-            "type": "match",
-            "data": {
-                "path": {"text": "/tmp/project/file.py"},
-                "line_number": 1,
-                "lines": {"text": "content\n"},
-                "submatches": []
+        output = "not valid json\n" + json.dumps(
+            {
+                "type": "match",
+                "data": {
+                    "path": {"text": "/tmp/project/file.py"},
+                    "line_number": 1,
+                    "lines": {"text": "content\n"},
+                    "submatches": [],
+                },
             }
-        })
-
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout=output,
-            stderr=""
         )
+
+        mock_run.return_value = MagicMock(returncode=0, stdout=output, stderr="")
 
         result = execute_code_search("content")
 

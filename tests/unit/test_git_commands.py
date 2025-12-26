@@ -58,8 +58,7 @@ class TestGitStatusCommand:
         handle_git_status([])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "main" in output
         assert "clean" in output.lower()
@@ -80,8 +79,7 @@ class TestGitStatusCommand:
         handle_git_status([])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "develop" in output
         assert "Staged" in output
@@ -98,8 +96,7 @@ class TestGitStatusCommand:
         handle_git_status([])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "Not a git repository" in output
 
@@ -119,8 +116,7 @@ class TestGitStatusCommand:
         handle_git_status([])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "and 10 more" in output
 
@@ -136,8 +132,18 @@ class TestGitLogCommand:
             "success": True,
             "commit_count": 2,
             "commits": [
-                {"hash": "abc1234", "author": "John", "date": "2024-01-15", "message": "First commit"},
-                {"hash": "def5678", "author": "Jane", "date": "2024-01-16", "message": "Second commit"},
+                {
+                    "hash": "abc1234",
+                    "author": "John",
+                    "date": "2024-01-15",
+                    "message": "First commit",
+                },
+                {
+                    "hash": "def5678",
+                    "author": "Jane",
+                    "date": "2024-01-16",
+                    "message": "Second commit",
+                },
             ],
         }
 
@@ -145,8 +151,7 @@ class TestGitLogCommand:
 
         mock_execute.assert_called_with(limit=10, file_path=None)
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "abc1234" in output
         assert "John" in output
@@ -203,8 +208,7 @@ class TestGitLogCommand:
         handle_git_log([])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "Not a git repository" in output
 
@@ -227,8 +231,7 @@ class TestGitDiffCommand:
 
         mock_execute.assert_called_with(file_path=None, staged=False)
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "Unstaged" in output
 
@@ -247,8 +250,7 @@ class TestGitDiffCommand:
 
         mock_execute.assert_called_with(file_path=None, staged=True)
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "Staged" in output
 
@@ -293,8 +295,7 @@ class TestGitDiffCommand:
         handle_git_diff([])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "No" in output
 
@@ -307,8 +308,7 @@ class TestGitDiffCommand:
         handle_git_diff([])
 
         output = "\n".join(
-            " ".join(str(arg) for arg in call[0])
-            for call in mock_print.call_args_list
+            " ".join(str(arg) for arg in call[0]) for call in mock_print.call_args_list
         )
         assert "Not a git repository" in output
 
@@ -321,6 +321,7 @@ class TestGitCommandAliases:
         # Force reload to re-register after any registry.clear() calls
         import importlib
         from src.commands.handlers import git_commands
+
         importlib.reload(git_commands)
         from src.commands.registry import CommandRegistry
 
@@ -333,6 +334,7 @@ class TestGitCommandAliases:
         # Force reload to re-register after any registry.clear() calls
         import importlib
         from src.commands.handlers import git_commands
+
         importlib.reload(git_commands)
         from src.commands.registry import CommandRegistry
 
@@ -345,6 +347,7 @@ class TestGitCommandAliases:
         # Force reload to re-register after any registry.clear() calls
         import importlib
         from src.commands.handlers import git_commands
+
         importlib.reload(git_commands)
         from src.commands.registry import CommandRegistry
 

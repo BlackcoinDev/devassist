@@ -159,10 +159,14 @@ class TestCommandIntegration:
         # Ensure memory command is registered (might have been cleared by other tests)
         if not CommandRegistry.has_command("memory"):
             from src.commands.handlers.memory_commands import handle_memory
-            CommandRegistry.register("memory", "Show conversation history", category="memory")(handle_memory)
+
+            CommandRegistry.register(
+                "memory", "Show conversation history", category="memory"
+            )(handle_memory)
 
         # Mock conversation history to ensure consistent output
         from src.core.context import get_context
+
         get_context().conversation_history = []
 
         result = handle_slash_command("/memory")

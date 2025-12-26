@@ -48,9 +48,7 @@ class TestShellExecuteBasic:
         mock_getenv.return_value = "cli"
         mock_getcwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="Hello World\n",
-            stderr=""
+            returncode=0, stdout="Hello World\n", stderr=""
         )
 
         result = execute_shell("echo 'Hello World'")
@@ -68,9 +66,7 @@ class TestShellExecuteBasic:
         mock_getenv.return_value = "cli"
         mock_getcwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(
-            returncode=1,
-            stdout="",
-            stderr="Error: file not found\n"
+            returncode=1, stdout="", stderr="Error: file not found\n"
         )
 
         result = execute_shell("cat nonexistent.txt")
@@ -116,15 +112,13 @@ class TestShellExecuteGUIMode:
     @patch("os.getenv")
     @patch("subprocess.run")
     @patch("os.getcwd")
-    def test_execute_shell_allowed_in_cli_mode(self, mock_getcwd, mock_run, mock_getenv):
+    def test_execute_shell_allowed_in_cli_mode(
+        self, mock_getcwd, mock_run, mock_getenv
+    ):
         """Test that shell execution works in CLI mode."""
         mock_getenv.return_value = "cli"
         mock_getcwd.return_value = "/tmp"
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         result = execute_shell("ls -la")
 
@@ -210,11 +204,7 @@ class TestShellExecuteTimeout:
         """Test custom timeout is passed to subprocess."""
         mock_getenv.return_value = "cli"
         mock_getcwd.return_value = "/tmp"
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         execute_shell("long_command", timeout=120)
 
@@ -225,15 +215,13 @@ class TestShellExecuteTimeout:
     @patch("os.getenv")
     @patch("subprocess.run")
     @patch("os.getcwd")
-    def test_execute_shell_timeout_clamped_to_max(self, mock_getcwd, mock_run, mock_getenv):
+    def test_execute_shell_timeout_clamped_to_max(
+        self, mock_getcwd, mock_run, mock_getenv
+    ):
         """Test that timeout is clamped to maximum (300s)."""
         mock_getenv.return_value = "cli"
         mock_getcwd.return_value = "/tmp"
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         execute_shell("command", timeout=600)
 
@@ -243,15 +231,13 @@ class TestShellExecuteTimeout:
     @patch("os.getenv")
     @patch("subprocess.run")
     @patch("os.getcwd")
-    def test_execute_shell_timeout_clamped_to_min(self, mock_getcwd, mock_run, mock_getenv):
+    def test_execute_shell_timeout_clamped_to_min(
+        self, mock_getcwd, mock_run, mock_getenv
+    ):
         """Test that timeout is clamped to minimum (30s default)."""
         mock_getenv.return_value = "cli"
         mock_getcwd.return_value = "/tmp"
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         execute_shell("command", timeout=0)
 
@@ -271,11 +257,7 @@ class TestShellExecuteOutputTruncation:
         mock_getcwd.return_value = "/tmp"
 
         large_output = "x" * (60 * 1024)  # 60KB output
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout=large_output,
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout=large_output, stderr="")
 
         result = execute_shell("generate_output")
 
@@ -292,11 +274,7 @@ class TestShellExecuteOutputTruncation:
         mock_getcwd.return_value = "/tmp"
 
         large_error = "e" * (60 * 1024)  # 60KB error output
-        mock_run.return_value = MagicMock(
-            returncode=1,
-            stdout="",
-            stderr=large_error
-        )
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr=large_error)
 
         result = execute_shell("error_command")
 
@@ -313,9 +291,7 @@ class TestShellExecuteOutputTruncation:
         mock_getenv.return_value = "cli"
         mock_getcwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="small output",
-            stderr=""
+            returncode=0, stdout="small output", stderr=""
         )
 
         result = execute_shell("command")
@@ -350,11 +326,7 @@ class TestShellExecuteEdgeCases:
         """Test that executed command is included in result."""
         mock_getenv.return_value = "cli"
         mock_getcwd.return_value = "/tmp"
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="output",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="output", stderr="")
 
         result = execute_shell("git status")
 
@@ -369,11 +341,7 @@ class TestShellExecuteEdgeCases:
         """Test that command runs in current directory."""
         mock_getenv.return_value = "cli"
         mock_getcwd.return_value = "/home/user/project"
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         execute_shell("ls")
 

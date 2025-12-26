@@ -115,7 +115,11 @@ class TestCaching(unittest.TestCase):
         reset_context()
 
     @patch("src.storage.cache.os.path.exists")
-    @patch("src.storage.cache.open", new_callable=mock_open, read_data='{"test": [1, 2, 3]}')
+    @patch(
+        "src.storage.cache.open",
+        new_callable=mock_open,
+        read_data='{"test": [1, 2, 3]}',
+    )
     @patch("src.storage.cache.json.load")
     def test_load_embedding_cache(self, mock_json_load, mock_file, mock_exists):
         """Test loading embedding cache."""
@@ -248,6 +252,7 @@ class TestSlashCommands(unittest.TestCase):
         reset_context()
         import importlib
         import src.commands.handlers.help_commands
+
         importlib.reload(src.commands.handlers.help_commands)
         # We only really need help for the help test
 
@@ -372,7 +377,10 @@ class TestContextAndLearning(unittest.TestCase):
 class TestSpaceCommands(unittest.TestCase):
     """Test space management commands."""
 
-    @patch("src.commands.handlers.space_commands.list_spaces", return_value=["default", "test"])
+    @patch(
+        "src.commands.handlers.space_commands.list_spaces",
+        return_value=["default", "test"],
+    )
     def test_handle_space_command_list(self, mock_list):
         """Test /space list command."""
         from src.core.context import reset_context, get_context

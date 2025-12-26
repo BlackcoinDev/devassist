@@ -17,6 +17,7 @@ def check_mem0():
     # 1. Check Import
     try:
         from mem0 import Memory  # type: ignore
+
         print("✅ Mem0 library found")
     except ImportError:
         print("❌ Mem0 library NOT installed. Run: pip install -r requirements.txt")
@@ -35,7 +36,9 @@ def check_mem0():
 
     if not all([lm_studio_url, ollama_url, model_name, embedding_model, chroma_host]):
         print("❌ Missing environment variables. Check your .env file.")
-        print("   Required: LM_STUDIO_URL, OLLAMA_BASE_URL, MODEL_NAME, EMBEDDING_MODEL, CHROMA_HOST")
+        print(
+            "   Required: LM_STUDIO_URL, OLLAMA_BASE_URL, MODEL_NAME, EMBEDDING_MODEL, CHROMA_HOST"
+        )
         return False
 
     # 4. Test Configuration
@@ -55,14 +58,14 @@ def check_mem0():
                     "openai_base_url": lm_studio_url,
                     "api_key": "lm-studio",
                     "temperature": 0.1,
-                }
+                },
             },
             "embedder": {
                 "provider": "ollama",
                 "config": {
                     "model": embedding_model,
                     "base_url": ollama_url,
-                }
+                },
             },
             "vector_store": {
                 "provider": "chroma",
@@ -70,8 +73,8 @@ def check_mem0():
                     "collection_name": "mem0_personalized_memory",
                     "host": chroma_host,
                     "port": chroma_port,
-                }
-            }
+                },
+            },
         }
 
         m = Memory.from_config(mem0_config)
@@ -81,17 +84,27 @@ def check_mem0():
         print("\n📝 Testing Mem0 Write...")
         try:
             # Test adding a user preference
-            m.add(messages=[{"role": "user", "content": "My preferred model is qwen3-vl-30b"}], user_id="default_user")
+            m.add(
+                messages=[
+                    {"role": "user", "content": "My preferred model is qwen3-vl-30b"}
+                ],
+                user_id="default_user",
+            )
             print("✅ Added user preference")
 
             # Test retrieving from memory
             results = m.search("What is my preferred model?", user_id="default_user")
-            if isinstance(results, dict) and 'results' in results:
-                found = any("qwen3" in r.get('memory', '') or "#FF00FF" in r.get('memory', '') for r in results['results'])
+            if isinstance(results, dict) and "results" in results:
+                found = any(
+                    "qwen3" in r.get("memory", "") or "#FF00FF" in r.get("memory", "")
+                    for r in results["results"]
+                )
                 if found:
                     print("✅ Memory read test passed")
                 else:
-                    print("⚠️  Memory read returned results but didn't find expected content")
+                    print(
+                        "⚠️  Memory read returned results but didn't find expected content"
+                    )
         except Exception as e:
             print(f"❌ Memory test failed: {e}")
             return False

@@ -50,6 +50,7 @@ class TestCommandRegistration:
 
     def test_register_simple_command(self):
         """Test registering a basic command."""
+
         @CommandRegistry.register("test")
         def handle_test(args):
             return "executed"
@@ -59,6 +60,7 @@ class TestCommandRegistration:
 
     def test_register_with_description(self):
         """Test registering command with description."""
+
         @CommandRegistry.register("help", "Show help text")
         def handle_help(args):
             pass
@@ -68,6 +70,7 @@ class TestCommandRegistration:
 
     def test_register_with_category(self):
         """Test registering command with category."""
+
         @CommandRegistry.register("config", "Config command", category="settings")
         def handle_config(args):
             pass
@@ -78,6 +81,7 @@ class TestCommandRegistration:
 
     def test_register_with_aliases(self):
         """Test registering command with aliases."""
+
         @CommandRegistry.register("help", "Show help", aliases=["h", "?"])
         def handle_help(args):
             return "help"
@@ -88,6 +92,7 @@ class TestCommandRegistration:
 
     def test_register_command_convenience_function(self):
         """Test using register_command convenience function."""
+
         @register_command("test", "Test command")
         def handle_test(args):
             pass
@@ -139,6 +144,7 @@ class TestCommandDispatch:
 
     def test_dispatch_with_error_handling(self):
         """Test that errors during execution are caught."""
+
         @CommandRegistry.register("error")
         def handle_error(args):
             raise ValueError("Test error")
@@ -244,6 +250,7 @@ class TestMultipleRegistrations:
 
     def test_reregister_same_name_overwrites(self):
         """Test that re-registering a command overwrites previous."""
+
         @CommandRegistry.register("test")
         def handler1(args):
             return "first"
@@ -260,6 +267,7 @@ class TestMultipleRegistrations:
 
     def test_multiple_categories(self):
         """Test commands across multiple categories."""
+
         @CommandRegistry.register("cmd1", category="cat1")
         def h1(args):
             pass
@@ -278,6 +286,7 @@ class TestMultipleRegistrations:
 
     def test_alias_to_different_commands(self):
         """Test that different commands can have same alias behavior."""
+
         @CommandRegistry.register("cmd1", aliases=["a"])
         def h1(args):
             return "cmd1"

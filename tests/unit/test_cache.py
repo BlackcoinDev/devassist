@@ -38,7 +38,7 @@ from src.storage.cache import (
     load_embedding_cache,
     load_query_cache,
     save_query_cache,
-    cleanup_memory
+    cleanup_memory,
 )
 from src.core.context import get_context, reset_context
 
@@ -49,7 +49,7 @@ class TestEmbeddingCache:
     def setup_method(self):
         """Set up test environment."""
         reset_context()
-        self.temp_file = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
+        self.temp_file = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
         self.temp_file.close()
 
     def teardown_method(self):
@@ -61,10 +61,10 @@ class TestEmbeddingCache:
     def test_load_embedding_cache(self):
         """Test loading embeddings from disk."""
         data = {"test_text": [0.1, 0.2, 0.3]}
-        with open(self.temp_file.name, 'w') as f:
+        with open(self.temp_file.name, "w") as f:
             json.dump(data, f)
 
-        with patch('src.storage.cache.get_config') as mock_get_config:
+        with patch("src.storage.cache.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.embedding_cache_file = self.temp_file.name
             mock_get_config.return_value = mock_config
@@ -77,7 +77,7 @@ class TestEmbeddingCache:
 
     def test_load_embedding_cache_file_not_found(self):
         """Test loading embeddings when file doesn't exist."""
-        with patch('src.storage.cache.get_config') as mock_get_config:
+        with patch("src.storage.cache.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.embedding_cache_file = "/nonexistent/file.json"
             mock_get_config.return_value = mock_config
@@ -90,10 +90,10 @@ class TestEmbeddingCache:
 
     def test_load_embedding_cache_invalid_json(self):
         """Test loading embeddings with invalid JSON."""
-        with open(self.temp_file.name, 'w') as f:
+        with open(self.temp_file.name, "w") as f:
             f.write("invalid json")
 
-        with patch('src.storage.cache.get_config') as mock_get_config:
+        with patch("src.storage.cache.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.embedding_cache_file = self.temp_file.name
             mock_get_config.return_value = mock_config
@@ -111,7 +111,7 @@ class TestQueryCache:
     def setup_method(self):
         """Set up test environment."""
         reset_context()
-        self.temp_file = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
+        self.temp_file = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
         self.temp_file.close()
 
     def teardown_method(self):
@@ -123,10 +123,10 @@ class TestQueryCache:
     def test_load_query_cache(self):
         """Test loading query results from disk."""
         data = {"query_1": ["result1", "result2"]}
-        with open(self.temp_file.name, 'w') as f:
+        with open(self.temp_file.name, "w") as f:
             json.dump(data, f)
 
-        with patch('src.storage.cache.get_config') as mock_get_config:
+        with patch("src.storage.cache.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.query_cache_file = self.temp_file.name
             mock_get_config.return_value = mock_config
@@ -139,7 +139,7 @@ class TestQueryCache:
 
     def test_load_query_cache_file_not_found(self):
         """Test loading query cache when file doesn't exist."""
-        with patch('src.storage.cache.get_config') as mock_get_config:
+        with patch("src.storage.cache.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.query_cache_file = "/nonexistent/file.json"
             mock_get_config.return_value = mock_config
@@ -152,10 +152,10 @@ class TestQueryCache:
 
     def test_load_query_cache_invalid_json(self):
         """Test loading query cache with invalid JSON."""
-        with open(self.temp_file.name, 'w') as f:
+        with open(self.temp_file.name, "w") as f:
             f.write("invalid json")
 
-        with patch('src.storage.cache.get_config') as mock_get_config:
+        with patch("src.storage.cache.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.query_cache_file = self.temp_file.name
             mock_get_config.return_value = mock_config
@@ -173,7 +173,7 @@ class TestCacheManagement:
     def setup_method(self):
         """Set up test environment."""
         reset_context()
-        self.temp_file = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
+        self.temp_file = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
         self.temp_file.close()
 
     def teardown_method(self):
@@ -184,7 +184,7 @@ class TestCacheManagement:
 
     def test_cleanup_memory(self):
         """Test memory cleanup triggers garbage collection."""
-        with patch('gc.collect') as mock_collect:
+        with patch("gc.collect") as mock_collect:
             cleanup_memory()
             assert mock_collect.called
 
@@ -194,7 +194,7 @@ class TestCacheManagement:
         # Create 1100 entries
         ctx.query_cache = {f"query_{i}": [f"result_{i}"] for i in range(1100)}
 
-        with patch('src.storage.cache.get_config') as mock_get_config:
+        with patch("src.storage.cache.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.query_cache_file = self.temp_file.name
             mock_get_config.return_value = mock_config
@@ -202,7 +202,7 @@ class TestCacheManagement:
             save_query_cache()
 
             # Verify file contains only 500 entries (as per logic in cache.py)
-            with open(self.temp_file.name, 'r') as f:
+            with open(self.temp_file.name, "r") as f:
                 saved_data = json.load(f)
 
             assert len(saved_data) == 500
@@ -213,7 +213,7 @@ class TestCacheManagement:
         ctx = get_context()
         ctx.query_cache = {"query": ["result"]}
 
-        with patch('src.storage.cache.get_config') as mock_get_config:
+        with patch("src.storage.cache.get_config") as mock_get_config:
             mock_config = MagicMock()
             mock_config.query_cache_file = "/invalid/path/file.json"
             mock_get_config.return_value = mock_config

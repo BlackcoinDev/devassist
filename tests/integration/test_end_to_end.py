@@ -36,7 +36,9 @@ class TestEndToEnd(unittest.TestCase):
     @patch("src.main.ChatLoop")
     @patch("builtins.input")
     @patch("builtins.print")
-    def test_basic_session_flow(self, mock_print, mock_input, mock_chat_loop, mock_init):
+    def test_basic_session_flow(
+        self, mock_print, mock_input, mock_chat_loop, mock_init
+    ):
         """Test application initialization and basic functionality."""
         # 1. Setup mocks for current architecture
         mock_init.return_value = True

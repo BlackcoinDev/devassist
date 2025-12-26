@@ -47,7 +47,7 @@ class TestContextInitialization:
 
     def test_context_with_config(self):
         """Test that context can be created with configuration."""
-        with patch('src.core.config.Config') as mock_config:
+        with patch("src.core.config.Config") as mock_config:
             mock_config.return_value = Mock()
 
             context = ApplicationContext()
@@ -112,6 +112,7 @@ class TestContextLifecycle:
     def test_context_thread_safety(self):
         """Test that context access is thread-safe using multiple threads."""
         import threading
+
         reset_context()
 
         contexts = []
@@ -172,6 +173,7 @@ class TestContextAccessors:
 
     def test_llm_accessor(self):
         from src.core.context import get_llm, set_llm
+
         mock_llm = Mock()
         set_llm(mock_llm)
         assert get_llm() is mock_llm
@@ -179,6 +181,7 @@ class TestContextAccessors:
 
     def test_vectorstore_accessor(self):
         from src.core.context import get_vectorstore, set_vectorstore
+
         mock_vs = Mock()
         set_vectorstore(mock_vs)
         assert get_vectorstore() is mock_vs
@@ -186,6 +189,7 @@ class TestContextAccessors:
 
     def test_embeddings_accessor(self):
         from src.core.context import get_embeddings, set_embeddings
+
         mock_emb = Mock()
         set_embeddings(mock_emb)
         assert get_embeddings() is mock_emb
@@ -193,6 +197,7 @@ class TestContextAccessors:
 
     def test_chroma_client_accessor(self):
         from src.core.context import get_chroma_client, set_chroma_client
+
         mock_cli = Mock()
         set_chroma_client(mock_cli)
         assert get_chroma_client() is mock_cli
@@ -200,6 +205,7 @@ class TestContextAccessors:
 
     def test_user_memory_accessor(self):
         from src.core.context import get_user_memory, set_user_memory
+
         mock_mem = Mock()
         set_user_memory(mock_mem)
         assert get_user_memory() is mock_mem
@@ -207,6 +213,7 @@ class TestContextAccessors:
 
     def test_db_conn_accessor(self):
         from src.core.context import get_db_conn, set_db_conn
+
         mock_conn = Mock()
         set_db_conn(mock_conn)
         assert get_db_conn() is mock_conn
@@ -215,6 +222,7 @@ class TestContextAccessors:
     def test_db_lock_accessor(self):
         from src.core.context import get_db_lock, set_db_lock
         import threading
+
         lock = threading.Lock()
         set_db_lock(lock)
         assert get_db_lock() is lock
@@ -222,13 +230,21 @@ class TestContextAccessors:
 
     def test_conversation_history_accessor(self):
         from src.core.context import get_conversation_history, set_conversation_history
+
         hist = ["msg1", "msg2"]
         set_conversation_history(hist)
         assert get_conversation_history() == hist
         assert self.ctx.conversation_history == hist
 
     def test_modes_accessors(self):
-        from src.core.context import get_context_mode, set_context_mode, get_learning_mode, set_learning_mode, get_current_space, set_current_space
+        from src.core.context import (
+            get_context_mode,
+            set_context_mode,
+            get_learning_mode,
+            set_learning_mode,
+            get_current_space,
+            set_current_space,
+        )
 
         set_context_mode("on")
         assert get_context_mode() == "on"
@@ -241,6 +257,7 @@ class TestContextAccessors:
 
     def test_cache_accessors(self):
         from src.core.context import get_embedding_cache, get_query_cache
+
         self.ctx.embedding_cache["k"] = [0.1]
         self.ctx.query_cache["q"] = ["r"]
         assert get_embedding_cache()["k"] == [0.1]

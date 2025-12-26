@@ -90,7 +90,9 @@ def _get_collection_count(collection_id: str, config) -> Optional[int]:
         return None
 
 
-def _analyze_collection_metadata(collection_name: str, chunk_count: int, ctx) -> Dict[str, object]:
+def _analyze_collection_metadata(
+    collection_name: str, chunk_count: int, ctx
+) -> Dict[str, object]:
     """Analyze metadata from collection for statistics."""
     stats: Dict[str, object] = {
         "sources": set(),
@@ -100,7 +102,11 @@ def _analyze_collection_metadata(collection_name: str, chunk_count: int, ctx) ->
     }
 
     try:
-        if ctx.vectorstore is None or not hasattr(ctx.vectorstore, "_client") or ctx.vectorstore._client is None:
+        if (
+            ctx.vectorstore is None
+            or not hasattr(ctx.vectorstore, "_client")
+            or ctx.vectorstore._client is None
+        ):
             return stats
 
         chroma_client = ctx.vectorstore._client
@@ -161,7 +167,9 @@ def _analyze_collection_metadata(collection_name: str, chunk_count: int, ctx) ->
     return stats
 
 
-def _format_statistics_output(collection_name: str, chunk_count: int, current_space: str, stats: Dict[str, object]) -> str:
+def _format_statistics_output(
+    collection_name: str, chunk_count: int, current_space: str, stats: Dict[str, object]
+) -> str:
     """Format statistics for display."""
     output = f"📊 Collection: {collection_name}\n"
     output += f"📈 Chunks: {chunk_count}\n"
@@ -244,7 +252,9 @@ def handle_vectordb(args: List[str]) -> None:
     stats = _analyze_collection_metadata(collection_name, chunk_count, ctx)
 
     # Format and display output
-    output = _format_statistics_output(collection_name, chunk_count, ctx.current_space, stats)
+    output = _format_statistics_output(
+        collection_name, chunk_count, ctx.current_space, stats
+    )
     print(output)
 
     print("--- End Vector Database ---")

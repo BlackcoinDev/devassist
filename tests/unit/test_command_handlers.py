@@ -49,7 +49,7 @@ class TestConfigHandlers:
     def setup_method(self):
         reset_context()
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_handle_context_show(self, mock_print):
         """Test showing current context mode."""
         ctx = get_context()
@@ -58,11 +58,13 @@ class TestConfigHandlers:
         handle_context([])
 
         # Verify it printed the current mode
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Current context mode: auto" in output
 
-    @patch('builtins.print')
-    @patch('src.commands.handlers.config_commands.set_context_mode')
+    @patch("builtins.print")
+    @patch("src.commands.handlers.config_commands.set_context_mode")
     def test_handle_context_set(self, mock_set, mock_print):
         """Test setting context mode."""
         handle_context(["on"])
@@ -70,33 +72,39 @@ class TestConfigHandlers:
 
         # Test invalid mode
         handle_context(["invalid"])
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Invalid context mode" in output
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_handle_learning_show(self, mock_print):
         """Test showing current learning mode."""
         ctx = get_context()
         ctx.learning_mode = "normal"
 
         handle_learning([])
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Current learning mode: normal" in output
 
 
 class TestHelpHandlers:
     """Test help and information command handlers."""
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_handle_help(self, mock_print):
         """Test that help menu displays."""
         handle_help([])
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Available Commands" in output
         assert "/memory" in output
 
-    @patch('builtins.print')
-    @patch('src.commands.handlers.help_commands.get_config')
+    @patch("builtins.print")
+    @patch("src.commands.handlers.help_commands.get_config")
     def test_handle_model_info(self, mock_get_config, mock_print):
         """Test displaying model information."""
         mock_config = MagicMock()
@@ -106,7 +114,9 @@ class TestHelpHandlers:
         mock_get_config.return_value = mock_config
 
         handle_model_info([])
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Current Model: test-model" in output
         assert "Temperature: 0.7" in output
 
@@ -117,18 +127,20 @@ class TestSpaceHandlers:
     def setup_method(self):
         reset_context()
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_handle_space_show_current(self, mock_print):
         """Test showing current space info."""
         ctx = get_context()
         ctx.current_space = "my-space"
 
         handle_space([])
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Current space: my-space" in output
 
-    @patch('builtins.print')
-    @patch('src.commands.handlers.space_commands.list_spaces')
+    @patch("builtins.print")
+    @patch("src.commands.handlers.space_commands.list_spaces")
     def test_handle_space_list(self, mock_list_spaces, mock_print):
         """Test listing available spaces."""
         ctx = get_context()
@@ -136,12 +148,14 @@ class TestSpaceHandlers:
         mock_list_spaces.return_value = ["default", "work", "personal"]
 
         handle_space(["list"])
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Available spaces (3):" in output
         assert "work" in output
 
-    @patch('builtins.print')
-    @patch('src.commands.handlers.space_commands.ensure_space_collection')
+    @patch("builtins.print")
+    @patch("src.commands.handlers.space_commands.ensure_space_collection")
     def test_handle_space_create(self, mock_ensure, mock_print):
         """Test creating a new space."""
         ctx = get_context()
@@ -150,12 +164,14 @@ class TestSpaceHandlers:
         handle_space(["create", "new-project"])
 
         mock_ensure.assert_called_with("new-project")
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Created and switched to space: new-project" in output
 
-    @patch('builtins.print')
-    @patch('builtins.input', return_value="yes")
-    @patch('src.commands.handlers.space_commands.delete_space')
+    @patch("builtins.print")
+    @patch("builtins.input", return_value="yes")
+    @patch("src.commands.handlers.space_commands.delete_space")
     def test_handle_space_delete(self, mock_delete, mock_input, mock_print):
         """Test deleting an existing space with confirmation."""
         ctx = get_context()
@@ -164,7 +180,9 @@ class TestSpaceHandlers:
         handle_space(["delete", "old-space"])
 
         mock_delete.assert_called_with("old-space")
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Deleted space: old-space" in output
 
 
@@ -174,9 +192,9 @@ class TestDatabaseHandlers:
     def setup_method(self):
         reset_context()
 
-    @patch('builtins.print')
-    @patch('src.commands.handlers.database_commands._get_api_session')
-    @patch('src.commands.handlers.database_commands.get_config')
+    @patch("builtins.print")
+    @patch("src.commands.handlers.database_commands._get_api_session")
+    @patch("src.commands.handlers.database_commands.get_config")
     def test_handle_vectordb_success(self, mock_get_config, mock_session, mock_print):
         """Test displaying vector database stats."""
         ctx = get_context()
@@ -191,13 +209,17 @@ class TestDatabaseHandlers:
         # Mock API responses
         mock_api = mock_session.return_value
         mock_api.get.side_effect = [
-            MagicMock(status_code=200, json=lambda: [{"id": "id1", "name": "knowledge_base"}]),  # list colls
-            MagicMock(status_code=200, json=lambda: 42)  # count
+            MagicMock(
+                status_code=200, json=lambda: [{"id": "id1", "name": "knowledge_base"}]
+            ),  # list colls
+            MagicMock(status_code=200, json=lambda: 42),  # count
         ]
 
         handle_vectordb([])
 
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Chunks: 42" in output
 
 
@@ -207,8 +229,8 @@ class TestLearningHandlers:
     def setup_method(self):
         reset_context()
 
-    @patch('builtins.print')
-    @patch('src.commands.handlers.learning_commands.add_to_knowledge_base')
+    @patch("builtins.print")
+    @patch("src.commands.handlers.learning_commands.add_to_knowledge_base")
     def test_handle_learn_success(self, mock_add, mock_print):
         """Test the /learn command."""
         ctx = get_context()
@@ -219,17 +241,21 @@ class TestLearningHandlers:
         handle_learn(["some", "new", "fact"])
 
         mock_add.assert_called_with("some new fact")
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Learning: some new fact" in output
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_handle_learn_no_args(self, mock_print):
         """Test /learn without arguments."""
         ctx = get_context()
         ctx.embeddings = MagicMock()
         ctx.vectorstore = MagicMock()
         handle_learn([])
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Usage: /learn" in output
 
 
@@ -239,20 +265,22 @@ class TestMemoryHandlers:
     def setup_method(self):
         reset_context()
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_handle_memory(self, mock_print):
         """Test displaying conversation history."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Hello world")]
 
         handle_memory([])
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "Conversation History (1 messages)" in output
         assert "Hello world" in output
 
-    @patch('builtins.print')
-    @patch('builtins.input', return_value="yes")
-    @patch('src.commands.handlers.memory_commands.save_memory')
+    @patch("builtins.print")
+    @patch("builtins.input", return_value="yes")
+    @patch("src.commands.handlers.memory_commands.save_memory")
     def test_handle_clear(self, mock_save, mock_input, mock_print):
         """Test clearing memory."""
         ctx = get_context()
@@ -268,30 +296,51 @@ class TestMemoryHandlers:
 class TestFileHandlers:
     """Test file operation command handlers."""
 
-    @patch('builtins.print')
-    @patch('os.getcwd', return_value="/mock/dir")
-    @patch('os.path.abspath', side_effect=lambda x: f"/mock/dir/{x}")
-    @patch('os.path.exists', return_value=True)
-    @patch('os.path.isfile', return_value=True)
-    @patch('os.path.getsize', return_value=100)
-    def test_handle_read_success(self, mock_getsize, mock_isfile, mock_exists, mock_abspath, mock_getcwd, mock_print):
+    @patch("builtins.print")
+    @patch("os.getcwd", return_value="/mock/dir")
+    @patch("os.path.abspath", side_effect=lambda x: f"/mock/dir/{x}")
+    @patch("os.path.exists", return_value=True)
+    @patch("os.path.isfile", return_value=True)
+    @patch("os.path.getsize", return_value=100)
+    def test_handle_read_success(
+        self,
+        mock_getsize,
+        mock_isfile,
+        mock_exists,
+        mock_abspath,
+        mock_getcwd,
+        mock_print,
+    ):
         """Test reading a file securely."""
-        with patch('builtins.open', MagicMock(return_value=MagicMock(__enter__=lambda x: MagicMock(read=lambda: "file context")))):
+        with patch(
+            "builtins.open",
+            MagicMock(
+                return_value=MagicMock(
+                    __enter__=lambda x: MagicMock(read=lambda: "file context")
+                )
+            ),
+        ):
             handle_read(["test.txt"])
-            output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+            output = "\n".join(
+                " ".join(map(str, call[0])) for call in mock_print.call_args_list
+            )
             assert "file context" in output
 
-    @patch('builtins.print')
-    @patch('os.getcwd', return_value="/mock/dir")
-    @patch('os.path.abspath', side_effect=lambda x: f"/mock/dir/{x}")
-    @patch('os.path.exists', return_value=True)
-    def test_handle_write_success(self, mock_exists, mock_abspath, mock_getcwd, mock_print):
+    @patch("builtins.print")
+    @patch("os.getcwd", return_value="/mock/dir")
+    @patch("os.path.abspath", side_effect=lambda x: f"/mock/dir/{x}")
+    @patch("os.path.exists", return_value=True)
+    def test_handle_write_success(
+        self, mock_exists, mock_abspath, mock_getcwd, mock_print
+    ):
         """Test writing to a file securely."""
-        with patch('builtins.open', MagicMock()) as mock_open:
+        with patch("builtins.open", MagicMock()) as mock_open:
             handle_write(["test.txt", "hello", "world"])
 
             mock_open.assert_called_with("/mock/dir/test.txt", "w", encoding="utf-8")
-            output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+            output = "\n".join(
+                " ".join(map(str, call[0])) for call in mock_print.call_args_list
+            )
             assert "File written: test.txt" in output
 
 
@@ -301,23 +350,27 @@ class TestExportHandlers:
     def setup_method(self):
         reset_context()
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_handle_export_no_history(self, mock_print):
         """Test export when history is empty."""
         ctx = get_context()
         ctx.conversation_history = []
         handle_export(["json"])
-        output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+        output = "\n".join(
+            " ".join(map(str, call[0])) for call in mock_print.call_args_list
+        )
         assert "No conversation history to export" in output
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_handle_export_json_success(self, mock_print):
         """Test successful JSON export."""
         ctx = get_context()
         ctx.conversation_history = [HumanMessage(content="Save me")]
 
-        with patch('builtins.open', MagicMock()):
+        with patch("builtins.open", MagicMock()):
             handle_export(["json"])
-            output = "\n".join(" ".join(map(str, call[0])) for call in mock_print.call_args_list)
+            output = "\n".join(
+                " ".join(map(str, call[0])) for call in mock_print.call_args_list
+            )
             assert "Conversation exported to:" in output
             assert "Format: JSON" in output

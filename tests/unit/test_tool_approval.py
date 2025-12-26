@@ -74,7 +74,9 @@ class TestApprovalPolicies(unittest.TestCase):
         manager.approvals["smart_tool"] = "auto-conservative"
 
         # Safe baseline and no LLM warning
-        result = manager.requires_approval("smart_tool", {}, baseline=True, llm_guess=False)
+        result = manager.requires_approval(
+            "smart_tool", {}, baseline=True, llm_guess=False
+        )
 
         self.assertFalse(result)
 
@@ -84,7 +86,9 @@ class TestApprovalPolicies(unittest.TestCase):
         manager.approvals["smart_tool"] = "auto-conservative"
 
         # AI thinks it's dangerous
-        result = manager.requires_approval("smart_tool", {}, baseline=True, llm_guess=True)
+        result = manager.requires_approval(
+            "smart_tool", {}, baseline=True, llm_guess=True
+        )
 
         self.assertTrue(result)  # AI thinks dangerous, ask
 
@@ -94,7 +98,9 @@ class TestApprovalPolicies(unittest.TestCase):
         manager.approvals["permissive_tool"] = "auto-permissive"
 
         # Safe baseline but not explicitly dangerous
-        result = manager.requires_approval("permissive_tool", {}, baseline=False, llm_guess=False)
+        result = manager.requires_approval(
+            "permissive_tool", {}, baseline=False, llm_guess=False
+        )
 
         self.assertFalse(result)
 
@@ -104,7 +110,9 @@ class TestApprovalPolicies(unittest.TestCase):
         manager.approvals["permissive_tool"] = "auto-permissive"
 
         # AI thinks it's dangerous
-        result = manager.requires_approval("permissive_tool", {}, baseline=False, llm_guess=True)
+        result = manager.requires_approval(
+            "permissive_tool", {}, baseline=False, llm_guess=True
+        )
 
         self.assertTrue(result)
 
@@ -240,15 +248,12 @@ class TestConfigurationManagement(unittest.TestCase):
             "approvals": {
                 "read_file": "always",
                 "shell_execute": "ask",
-                "write_file": "never"
+                "write_file": "never",
             },
-            "defaults": {
-                "builtin": "always",
-                "mcp": "ask"
-            }
+            "defaults": {"builtin": "always", "mcp": "ask"},
         }
 
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump(config_data, f)
 
         manager = ToolApprovalManager(self.config_path)
@@ -297,10 +302,10 @@ class TestConfigurationManagement(unittest.TestCase):
         config_data = {
             "version": "1.0",
             "approvals": {"existing_tool": "always"},
-            "defaults": {"builtin": "ask"}
+            "defaults": {"builtin": "ask"},
         }
 
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump(config_data, f)
 
         manager = ToolApprovalManager(self.config_path)
@@ -467,7 +472,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_invalid_config_json(self):
         """Test handling of invalid JSON in config file."""
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             f.write("{ invalid json }")
 
         manager = ToolApprovalManager(self.config_path)
@@ -480,7 +485,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test config file with missing approvals key."""
         config_data = {"defaults": {"builtin": "ask"}}
 
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump(config_data, f)
 
         manager = ToolApprovalManager(self.config_path)
@@ -505,7 +510,13 @@ class TestEdgeCases(unittest.TestCase):
         """Test that all policy types can be set."""
         manager = ToolApprovalManager(self.config_path)
 
-        for policy_value in ["always", "never", "ask", "auto-conservative", "auto-permissive"]:
+        for policy_value in [
+            "always",
+            "never",
+            "ask",
+            "auto-conservative",
+            "auto-permissive",
+        ]:
             success = manager.set_policy(f"tool_{policy_value}", policy_value)
             self.assertTrue(success, f"Failed to set policy: {policy_value}")
 

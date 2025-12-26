@@ -42,79 +42,93 @@ class TestConfigLoading:
 
     def test_load_config_from_env(self):
         """Test loading all required variables from .env."""
-        with patch.dict(os.environ, {
-            'LM_STUDIO_URL': 'http://localhost:1234',
-            'LM_STUDIO_KEY': 'test-key',
-            'MODEL_NAME': 'qwen3-vl-30b',
-            'MAX_HISTORY_PAIRS': '10',
-            'TEMPERATURE': '0.7',
-            'MAX_INPUT_LENGTH': '4096',
-            'DB_TYPE': 'sqlite',
-            'DB_PATH': 'test.db',
-            'CHROMA_HOST': 'localhost',
-            'CHROMA_PORT': '8000',
-            'OLLAMA_BASE_URL': 'http://localhost:11434',
-            'EMBEDDING_MODEL': 'qwen3-embedding'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "LM_STUDIO_URL": "http://localhost:1234",
+                "LM_STUDIO_KEY": "test-key",
+                "MODEL_NAME": "qwen3-vl-30b",
+                "MAX_HISTORY_PAIRS": "10",
+                "TEMPERATURE": "0.7",
+                "MAX_INPUT_LENGTH": "4096",
+                "DB_TYPE": "sqlite",
+                "DB_PATH": "test.db",
+                "CHROMA_HOST": "localhost",
+                "CHROMA_PORT": "8000",
+                "OLLAMA_BASE_URL": "http://localhost:11434",
+                "EMBEDDING_MODEL": "qwen3-embedding",
+            },
+        ):
             config = Config.from_env()
 
-            assert config.lm_studio_url == 'http://localhost:1234'
-            assert config.model_name == 'qwen3-vl-30b'
+            assert config.lm_studio_url == "http://localhost:1234"
+            assert config.model_name == "qwen3-vl-30b"
             assert config.chroma_port == 8000
             assert config.temperature == 0.7
             assert config.max_history_pairs == 10
 
     def test_load_config_with_missing_required(self):
         """Test handling of missing required variables."""
-        with patch.dict(os.environ, {
-            'LM_STUDIO_URL': 'http://localhost:1234'
-            # Missing other required variables
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "LM_STUDIO_URL": "http://localhost:1234"
+                # Missing other required variables
+            },
+            clear=True,
+        ):
             with pytest.raises(ValueError):
                 Config.from_env()
 
     def test_load_config_validates_types(self):
         """Test type validation for configuration values."""
-        with patch.dict(os.environ, {
-            'LM_STUDIO_URL': 'http://localhost:1234',
-            'LM_STUDIO_KEY': 'test-key',
-            'MODEL_NAME': 'qwen3-vl-30b',
-            'MAX_HISTORY_PAIRS': 'invalid',  # Not an int
-            'TEMPERATURE': '0.7',
-            'MAX_INPUT_LENGTH': '4096',
-            'DB_TYPE': 'sqlite',
-            'DB_PATH': 'test.db',
-            'CHROMA_HOST': 'localhost',
-            'CHROMA_PORT': '8000',
-            'OLLAMA_BASE_URL': 'http://localhost:11434',
-            'EMBEDDING_MODEL': 'qwen3-embedding'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "LM_STUDIO_URL": "http://localhost:1234",
+                "LM_STUDIO_KEY": "test-key",
+                "MODEL_NAME": "qwen3-vl-30b",
+                "MAX_HISTORY_PAIRS": "invalid",  # Not an int
+                "TEMPERATURE": "0.7",
+                "MAX_INPUT_LENGTH": "4096",
+                "DB_TYPE": "sqlite",
+                "DB_PATH": "test.db",
+                "CHROMA_HOST": "localhost",
+                "CHROMA_PORT": "8000",
+                "OLLAMA_BASE_URL": "http://localhost:11434",
+                "EMBEDDING_MODEL": "qwen3-embedding",
+            },
+        ):
             with pytest.raises(ValueError):
                 Config.from_env()
 
     def test_get_config_singleton(self):
         """Test that get_config returns the same instance."""
-        with patch.dict(os.environ, {
-            'LM_STUDIO_URL': 'http://localhost:1234',
-            'LM_STUDIO_KEY': 'test-key',
-            'MODEL_NAME': 'qwen3-vl-30b',
-            'MAX_HISTORY_PAIRS': '10',
-            'TEMPERATURE': '0.7',
-            'MAX_INPUT_LENGTH': '4096',
-            'DB_TYPE': 'sqlite',
-            'DB_PATH': 'test.db',
-            'CHROMA_HOST': 'localhost',
-            'CHROMA_PORT': '8000',
-            'OLLAMA_BASE_URL': 'http://localhost:11434',
-            'EMBEDDING_MODEL': 'qwen3-embedding'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "LM_STUDIO_URL": "http://localhost:1234",
+                "LM_STUDIO_KEY": "test-key",
+                "MODEL_NAME": "qwen3-vl-30b",
+                "MAX_HISTORY_PAIRS": "10",
+                "TEMPERATURE": "0.7",
+                "MAX_INPUT_LENGTH": "4096",
+                "DB_TYPE": "sqlite",
+                "DB_PATH": "test.db",
+                "CHROMA_HOST": "localhost",
+                "CHROMA_PORT": "8000",
+                "OLLAMA_BASE_URL": "http://localhost:11434",
+                "EMBEDDING_MODEL": "qwen3-embedding",
+            },
+        ):
             from src.core import config as config_mod
+
             config_mod._config = None  # Reset singleton
 
             c1 = get_config()
             c2 = get_config()
             assert c1 is c2
-            assert c1.model_name == 'qwen3-vl-30b'
+            assert c1.model_name == "qwen3-vl-30b"
 
 
 class TestConfigProxy:
@@ -122,42 +136,46 @@ class TestConfigProxy:
 
     def test_config_proxy_properties(self):
         """Test all ConfigProxy properties."""
-        with patch.dict(os.environ, {
-            'LM_STUDIO_URL': 'http://localhost:1234',
-            'LM_STUDIO_KEY': 'test-key',
-            'MODEL_NAME': 'test-model',
-            'MAX_HISTORY_PAIRS': '15',
-            'TEMPERATURE': '0.8',
-            'MAX_INPUT_LENGTH': '8192',
-            'DB_TYPE': 'sqlite',
-            'DB_PATH': 'custom.db',
-            'CHROMA_HOST': '192.168.1.1',
-            'CHROMA_PORT': '9000',
-            'OLLAMA_BASE_URL': 'http://localhost:11434',
-            'EMBEDDING_MODEL': 'test-embedding',
-            'VERBOSE_LOGGING': 'true',
-            'SHOW_LLM_REASONING': 'false',
-            'SHOW_TOKEN_USAGE': 'true',
-            'SHOW_TOOL_DETAILS': 'false'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "LM_STUDIO_URL": "http://localhost:1234",
+                "LM_STUDIO_KEY": "test-key",
+                "MODEL_NAME": "test-model",
+                "MAX_HISTORY_PAIRS": "15",
+                "TEMPERATURE": "0.8",
+                "MAX_INPUT_LENGTH": "8192",
+                "DB_TYPE": "sqlite",
+                "DB_PATH": "custom.db",
+                "CHROMA_HOST": "192.168.1.1",
+                "CHROMA_PORT": "9000",
+                "OLLAMA_BASE_URL": "http://localhost:11434",
+                "EMBEDDING_MODEL": "test-embedding",
+                "VERBOSE_LOGGING": "true",
+                "SHOW_LLM_REASONING": "false",
+                "SHOW_TOKEN_USAGE": "true",
+                "SHOW_TOOL_DETAILS": "false",
+            },
+        ):
             from src.core import config as config_mod
+
             config_mod._config = None  # Reset singleton
 
             from src.core.config import config_proxy
 
             # Test all proxy properties
-            assert config_proxy.LM_STUDIO_BASE_URL == 'http://localhost:1234'
-            assert config_proxy.LM_STUDIO_API_KEY == 'test-key'
-            assert config_proxy.MODEL_NAME == 'test-model'
+            assert config_proxy.LM_STUDIO_BASE_URL == "http://localhost:1234"
+            assert config_proxy.LM_STUDIO_API_KEY == "test-key"
+            assert config_proxy.MODEL_NAME == "test-model"
             assert config_proxy.MAX_HISTORY_PAIRS == 15
             assert config_proxy.TEMPERATURE == 0.8
             assert config_proxy.MAX_INPUT_LENGTH == 8192
-            assert config_proxy.DB_TYPE == 'sqlite'
-            assert config_proxy.DB_PATH == 'custom.db'
-            assert config_proxy.CHROMA_HOST == '192.168.1.1'
+            assert config_proxy.DB_TYPE == "sqlite"
+            assert config_proxy.DB_PATH == "custom.db"
+            assert config_proxy.CHROMA_HOST == "192.168.1.1"
             assert config_proxy.CHROMA_PORT == 9000
-            assert config_proxy.OLLAMA_BASE_URL == 'http://localhost:11434'
-            assert config_proxy.EMBEDDING_MODEL == 'test-embedding'
+            assert config_proxy.OLLAMA_BASE_URL == "http://localhost:11434"
+            assert config_proxy.EMBEDDING_MODEL == "test-embedding"
             assert config_proxy.VERBOSE_LOGGING is True
             assert config_proxy.SHOW_LLM_REASONING is False
             assert config_proxy.SHOW_TOKEN_USAGE is True
@@ -171,19 +189,20 @@ class TestConfigEdgeCases:
         """Test handling when python-dotenv is not available."""
 
         # Save original dotenv module if present
-        dotenv_module = sys.modules.get('dotenv')
+        dotenv_module = sys.modules.get("dotenv")
 
         try:
             # Remove dotenv from modules
-            if 'dotenv' in sys.modules:
-                del sys.modules['dotenv']
+            if "dotenv" in sys.modules:
+                del sys.modules["dotenv"]
 
             # Mock the import to raise ImportError
             import builtins
+
             real_import = builtins.__import__
 
             def mock_import(name, *args, **kwargs):
-                if name == 'dotenv':
+                if name == "dotenv":
                     raise ImportError("No module named 'dotenv'")
                 return real_import(name, *args, **kwargs)
 
@@ -191,6 +210,7 @@ class TestConfigEdgeCases:
                 # Reload the config module to trigger the ImportError path
                 import importlib
                 from src.core import config as config_mod
+
                 importlib.reload(config_mod)
 
                 # The module should still load, just without dotenv support
@@ -199,40 +219,41 @@ class TestConfigEdgeCases:
         finally:
             # Restore original dotenv module
             if dotenv_module:
-                sys.modules['dotenv'] = dotenv_module
+                sys.modules["dotenv"] = dotenv_module
 
     def test_kmp_duplicate_lib_workaround(self):
         """Test KMP_DUPLICATE_LIB_OK environment variable handling."""
 
         # Save original KMP_DUPLICATE_LIB_OK value
-        original_kmp_value = os.environ.get('KMP_DUPLICATE_LIB_OK')
+        original_kmp_value = os.environ.get("KMP_DUPLICATE_LIB_OK")
 
         try:
             # Test when KMP_DUPLICATE_LIB_OK is set to TRUE
-            with patch.dict(os.environ, {'KMP_DUPLICATE_LIB_OK': 'TRUE'}):
+            with patch.dict(os.environ, {"KMP_DUPLICATE_LIB_OK": "TRUE"}):
                 # Reload the config module to trigger the KMP handling
                 import importlib
                 from src.core import config as config_mod
+
                 importlib.reload(config_mod)
 
                 # KMP_DUPLICATE_LIB_OK should be set in environment
-                assert os.environ.get('KMP_DUPLICATE_LIB_OK') == 'TRUE'
+                assert os.environ.get("KMP_DUPLICATE_LIB_OK") == "TRUE"
 
             # Test when KMP_DUPLICATE_LIB_OK is not set
             with patch.dict(os.environ, {}, clear=True):
                 # Remove KMP_DUPLICATE_LIB_OK if it was set
-                if 'KMP_DUPLICATE_LIB_OK' in os.environ:
-                    del os.environ['KMP_DUPLICATE_LIB_OK']
+                if "KMP_DUPLICATE_LIB_OK" in os.environ:
+                    del os.environ["KMP_DUPLICATE_LIB_OK"]
 
                 # Reload the config module
                 importlib.reload(config_mod)
 
                 # KMP_DUPLICATE_LIB_OK should not be set
-                assert os.environ.get('KMP_DUPLICATE_LIB_OK') is None
+                assert os.environ.get("KMP_DUPLICATE_LIB_OK") is None
 
         finally:
             # Restore original KMP_DUPLICATE_LIB_OK value
             if original_kmp_value:
-                os.environ['KMP_DUPLICATE_LIB_OK'] = original_kmp_value
-            elif 'KMP_DUPLICATE_LIB_OK' in os.environ:
-                del os.environ['KMP_DUPLICATE_LIB_OK']
+                os.environ["KMP_DUPLICATE_LIB_OK"] = original_kmp_value
+            elif "KMP_DUPLICATE_LIB_OK" in os.environ:
+                del os.environ["KMP_DUPLICATE_LIB_OK"]

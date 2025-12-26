@@ -140,14 +140,18 @@ class AIWorker(QThread):
 
             # MEM0 TEACHING (Background Thread)
             from src.main import user_memory
+
             if user_memory:
+
                 def run_mem0_add(text):
                     try:
                         messages = [{"role": "user", "content": text}]
                         user_memory.add(messages, user_id="default_user")
                     except Exception:
                         pass
+
                 import threading
+
                 threading.Thread(target=run_mem0_add, args=(self.user_input,)).start()
 
         except Exception as e:
@@ -507,7 +511,8 @@ class AIAssistantGUI(QMainWindow):
         self.setPalette(palette)
 
         # Style the chat display with dark theme
-        self.chat_display.setStyleSheet("""
+        self.chat_display.setStyleSheet(
+            """
             QTextEdit {
                 background-color: #1e1e1e;
                 color: #ffffff;
@@ -515,10 +520,12 @@ class AIAssistantGUI(QMainWindow):
                 border-radius: 5px;
                 padding: 5px;
             }
-        """)
+        """
+        )
 
         # Style the input field with dark theme
-        self.input_field.setStyleSheet("""
+        self.input_field.setStyleSheet(
+            """
             QLineEdit {
                 background-color: #2a2a2a;
                 color: #ffffff;
@@ -527,7 +534,8 @@ class AIAssistantGUI(QMainWindow):
                 padding: 5px;
                 font-size: 10pt;
             }
-        """)
+        """
+        )
 
         # Style buttons with dark theme
         button_style = """
@@ -677,7 +685,8 @@ class AIAssistantGUI(QMainWindow):
         self.setPalette(palette)
 
         # Style the chat display with light theme
-        self.chat_display.setStyleSheet("""
+        self.chat_display.setStyleSheet(
+            """
             QTextEdit {
                 background-color: #ffffff;
                 color: #000000;
@@ -685,10 +694,12 @@ class AIAssistantGUI(QMainWindow):
                 border-radius: 5px;
                 padding: 5px;
             }
-        """)
+        """
+        )
 
         # Style the input field with light theme
-        self.input_field.setStyleSheet("""
+        self.input_field.setStyleSheet(
+            """
             QLineEdit {
                 background-color: #ffffff;
                 color: #000000;
@@ -697,7 +708,8 @@ class AIAssistantGUI(QMainWindow):
                 padding: 5px;
                 font-size: 10pt;
             }
-        """)
+        """
+        )
 
         # Style buttons with light theme
         button_style = """
@@ -903,7 +915,7 @@ class AIAssistantGUI(QMainWindow):
             "Tool Execution Approval",
             msg,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         approved = reply == QMessageBox.StandardButton.Yes
@@ -1018,7 +1030,8 @@ class AIAssistantGUI(QMainWindow):
         # Update theme button text and icon
         if self.dark_theme:
             self.theme_button.setText("🌙 Dark")
-            self.theme_button.setStyleSheet("""
+            self.theme_button.setStyleSheet(
+                """
                 QPushButton {
                     background-color: #2a2a2a;
                     color: #ffffff;
@@ -1030,10 +1043,12 @@ class AIAssistantGUI(QMainWindow):
                 QPushButton:hover {
                     background-color: #3a3a3a;
                 }
-            """)
+            """
+            )
         else:
             self.theme_button.setText("☀️ Light")
-            self.theme_button.setStyleSheet("""
+            self.theme_button.setStyleSheet(
+                """
                 QPushButton {
                     background-color: #f0f0f0;
                     color: #000000;
@@ -1045,7 +1060,8 @@ class AIAssistantGUI(QMainWindow):
                 QPushButton:hover {
                     background-color: #e0e0e0;
                 }
-            """)
+            """
+            )
 
     def handle_quit(self):
         """Handle quit commands."""
@@ -1108,7 +1124,9 @@ class AIAssistantGUI(QMainWindow):
                         .replace(">", "&gt;")
                         .replace("\n", "<br>")
                     )
-                    self.chat_display.append(f"<b>AI Assistant:</b><br>{result_html}<br>")
+                    self.chat_display.append(
+                        f"<b>AI Assistant:</b><br>{result_html}<br>"
+                    )
                 else:
                     self.chat_display.append(
                         "<b>AI Assistant:</b><br>Command executed successfully<br>"
@@ -1121,9 +1139,7 @@ class AIAssistantGUI(QMainWindow):
 
         except Exception as e:
             logger.error(f"Error handling slash command: {e}")
-            self.chat_display.append(
-                f"<b>AI Assistant:</b><br>❌ Error: {str(e)}<br>"
-            )
+            self.chat_display.append(f"<b>AI Assistant:</b><br>❌ Error: {str(e)}<br>")
 
         # Scroll to bottom
         cursor = self.chat_display.textCursor()

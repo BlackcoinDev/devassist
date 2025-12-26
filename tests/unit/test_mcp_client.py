@@ -1,6 +1,7 @@
 """
 Tests for MCP Client.
 """
+
 import asyncio
 from src.mcp.client import MCPClient
 

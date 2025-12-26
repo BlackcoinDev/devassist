@@ -94,10 +94,14 @@ def _find_collection_id(collection_name: str, space_name: str) -> Optional[str]:
                 if coll.get("name") == collection_name:
                     collection_id = coll.get("id")
                     if config.verbose_logging:
-                        logger.debug(f"✅ Found collection: {collection_name} (ID: {collection_id})")
+                        logger.debug(
+                            f"✅ Found collection: {collection_name} (ID: {collection_id})"
+                        )
                     return collection_id
             if config.verbose_logging:
-                logger.debug(f"❌ Collection {collection_name} not found in {len(collections)} collections")
+                logger.debug(
+                    f"❌ Collection {collection_name} not found in {len(collections)} collections"
+                )
     except Exception as e:
         logger.warning(f"Error finding collection for space {space_name}: {e}")
     return None
@@ -125,7 +129,9 @@ def _query_chromadb(collection_id: str, query_embedding: list, k: int) -> list:
         if config.verbose_logging:
             logger.debug("🌐 Querying ChromaDB API")
             logger.debug(f"   URL: {query_url}")
-            logger.debug(f"   Payload: n_results={k}, embedding_length={len(query_embedding)}")
+            logger.debug(
+                f"   Payload: n_results={k}, embedding_length={len(query_embedding)}"
+            )
         api_session = _get_api_session()
         response = api_session.post(query_url, json=payload, timeout=10)
         if config.verbose_logging:
@@ -144,7 +150,9 @@ def _query_chromadb(collection_id: str, query_embedding: list, k: int) -> list:
                 for i, doc_content in enumerate(documents):
                     docs.append(doc_content)
                     if config.verbose_logging:
-                        logger.debug(f"   Document {i+1}: {len(doc_content)} chars - {doc_content[:50]}...")
+                        logger.debug(
+                            f"   Document {i+1}: {len(doc_content)} chars - {doc_content[:50]}..."
+                        )
             if config.verbose_logging:
                 logger.debug(f"📄 Retrieved {len(docs)} documents from ChromaDB")
         else:
@@ -199,7 +207,9 @@ def _check_cache_for_context(cache_key: str) -> Optional[str]:
         cached_results = ctx.query_cache[cache_key]
         if cached_results:
             if config.verbose_logging:
-                logger.debug(f"💾 Cache hit: {len(cached_results)} cached results found")
+                logger.debug(
+                    f"💾 Cache hit: {len(cached_results)} cached results found"
+                )
                 for i, result in enumerate(cached_results):
                     logger.debug(f"   Result {i+1}: {result[:100]}...")
             return _format_context_results(cached_results)
@@ -233,8 +243,12 @@ def _generate_query_embedding(query: str) -> Optional[list]:
     try:
         query_embedding = ctx.embeddings.embed_query(query)
         if config.verbose_logging:
-            logger.debug(f"✅ Generated embedding vector (length: {len(query_embedding)})")
-            logger.debug(f"   First 5 values: {query_embedding[:5] if len(query_embedding) >= 5 else query_embedding}")
+            logger.debug(
+                f"✅ Generated embedding vector (length: {len(query_embedding)})"
+            )
+            logger.debug(
+                f"   First 5 values: {query_embedding[:5] if len(query_embedding) >= 5 else query_embedding}"
+            )
         return query_embedding
     except Exception as e:
         logger.warning(f"Failed to generate query embedding: {e}")
@@ -294,7 +308,9 @@ def get_relevant_context(
     config = get_config()
 
     if config.verbose_logging:
-        logger.debug(f"🔍 get_relevant_context called with query: '{query}' (k={k}, space={space_name})")
+        logger.debug(
+            f"🔍 get_relevant_context called with query: '{query}' (k={k}, space={space_name})"
+        )
 
     # Use current space if not specified
     if space_name is None:
@@ -325,6 +341,7 @@ def get_relevant_context(
 
         # Find collection for the specified space
         from src.vectordb.spaces import get_space_collection_name
+
         collection_name = get_space_collection_name(space_name)
         collection_id = _find_collection_id(collection_name, space_name)
 
@@ -333,7 +350,9 @@ def get_relevant_context(
             return ""
 
         # Query and cache results
-        return _retrieve_and_cache_context(query_embedding, collection_id, k, cache_key, space_name)
+        return _retrieve_and_cache_context(
+            query_embedding, collection_id, k, cache_key, space_name
+        )
 
     except (AttributeError, NameError, Exception) as e:
         logger.warning(f"Failed to retrieve context: {e}")
@@ -375,8 +394,12 @@ def _generate_embeddings(content: str) -> Optional[list]:
 
         if config.verbose_logging:
             try:
-                logger.debug(f"✅ Generated embedding vector (length: {len(embedding_vector)})")
-                logger.debug(f"   Sample: {embedding_vector[:3]}...{embedding_vector[-3:]}")
+                logger.debug(
+                    f"✅ Generated embedding vector (length: {len(embedding_vector)})"
+                )
+                logger.debug(
+                    f"   Sample: {embedding_vector[:3]}...{embedding_vector[-3:]}"
+                )
             except (TypeError, IndexError):
                 logger.debug("✅ Generated embedding vector")
 
@@ -420,7 +443,9 @@ def _find_or_create_collection(collection_name: str, space_name: str) -> Optiona
             if coll.get("name") == collection_name:
                 collection_id = coll.get("id")
                 if config.verbose_logging:
-                    logger.debug(f"✅ Found existing collection: {collection_name} (ID: {collection_id})")
+                    logger.debug(
+                        f"✅ Found existing collection: {collection_name} (ID: {collection_id})"
+                    )
                 return collection_id
 
     # Collection doesn't exist, create it
@@ -453,7 +478,11 @@ def _find_or_create_collection(collection_name: str, space_name: str) -> Optiona
 
 
 def _store_document_in_chromadb(
-    collection_id: str, doc_content: str, embedding_vector: list, metadata: dict, space_name: str
+    collection_id: str,
+    doc_content: str,
+    embedding_vector: list,
+    metadata: dict,
+    space_name: str,
 ) -> bool:
     """
     Store document in ChromaDB with embeddings.
@@ -503,7 +532,9 @@ def _store_document_in_chromadb(
 
         if response.status_code == 201:
             if config.verbose_logging:
-                logger.debug(f"✅ Document added successfully to space {space_name}: {doc_id}")
+                logger.debug(
+                    f"✅ Document added successfully to space {space_name}: {doc_id}"
+                )
             return True
         else:
             logger.error(
@@ -541,7 +572,9 @@ def _validate_learning_inputs(content: str) -> bool:
     return True
 
 
-def _prepare_document_for_learning(content: str, metadata: Optional[dict] = None) -> Optional[tuple]:
+def _prepare_document_for_learning(
+    content: str, metadata: Optional[dict] = None
+) -> Optional[tuple]:
     """
     Prepare document and generate embeddings for learning.
 
@@ -590,7 +623,13 @@ def _store_in_chromadb_with_fallback(
 
     try:
         # Try direct API method
-        if _store_document_in_chromadb(collection_id, doc.page_content, embedding_vector, doc.metadata, collection_name):
+        if _store_document_in_chromadb(
+            collection_id,
+            doc.page_content,
+            embedding_vector,
+            doc.metadata,
+            collection_name,
+        ):
             return True
 
         # API returned an error (not an exception), don't try fallback
@@ -598,7 +637,9 @@ def _store_in_chromadb_with_fallback(
 
     except Exception as api_e:
         # API raised an exception, try LangChain fallback
-        logger.warning(f"Direct API call failed with exception, trying LangChain fallback: {api_e}")
+        logger.warning(
+            f"Direct API call failed with exception, trying LangChain fallback: {api_e}"
+        )
         if ctx.vectorstore is not None:
             ctx.vectorstore.add_documents([doc])
             if config.verbose_logging:
@@ -635,7 +676,10 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
     if config.verbose_logging:
         logger.debug(f"🏢 Adding to space: {ctx.current_space}")
         from src.vectordb.spaces import get_space_collection_name
-        logger.debug(f"   Space collection: {get_space_collection_name(ctx.current_space)}")
+
+        logger.debug(
+            f"   Space collection: {get_space_collection_name(ctx.current_space)}"
+        )
 
     # Prepare document and embeddings
     result = _prepare_document_for_learning(content, metadata)
@@ -647,21 +691,28 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
     try:
         # Try API-based storage
         from src.vectordb.spaces import get_space_collection_name
+
         collection_name = get_space_collection_name(ctx.current_space)
         collection_id = _find_or_create_collection(collection_name, ctx.current_space)
 
         if not collection_id:
-            logger.error(f"Could not find or create collection for space {ctx.current_space}")
+            logger.error(
+                f"Could not find or create collection for space {ctx.current_space}"
+            )
             # Try fallback before failing
             if ctx.vectorstore is not None:
                 ctx.vectorstore.add_documents([doc])
                 if config.verbose_logging:
-                    logger.debug("Used LangChain fallback after failed collection creation")
+                    logger.debug(
+                        "Used LangChain fallback after failed collection creation"
+                    )
                 return True
             return False
 
         # Store document with fallback
-        return _store_in_chromadb_with_fallback(doc, embedding_vector, collection_name, collection_id)
+        return _store_in_chromadb_with_fallback(
+            doc, embedding_vector, collection_name, collection_id
+        )
 
     except Exception as e:
         # API failed, try LangChain fallback

@@ -1,6 +1,7 @@
 """
 Tests for /approve command and ToolApprovalManager set_policy.
 """
+
 from unittest.mock import patch, mock_open
 from src.commands.handlers.config_commands import handle_approve
 from src.tools.approval import ToolApprovalManager

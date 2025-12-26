@@ -124,6 +124,7 @@ def test_unknown_argument():
 def test_gui_import_error_fallback():
     """Test GUI ImportError falls back to CLI."""
     import builtins
+
     real_import = builtins.__import__
 
     def mock_import(name, *args, **kwargs):
@@ -196,12 +197,14 @@ def test_env_file_missing():
             # Re-import to trigger the check
             import importlib
             import launcher
+
             importlib.reload(launcher)
 
 
 def test_dotenv_import_error():
     """Test error when python-dotenv is not installed."""
     import sys
+
     # Remove dotenv from modules if present
     dotenv_module = sys.modules.pop("dotenv", None)
 
@@ -210,6 +213,7 @@ def test_dotenv_import_error():
             with pytest.raises(SystemExit):
                 import importlib
                 import launcher
+
                 importlib.reload(launcher)
     finally:
         # Restore dotenv module
@@ -225,5 +229,6 @@ def test_kmp_duplicate_lib_workaround():
         patch("launcher.load_dotenv"),
     ):
         import os
+
         # This should set the environment variable
         assert os.getenv("KMP_DUPLICATE_LIB_OK") in [None, "TRUE"]
