@@ -36,7 +36,7 @@ import logging
 import json
 import time
 from typing import Dict, Any, Optional, Callable
-from langchain_core.messages import HumanMessage, ToolMessage, SystemMessage
+from langchain_core.messages import HumanMessage, ToolMessage
 from src.core.context import get_context
 from src.tools.registry import ToolRegistry
 from src.tools.approval import ToolApprovalManager
@@ -75,27 +75,38 @@ class ChatLoop:
             str: The final response from the AI.
         """
         if self.config.verbose_logging:
-            logger.info(f"🔄 ChatLoop: Starting iteration for input: '{user_input[:50]}...'")
+            logger.info(
+                f"🔄 ChatLoop: Starting iteration for input: '{user_input[:50]}...'"
+            )
 
         # 1. Add user message to history
         self.ctx.conversation_history.append(HumanMessage(content=user_input))
 
         # 2. Get context (RAG)
         from src.core.context_utils import get_relevant_context
+
         if self.ctx.context_mode != "off":
             logger.info(f"📚 ChatLoop: Getting context for query: '{user_input}'")
             context = get_relevant_context(user_input)
-            logger.info(f"📚 ChatLoop: Got context (length {len(context) if context else 0}): '{context if context else 'None'}'")
+            logger.info(
+                f"📚 ChatLoop: Got context (length {len(context) if context else 0}): '{context if context else 'None'}'"
+            )
             if context:
                 # Add context as part of the user message instead of system message
                 # This ensures the AI definitely sees the context
-                enhanced_user_input = f"{user_input}\n\nContext from knowledge base:\n{context}"
-                logger.info(f"📚 ChatLoop: Enhanced user input with context ({len(context)} chars)")
+                enhanced_user_input = (
+                    f"{user_input}\n\nContext from knowledge base:\n{context}"
+                )
+                logger.info(
+                    f"📚 ChatLoop: Enhanced user input with context ({len(context)} chars)"
+                )
                 logger.info(f"📚 ChatLoop: Context content: '{context}'")
                 if self.config.verbose_logging:
                     logger.info(f"📚 ChatLoop: Injected context ({len(context)} chars)")
                 user_input = enhanced_user_input
-                logger.info(f"📚 ChatLoop: Using enhanced input: '{user_input[:200]}...'")
+                logger.info(
+                    f"📚 ChatLoop: Using enhanced input: '{user_input[:200]}...'"
+                )
 
         # 3. Enter the Tool Loop (Maximum 5 iterations to prevent infinite loops)
         max_iterations = 5
@@ -112,9 +123,6 @@ class ChatLoop:
 
                 if self.config.verbose_logging:
                     logger.info("🤖 Sending prompt to LLM...")
-                    # DEBUG: Log the System Prompt being sent to verify injection
-                    if self.ctx.conversation_history and isinstance(self.ctx.conversation_history[0], SystemMessage):
-                        pass
 
                 start_time = time.time()
                 # Bind tools to the LLM
@@ -137,12 +145,18 @@ class ChatLoop:
                     logger.info(f"📥 LLM Response received in {elapsed:.2f}s")
 
                 # SHOW_TOKEN_USAGE
-                if self.config.show_token_usage and getattr(response, "usage_metadata", None):
+                if self.config.show_token_usage and getattr(
+                    response, "usage_metadata", None
+                ):
                     usage = response.usage_metadata
-                    logger.info(f"🔄 Token Usage: {usage.get('input_tokens', 0)} prompt + {usage.get('output_tokens', 0)} completion")
+                    logger.info(
+                        f"🔄 Token Usage: {usage.get('input_tokens', 0)} prompt + {usage.get('output_tokens', 0)} completion"
+                    )
 
                 # SHOW_LLM_REASONING
-                if self.config.show_llm_reasoning and getattr(response, "additional_kwargs", None):
+                if self.config.show_llm_reasoning and getattr(
+                    response, "additional_kwargs", None
+                ):
                     reasoning = response.additional_kwargs.get("reasoning_content")
                     if reasoning:
                         logger.info(f"🧠 LLM Reasoning: {reasoning}")
@@ -153,7 +167,9 @@ class ChatLoop:
                 tool_calls = getattr(response, "tool_calls", [])
                 if not tool_calls:
                     if self.config.verbose_logging:
-                        logger.warning("⚠️ LLM decided NOT to use any tools for this request.")
+                        logger.warning(
+                            "⚠️ LLM decided NOT to use any tools for this request."
+                        )
                     final_answer = response.content
                     break
 
@@ -170,20 +186,25 @@ class ChatLoop:
                     result = self._handle_tool_execution(name, args)
 
                     # Add result to history as ToolMessage
-                    self.ctx.conversation_history.append(ToolMessage(
-                        content=json.dumps(result),
-                        tool_call_id=call_id
-                    ))
+                    self.ctx.conversation_history.append(
+                        ToolMessage(content=json.dumps(result), tool_call_id=call_id)
+                    )
 
                     # AUTOMATIC CONTEXT INJECTION FOR FILE READS
                     # If the tool was `read_file` and successful, also add it as a HumanMessage
                     # so the AI definitely "sees" the content in its context window for reasoning.
-                    if name == "read_file_content" and isinstance(result, dict) and result.get("success"):
+                    if (
+                        name == "read_file_content"
+                        and isinstance(result, dict)
+                        and result.get("success")
+                    ):
                         content = result.get("content", "")
                         file_path = result.get("file_path", "unknown")
                         if content:
                             msg = f"Output of reading file {file_path}:\n```\n{content}\n```"
-                            self.ctx.conversation_history.append(HumanMessage(content=msg))
+                            self.ctx.conversation_history.append(
+                                HumanMessage(content=msg)
+                            )
 
             except Exception as e:
                 logger.error(f"Error in chat loop iteration: {e}")
@@ -192,8 +213,7 @@ class ChatLoop:
         # 4. Final Cleanup
         # Trim and Save
         self.ctx.conversation_history = trim_history(
-            self.ctx.conversation_history,
-            self.config.max_history_pairs
+            self.ctx.conversation_history, self.config.max_history_pairs
         )
         save_memory(self.ctx.conversation_history)
 
@@ -212,7 +232,7 @@ class ChatLoop:
             elif self._is_cli():
                 print(f"\n⚠️  AI wants to run {name} with args: {args}")
                 choice = input("Confirm? (y/n): ").strip().lower()
-                approved = choice in ['y', 'yes']
+                approved = choice in ["y", "yes"]
 
             if approved:
                 if self.config.show_tool_details:
@@ -228,6 +248,7 @@ class ChatLoop:
     def _is_cli(self) -> bool:
         """Check if we are running in CLI mode."""
         import os
+
         return os.getenv("DEVASSIST_INTERFACE", "cli").lower() == "cli"
 
     def _execute_forced(self, name: str, args: Dict[str, Any]) -> Dict[str, Any]:

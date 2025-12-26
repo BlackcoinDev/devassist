@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
 #
@@ -34,8 +32,68 @@ import subprocess
 from typing import Dict, Any, Optional, List
 
 from src.tools.registry import ToolRegistry
+from src.core.utils import standard_error, standard_success
+from src.core.constants import GIT_DEFAULT_TIMEOUT, GIT_DIFF_TIMEOUT, GIT_DIFF_MAX_SIZE
 
 logger = logging.getLogger(__name__)
+
+# =============================================================================
+# CONSTANTS
+# =============================================================================
+
+# Safe git commands that are allowed
+SAFE_GIT_COMMANDS = {"status", "diff", "log", "rev-parse", "branch", "show"}
+
+
+def _validate_git_args(args: List[str]) -> None:
+    """
+    Validate git command arguments for security.
+
+    Args:
+        args: Git command arguments
+
+    Raises:
+        SecurityError: If command or arguments are unsafe
+    """
+    if not args:
+        raise ValueError("Empty git command arguments")
+
+    command = args[0]
+    if command not in SAFE_GIT_COMMANDS:
+        from src.security.exceptions import SecurityError
+
+        raise SecurityError(f"Unsafe git command: {command}")
+
+
+def _sanitize_file_path(file_path: str) -> str:
+    """
+    Sanitize file path to prevent directory traversal attacks.
+
+    Args:
+        file_path: The file path to sanitize
+
+    Returns:
+        Sanitized file path
+
+    Raises:
+        SecurityError: If path contains dangerous patterns
+    """
+    import os.path
+    from src.security.exceptions import SecurityError
+
+    # Basic path traversal checks
+    if ".." in file_path or file_path.startswith("/"):
+        raise SecurityError(f"Unsafe file path: {file_path}")
+
+    # Normalize path
+    normalized = os.path.normpath(file_path)
+
+    # Ensure it's still safe after normalization
+    if normalized.startswith("/") or ".." in normalized:
+        raise SecurityError(f"Path traversal attempt: {file_path}")
+
+    return normalized
+
 
 # =============================================================================
 # TOOL DEFINITIONS (OpenAI Function Calling Format)
@@ -114,7 +172,9 @@ GIT_LOG_DEFINITION = {
 # =============================================================================
 
 
-def _run_git_command(args: List[str], timeout: int = 30) -> tuple[bool, str, str]:
+def _run_git_command(
+    args: List[str], timeout: int = GIT_DEFAULT_TIMEOUT
+) -> tuple[bool, str, str]:
     """
     Run a git command safely.
 
@@ -125,6 +185,9 @@ def _run_git_command(args: List[str], timeout: int = 30) -> tuple[bool, str, str
     Returns:
         Tuple of (success, stdout, stderr)
     """
+    # Validate git command arguments
+    _validate_git_args(args)
+
     try:
         result = subprocess.run(
             ["git"] + args,
@@ -201,12 +264,14 @@ def _parse_log_output(output: str) -> List[Dict[str, str]]:
             continue
         parts = line.split("|", 3)
         if len(parts) >= 4:
-            commits.append({
-                "hash": parts[0],
-                "author": parts[1],
-                "date": parts[2],
-                "message": parts[3],
-            })
+            commits.append(
+                {
+                    "hash": parts[0],
+                    "author": parts[1],
+                    "date": parts[2],
+                    "message": parts[3],
+                }
+            )
     return commits
 
 
@@ -225,7 +290,7 @@ def execute_git_status() -> Dict[str, Any]:
     """
     # Check if in a git repo
     if not _is_git_repo():
-        return {"error": "Not a git repository"}
+        return standard_error("Not a git repository")
 
     # Get status
     success, stdout, stderr = _run_git_command(["status", "--porcelain"])
@@ -260,8 +325,7 @@ def execute_git_status() -> Dict[str, Any]:
 
 @ToolRegistry.register("git_diff", GIT_DIFF_DEFINITION)
 def execute_git_diff(
-    file_path: Optional[str] = None,
-    staged: bool = False
+    file_path: Optional[str] = None, staged: bool = False
 ) -> Dict[str, Any]:
     """
     Execute git diff and return the diff output.
@@ -275,35 +339,38 @@ def execute_git_diff(
     """
     # Check if in a git repo
     if not _is_git_repo():
-        return {"error": "Not a git repository"}
+        return standard_error("Not a git repository")
 
     # Build command
     args = ["diff"]
     if staged:
         args.append("--staged")
     if file_path:
+        # Sanitize file path to prevent directory traversal
+        safe_path = _sanitize_file_path(file_path)
         args.append("--")
-        args.append(file_path)
+        args.append(safe_path)
 
     # Run diff
-    success, stdout, stderr = _run_git_command(args, timeout=60)
+    success, stdout, stderr = _run_git_command(args, timeout=GIT_DIFF_TIMEOUT)
 
     if not success:
-        return {"error": f"Git diff failed: {stderr}"}
+        return standard_error(f"Git diff failed: {stderr}")
 
     # Check if there are changes
     if not stdout.strip():
         scope = "staged" if staged else "unstaged"
         file_scope = f" for '{file_path}'" if file_path else ""
-        return {
-            "success": True,
-            "has_changes": False,
-            "message": f"No {scope} changes{file_scope}",
-            "diff": "",
-        }
+        return standard_success(
+            {
+                "has_changes": False,
+                "message": f"No {scope} changes{file_scope}",
+                "diff": "",
+            }
+        )
 
     # Truncate if too long (max 100KB)
-    max_size = 100 * 1024
+    max_size = GIT_DIFF_MAX_SIZE
     truncated = False
     diff = stdout
     if len(diff) > max_size:
@@ -321,10 +388,7 @@ def execute_git_diff(
 
 
 @ToolRegistry.register("git_log", GIT_LOG_DEFINITION)
-def execute_git_log(
-    limit: int = 10,
-    file_path: Optional[str] = None
-) -> Dict[str, Any]:
+def execute_git_log(limit: int = 10, file_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Execute git log and return structured commit history.
 
@@ -337,7 +401,7 @@ def execute_git_log(
     """
     # Check if in a git repo
     if not _is_git_repo():
-        return {"error": "Not a git repository"}
+        return standard_error("Not a git repository")
 
     # Validate limit
     if limit < 1:
@@ -356,8 +420,10 @@ def execute_git_log(
     ]
 
     if file_path:
+        # Sanitize file path to prevent directory traversal
+        safe_path = _sanitize_file_path(file_path)
         args.append("--")
-        args.append(file_path)
+        args.append(safe_path)
 
     # Run log
     success, stdout, stderr = _run_git_command(args)

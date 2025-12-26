@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
 #
@@ -37,8 +35,33 @@ from typing import Dict, Any
 from src.tools.registry import ToolRegistry
 from src.security.shell_security import ShellSecurity
 from src.security.exceptions import SecurityError
+from src.core.utils import standard_error
+from src.core.constants import (
+    SHELL_DEFAULT_TIMEOUT,
+    SHELL_MAX_TIMEOUT,
+    SHELL_MAX_OUTPUT_SIZE,
+)
 
 logger = logging.getLogger(__name__)
+
+# =============================================================================
+# CONSTANTS
+# =============================================================================
+
+# Safe environment variables to pass to shell commands
+# Only these variables are exposed to prevent information leakage
+SAFE_ENV_VARS = {"PATH", "HOME", "LANG", "TERM", "SHELL", "USER", "PWD"}
+
+
+def get_safe_env() -> Dict[str, str]:
+    """
+    Return a filtered environment dictionary containing only safe variables.
+
+    This prevents sensitive information like API keys, passwords, and other
+    environment variables from being accessible to shell commands.
+    """
+    return {k: v for k, v in os.environ.items() if k in SAFE_ENV_VARS}
+
 
 # =============================================================================
 # TOOL DEFINITIONS (OpenAI Function Calling Format)
@@ -63,8 +86,11 @@ SHELL_EXECUTE_DEFINITION = {
                 },
                 "timeout": {
                     "type": "integer",
-                    "description": "Command timeout in seconds (default: 30, max: 300)",
-                    "default": 30,
+                    "description": (
+                        f"Command timeout in seconds (default: {SHELL_DEFAULT_TIMEOUT}, "
+                        f"max: {SHELL_MAX_TIMEOUT})"
+                    ),
+                    "default": SHELL_DEFAULT_TIMEOUT,
                 },
             },
             "required": ["command"],
@@ -94,7 +120,7 @@ def _is_gui_mode() -> bool:
 
 
 @ToolRegistry.register("shell_execute", SHELL_EXECUTE_DEFINITION)
-def execute_shell(command: str, timeout: int = 30) -> Dict[str, Any]:
+def execute_shell(command: str, timeout: int = SHELL_DEFAULT_TIMEOUT) -> Dict[str, Any]:
     """
     Execute a shell command with security validation.
 
@@ -112,47 +138,73 @@ def execute_shell(command: str, timeout: int = 30) -> Dict[str, Any]:
     Returns:
         Dict with success status, stdout, stderr, and return_code
     """
+    # Log tool start
+    logger.debug("🔧 shell_execute: Starting execution")
+    logger.debug(f"   Command: {command}")
+    logger.debug(f"   Timeout: {timeout}s")
+
     # Check interface mode
     if _is_gui_mode():
-        return {
-            "error": "Shell execution is disabled in GUI mode for security reasons. "
+        logger.warning("🚫 shell_execute: Blocked - GUI mode")
+        return standard_error(
+            "Shell execution is disabled in GUI mode for security reasons. "
             "Please use the CLI interface for shell commands."
-        }
+        )
 
     # Validate command is not empty
     if not command or not command.strip():
-        return {"error": "Empty command"}
+        logger.warning("🚫 shell_execute: Blocked - Empty command")
+        return standard_error("Empty command")
 
     command = command.strip()
 
+    # Log command details
+    logger.debug(f"🔧 shell_execute: Executing '{command}' with {timeout}s timeout")
+
     # Validate timeout
     if timeout < 1:
-        timeout = 30
-    elif timeout > 300:
-        timeout = 300
+        logger.debug(
+            f"⚠️ shell_execute: Timeout too low ({timeout}s), using default {SHELL_DEFAULT_TIMEOUT}s"
+        )
+        timeout = SHELL_DEFAULT_TIMEOUT
+    elif timeout > SHELL_MAX_TIMEOUT:
+        logger.debug(
+            f"⚠️ shell_execute: Timeout too high ({timeout}s), using max {SHELL_MAX_TIMEOUT}s"
+        )
+        timeout = SHELL_MAX_TIMEOUT
 
     # Security validation
     try:
         status, reason, requires_approval = ShellSecurity.validate_command(command)
     except SecurityError as e:
-        logger.warning(f"Shell command blocked: {command} - {e}")
-        return {"error": str(e)}
+        logger.warning(
+            f"🚫 shell_execute: Security validation failed - {command} - {e}"
+        )
+        return standard_error(str(e))
 
     # Handle blocked commands
     if status == "blocked":
-        logger.warning(f"Blocked command: {command} - {reason}")
-        return {"error": reason}
+        logger.warning(f"🚫 shell_execute: Blocked command - {command} - {reason}")
+        return standard_error(reason)
 
     # Log unknown commands (requires user approval via tool approval system)
     if status == "unknown":
-        logger.info(f"Unknown command (may require approval): {command}")
+        logger.info(
+            f"🤔 shell_execute: Unknown command (may require approval) - {command}"
+        )
 
     # Execute the command
     try:
+        # Log security context
+        logger.debug("🔒 shell_execute: Security validation passed")
+        logger.debug(f"   Status: {status}, Approval required: {requires_approval}")
+
         # Split command into arguments for safer execution
         import shlex
 
         cmd_parts = shlex.split(command)
+
+        logger.debug(f"🔧 shell_execute: Parsed command parts: {cmd_parts}")
 
         result = subprocess.run(
             cmd_parts,
@@ -161,11 +213,18 @@ def execute_shell(command: str, timeout: int = 30) -> Dict[str, Any]:
             text=True,
             timeout=timeout,
             cwd=os.getcwd(),
-            env=os.environ.copy(),
+            env=get_safe_env(),
+        )
+
+        # Log execution results
+        logger.debug("✅ shell_execute: Command completed")
+        logger.debug(f"   Return code: {result.returncode}")
+        logger.debug(
+            f"   Output length: stdout={len(result.stdout)} chars, stderr={len(result.stderr)} chars"
         )
 
         # Truncate output if too long (max 50KB)
-        max_output = 50 * 1024
+        max_output = SHELL_MAX_OUTPUT_SIZE
         stdout = result.stdout
         stderr = result.stderr
 
@@ -175,10 +234,14 @@ def execute_shell(command: str, timeout: int = 30) -> Dict[str, Any]:
         if len(stdout) > max_output:
             stdout = stdout[:max_output] + "\n... (output truncated)"
             stdout_truncated = True
+            logger.debug(f"📊 shell_execute: Output truncated at {max_output} chars")
 
         if len(stderr) > max_output:
             stderr = stderr[:max_output] + "\n... (output truncated)"
             stderr_truncated = True
+            logger.debug(
+                f"📊 shell_execute: Error output truncated at {max_output} chars"
+            )
 
         return {
             "success": result.returncode == 0,
@@ -191,15 +254,16 @@ def execute_shell(command: str, timeout: int = 30) -> Dict[str, Any]:
         }
 
     except subprocess.TimeoutExpired:
-        logger.warning(f"Command timed out after {timeout}s: {command}")
-        return {
-            "error": f"Command timed out after {timeout} seconds",
-            "command": command,
-        }
+        logger.warning(
+            f"⏰ shell_execute: Command timed out after {timeout}s - {command}"
+        )
+        return standard_error(
+            f"Command timed out after {timeout} seconds", {"command": command}
+        )
 
     except Exception as e:
-        logger.error(f"Error executing command '{command}': {e}")
-        return {"error": str(e), "command": command}
+        logger.error(f"❌ shell_execute: Error executing command '{command}' - {e}")
+        return standard_error(str(e), {"command": command})
 
 
 __all__ = ["execute_shell"]

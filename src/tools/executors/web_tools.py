@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
@@ -33,6 +32,8 @@ from typing import Dict, Any
 
 from src.tools.registry import ToolRegistry
 from src.core.config import get_config
+from src.core.utils import standard_error
+from src.core.constants import WEB_SEARCH_DEFAULT_MAX_RESULTS
 
 logger = logging.getLogger(__name__)
 _config = get_config()
@@ -71,13 +72,15 @@ SEARCH_WEB_DEFINITION = {
 
 
 @ToolRegistry.register("search_web", SEARCH_WEB_DEFINITION)
-def execute_web_search(query: str, max_results: int = 10) -> Dict[str, Any]:
+def execute_web_search(
+    query: str, max_results: int = WEB_SEARCH_DEFAULT_MAX_RESULTS
+) -> Dict[str, Any]:
     """
     Execute web search using DuckDuckGo.
 
     Args:
         query: Search query string
-        max_results: Maximum number of results (default: 10)
+        max_results: Maximum number of results (default: {WEB_SEARCH_DEFAULT_MAX_RESULTS})
 
     Returns:
         Dict with success status and search results
@@ -85,8 +88,16 @@ def execute_web_search(query: str, max_results: int = 10) -> Dict[str, Any]:
     try:
         from ddgs import DDGS
 
+        logger.debug("🔧 search_web: Starting")
+        logger.debug(f"   Query: '{query}'")
+        logger.debug(f"   Max results: {max_results}")
+
         if _config.show_tool_details:
-            logger.info(f"🌍 search_web: Querying '{query}' (max {max_results} results)")
+            logger.info(
+                f"🌍 search_web: Querying '{query}' (max {max_results} results)"
+            )
+        else:
+            logger.debug("🔧 search_web: show_tool_details disabled")
 
         # Improve search query for better results
         enhanced_query = query
@@ -105,6 +116,11 @@ def execute_web_search(query: str, max_results: int = 10) -> Dict[str, Any]:
         if not has_crypto and ("coin" in query.lower() or "token" in query.lower()):
             # Add context for potential crypto queries
             enhanced_query = f"{query} cryptocurrency"
+            logger.debug(
+                f"🔧 search_web: Enhanced query for crypto context: {enhanced_query}"
+            )
+        else:
+            logger.debug(f"🔧 search_web: Using original query: {enhanced_query}")
 
         try:
             with DDGS() as ddgs:
@@ -114,6 +130,7 @@ def execute_web_search(query: str, max_results: int = 10) -> Dict[str, Any]:
             # Return results directly (no filtering)
             if _config.show_tool_details:
                 logger.info(f"   📊 Found {len(raw_results)} results")
+            logger.debug(f"✅ search_web: Found {len(raw_results)} results")
             return {
                 "success": True,
                 "result_count": len(raw_results),
@@ -121,17 +138,19 @@ def execute_web_search(query: str, max_results: int = 10) -> Dict[str, Any]:
             }
         except Exception as search_err:
             # If DDGS search fails, provide diagnostic info
-            logger.error(f"DDGS search execution error: {str(search_err)}")
-            return {
-                "error": f"Web search failed: {str(search_err)}. The ddgs package is installed but encountered an error."
-            }
+            logger.error(
+                f"❌ search_web: DDGS search execution error - {str(search_err)}"
+            )
+            return standard_error(
+                f"Web search failed: {str(search_err)}. The ddgs package is installed but encountered an error."
+            )
 
     except ImportError as ie:
-        logger.error(f"Failed to import duckduckgo_search: {str(ie)}")
-        return {"error": "ddgs not installed. Run: pip install ddgs"}
+        logger.error(f"❌ search_web: Failed to import duckduckgo_search - {str(ie)}")
+        return standard_error("ddgs not installed. Run: pip install ddgs")
     except Exception as e:
-        logger.error(f"Web search failed: {e}")
-        return {"error": str(e)}
+        logger.error(f"❌ search_web: Web search failed - {e}")
+        return standard_error(str(e))
 
 
 __all__ = ["execute_web_search"]

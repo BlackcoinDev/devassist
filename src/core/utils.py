@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
 #
@@ -27,7 +25,8 @@ This module contains utility functions that don't depend on global state
 and can be safely imported by other modules.
 """
 
-from typing import List
+from typing import List, Dict, Any, Optional
+from src.core.constants import CONTENT_CHUNK_SIZE, CONTENT_TRUNCATE_LENGTH
 
 
 def chunk_text(content: str) -> List[str]:
@@ -48,7 +47,7 @@ def chunk_text(content: str) -> List[str]:
         from langchain_text_splitters import RecursiveCharacterTextSplitter
 
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1500,  # Optimal size for context retention
+            chunk_size=CONTENT_CHUNK_SIZE,  # Optimal size for context retention
             chunk_overlap=200,  # Ensures semantic continuity
             separators=[
                 "\n\n",
@@ -62,7 +61,7 @@ def chunk_text(content: str) -> List[str]:
         return text_splitter.split_text(content)
     except ImportError:
         # Fallback to simple chunking if langchain is not available
-        chunk_size = 1500
+        chunk_size = CONTENT_CHUNK_SIZE
         chunks = []
 
         # Split by paragraphs first to maintain coherence
@@ -129,7 +128,7 @@ def get_file_size_info(file_path: str) -> tuple[int, str]:
     return file_size, size_str
 
 
-def truncate_content(content: str, max_length: int = 100) -> str:
+def truncate_content(content: str, max_length: int = CONTENT_TRUNCATE_LENGTH) -> str:
     """
     Truncate content for display purposes.
 
@@ -143,3 +142,37 @@ def truncate_content(content: str, max_length: int = 100) -> str:
     if len(content) <= max_length:
         return content
     return content[: max_length - 3] + "..."
+
+
+def standard_error(
+    message: str, details: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    Create a standardized error response for tool executors.
+
+    Args:
+        message: Error message
+        details: Optional additional error details
+
+    Returns:
+        Standardized error dictionary
+    """
+    result = {"success": False, "error": message}
+    if details:
+        result["details"] = details
+    return result
+
+
+def standard_success(data: dict) -> dict:
+    """
+    Create a standardized success response for tool executors.
+
+    Args:
+        data: Success data dictionary
+
+    Returns:
+        Standardized success dictionary
+    """
+    result = {"success": True}
+    result.update(data)
+    return result

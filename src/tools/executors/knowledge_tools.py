@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
@@ -35,6 +34,7 @@ from typing import Dict, Any, Optional
 from src.tools.registry import ToolRegistry
 from src.core.context_utils import add_to_knowledge_base, get_relevant_context
 from src.core.config import get_config
+from src.core.utils import standard_error, standard_success
 
 logger = logging.getLogger(__name__)
 _config = get_config()
@@ -114,12 +114,20 @@ def execute_learn_information(
     """
     try:
         if not information.strip():
-            return {"error": "Information cannot be empty"}
+            logger.debug("🔧 learn_information: Blocked - Empty information")
+            return standard_error("Information cannot be empty")
+
+        logger.debug("🔧 learn_information: Starting")
+        logger.debug(f"   Information length: {len(information)} chars")
 
         if _config.show_tool_details:
-            logger.info(f"🔧 learn_information: Adding {len(information)} chars to knowledge base")
+            logger.info(
+                f"🔧 learn_information: Adding {len(information)} chars to knowledge base"
+            )
             if metadata:
                 logger.info(f"   📋 Metadata: {metadata}")
+        else:
+            logger.debug("🔧 learn_information: show_tool_details disabled")
 
         start_time = time.time()
 
@@ -131,19 +139,23 @@ def execute_learn_information(
         if success:
             if _config.show_tool_details:
                 logger.info(f"   ✅ Successfully learned in {elapsed:.2f}s")
-            return {
-                "success": True,
-                "information_length": len(information),
-                "learned": True,
-            }
+            logger.debug(
+                f"✅ learn_information: Completed successfully in {elapsed:.2f}s"
+            )
+            return standard_success(
+                {
+                    "information_length": len(information),
+                    "learned": True,
+                }
+            )
         else:
             if _config.show_tool_details:
                 logger.warning("   ❌ Failed to add to knowledge base")
-            return {"error": "Failed to add information to knowledge base"}
-
+            logger.error("❌ learn_information: Failed to add to knowledge base")
+            return standard_error("Failed to add information to knowledge base")
     except Exception as e:
-        logger.error(f"Error learning information: {e}")
-        return {"error": str(e)}
+        logger.error(f"❌ learn_information: Error learning information - {e}")
+        return standard_error(str(e))
 
 
 @ToolRegistry.register("search_knowledge", SEARCH_KNOWLEDGE_DEFINITION)
@@ -160,10 +172,16 @@ def execute_search_knowledge(query: str, limit: int = 5) -> Dict[str, Any]:
     """
     try:
         if not query.strip():
-            return {"error": "Query cannot be empty"}
+            logger.debug("🔧 search_knowledge: Blocked - Empty query")
+            return standard_error("Query cannot be empty")
+
+        logger.debug("🔧 search_knowledge: Starting")
+        logger.debug(f"   Query: '{query[:50]}...' limit={limit}")
 
         if _config.show_tool_details:
             logger.info(f"🔧 search_knowledge: Query='{query[:50]}...' limit={limit}")
+        else:
+            logger.debug("🔧 search_knowledge: show_tool_details disabled")
 
         start_time = time.time()
 
@@ -176,16 +194,20 @@ def execute_search_knowledge(query: str, limit: int = 5) -> Dict[str, Any]:
         if _config.show_tool_details:
             logger.info(f"   📊 Found {result_count} results in {elapsed:.2f}s")
 
-        return {
-            "success": True,
-            "query": query,
-            "results": context,
-            "result_count": result_count,
-        }
+        logger.debug(
+            f"✅ search_knowledge: Found {result_count} results in {elapsed:.2f}s"
+        )
+        return standard_success(
+            {
+                "query": query,
+                "results": context,
+                "result_count": result_count,
+            }
+        )
 
     except Exception as e:
-        logger.error(f"Error searching knowledge: {e}")
-        return {"error": str(e)}
+        logger.error(f"❌ search_knowledge: Error searching knowledge - {e}")
+        return standard_error(str(e))
 
 
 __all__ = ["execute_learn_information", "execute_search_knowledge"]

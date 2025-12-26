@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
@@ -36,6 +35,8 @@ import shutil
 from typing import Dict, Any, Optional, List
 
 from src.tools.registry import ToolRegistry
+from src.core.utils import standard_error
+from src.core.constants import CODE_SEARCH_DEFAULT_MAX_RESULTS, CODE_SEARCH_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -74,8 +75,10 @@ CODE_SEARCH_DEFINITION = {
                 },
                 "max_results": {
                     "type": "integer",
-                    "description": "Maximum number of matches to return (default: 50, max: 200)",
-                    "default": 50,
+                    "description": (
+                        f"Maximum number of matches to return (default: {CODE_SEARCH_DEFAULT_MAX_RESULTS}, max: 200)"
+                    ),
+                    "default": CODE_SEARCH_DEFAULT_MAX_RESULTS,
                 },
                 "case_sensitive": {
                     "type": "boolean",
@@ -133,12 +136,14 @@ def _parse_rg_json_output(output: str) -> List[Dict[str, Any]]:
             if submatches:
                 match_text = submatches[0].get("match", {}).get("text", "")
 
-            matches.append({
-                "file": path,
-                "line": line_number,
-                "content": lines,
-                "match": match_text,
-            })
+            matches.append(
+                {
+                    "file": path,
+                    "line": line_number,
+                    "content": lines,
+                    "match": match_text,
+                }
+            )
 
         except json.JSONDecodeError:
             # Skip malformed lines
@@ -175,18 +180,18 @@ def execute_code_search(
     """
     # Validate pattern
     if not pattern:
-        return {"error": "Search pattern cannot be empty"}
+        return standard_error("Search pattern cannot be empty")
 
     # Check ripgrep is installed
     if not _check_ripgrep():
         return {
             "error": "ripgrep (rg) is required but not installed. "
-                     "Please install ripgrep: https://github.com/BurntSushi/ripgrep"
+            "Please install ripgrep: https://github.com/BurntSushi/ripgrep"
         }
 
     # Validate max_results
     if max_results < 1:
-        max_results = 50
+        max_results = CODE_SEARCH_DEFAULT_MAX_RESULTS
     elif max_results > 200:
         max_results = 200
 
@@ -195,18 +200,18 @@ def execute_code_search(
     search_path = os.path.abspath(os.path.join(current_dir, path))
 
     if not search_path.startswith(current_dir):
-        return {"error": "Access denied: Cannot search outside current directory"}
+        return standard_error("Access denied: Cannot search outside current directory")
 
     if not os.path.exists(search_path):
-        return {"error": f"Path not found: {path}"}
+        return standard_error(f"Path not found: {path}")
 
     # Build ripgrep command
     # Using --json for structured output
     args = [
         "rg",
-        "--json",                    # JSON output for parsing
+        "--json",  # JSON output for parsing
         f"--max-count={max_results}",  # Limit per file
-        "--no-heading",              # No file headers
+        "--no-heading",  # No file headers
     ]
 
     # Case sensitivity
@@ -226,13 +231,13 @@ def execute_code_search(
             args,
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=CODE_SEARCH_TIMEOUT,
             cwd=current_dir,
         )
 
         # ripgrep returns 1 for no matches (not an error)
         if result.returncode not in (0, 1):
-            return {"error": f"ripgrep failed: {result.stderr}"}
+            return standard_error(f"ripgrep failed: {result.stderr}")
 
         # Parse JSON output
         matches = _parse_rg_json_output(result.stdout)
@@ -263,11 +268,11 @@ def execute_code_search(
         }
 
     except subprocess.TimeoutExpired:
-        return {"error": "Code search timed out after 60 seconds"}
+        return standard_error("Code search timed out after 60 seconds")
 
     except Exception as e:
         logger.error(f"Error in code search: {e}")
-        return {"error": str(e)}
+        return standard_error(str(e))
 
 
 __all__ = ["execute_code_search"]

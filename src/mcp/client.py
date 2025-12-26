@@ -56,7 +56,7 @@ class MCPClient:
             return
 
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, "r") as f:
                 config = json.load(f)
 
             for server_conf in config.get("servers", []):
@@ -77,12 +77,11 @@ class MCPClient:
                 transport = StdioTransport(
                     command=config["command"],
                     args=config.get("args", []),
-                    env=config.get("env")
+                    env=config.get("env"),
                 )
             elif transport_type == "http":
                 transport = HttpTransport(
-                    url=config["url"],
-                    headers=config.get("headers")
+                    url=config["url"], headers=config.get("headers")
                 )
 
             if transport:
@@ -99,12 +98,7 @@ class MCPClient:
     async def _discover_tools(self, server_name: str, transport: Any):
         """List tools from server and register them."""
         # JSON-RPC listTools
-        request = {
-            "jsonrpc": "2.0",
-            "method": "tools/list",
-            "id": 1,
-            "params": {}
-        }
+        request = {"jsonrpc": "2.0", "method": "tools/list", "id": 1, "params": {}}
 
         await transport.send_message(request)
         response = await transport.receive_message()
@@ -123,15 +117,16 @@ class MCPClient:
 
                 logger.info(f"   🔧 Discovered tool: {prefixed_name}")
 
-    def _register_tool(self, registered_name: str, tool_def: Dict, server_name: str, original_name: str):
+    def _register_tool(
+        self, registered_name: str, tool_def: Dict, server_name: str, original_name: str
+    ):
         """Register tool with ToolRegistry."""
 
         # Create execution wrapper
         def executor(**kwargs):
             # Run in the background loop
             future = asyncio.run_coroutine_threadsafe(
-                self.execute_tool(server_name, original_name, kwargs),
-                self._loop
+                self.execute_tool(server_name, original_name, kwargs), self._loop
             )
             return future.result()
 
@@ -145,16 +140,114 @@ class MCPClient:
                 "function": {
                     "name": registered_name,
                     "description": tool_def.get("description", ""),
-                    "parameters": tool_def.get("inputSchema", {})
-                }
+                    "parameters": tool_def.get("inputSchema", {}),
+                },
             }
         else:
             openai_def = tool_def
 
         # Register dynamically
-        ToolRegistry.register_dynamic(registered_name, openai_def, executor)
+        if not self._validate_external_tool(tool_def, server_name, original_name):
+            logger.warning(
+                f"🚫 MCP tool validation failed for {registered_name} from {server_name}"
+            )
+            return
 
-    async def execute_tool(self, server_name: str, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+        ToolRegistry.register_dynamic(registered_name, openai_def, executor)
+        logger.info(f"✅ Successfully registered MCP tool: {registered_name}")
+
+    def _validate_external_tool(
+        self, tool_def: Dict, server_name: str, tool_name: str
+    ) -> bool:
+        """
+        Validate external MCP tool for security.
+
+        Args:
+            tool_def: Tool definition from MCP server
+            server_name: Name of the MCP server
+            tool_name: Original tool name
+
+        Returns:
+            True if tool is safe to register, False otherwise
+        """
+        # Basic structure validation
+        if not isinstance(tool_def, dict):
+            logger.warning(
+                f"Invalid tool definition type from {server_name}: {type(tool_def)}"
+            )
+            return False
+
+        # Check required fields
+        if "name" not in tool_def:
+            logger.warning(f"Tool missing 'name' field from {server_name}")
+            return False
+
+        # Validate tool name for security
+        safe_name = tool_def["name"]
+        if not isinstance(safe_name, str) or not safe_name.strip():
+            logger.warning(f"Invalid tool name from {server_name}: {safe_name}")
+            return False
+
+        # Check for potentially dangerous patterns in tool name
+        dangerous_patterns = [
+            "exec",
+            "eval",
+            "compile",
+            "import",
+            "__import__",
+            "subprocess",
+            "os.",
+            "sys.",
+            "shutil.",
+            "rm",
+            "del",
+            "remove",
+            "unlink",
+            "sudo",
+            "su",
+            "chmod",
+            "chown",
+        ]
+
+        for pattern in dangerous_patterns:
+            if pattern in safe_name.lower():
+                logger.warning(
+                    f"Potentially dangerous tool name '{safe_name}' from {server_name}"
+                )
+                return False
+
+        # Validate description if present
+        description = tool_def.get("description", "")
+        if description and not isinstance(description, str):
+            logger.warning(
+                f"Invalid description type for tool {safe_name} from {server_name}"
+            )
+            return False
+
+        # Check for dangerous patterns in description
+        for pattern in dangerous_patterns:
+            if pattern in description.lower():
+                logger.warning(
+                    f"Dangerous pattern '{pattern}' in description for tool {safe_name} from {server_name}"
+                )
+                return False
+
+        # Validate input schema if present
+        input_schema = tool_def.get("inputSchema", {})
+        if input_schema and not isinstance(input_schema, dict):
+            logger.warning(
+                f"Invalid input schema type for tool {safe_name} from {server_name}"
+            )
+            return False
+
+        logger.debug(
+            f"🔒 MCP tool validation passed for {safe_name} from {server_name}"
+        )
+        return True
+
+    async def execute_tool(
+        self, server_name: str, tool_name: str, args: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Execute tool on remote server."""
         transport = self.servers.get(server_name)
         if not transport:
@@ -164,10 +257,7 @@ class MCPClient:
             "jsonrpc": "2.0",
             "method": "tools/call",
             "id": 2,
-            "params": {
-                "name": tool_name,
-                "arguments": args
-            }
+            "params": {"name": tool_name, "arguments": args},
         }
 
         await transport.send_message(request)

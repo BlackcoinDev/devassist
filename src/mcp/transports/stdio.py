@@ -1,6 +1,7 @@
 """
 Stdio transport for MCP.
 """
+
 import asyncio
 import json
 import logging
@@ -10,14 +11,31 @@ from .base import Transport
 
 logger = logging.getLogger(__name__)
 
+# Safe environment variables for MCP subprocesses
+# Only expose essential variables to prevent information leakage
+SAFE_ENV_VARS = {"PATH", "HOME", "LANG", "TERM", "SHELL", "USER", "PWD"}
+
+
+def get_safe_env() -> Dict[str, str]:
+    """
+    Return a filtered environment dictionary containing only safe variables.
+
+    This prevents sensitive information like API keys, passwords, and other
+    environment variables from being accessible to MCP subprocesses.
+    """
+    return {k: v for k, v in os.environ.items() if k in SAFE_ENV_VARS}
+
 
 class StdioTransport(Transport):
     """Transport over standard input/output of a subprocess."""
 
-    def __init__(self, command: str, args: List[str], env: Optional[Dict[str, str]] = None):
+    def __init__(
+        self, command: str, args: List[str], env: Optional[Dict[str, str]] = None
+    ):
         self.command = command
         self.args = args
-        self.env = env or os.environ.copy()
+        # Use safe environment by default to prevent information leakage
+        self.env = env or get_safe_env()
         self.process: Optional[asyncio.subprocess.Process] = None
 
     async def connect(self) -> None:
@@ -29,7 +47,7 @@ class StdioTransport(Transport):
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                env=self.env
+                env=self.env,
             )
             logger.info(f"Started MCP stdio server: {self.command} {self.args}")
         except Exception as e:

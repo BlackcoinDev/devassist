@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
@@ -35,6 +34,7 @@ from typing import Dict, Any
 
 from src.tools.registry import ToolRegistry
 from src.core.config import get_config
+from src.core.utils import standard_error, standard_success
 
 logger = logging.getLogger(__name__)
 _config = get_config()
@@ -73,7 +73,9 @@ PARSE_DOCUMENT_DEFINITION = {
 
 
 @ToolRegistry.register("parse_document", PARSE_DOCUMENT_DEFINITION)
-def execute_parse_document(file_path: str, extract_type: str = "text") -> Dict[str, Any]:
+def execute_parse_document(
+    file_path: str, extract_type: str = "text"
+) -> Dict[str, Any]:
     """
     Execute document parsing tool using Docling's unified pipeline.
 
@@ -110,7 +112,7 @@ def execute_parse_document(file_path: str, extract_type: str = "text") -> Dict[s
         full_path = os.path.abspath(file_path)
 
         if not full_path.startswith(current_dir):
-            return {"error": "Access denied: File outside current directory"}
+            return standard_error("Access denied: File outside current directory")
 
         if not os.path.exists(full_path):
             return {"error": f"File not found: {file_path}"}
@@ -146,28 +148,28 @@ def execute_parse_document(file_path: str, extract_type: str = "text") -> Dict[s
             if _config.show_tool_details:
                 logger.info(f"   ✅ Extracted {len(content)} chars in {elapsed:.2f}s")
 
-            return {
-                "success": True,
-                "file_path": file_path,
-                "extract_type": extract_type,  # Kept for API compatibility
-                "file_type": file_ext,
-                "content": content,
-                "analysis": content,  # Content is the analysis in this case
-                "note": "Processed via Docling Unified Pipeline",
-            }
+            return standard_success(
+                {
+                    "file_path": file_path,
+                    "extract_type": extract_type,  # Kept for API compatibility
+                    "file_type": file_ext,
+                    "content": content,
+                    "analysis": content,  # Content is the analysis in this case
+                    "note": "Processed via Docling Unified Pipeline",
+                }
+            )
 
         except ImportError:
-            return {
-                "success": False,
-                "error": "docling library not installed. Please install with: pip install docling",
-            }
+            return standard_error(
+                "docling library not installed. Please install with: pip install docling"
+            )
         except Exception as e:
             logger.error(f"Docling processing failed for {file_path}: {e}")
-            return {"success": False, "error": f"Docling processing failed: {str(e)}"}
+            return standard_error(f"Docling processing failed: {str(e)}")
 
     except Exception as e:
         logger.error(f"Document parsing failed for {file_path}: {e}")
-        return {"error": f"Document parsing failed: {str(e)}"}
+        return standard_error(f"Document parsing failed: {str(e)}")
 
 
 __all__ = ["execute_parse_document"]

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
@@ -34,6 +33,7 @@ import logging
 from typing import Dict, Any
 
 from src.tools.registry import ToolRegistry
+from src.core.utils import standard_error, standard_success
 
 logger = logging.getLogger(__name__)
 
@@ -126,41 +126,62 @@ def execute_read_file(file_path: str) -> Dict[str, Any]:
         Dict with success status, content, and file metadata
     """
     try:
+        logger.debug("🔧 read_file_content: Starting")
+        logger.debug(f"   File path: {file_path}")
+
         # Security check
         current_dir = os.getcwd()
         full_path = os.path.abspath(file_path)
 
         if not full_path.startswith(current_dir):
-            return {
-                "error": "Access denied: Cannot read files outside current directory"
-            }
+            logger.warning("🚫 read_file_content: Blocked - Path outside directory")
+            logger.debug(f"   Full path: {full_path}")
+            logger.debug(f"   Current dir: {current_dir}")
+            return standard_error(
+                "Access denied: Cannot read files outside current directory"
+            )
 
         if not os.path.exists(full_path):
-            return {"error": f"File not found: {file_path}"}
+            logger.warning(f"🚫 read_file_content: File not found - {file_path}")
+            return standard_error(f"File not found: {file_path}")
 
         if not os.path.isfile(full_path):
-            return {"error": f"Not a file: {file_path}"}
+            logger.warning(f"🚫 read_file_content: Not a file - {file_path}")
+            return standard_error(f"Not a file: {file_path}")
 
         # Size check
         file_size = os.path.getsize(full_path)
+        logger.debug(f"📄 read_file_content: File size: {file_size} bytes")
+
         if file_size > 1024 * 1024:  # 1MB limit
-            return {"error": f"File too large: {file_size} bytes (max 1MB)"}
+            logger.warning(
+                f"🚫 read_file_content: File too large - {file_size} bytes (max 1MB)"
+            )
+            return standard_error(f"File too large: {file_size} bytes (max 1MB)")
 
-        with open(full_path, "r", encoding="utf-8", errors="replace") as f:
-            content = f.read()
+        # Content check
+        try:
+            with open(full_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except UnicodeDecodeError:
+            logger.warning(
+                f"🚫 read_file_content: Cannot read binary file - {file_path}"
+            )
+            return standard_error("Cannot read binary file")
+        except Exception as e:
+            logger.error(f"❌ read_file_content: Error reading file - {e}")
+            return standard_error(str(e))
 
-        return {
-            "success": True,
-            "file_path": file_path,
-            "size": file_size,
-            "content": content,
-        }
+        logger.debug(
+            f"✅ read_file_content: Successfully read {len(content)} chars from {file_path}"
+        )
+        return standard_success(
+            {"file_path": file_path, "content": content, "size": file_size}
+        )
 
-    except UnicodeDecodeError:
-        return {"error": "Cannot read binary file"}
     except Exception as e:
-        logger.error(f"Error reading file {file_path}: {e}")
-        return {"error": str(e)}
+        logger.error(f"❌ read_file_content: Error reading file - {e}")
+        return standard_error(str(e))
 
 
 @ToolRegistry.register("write_file", WRITE_FILE_DEFINITION)
@@ -193,11 +214,11 @@ def execute_write_file(file_path: str, content: str) -> Dict[str, Any]:
         with open(full_path, "w", encoding="utf-8") as f:
             f.write(content)
 
-        return {"success": True, "file_path": file_path, "size": len(content)}
+        return standard_success({"file_path": file_path, "size": len(content)})
 
     except Exception as e:
         logger.error(f"Error writing file {file_path}: {e}")
-        return {"error": str(e)}
+        return standard_error(str(e))
 
 
 @ToolRegistry.register("list_directory", LIST_DIRECTORY_DEFINITION)
@@ -222,7 +243,7 @@ def execute_list_directory(directory_path: str = ".") -> Dict[str, Any]:
             }
 
         if not os.path.exists(full_path):
-            return {"error": f"Directory not found: {directory_path}"}
+            return standard_error(f"Directory not found: {directory_path}")
 
         if not os.path.isdir(full_path):
             return {"error": f"Not a directory: {directory_path}"}
@@ -247,7 +268,7 @@ def execute_list_directory(directory_path: str = ".") -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error listing directory {directory_path}: {e}")
-        return {"error": str(e)}
+        return standard_error(str(e))
 
 
 @ToolRegistry.register("get_current_directory", GET_CURRENT_DIRECTORY_DEFINITION)
@@ -259,10 +280,10 @@ def execute_get_current_directory() -> Dict[str, Any]:
         Dict with success status and current directory path
     """
     try:
-        return {"success": True, "current_directory": os.getcwd()}
+        return standard_success({"current_directory": os.getcwd()})
     except Exception as e:
         logger.error(f"Error getting current directory: {e}")
-        return {"error": str(e)}
+        return standard_error(str(e))
 
 
 __all__ = [
