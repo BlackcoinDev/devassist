@@ -261,3 +261,8 @@ tramp
 # Custom project files
 venv/
 .claude/
+
+# Performance test data (generated files, should not be committed)
+performance_baselines.json
+performance_report_*.md
+*_baseline.json
