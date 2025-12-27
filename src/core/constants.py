@@ -52,3 +52,11 @@ CODE_SEARCH_TIMEOUT = 60  # Timeout for code search in seconds
 # Content processing limits
 CONTENT_CHUNK_SIZE = 1500  # Default chunk size for content splitting
 CONTENT_TRUNCATE_LENGTH = 100  # Default truncate length for display
+
+# =============================================================================
+# CHAT LOOP CONSTANTS
+# =============================================================================
+
+# Chat loop iteration limits
+MAX_ITERATIONS = 5  # Maximum tool calling iterations per user request
+MAX_INPUT_LENGTH = 10000  # Maximum user input length in characters

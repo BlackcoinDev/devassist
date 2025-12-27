@@ -42,8 +42,34 @@ from src.tools.registry import ToolRegistry
 from src.tools.approval import ToolApprovalManager
 from src.storage.memory import save_memory, trim_history
 from src.core.config import get_config
+from src.core.constants import (
+    MAX_INPUT_LENGTH,
+)
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# CUSTOM EXCEPTION CLASSES FOR INPUT VALIDATION
+# =============================================================================
+
+
+class InputValidationError(Exception):
+    """Raised when user input fails validation."""
+
+    pass
+
+
+class ToolExecutionError(Exception):
+    """Raised when tool execution fails."""
+
+    pass
+
+
+class LLMTimeoutError(Exception):
+    """Raised when LLM request times out."""
+
+    pass
 
 
 class ChatLoop:
@@ -64,9 +90,72 @@ class ChatLoop:
         self.confirmation_callback = confirmation_callback
         self.config = get_config()
 
+    # =============================================================================
+    # INPUT VALIDATION AND SANITIZATION METHODS
+    # =============================================================================
+
+    def _validate_input(self, user_input: str) -> str:
+        """
+        Validate and sanitize user input before processing.
+
+        Args:
+            user_input: The raw user input to validate
+
+        Returns:
+            str: The sanitized input
+
+        Raises:
+            InputValidationError: If input fails validation
+        """
+        # Empty input check
+        if not user_input or not user_input.strip():
+            logger.warning("Input validation failed: empty input")
+            raise InputValidationError("Input cannot be empty")
+
+        # Length validation (prevent memory exhaustion)
+        if len(user_input) > MAX_INPUT_LENGTH:
+            logger.warning(
+                f"Input validation failed: too long ({len(user_input)} > {MAX_INPUT_LENGTH})"
+            )
+            raise InputValidationError(
+                f"Input too long (max {MAX_INPUT_LENGTH} characters)"
+            )
+
+        # Content sanitization
+        sanitized_input = self._sanitize_content(user_input)
+
+        return sanitized_input
+
+    def _sanitize_content(self, content: str) -> str:
+        """
+        Basic content sanitization to prevent injection attacks.
+
+        Args:
+            content: The content to sanitize
+
+        Returns:
+            str: The sanitized content
+        """
+        # Remove potential control characters except common ones
+        sanitized = "".join(
+            char for char in content if ord(char) >= 32 or char in "\n\t\r"
+        )
+
+        # Strip leading/trailing whitespace
+        sanitized = sanitized.strip()
+
+        return sanitized
+
     def run_iteration(self, user_input: str) -> str:
         """
+        Main orchestrator - delegates to specialized methods.
+
         Process a single user input through the AI loop.
+        This method orchestrates the complete conversation flow:
+        1. Input validation and sanitization
+        2. Context injection (RAG) if enabled
+        3. Iterative tool calling with security validation
+        4. Memory management and persistence
 
         Args:
             user_input: The text input from the user.
@@ -74,150 +163,404 @@ class ChatLoop:
         Returns:
             str: The final response from the AI.
         """
-        if self.config.verbose_logging:
-            logger.info(
-                f"🔄 ChatLoop: Starting iteration for input: '{user_input[:50]}...'"
-            )
+        try:
+            # 1. Input processing
+            validated_input = self._validate_and_sanitize_input(user_input)
 
-        # 1. Add user message to history
-        self.ctx.conversation_history.append(HumanMessage(content=user_input))
+            # 2. Context enhancement
+            enhanced_input = self._inject_context(validated_input)
 
-        # 2. Get context (RAG)
+            # 3. Add user message to history before tool processing
+            self.ctx.conversation_history.append(HumanMessage(content=enhanced_input))
+
+            # 4. Tool processing
+            response = self._execute_tool_loop()
+
+            # 5. Memory cleanup
+            self._cleanup_memory()
+
+            return response
+
+        except Exception as e:
+            return self._handle_iteration_error(e)
+
+    def _validate_and_sanitize_input(self, user_input: str) -> str:
+        """
+        Validate and sanitize user input.
+
+        Args:
+            user_input: The raw user input to validate
+
+        Returns:
+            str: The validated and sanitized input
+
+        Raises:
+            InputValidationError: If input fails validation
+        """
+        start_time = time.time()
+        validated_input = self._validate_input(user_input)
+        self._monitor_performance("Input validation", start_time)
+        return validated_input
+
+    def _inject_context(self, user_input: str) -> str:
+        """
+        Inject RAG context if enabled.
+
+        Args:
+            user_input: The user input to enhance with context
+
+        Returns:
+            str: The input with injected context, or original if disabled/no context
+        """
+        start_time = time.time()
+
+        if self.ctx.context_mode == "off":
+            self._monitor_performance("Context injection (disabled)", start_time)
+            return user_input
+
         from src.core.context_utils import get_relevant_context
 
-        if self.ctx.context_mode != "off":
-            logger.info(f"📚 ChatLoop: Getting context for query: '{user_input}'")
-            context = get_relevant_context(user_input)
-            logger.info(
-                f"📚 ChatLoop: Got context (length {len(context) if context else 0}): '{context if context else 'None'}'"
-            )
-            if context:
-                # Add context as part of the user message instead of system message
-                # This ensures the AI definitely sees the context
-                enhanced_user_input = (
-                    f"{user_input}\n\nContext from knowledge base:\n{context}"
-                )
-                logger.info(
-                    f"📚 ChatLoop: Enhanced user input with context ({len(context)} chars)"
-                )
-                logger.info(f"📚 ChatLoop: Context content: '{context}'")
-                if self.config.verbose_logging:
-                    logger.info(f"📚 ChatLoop: Injected context ({len(context)} chars)")
-                user_input = enhanced_user_input
-                logger.info(
-                    f"📚 ChatLoop: Using enhanced input: '{user_input[:200]}...'"
-                )
+        context = get_relevant_context(user_input)
 
-        # 3. Enter the Tool Loop (Maximum 5 iterations to prevent infinite loops)
-        max_iterations = 5
+        if not context:
+            self._monitor_performance("Context injection (no context)", start_time)
+            return user_input
+
+        enhanced_input = f"{user_input}\n\nContext from knowledge base:\n{context}"
+        logger.info(f"📚 Enhanced input with context ({len(context)} chars)")
+        self._monitor_performance("Context injection", start_time)
+        return enhanced_input
+
+    def _execute_tool_loop(self) -> str:
+        """
+        Execute tool calling loop with performance optimizations.
+
+        Returns:
+            str: The final response from the AI
+        """
+        from src.core.constants import MAX_ITERATIONS
+
+        max_iterations = MAX_ITERATIONS
+
         final_answer = "No response from AI."
 
-        for i in range(max_iterations):
-            try:
-                if self.config.verbose_logging:
-                    logger.debug(f"🤖 ChatLoop: AI Turn {i + 1}/{max_iterations}")
+        # PHASE 3: Performance monitoring start
+        loop_start_time = time.time()
 
-                # Call LLM
-                if not self.ctx.llm:
-                    return "❌ Error: LLM not initialized."
+        for _ in range(max_iterations):
+            iteration_start = time.time()
 
-                if self.config.verbose_logging:
-                    logger.info("🤖 Sending prompt to LLM...")
+            # Bind tools and invoke LLM
+            response = self._invoke_llm_with_tools()
 
-                start_time = time.time()
-                # Bind tools to the LLM
-                # We get the raw dict definitions from the registry
-                # and bind them to the model for this interaction
-                tool_definitions = ToolRegistry.get_definitions()
-                llm_with_tools = self.ctx.llm.bind_tools(tool_definitions)
+            # Monitor LLM response time
+            self._monitor_performance("LLM invocation", iteration_start)
 
-                if self.config.verbose_logging:
-                    logger.debug(f"🔧 Bound {len(tool_definitions)} tools to LLM")
-                    # Log the tool names
-                    tool_names = [t["function"]["name"] for t in tool_definitions]
-                    logger.debug(f"🔧 Tool Names: {tool_names}")
-
-                start_time = time.time()
-                response = llm_with_tools.invoke(self.ctx.conversation_history)
-                elapsed = time.time() - start_time
-
-                if self.config.verbose_logging:
-                    logger.info(f"📥 LLM Response received in {elapsed:.2f}s")
-
-                # SHOW_TOKEN_USAGE
-                if self.config.show_token_usage and getattr(
-                    response, "usage_metadata", None
-                ):
-                    usage = response.usage_metadata
-                    logger.info(
-                        f"🔄 Token Usage: {usage.get('input_tokens', 0)} prompt + {usage.get('output_tokens', 0)} completion"
-                    )
-
-                # SHOW_LLM_REASONING
-                if self.config.show_llm_reasoning and getattr(
-                    response, "additional_kwargs", None
-                ):
-                    reasoning = response.additional_kwargs.get("reasoning_content")
-                    if reasoning:
-                        logger.info(f"🧠 LLM Reasoning: {reasoning}")
-
+            # Check for tool calls
+            tool_calls = self._extract_tool_calls(response)
+            if not tool_calls:
+                # Add LLM response to history before returning
                 self.ctx.conversation_history.append(response)
 
-                # Check for tool calls
-                tool_calls = getattr(response, "tool_calls", [])
-                if not tool_calls:
-                    if self.config.verbose_logging:
-                        logger.warning(
-                            "⚠️ LLM decided NOT to use any tools for this request."
-                        )
-                    final_answer = response.content
-                    break
+                # PHASE 3: Performance monitoring for complete iteration
+                self._monitor_performance(
+                    "Complete tool loop iteration", loop_start_time
+                )
 
-                if self.config.show_tool_details:
-                    logger.info(f"🔧 LLM Generated {len(tool_calls)} Tool Call(s)")
+                return response.content
 
-                # Execute tool calls
-                for tool_call in tool_calls:
-                    name = tool_call["name"]
-                    args = tool_call["args"]
-                    call_id = tool_call.get("id")
+            # Add LLM response to history first
+            self.ctx.conversation_history.append(response)
 
-                    # Check Approval with advanced policy
-                    result = self._handle_tool_execution(name, args)
+            # PHASE 3: Check if we should trim memory before tool execution
+            if self._should_trim_memory():
+                self._trim_conversation_history_incremental()
 
-                    # Add result to history as ToolMessage
-                    self.ctx.conversation_history.append(
-                        ToolMessage(content=json.dumps(result), tool_call_id=call_id)
-                    )
+            # Execute tools with performance optimization
+            tool_start_time = time.time()
 
-                    # AUTOMATIC CONTEXT INJECTION FOR FILE READS
-                    # If the tool was `read_file` and successful, also add it as a HumanMessage
-                    # so the AI definitely "sees" the content in its context window for reasoning.
-                    if (
-                        name == "read_file_content"
-                        and isinstance(result, dict)
-                        and result.get("success")
-                    ):
-                        content = result.get("content", "")
-                        file_path = result.get("file_path", "unknown")
-                        if content:
-                            msg = f"Output of reading file {file_path}:\n```\n{content}\n```"
-                            self.ctx.conversation_history.append(
-                                HumanMessage(content=msg)
-                            )
+            # PHASE 3: Parallel execution (placeholder implementation)
+            results = self._execute_parallel_tools_if_safe(tool_calls)
 
-            except Exception as e:
-                logger.error(f"Error in chat loop iteration: {e}")
-                return f"❌ Error: {str(e)}"
+            # Add ToolMessages for each result
+            for i, (tool_call, result) in enumerate(zip(tool_calls, results)):
+                tool_message = ToolMessage(
+                    content=json.dumps(result), tool_call_id=tool_call.get("id")
+                )
+                self.ctx.conversation_history.append(tool_message)
 
-        # 4. Final Cleanup
-        # Trim and Save
+                # Handle file read context injection - add HumanMessage for file content
+                self._handle_file_read_injection(tool_call["name"], result)
+
+            # Monitor tool execution time
+            self._monitor_performance(
+                f"Tool execution ({len(tool_calls)} tools)", tool_start_time
+            )
+
+        # Log final performance stats
+        final_stats = self._get_performance_stats()
+        logger.info(f"📊 Final performance stats: {final_stats}")
+
+        return final_answer
+
+    def _cleanup_memory(self) -> None:
+        """
+        Clean up conversation history and save to storage.
+        """
+        # Trim conversation history
+        self._trim_conversation_history()
+
+        # Save to persistent storage
+        self._save_conversation_memory()
+
+    # =============================================================================
+    # PHASE 3: PERFORMANCE OPTIMIZATION METHODS
+    # =============================================================================
+
+    def _should_trim_memory(self) -> bool:
+        """
+        Check if conversation history should be trimmed based on current size.
+
+        Returns:
+            bool: True if memory trimming is recommended
+        """
+        current_length = len(self.ctx.conversation_history)
+        max_pairs = self.config.max_history_pairs
+
+        # Calculate maximum safe size (pairs * 2 + system messages)
+        max_safe_size = max_pairs * 2 + 5  # 5 system messages buffer
+
+        # Trim when we're at 150% of safe size to prevent memory bloat
+        return current_length > max_safe_size * 1.5
+
+    def _trim_conversation_history_incremental(self) -> bool:
+        """
+        Incrementally trim conversation history during tool execution.
+
+        Returns:
+            bool: True if trimming was performed
+        """
+        if not self._should_trim_memory():
+            return False
+
+        original_length = len(self.ctx.conversation_history)
+
+        # Trim to a safe level (120% of max_pairs instead of 100%)
+        safe_pairs = int(self.config.max_history_pairs * 1.2)
         self.ctx.conversation_history = trim_history(
-            self.ctx.conversation_history, self.config.max_history_pairs
+            self.ctx.conversation_history, safe_pairs
         )
-        save_memory(self.ctx.conversation_history)
 
-        return str(final_answer)
+        new_length = len(self.ctx.conversation_history)
+        trimmed_count = original_length - new_length
+
+        logger.debug(
+            f"💾 Incremental memory trim: {original_length} → {new_length} messages ({trimmed_count} removed)"
+        )
+        return True
+
+    def _monitor_performance(self, operation: str, start_time: float) -> None:
+        """
+        Monitor and log performance metrics for operations.
+
+        Args:
+            operation: Name of the operation being monitored
+            start_time: Start time of the operation
+        """
+        elapsed = time.time() - start_time
+
+        # Log performance metrics at appropriate levels
+        if elapsed > 5.0:  # Slow operations
+            logger.warning(f"🐌 Slow operation: {operation} took {elapsed:.2f}s")
+        elif elapsed > 1.0:  # Moderate operations
+            logger.info(f"⏱️ Operation timing: {operation} took {elapsed:.2f}s")
+        else:  # Fast operations (debug only)
+            logger.debug(f"⚡ Fast operation: {operation} took {elapsed:.2f}s")
+
+    def _handle_iteration_error(self, error: Exception) -> str:
+        """
+        Handle and format iteration errors.
+
+        Args:
+            error: The exception that occurred
+
+        Returns:
+            str: User-friendly error message
+        """
+        if isinstance(error, InputValidationError):
+            logger.warning(f"Invalid input: {error}")
+            return f"❌ Invalid input: {str(error)}"
+        elif isinstance(error, ToolExecutionError):
+            logger.error(f"Tool execution failed: {error}")
+            return f"❌ Tool execution failed: {str(error)}"
+        elif isinstance(error, LLMTimeoutError):
+            logger.error(f"LLM timeout: {error}")
+            return f"❌ AI request timed out: {str(error)}"
+        else:
+            logger.error(f"Unexpected error in chat loop: {error}", exc_info=True)
+            return "❌ An unexpected error occurred. Please try again."
+
+    def _invoke_llm_with_tools(self) -> Any:
+        """
+        Bind tools to LLM and invoke with conversation context.
+
+        Returns:
+            Any: The LLM response with potential tool calls
+        """
+        if not self.ctx.llm:
+            raise RuntimeError("LLM not initialized")
+
+        start_time = time.time()
+
+        # Bind tools to the LLM
+        tool_definitions = ToolRegistry.get_definitions()
+        llm_with_tools = self.ctx.llm.bind_tools(tool_definitions)
+
+        # Invoke LLM
+        response = llm_with_tools.invoke(self.ctx.conversation_history)
+        elapsed = time.time() - start_time
+
+        logger.info(f"🤖 LLM response in {elapsed:.2f}s")
+
+        # Log token usage if enabled
+        if self.config.show_token_usage and getattr(response, "usage_metadata", None):
+            usage = response.usage_metadata
+            logger.info(
+                f"🔄 Token Usage: {usage.get('input_tokens', 0)} prompt + {usage.get('output_tokens', 0)} completion"
+            )
+
+        # SHOW_LLM_REASONING
+        if self.config.show_llm_reasoning and getattr(
+            response, "additional_kwargs", None
+        ):
+            reasoning = response.additional_kwargs.get("reasoning_content")
+            if reasoning:
+                logger.info(f"🧠 LLM Reasoning: {reasoning}")
+
+        return response
+
+    def _extract_tool_calls(self, response: Any) -> list:
+        """
+        Extract tool calls from LLM response.
+
+        Args:
+            response: The LLM response object
+
+        Returns:
+            list: List of tool call dictionaries
+        """
+        tool_calls = getattr(response, "tool_calls", [])
+        logger.info(f"🔧 LLM generated {len(tool_calls)} tool call(s)")
+        return tool_calls
+
+    def _execute_single_tool(self, tool_call: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute a single tool call with performance optimizations.
+
+        Args:
+            tool_call: Dictionary containing tool name, args, and call_id
+
+        Returns:
+            Dict[str, Any]: The result of tool execution
+        """
+        name = tool_call["name"]
+        args = tool_call["args"]
+
+        logger.info(f"🔧 Executing tool: {name}")
+
+        # Check Approval with advanced policy
+        result = self._handle_tool_execution(name, args)
+
+        # Log tool execution result
+        if result.get("success"):
+            logger.info(f"✅ Tool {name} completed successfully")
+        else:
+            logger.warning(
+                f"⚠️ Tool {name} failed: {result.get('error', 'Unknown error')}"
+            )
+
+        # PHASE 3 OPTIMIZATION: Incremental memory management
+        # Check if we need to trim memory after each tool execution
+        if self._trim_conversation_history_incremental():
+            logger.debug(f"💾 Memory trimmed after {name} execution")
+
+        return result
+
+    def _get_performance_stats(self) -> Dict[str, Any]:
+        """
+        Get current performance statistics for monitoring.
+
+        Returns:
+            Dict[str, Any]: Performance statistics
+        """
+        return {
+            "conversation_length": len(self.ctx.conversation_history),
+            "max_history_pairs": self.config.max_history_pairs,
+            "memory_utilization": len(self.ctx.conversation_history)
+            / (self.config.max_history_pairs * 2 + 5),
+            "timestamp": time.time(),
+        }
+
+    def _execute_parallel_tools_if_safe(self, tool_calls: list) -> list:
+        """
+        Execute independent tools in parallel when safe to do so.
+
+        Args:
+            tool_calls: List of tool call dictionaries
+
+        Returns:
+            list: List of tool execution results
+        """
+        # PHASE 3: For now, implement sequential execution with optimization
+        # In a full implementation, this would analyze tool dependencies
+        # and execute independent tools in parallel using asyncio
+
+        results = []
+        for tool_call in tool_calls:
+            result = self._execute_single_tool(tool_call)
+            results.append(result)
+
+        return results
+
+    def _handle_file_read_injection(
+        self, tool_name: str, result: Dict[str, Any]
+    ) -> None:
+        """
+        Handle automatic context injection for file reads.
+
+        Args:
+            tool_name: The name of the executed tool
+            result: The result dictionary from tool execution
+        """
+        if (
+            tool_name == "read_file_content"
+            and isinstance(result, dict)
+            and result.get("success")
+        ):
+            content = result.get("content", "")
+            file_path = result.get("file_path", "unknown")
+            if content:
+                msg = f"Output of reading file {file_path}:\n```\n{content}\n```"
+                self.ctx.conversation_history.append(HumanMessage(content=msg))
+
+    # =============================================================================
+    # MEMORY MANAGEMENT DECOMPOSITION METHODS
+    # =============================================================================
+
+    def _trim_conversation_history(self) -> None:
+        """
+        Trim conversation history to prevent memory bloat.
+        """
+        max_pairs = self.config.max_history_pairs
+        self.ctx.conversation_history = trim_history(
+            self.ctx.conversation_history, max_pairs
+        )
+
+    def _save_conversation_memory(self) -> None:
+        """
+        Save conversation to persistent storage.
+        """
+        save_memory(self.ctx.conversation_history)
 
     def _handle_tool_execution(self, name: str, args: Dict[str, Any]) -> Dict[str, Any]:
         """Handles security validation, approval prompts, and execution."""
