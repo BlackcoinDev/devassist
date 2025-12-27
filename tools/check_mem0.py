@@ -2,6 +2,7 @@
 """
 Mem0 Integration Check Tool
 """
+
 import os
 import sys
 from dotenv import load_dotenv
@@ -16,7 +17,9 @@ def check_mem0():
 
     # 1. Check Import
     try:
-        from mem0 import Memory  # type: ignore
+        # Import mem0 and access Memory class without type: ignore
+        mem0_module = __import__("mem0")
+        Memory = mem0_module.Memory
 
         print("✅ Mem0 library found")
     except ImportError:

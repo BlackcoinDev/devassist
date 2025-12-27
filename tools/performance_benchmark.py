@@ -6,7 +6,6 @@ Provides automated performance benchmarking, regression detection,
 and performance reporting for production monitoring.
 """
 
-from src.storage.memory import trim_history
 from src.core.chat_loop import ChatLoop
 
 import json
@@ -204,15 +203,19 @@ class PerformanceBenchmark:
 
         successful_executions = 0
 
-        with patch("src.core.chat_loop.ToolRegistry") as mock_registry:
-            mock_registry.execute.return_value = {"success": True, "result": "test"}
+        with patch("src.core.chat_loop.ToolRegistry") as mock_registry_class:
+            mock_registry_instance = mock_registry_class.return_value
+            mock_registry_instance.execute.return_value = {
+                "success": True,
+                "result": "test",
+            }
 
             tool_call = {"name": "test_tool", "args": {}}
 
             for _ in range(self.config["test_parameters"]["iterations"]):
                 try:
-                    result = chat_loop._execute_single_tool(tool_call)
-                    if result.get("success"):
+                    tool_result = chat_loop._execute_single_tool(tool_call)
+                    if tool_result.get("success"):
                         successful_executions += 1
                 except Exception:
                     pass
@@ -229,7 +232,7 @@ class PerformanceBenchmark:
             and memory_growth < self.config["thresholds"]["max_memory_growth"]
         )
 
-        result = BenchmarkResult(
+        benchmark_result = BenchmarkResult(
             name="tool_execution",
             duration=duration,
             memory_usage=memory_growth,
@@ -244,7 +247,7 @@ class PerformanceBenchmark:
         print(
             f"✅ Tool execution: {ops_per_second:.1f} execs/sec, {memory_growth:.2f}MB growth"
         )
-        return result
+        return benchmark_result
 
     def run_performance_monitoring_benchmark(self) -> BenchmarkResult:
         """Benchmark performance monitoring overhead."""
@@ -314,11 +317,12 @@ class PerformanceBenchmark:
 
         with (
             patch("src.core.chat_loop.get_context") as mock_get_ctx,
-            patch("src.core.chat_loop.ToolRegistry") as mock_registry,
+            patch("src.core.chat_loop.ToolRegistry.execute") as mock_execute,
             patch("src.core.chat_loop.save_memory"),
             patch("src.core.context_utils.get_relevant_context", return_value=""),
         ):
             mock_get_ctx.return_value = mock_ctx
+            mock_execute.return_value = {"success": True, "result": "test"}
 
             mock_llm = MagicMock()
             mock_llm.bind_tools.return_value = mock_llm
@@ -516,13 +520,13 @@ class PerformanceBenchmark:
         # Summary
         total_tests = len(results)
         passed_tests = sum(1 for r in results if r.success)
-        report.append(f"## Summary")
+        report.append("## Summary")
         report.append(f"- Tests Run: {total_tests}")
         report.append(f"- Tests Passed: {passed_tests}")
         report.append(f"- Success Rate: {passed_tests / total_tests * 100:.1f}%")
 
         # Individual results
-        report.append("\\n## Detailed Results")
+        report.append("\n## Detailed Results")
         for result in results:
             status = "✅ PASS" if result.success else "❌ FAIL"
             report.append(f"### {result.name} - {status}")
@@ -538,7 +542,7 @@ class PerformanceBenchmark:
 
         # Comparison with baseline
         if comparison:
-            report.append("\\n## Baseline Comparison")
+            report.append("\n## Baseline Comparison")
 
             if comparison["regressions"]:
                 report.append("### ⚠️ Performance Regressions Detected")
@@ -571,14 +575,14 @@ class PerformanceBenchmark:
         if self.config["reporting"]["alert_on_regression"]:
             failed_tests = [r for r in results if not r.success]
             if failed_tests:
-                report.append("\\n## 🚨 ALERTS")
+                report.append("\n## 🚨 ALERTS")
                 report.append("### Failed Tests")
                 for test in failed_tests:
                     report.append(
                         f"- {test.name}: {test.error_message or 'Performance threshold exceeded'}"
                     )
 
-        return "\\n".join(report)
+        return "\n".join(report)
 
     def save_report(self, results: List[BenchmarkResult], comparison: Dict[str, Any]):
         """Save benchmark report."""
@@ -626,7 +630,7 @@ def main():
     report_path = benchmark.save_report(results, comparison)
 
     # Print summary
-    print("\\n" + "=" * 50)
+    print("\n" + "=" * 50)
     print("📊 BENCHMARK SUMMARY")
     print("=" * 50)
 
@@ -636,16 +640,16 @@ def main():
     print(f"Tests Passed: {passed}/{total} ({passed / total * 100:.1f}%)")
 
     if comparison.get("regressions"):
-        print(f"\\n⚠️ Regressions: {len(comparison['regressions'])}")
+        print(f"\n⚠️ Regressions: {len(comparison['regressions'])}")
         for reg in comparison["regressions"]:
             print(f"  - {reg['name']}: {reg['duration_change']:+.1f}% duration")
 
     if comparison.get("improvements"):
-        print(f"\\n🎉 Improvements: {len(comparison['improvements'])}")
+        print(f"\n🎉 Improvements: {len(comparison['improvements'])}")
         for imp in comparison["improvements"]:
             print(f"  - {imp['name']}: {imp['ops_change']:+.1f}% operations/sec")
 
-    print(f"\\n📄 Full report: {report_path}")
+    print(f"\n📄 Full report: {report_path}")
 
     # Exit with error code if benchmarks failed
     sys.exit(0 if passed == total else 1)

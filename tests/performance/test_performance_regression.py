@@ -23,7 +23,6 @@ from unittest.mock import MagicMock, patch
 
 # Add src to path for testing
 import sys
-import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
@@ -234,8 +233,12 @@ class TestMemoryManagementPerformance(PerformanceRegressionTestCase):
         for i in range(int(threshold) + 30):
             self.mock_ctx.conversation_history.append(f"tool_test_{i}")
 
-        with patch("src.core.chat_loop.ToolRegistry") as mock_registry:
-            mock_registry.execute.return_value = {"success": True, "result": "test"}
+        with patch("src.core.chat_loop.ToolRegistry") as mock_registry_class:
+            mock_registry_instance = mock_registry_class.return_value
+            mock_registry_instance.execute.return_value = {
+                "success": True,
+                "result": "test",
+            }
 
             tool_call = {"name": "test_tool", "args": {}}
 
@@ -363,7 +366,7 @@ class TestIntegratedPerformance(PerformanceRegressionTestCase):
         # Mock all dependencies
         with (
             patch("src.core.chat_loop.get_context") as mock_get_ctx,
-            patch("src.core.chat_loop.ToolRegistry") as mock_registry,
+            patch("src.core.chat_loop.ToolRegistry.execute") as mock_execute,
             patch("src.core.chat_loop.save_memory"),
             patch("src.core.context_utils.get_relevant_context", return_value=""),
         ):
@@ -371,6 +374,7 @@ class TestIntegratedPerformance(PerformanceRegressionTestCase):
             mock_ctx.conversation_history = []
             mock_ctx.context_mode = "off"
             mock_get_ctx.return_value = mock_ctx
+            mock_execute.return_value = {"success": True, "result": "test"}
 
             mock_llm = MagicMock()
             mock_llm.bind_tools.return_value = mock_llm
@@ -401,7 +405,7 @@ class TestIntegratedPerformance(PerformanceRegressionTestCase):
         # Mock LLM with tool calls
         with (
             patch("src.core.chat_loop.get_context") as mock_get_ctx,
-            patch("src.core.chat_loop.ToolRegistry") as mock_registry,
+            patch("src.core.chat_loop.ToolRegistry.execute") as mock_execute,
             patch("src.core.chat_loop.save_memory"),
             patch("src.core.context_utils.get_relevant_context", return_value=""),
         ):
@@ -427,7 +431,7 @@ class TestIntegratedPerformance(PerformanceRegressionTestCase):
             mock_llm.invoke.side_effect = [mock_response, final_response]
             mock_ctx.llm = mock_llm
 
-            mock_registry.execute.return_value = {
+            mock_execute.return_value = {
                 "success": True,
                 "result": "tool_output",
             }
@@ -486,7 +490,7 @@ class TestPerformanceRegressionMonitoring(unittest.TestCase):
         with open("performance_baselines.json", "w") as f:
             json.dump(baselines, f, indent=2)
 
-        print(f"📊 Performance baselines established:")
+        print("📊 Performance baselines established:")
         for test_name, time_taken in baselines.items():
             print(f"  {test_name}: {time_taken:.4f}s")
 

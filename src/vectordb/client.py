@@ -82,7 +82,7 @@ class ChromaDBClient:
         session.mount("https://", adapter)
         return session
 
-    def list_collections(self, timeout: int = 10) -> List[Dict[str, Any]]:  # type: ignore
+    def list_collections(self, timeout: int = 10) -> List[Dict[str, Any]]:
         """
         List all collections in the database.
 
@@ -98,9 +98,13 @@ class ChromaDBClient:
         try:
             response = self.session.get(self.collections_url, timeout=timeout)
             logger.debug(f"   Response status: {response.status_code}")
+
             if response.status_code == 200:
                 logger.debug(f"   Found {len(response.json())} collections")
                 return response.json()
+            else:
+                logger.error(f"Unexpected status code: {response.status_code}")
+                return []
         except Exception as e:
             logger.error(f"Error listing collections: {e}")
             return []

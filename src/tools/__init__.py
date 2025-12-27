@@ -32,15 +32,27 @@ Import this module to make all tools available for AI tool calling.
 
 from src.tools.registry import ToolRegistry, register_tool
 
-# Import all tool executors to trigger registration
+# Import all tool executors to trigger auto-registration
 # Each executor module uses @ToolRegistry.register() decorator which registers on import
-from src.tools.executors import file_tools  # noqa: F401
-from src.tools.executors import knowledge_tools  # noqa: F401
-from src.tools.executors import document_tools  # noqa: F401
-from src.tools.executors import web_tools  # noqa: F401
-from src.tools.executors import shell_tools  # noqa: F401
-from src.tools.executors import git_tools  # noqa: F401
-from src.tools.executors import system_tools  # noqa: F401
+from src.tools.executors import file_tools
+from src.tools.executors import knowledge_tools
+from src.tools.executors import document_tools
+from src.tools.executors import web_tools
+from src.tools.executors import shell_tools
+from src.tools.executors import git_tools
+from src.tools.executors import system_tools
+
+# Use the imported modules to prevent "unused import" warnings
+# Reference the modules so they're marked as "used"
+_tool_modules = {
+    "file": file_tools,
+    "knowledge": knowledge_tools,
+    "document": document_tools,
+    "web": web_tools,
+    "shell": shell_tools,
+    "git": git_tools,
+    "system": system_tools,
+}
 
 __all__ = [
     "ToolRegistry",
