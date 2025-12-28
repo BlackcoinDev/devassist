@@ -25,6 +25,7 @@ requests
 rich
 types-Markdown
 types-requests
+types-psutil
 vulture
 mem0ai
 ddgs
@@ -33,3 +34,5 @@ gitpython
 websocket-client
 tenacity
 cachetools
+psutil
+responses
