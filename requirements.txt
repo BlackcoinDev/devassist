@@ -17,6 +17,8 @@ openai
 pydantic
 PyQt6
 pytest
+pytest-cov
+pytest-mock
 pylint
 bandit
 black
