@@ -37,6 +37,17 @@ from src.core.utils import standard_error, standard_success
 
 logger = logging.getLogger(__name__)
 
+
+def _get_sandbox_root() -> str:
+    """Get the sandbox root directory, resolving symlinks."""
+    return os.path.realpath(os.getcwd())
+
+
+def _resolve_path(file_path: str) -> str:
+    """Resolve a file path to its real path, following symlinks."""
+    return os.path.realpath(file_path)
+
+
 # =============================================================================
 # TOOL DEFINITIONS (OpenAI Function Calling Format)
 # =============================================================================
@@ -129,9 +140,9 @@ def execute_read_file(file_path: str) -> Dict[str, Any]:
         logger.debug("🔧 read_file_content: Starting")
         logger.debug(f"   File path: {file_path}")
 
-        # Security check
-        current_dir = os.getcwd()
-        full_path = os.path.abspath(file_path)
+        # Security check - use helper functions to resolve symlinks
+        current_dir = _get_sandbox_root()
+        full_path = _resolve_path(file_path)
 
         if not full_path.startswith(current_dir):
             logger.warning("🚫 read_file_content: Blocked - Path outside directory")
@@ -197,9 +208,9 @@ def execute_write_file(file_path: str, content: str) -> Dict[str, Any]:
         Dict with success status and file metadata
     """
     try:
-        # Security check
-        current_dir = os.getcwd()
-        full_path = os.path.abspath(file_path)
+        # Security check - use helper functions to resolve symlinks
+        current_dir = _get_sandbox_root()
+        full_path = _resolve_path(file_path)
 
         if not full_path.startswith(current_dir):
             return {
@@ -233,9 +244,9 @@ def execute_list_directory(directory_path: str = ".") -> Dict[str, Any]:
         Dict with success status and directory contents
     """
     try:
-        # Security check
-        current_dir = os.getcwd()
-        full_path = os.path.abspath(directory_path)
+        # Security check - use helper functions to resolve symlinks
+        current_dir = _get_sandbox_root()
+        full_path = _resolve_path(directory_path)
 
         if not full_path.startswith(current_dir):
             return {

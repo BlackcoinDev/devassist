@@ -36,17 +36,20 @@ import subprocess
 
 from src.tools.executors.shell_tools import execute_shell
 
+# Common mock path for the new working directory validation
+MOCK_VALIDATE_CWD = "src.tools.executors.shell_tools._validate_working_directory"
+
 
 class TestShellExecuteBasic:
     """Test basic shell execution functionality."""
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
-    def test_execute_shell_success(self, mock_getcwd, mock_run, mock_getenv):
+    def test_execute_shell_success(self, mock_run, mock_getenv, mock_validate_cwd):
         """Test successful command execution."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(
             returncode=0, stdout="Hello World\n", stderr=""
         )
@@ -58,13 +61,15 @@ class TestShellExecuteBasic:
         assert "Hello World" in result["stdout"]
         assert result["stderr"] == ""
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
-    def test_execute_shell_with_error_output(self, mock_getcwd, mock_run, mock_getenv):
+    def test_execute_shell_with_error_output(
+        self, mock_run, mock_getenv, mock_validate_cwd
+    ):
         """Test command execution with stderr output."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(
             returncode=1, stdout="", stderr="Error: file not found\n"
         )
@@ -109,15 +114,15 @@ class TestShellExecuteGUIMode:
         assert "error" in result
         assert "disabled in GUI mode" in result["error"]
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
     def test_execute_shell_allowed_in_cli_mode(
-        self, mock_getcwd, mock_run, mock_getenv
+        self, mock_run, mock_getenv, mock_validate_cwd
     ):
         """Test that shell execution works in CLI mode."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         result = execute_shell("ls -la")
@@ -183,13 +188,13 @@ class TestShellExecuteSecurity:
 class TestShellExecuteTimeout:
     """Test timeout handling."""
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
-    def test_execute_shell_timeout(self, mock_getcwd, mock_run, mock_getenv):
+    def test_execute_shell_timeout(self, mock_run, mock_getenv, mock_validate_cwd):
         """Test command timeout handling."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
         mock_run.side_effect = subprocess.TimeoutExpired("sleep 100", 30)
 
         result = execute_shell("sleep 100", timeout=30)
@@ -197,13 +202,15 @@ class TestShellExecuteTimeout:
         assert "error" in result
         assert "timed out" in result["error"].lower()
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
-    def test_execute_shell_custom_timeout(self, mock_getcwd, mock_run, mock_getenv):
+    def test_execute_shell_custom_timeout(
+        self, mock_run, mock_getenv, mock_validate_cwd
+    ):
         """Test custom timeout is passed to subprocess."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         execute_shell("long_command", timeout=120)
@@ -212,15 +219,15 @@ class TestShellExecuteTimeout:
         call_kwargs = mock_run.call_args[1]
         assert call_kwargs["timeout"] == 120
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
     def test_execute_shell_timeout_clamped_to_max(
-        self, mock_getcwd, mock_run, mock_getenv
+        self, mock_run, mock_getenv, mock_validate_cwd
     ):
         """Test that timeout is clamped to maximum (300s)."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         execute_shell("command", timeout=600)
@@ -228,15 +235,15 @@ class TestShellExecuteTimeout:
         call_kwargs = mock_run.call_args[1]
         assert call_kwargs["timeout"] == 300
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
     def test_execute_shell_timeout_clamped_to_min(
-        self, mock_getcwd, mock_run, mock_getenv
+        self, mock_run, mock_getenv, mock_validate_cwd
     ):
         """Test that timeout is clamped to minimum (30s default)."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         execute_shell("command", timeout=0)
@@ -248,13 +255,15 @@ class TestShellExecuteTimeout:
 class TestShellExecuteOutputTruncation:
     """Test output truncation for large outputs."""
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
-    def test_execute_shell_stdout_truncation(self, mock_getcwd, mock_run, mock_getenv):
+    def test_execute_shell_stdout_truncation(
+        self, mock_run, mock_getenv, mock_validate_cwd
+    ):
         """Test that large stdout is truncated."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
 
         large_output = "x" * (60 * 1024)  # 60KB output
         mock_run.return_value = MagicMock(returncode=0, stdout=large_output, stderr="")
@@ -265,13 +274,15 @@ class TestShellExecuteOutputTruncation:
         assert len(result["stdout"]) < len(large_output)
         assert "truncated" in result["stdout"]
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
-    def test_execute_shell_stderr_truncation(self, mock_getcwd, mock_run, mock_getenv):
+    def test_execute_shell_stderr_truncation(
+        self, mock_run, mock_getenv, mock_validate_cwd
+    ):
         """Test that large stderr is truncated."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
 
         large_error = "e" * (60 * 1024)  # 60KB error output
         mock_run.return_value = MagicMock(returncode=1, stdout="", stderr=large_error)
@@ -281,15 +292,15 @@ class TestShellExecuteOutputTruncation:
         assert result["stderr_truncated"] is True
         assert len(result["stderr"]) < len(large_error)
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
     def test_execute_shell_no_truncation_for_small_output(
-        self, mock_getcwd, mock_run, mock_getenv
+        self, mock_run, mock_getenv, mock_validate_cwd
     ):
         """Test that small outputs are not truncated."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(
             returncode=0, stdout="small output", stderr=""
         )
@@ -303,13 +314,15 @@ class TestShellExecuteOutputTruncation:
 class TestShellExecuteEdgeCases:
     """Test edge cases and error handling."""
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
-    def test_execute_shell_general_exception(self, mock_getcwd, mock_run, mock_getenv):
+    def test_execute_shell_general_exception(
+        self, mock_run, mock_getenv, mock_validate_cwd
+    ):
         """Test handling of general exceptions."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
         mock_run.side_effect = Exception("Unexpected error")
 
         result = execute_shell("command")
@@ -317,30 +330,30 @@ class TestShellExecuteEdgeCases:
         assert "error" in result
         assert "Unexpected error" in result["error"]
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
     def test_execute_shell_returns_command_in_result(
-        self, mock_getcwd, mock_run, mock_getenv
+        self, mock_run, mock_getenv, mock_validate_cwd
     ):
         """Test that executed command is included in result."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/tmp"
+        mock_validate_cwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(returncode=0, stdout="output", stderr="")
 
         result = execute_shell("git status")
 
         assert result["command"] == "git status"
 
+    @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
     @patch("subprocess.run")
-    @patch("os.getcwd")
-    def test_execute_shell_uses_current_directory(
-        self, mock_getcwd, mock_run, mock_getenv
+    def test_execute_shell_uses_validated_directory(
+        self, mock_run, mock_getenv, mock_validate_cwd
     ):
-        """Test that command runs in current directory."""
+        """Test that command runs in validated project directory."""
         mock_getenv.return_value = "cli"
-        mock_getcwd.return_value = "/home/user/project"
+        mock_validate_cwd.return_value = "/home/user/project"
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         execute_shell("ls")

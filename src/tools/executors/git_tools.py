@@ -41,8 +41,9 @@ logger = logging.getLogger(__name__)
 # CONSTANTS
 # =============================================================================
 
-# Safe git commands that are allowed
-SAFE_GIT_COMMANDS = {"status", "diff", "log", "rev-parse", "branch", "show"}
+# Safe git commands that are allowed (read-only operations)
+# Note: 'show' is intentionally excluded as it can expose file contents
+SAFE_GIT_COMMANDS = {"status", "diff", "log", "rev-parse", "branch"}
 
 
 def _validate_git_args(args: List[str]) -> None:

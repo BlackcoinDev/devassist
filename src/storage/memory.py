@@ -29,7 +29,7 @@ to the SQLite database, as well as history trimming to prevent memory bloat.
 import logging
 from typing import List, Optional, Sequence
 
-from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage
+from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage, AIMessage, ToolMessage
 
 from src.core.config import get_config
 from src.core.constants import SYSTEM_PROMPT
@@ -81,11 +81,17 @@ def load_memory() -> List[BaseMessage]:
             # We explicitly IGNORE stored SystemMessages to ensure the AI always
             # uses the latest definitions/capabilities defined in code.
             user_ai_history: List[BaseMessage] = []
-            for msg_type, content in rows:
+            for idx, (msg_type, content) in enumerate(rows):
                 if msg_type == "HumanMessage":
                     user_ai_history.append(HumanMessage(content=content))
                 elif msg_type == "AIMessage":
                     user_ai_history.append(AIMessage(content=content))
+                elif msg_type == "ToolMessage":
+                    # Restore ToolMessage with synthetic tool_call_id
+                    user_ai_history.append(ToolMessage(
+                        content=content,
+                        tool_call_id=f"restored_{idx}"
+                    ))
                 elif msg_type == "SystemMessage":
                     # Skip stored system prompts so we can inject the fresh one
                     pass

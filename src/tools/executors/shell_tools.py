@@ -30,6 +30,7 @@ Commands are validated against allowlist/blocklist before execution.
 import os
 import logging
 import subprocess
+from pathlib import Path
 from typing import Dict, Any
 
 from src.tools.registry import ToolRegistry
@@ -50,7 +51,11 @@ logger = logging.getLogger(__name__)
 
 # Safe environment variables to pass to shell commands
 # Only these variables are exposed to prevent information leakage
-SAFE_ENV_VARS = {"PATH", "HOME", "LANG", "TERM", "SHELL", "USER", "PWD"}
+SAFE_ENV_VARS = {"PATH", "HOME", "LANG", "TERM", "SHELL"}
+
+# Project root directory - captured at module import time
+# All shell commands are restricted to this directory tree
+_PROJECT_ROOT: Path = Path.cwd().resolve()
 
 
 def get_safe_env() -> Dict[str, str]:
@@ -61,6 +66,28 @@ def get_safe_env() -> Dict[str, str]:
     environment variables from being accessible to shell commands.
     """
     return {k: v for k, v in os.environ.items() if k in SAFE_ENV_VARS}
+
+
+def _validate_working_directory() -> Path:
+    """
+    Validate that the current working directory is within the project root.
+
+    Returns:
+        Path: The validated current working directory
+
+    Raises:
+        SecurityError: If cwd is outside the project root
+    """
+    cwd = Path.cwd().resolve()
+    try:
+        cwd.relative_to(_PROJECT_ROOT)
+        return cwd
+    except ValueError:
+        raise SecurityError(
+            f"Shell execution blocked: Current directory '{cwd}' is outside "
+            f"project root '{_PROJECT_ROOT}'. Shell commands are restricted "
+            "to the project directory tree for security."
+        )
 
 
 # =============================================================================
@@ -212,7 +239,7 @@ def execute_shell(command: str, timeout: int = SHELL_DEFAULT_TIMEOUT) -> Dict[st
             capture_output=True,
             text=True,
             timeout=timeout,
-            cwd=os.getcwd(),
+            cwd=_validate_working_directory(),
             env=get_safe_env(),
         )
 

@@ -60,16 +60,19 @@ from src.tools.executors.web_tools import execute_web_search
 class TestFileSystemTools:
     """Test file system operations with proper mocking."""
 
-    @patch("os.getcwd")
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
     @patch("os.path.exists")
     @patch("os.path.isfile")
     @patch("os.path.getsize")
     @patch("builtins.open", new_callable=mock_open, read_data="test content")
     def test_read_file_success(
-        self, mock_file, mock_getsize, mock_isfile, mock_exists, mock_getcwd
+        self, mock_file, mock_getsize, mock_isfile, mock_exists,
+        mock_sandbox_root, mock_resolve_path
     ):
         """Test successful file reading."""
-        mock_getcwd.return_value = "/tmp"
+        mock_sandbox_root.return_value = "/tmp"
+        mock_resolve_path.return_value = "/tmp/test.txt"
         mock_exists.return_value = True
         mock_isfile.return_value = True
         mock_getsize.return_value = 100  # Under 1MB limit
@@ -80,11 +83,13 @@ class TestFileSystemTools:
         assert "test content" in result["content"]
         assert result["size"] == 100
 
-    @patch("os.getcwd")
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
     @patch("os.path.exists")
-    def test_read_file_not_found(self, mock_exists, mock_getcwd):
+    def test_read_file_not_found(self, mock_exists, mock_sandbox_root, mock_resolve_path):
         """Test reading non-existent file."""
-        mock_getcwd.return_value = "/tmp"
+        mock_sandbox_root.return_value = "/tmp"
+        mock_resolve_path.return_value = "/tmp/nonexistent.txt"
         mock_exists.return_value = False
 
         result = execute_read_file("nonexistent.txt")
@@ -92,15 +97,17 @@ class TestFileSystemTools:
         assert "error" in result
         assert "not found" in result["error"].lower()
 
-    @patch("os.getcwd")
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
     @patch("os.path.exists")
     @patch("os.path.isfile")
     @patch("os.path.getsize")
     def test_read_file_too_large(
-        self, mock_getsize, mock_isfile, mock_exists, mock_getcwd
+        self, mock_getsize, mock_isfile, mock_exists, mock_sandbox_root, mock_resolve_path
     ):
         """Test reading file that's too large."""
-        mock_getcwd.return_value = "/tmp"
+        mock_sandbox_root.return_value = "/tmp"
+        mock_resolve_path.return_value = "/tmp/large.txt"
         mock_exists.return_value = True
         mock_isfile.return_value = True
         mock_getsize.return_value = 2 * 1024 * 1024  # 2MB > 1MB limit
@@ -110,12 +117,14 @@ class TestFileSystemTools:
         assert "error" in result
         assert "too large" in result["error"].lower()
 
-    @patch("os.getcwd")
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
     @patch("builtins.open", new_callable=mock_open)
     @patch("os.path.dirname")
-    def test_write_file_success(self, mock_dirname, mock_file, mock_getcwd):
+    def test_write_file_success(self, mock_dirname, mock_file, mock_sandbox_root, mock_resolve_path):
         """Test successful file writing."""
-        mock_getcwd.return_value = "/tmp"
+        mock_sandbox_root.return_value = "/tmp"
+        mock_resolve_path.return_value = "/tmp/test.txt"
         mock_dirname.return_value = "/tmp"
 
         result = execute_write_file("test.txt", "new content")
@@ -185,16 +194,16 @@ class TestFileSystemTools:
 
         assert result["success"] is True
 
-    @patch("os.getcwd")
-    @patch("os.path.abspath")
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
     @patch("os.path.exists")
     @patch("os.path.isfile")
     def test_read_file_not_a_file(
-        self, mock_isfile, mock_exists, mock_abspath, mock_getcwd
+        self, mock_isfile, mock_exists, mock_sandbox_root, mock_resolve_path
     ):
         """Test read_file when path is not a file (e.g., directory)."""
-        mock_getcwd.return_value = "/tmp"
-        mock_abspath.return_value = "/tmp/some_dir"
+        mock_sandbox_root.return_value = "/tmp"
+        mock_resolve_path.return_value = "/tmp/some_dir"
         mock_exists.return_value = True
         mock_isfile.return_value = False  # It's a directory, not a file
 
@@ -203,8 +212,8 @@ class TestFileSystemTools:
         assert "error" in result
         assert "Not a file" in result["error"]
 
-    @patch("os.getcwd")
-    @patch("os.path.abspath")
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
     @patch("os.path.exists")
     @patch("os.path.isfile")
     @patch("os.path.getsize")
@@ -217,12 +226,12 @@ class TestFileSystemTools:
         mock_getsize,
         mock_isfile,
         mock_exists,
-        mock_abspath,
-        mock_getcwd,
+        mock_sandbox_root,
+        mock_resolve_path,
     ):
         """Test read_file with binary file causing UnicodeDecodeError."""
-        mock_getcwd.return_value = "/tmp"
-        mock_abspath.return_value = "/tmp/binary.bin"
+        mock_sandbox_root.return_value = "/tmp"
+        mock_resolve_path.return_value = "/tmp/binary.bin"
         mock_exists.return_value = True
         mock_isfile.return_value = True
         mock_getsize.return_value = 100
@@ -232,20 +241,20 @@ class TestFileSystemTools:
         assert "error" in result
         assert "Cannot read binary file" in result["error"]
 
-    @patch("os.getcwd")
-    @patch("os.path.abspath")
-    def test_write_file_path_traversal(self, mock_abspath, mock_getcwd):
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
+    def test_write_file_path_traversal(self, mock_sandbox_root, mock_resolve_path):
         """Test write_file path traversal protection."""
-        mock_getcwd.return_value = "/app/workdir"
-        mock_abspath.return_value = "/etc/passwd"  # Outside workdir
+        mock_sandbox_root.return_value = "/app/workdir"
+        mock_resolve_path.return_value = "/etc/passwd"  # Outside workdir
 
         result = execute_write_file("../../etc/passwd", "malicious")
 
         assert "error" in result
         assert "Access denied" in result["error"]
 
-    @patch("os.getcwd")
-    @patch("os.path.abspath")
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
     @patch("os.path.dirname")
     @patch("os.path.exists")
     @patch("os.makedirs")
@@ -256,12 +265,12 @@ class TestFileSystemTools:
         mock_makedirs,
         mock_exists,
         mock_dirname,
-        mock_abspath,
-        mock_getcwd,
+        mock_sandbox_root,
+        mock_resolve_path,
     ):
         """Test write_file creating parent directory."""
-        mock_getcwd.return_value = "/tmp"
-        mock_abspath.return_value = "/tmp/newdir/file.txt"
+        mock_sandbox_root.return_value = "/tmp"
+        mock_resolve_path.return_value = "/tmp/newdir/file.txt"
         mock_dirname.return_value = "/tmp/newdir"
         mock_exists.return_value = False  # Directory doesn't exist
 
@@ -270,25 +279,25 @@ class TestFileSystemTools:
         mock_makedirs.assert_called_once_with("/tmp/newdir", exist_ok=True)
         assert result["success"] is True
 
-    @patch("os.getcwd")
-    @patch("os.path.abspath")
-    def test_list_directory_path_traversal(self, mock_abspath, mock_getcwd):
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
+    def test_list_directory_path_traversal(self, mock_sandbox_root, mock_resolve_path):
         """Test list_directory path traversal protection."""
-        mock_getcwd.return_value = "/app/workdir"
-        mock_abspath.return_value = "/etc"  # Outside workdir
+        mock_sandbox_root.return_value = "/app/workdir"
+        mock_resolve_path.return_value = "/etc"  # Outside workdir
 
         result = execute_list_directory("../../etc")
 
         assert "error" in result
         assert "Access denied" in result["error"]
 
-    @patch("os.getcwd")
-    @patch("os.path.abspath")
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
     @patch("os.path.exists")
-    def test_list_directory_not_found(self, mock_exists, mock_abspath, mock_getcwd):
+    def test_list_directory_not_found(self, mock_exists, mock_sandbox_root, mock_resolve_path):
         """Test list_directory with non-existent directory."""
-        mock_getcwd.return_value = "/tmp"
-        mock_abspath.return_value = "/tmp/missing"
+        mock_sandbox_root.return_value = "/tmp"
+        mock_resolve_path.return_value = "/tmp/missing"
         mock_exists.return_value = False
 
         result = execute_list_directory("missing")
@@ -296,16 +305,16 @@ class TestFileSystemTools:
         assert "error" in result
         assert "Directory not found" in result["error"]
 
-    @patch("os.getcwd")
-    @patch("os.path.abspath")
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
     @patch("os.path.exists")
     @patch("os.path.isdir")
     def test_list_directory_not_a_directory(
-        self, mock_isdir, mock_exists, mock_abspath, mock_getcwd
+        self, mock_isdir, mock_exists, mock_sandbox_root, mock_resolve_path
     ):
         """Test list_directory when path is a file, not directory."""
-        mock_getcwd.return_value = "/tmp"
-        mock_abspath.return_value = "/tmp/file.txt"
+        mock_sandbox_root.return_value = "/tmp"
+        mock_resolve_path.return_value = "/tmp/file.txt"
         mock_exists.return_value = True
         mock_isdir.return_value = False  # It's a file
 
@@ -314,17 +323,17 @@ class TestFileSystemTools:
         assert "error" in result
         assert "Not a directory" in result["error"]
 
-    @patch("os.getcwd")
-    @patch("os.path.abspath")
+    @patch("src.tools.executors.file_tools._resolve_path")
+    @patch("src.tools.executors.file_tools._get_sandbox_root")
     @patch("os.path.exists")
     @patch("os.path.isdir")
     @patch("os.listdir", side_effect=Exception("Permission denied"))
     def test_list_directory_exception(
-        self, mock_listdir, mock_isdir, mock_exists, mock_abspath, mock_getcwd
+        self, mock_listdir, mock_isdir, mock_exists, mock_sandbox_root, mock_resolve_path
     ):
         """Test list_directory with general exception."""
-        mock_getcwd.return_value = "/tmp"
-        mock_abspath.return_value = "/tmp/restricted"
+        mock_sandbox_root.return_value = "/tmp"
+        mock_resolve_path.return_value = "/tmp/restricted"
         mock_exists.return_value = True
         mock_isdir.return_value = True
 
