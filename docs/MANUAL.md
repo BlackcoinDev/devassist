@@ -1,4 +1,4 @@
- # AI Assistant Manual v0.3.0
+# AI Assistant Manual v0.3.0
 
 Welcome to your local AI Assistant! This manual provides a comprehensive guide
 to understanding and using the advanced features of your AI companion, including
@@ -98,6 +98,7 @@ security model:
 - **Safe Commands**: `git`, `npm`, `python`, `pytest`, etc. run without
   confirmation
 - **Blocked Commands**: `rm`, `sudo`, `chmod`, etc. are always denied
+- **Safe Environment**: Commands run in a sanitized environment (sensitive env vars removed)
 - **Unknown Commands**: Require user confirmation before execution
 
 **Example**:
@@ -152,6 +153,22 @@ Control which tools require confirmation:
 | `never`  | Block execution entirely    |
 
 **Configuration**: Edit `config/tool_approvals.json` to customize.
+
+### 9. Resource Limits & Security
+
+To prevent abuse and ensure stability, the following limits enforce fair usage:
+
+| Tool Category | Rate Limit | Reset Period |
+| ------------- | ---------- | ------------ |
+| **Shell**     | 10 calls   | 1 minute     |
+| **Git**       | 20 calls   | 1 minute     |
+| **File**      | 60 calls   | 1 minute     |
+| **Web**       | 10 calls   | 1 minute     |
+
+> [!WARNING]
+> If you exceed these limits, the tool will fail with a `RateLimitError`. Wait a minute and try again.
+>
+> **Security Audit**: All rate limit violations, tool approvals, and blocked commands are logged to the secure audit log for review.
 
 ---
 

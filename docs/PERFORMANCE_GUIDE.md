@@ -21,6 +21,7 @@ def _should_trim_memory(self) -> bool:
 ```
 
 **Key Metrics:**
+
 - **Trigger Threshold**: 150% of safe conversation size
 - **Trim Level**: 120% of maximum history pairs
 - **Performance**: <10ms for trimming operations
@@ -44,6 +45,7 @@ def _monitor_performance(self, operation: str, start_time: float):
 ```
 
 **Performance Categories:**
+
 - **Fast Operations** (<1s): DEBUG level logging
 - **Moderate Operations** (1-5s): INFO level logging
 - **Slow Operations** (>5s): WARNING level logging
@@ -58,6 +60,19 @@ Smart memory management with adaptive thresholds:
 | **Trim Trigger** | `safe_size * 1.5` | When to start trimming |
 | **Trim Level** | `max_pairs * 1.2` | Where to trim to |
 | **Emergency Trim** | `safe_size * 2.0` | Force trim for safety |
+
+#### 4. Caching and Rate Limiting
+
+New in v0.3.0, these features ensure system stability:
+
+- **Embedding Cache**: LRU cache (max 5000 items) for expensive embedding generations.
+  - **Hit Time**: <1ms
+  - **Save Interval**: Every 100 items (auto-save)
+  - **File Permissions**: `0o600` (Owner-only)
+
+- **Rate Limiting**: Token bucket algorithm to prevent abuse.
+  - **Overhead**: <0.1ms per check
+  - **Impact**: Negligible on valid traffic; blocks abusive traffic instantly.
 
 ## Performance Benchmarks
 
@@ -99,6 +114,7 @@ Smart memory management with adaptive thresholds:
 ### 1. Memory Management Optimization
 
 #### For Short Conversations (< 100 messages)
+
 ```python
 # No special optimization needed
 chat_loop = ChatLoop()
@@ -106,6 +122,7 @@ chat_loop = ChatLoop()
 ```
 
 #### For Medium Conversations (100-1000 messages)
+
 ```python
 # Configure for optimal memory management
 config = {
@@ -116,6 +133,7 @@ config = {
 ```
 
 #### For Long Conversations (1000+ messages)
+
 ```python
 # Aggressive memory management
 config = {
@@ -128,6 +146,7 @@ config = {
 ### 2. Performance Monitoring Setup
 
 #### Development Environment
+
 ```python
 import os
 import logging
@@ -146,6 +165,7 @@ logging.basicConfig(
 ```
 
 #### Production Environment
+
 ```python
 import os
 import logging
@@ -166,6 +186,7 @@ logging.basicConfig(
 ### 3. Tool Execution Optimization
 
 #### Sequential Execution (Current)
+
 ```python
 # Default - safe and reliable
 results = []
@@ -175,6 +196,7 @@ for tool_call in tool_calls:
 ```
 
 #### Parallel Execution (Future)
+
 ```python
 # Planned for future versions
 import asyncio
@@ -188,6 +210,7 @@ async def execute_tools_parallel(tool_calls):
 ### 4. Context Optimization
 
 #### Automatic Context Management
+
 ```python
 # System handles automatically based on configuration
 chat_loop = ChatLoop()
@@ -199,6 +222,7 @@ chat_loop = ChatLoop()
 ```
 
 #### Manual Context Control
+
 ```python
 # For specific performance requirements
 class OptimizedChatLoop(ChatLoop):
@@ -214,6 +238,7 @@ class OptimizedChatLoop(ChatLoop):
 ### 1. Real-time Monitoring
 
 #### Performance Statistics Collection
+
 ```python
 def monitor_performance():
     chat_loop = ChatLoop()
@@ -231,6 +256,7 @@ def monitor_performance():
 ```
 
 #### Memory Leak Detection
+
 ```python
 def detect_memory_leaks():
     initial_memory = get_memory_usage()
@@ -249,6 +275,7 @@ def detect_memory_leaks():
 ### 2. Performance Dashboards
 
 #### Key Metrics to Track
+
 - **Response Time**: Average, 95th percentile, 99th percentile
 - **Memory Usage**: Current, peak, trend
 - **Throughput**: Messages per minute, tool executions per minute
@@ -256,6 +283,7 @@ def detect_memory_leaks():
 - **Resource Utilization**: CPU, memory, disk I/O
 
 #### Sample Monitoring Code
+
 ```python
 class PerformanceMonitor:
     def __init__(self):
@@ -288,6 +316,7 @@ class PerformanceMonitor:
 ### 1. Load Testing
 
 #### Basic Load Test
+
 ```python
 import threading
 import time
@@ -312,6 +341,7 @@ load_test(num_users=10, duration_seconds=300)  # 10 users for 5 minutes
 ```
 
 #### Stress Testing
+
 ```python
 def stress_test():
     chat_loop = ChatLoop()
@@ -332,6 +362,7 @@ def stress_test():
 ### 2. Performance Regression Testing
 
 #### Automated Benchmarks
+
 ```python
 def run_performance_benchmark():
     """Run comprehensive performance benchmarks."""
@@ -369,6 +400,7 @@ for operation, current_time in current_performance.items():
 ### 3. Memory Testing
 
 #### Memory Leak Detection
+
 ```python
 def test_memory_leaks():
     initial_memory = get_memory_usage()
@@ -387,6 +419,7 @@ def test_memory_leaks():
 ```
 
 #### Memory Efficiency Testing
+
 ```python
 def test_memory_efficiency():
     chat_loop = ChatLoop()
@@ -411,6 +444,7 @@ def test_memory_efficiency():
 ### 1. System Configuration
 
 #### Memory Settings
+
 ```python
 # Optimal settings for different use cases
 
@@ -443,6 +477,7 @@ HIGH_THROUGHPUT_CONFIG = {
 ```
 
 #### Performance Tuning
+
 ```python
 # Tune for specific workloads
 
@@ -468,6 +503,7 @@ class TunedChatLoop(ChatLoop):
 ### 2. Resource Optimization
 
 #### CPU Optimization
+
 ```python
 # Minimize CPU usage
 
@@ -505,6 +541,7 @@ async def async_context_injection(user_input: str) -> str:
 ```
 
 #### Memory Optimization
+
 ```python
 # Minimize memory usage
 
@@ -529,12 +566,15 @@ class MemoryOptimizedChatLoop(ChatLoop):
 ### 1. Common Performance Issues
 
 #### Slow Response Times
+
 **Symptoms:**
+
 - Response times > 5 seconds
 - High CPU usage
 - Timeout errors
 
 **Causes & Solutions:**
+
 ```python
 # 1. LLM Timeout
 if "timeout" in str(error):
@@ -553,12 +593,15 @@ if "memory" in str(error):
 ```
 
 #### High Memory Usage
+
 **Symptoms:**
+
 - Memory usage > 80% of available
 - Out of memory errors
 - System slowdown
 
 **Solutions:**
+
 ```python
 # 1. Increase trimming frequency
 chat_loop.config.trim_threshold = 1.2  # More aggressive
@@ -574,12 +617,15 @@ class AggressiveCleanup(ChatLoop):
 ```
 
 #### Performance Regressions
+
 **Symptoms:**
+
 - Gradual performance degradation
 - Increased response times over time
 - Memory leaks
 
 **Detection & Resolution:**
+
 ```python
 def detect_performance_regression():
     # Compare current performance with baseline
@@ -597,6 +643,7 @@ def detect_performance_regression():
 ### 2. Performance Debugging
 
 #### Debug Mode
+
 ```python
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -625,6 +672,7 @@ class DebugChatLoop(ChatLoop):
 ```
 
 #### Performance Profiling
+
 ```python
 import cProfile
 import pstats

@@ -39,6 +39,33 @@ class TestRateLimiter:
         # Should be allowed again
         assert limiter.check() is True
 
+    def test_rate_limit_status(self):
+        """Test tracking of rate limit status."""
+        limiter = RateLimiter(max_calls=5, period_seconds=60)
+
+        # Make some requests
+        for _ in range(3):
+            limiter.check()
+
+        status = limiter.get_status()
+        assert status is not None
+        assert status["calls_in_period"] == 3
+        assert status["max_calls"] == 5
+        assert status["remaining"] == 2
+        assert status["period_seconds"] == 60
+
+    def test_rate_limit_reset(self):
+        """Test manually resetting the rate limiter."""
+        limiter = RateLimiter(max_calls=2, period_seconds=60)
+        limiter.check()
+        limiter.check()
+
+        with pytest.raises(RateLimitError):
+            limiter.check()
+
+        limiter.reset()
+        assert limiter.check() is True
+
 
 class TestRateLimitManager:
     """Test the central RateLimitManager."""
@@ -73,6 +100,7 @@ class TestRateLimitManager:
 
         RateLimitManager.check_limit("shell")
         status = RateLimitManager.get_status("shell")
+        assert status is not None
         assert status["max_calls"] == 10
 
     def test_check_limit_prefix_matching(self):
@@ -81,6 +109,7 @@ class TestRateLimitManager:
 
         RateLimitManager.check_limit("git_status")
         status = RateLimitManager.get_status("git_status")
+        assert status is not None
         assert status["max_calls"] == 20
 
     def test_check_limit_raises_error(self):

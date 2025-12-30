@@ -600,6 +600,33 @@ def get_user_conversations(user_id: str, session_id: str = None):
 
 ```
 
+### Rate Limiting Architecture
+
+Centralized rate limiting prevents abuse:
+
+```python
+class RateLimitManager:
+    # Singleton managing per-tool Limiters
+    limits = {
+        "shell": (10, 60),  # 10 calls / min
+        "git": (20, 60),    # 20 calls / min
+        "file": (60, 60),   # 60 calls / min
+        "web": (10, 60)     # 10 calls / min
+    }
+
+    def check_limit(tool_name):
+        # Checks Token Bucket / Window
+        # Raises RateLimitError if exceeded
+        # Logs to AuditLogger
+```
+
+### Audit Logging
+
+Security events are logged to `audit.log` via `AuditLogger`:
+
+- **Events**: Tool approvals, blocks, rate limit hits, permission denials
+- **Format**: `TIMESTAMP [LEVEL] User:SYSTEM Action:EVENT Resource:TARGET Details`
+
 ## 🧪 Testing Architecture
 
 ### Test Suite Overview

@@ -62,7 +62,7 @@ python launcher.py
 
 ```bash
 
-# Run all tests (555 tests, ~15s execution)
+# Run all tests (~730 tests, ~45s execution)
 
 uv run pytest
 
@@ -545,7 +545,7 @@ BLOCKED_COMMANDS: Set[str] = {
 
 - **Python 3.14**: Not compatible yet—use Python 3.13.x (latest available)
 - **GUI Tests**: Skipped by default (10 tests) to prevent PyQt6 segfaults
-- **Linting Issues**: 32 remaining issues (25 MyPy, 5 Vulture, 5 Flake8) - non-blocking
+- **Linting Issues**: 0 remaining issues (All MyPy, Vulture, Flake8 checks passed)
 
 ### Performance Expectations
 

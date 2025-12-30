@@ -9,9 +9,15 @@ migration information for the AI Assistant application.
 
 **v0.3.0 is fully backward compatible with v0.2.0 and earlier versions**:
 
-- ✅ **No breaking changes** - All existing functionality preserved
-- ✅ **Seamless upgrade** - No database migration required
 - ✅ **Feature addition only** - New features added without disrupting existing ones
+
+### ⚠️ Important Changes (v0.3.0)
+
+While effectively backward compatible, v0.3.0 introduces stricter security limits:
+
+1. **Rate Limiting**: Tools may now raise `RateLimitError` if used too aggressively (e.g., >10 shell calls/min).
+2. **File Permissions**: Cache files are now created with `0o600` (owner-only) permissions.
+3. **Shell Environment**: Subprocesses no longer inherit full environment variables (keys/secrets are stripped).
 
 ### New Features in v0.3.0
 
@@ -45,6 +51,11 @@ The following features have been **added** and are **opt-in**:
    - Configuration via `config/tool_approvals.json`
    - Default settings provide secure defaults
    - **No changes required** - sensible defaults provided
+
+6. **Enhanced Security & Caching**
+   - **Audit Logging**: Security events logged to `audit.log`
+   - **Rate Limiting**: Centralized limits for all tools
+   - **Persistent Cache**: LRU caching for embeddings with auto-save
 
 ### Configuration Changes (Optional)
 

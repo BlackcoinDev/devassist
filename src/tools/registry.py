@@ -125,9 +125,13 @@ class ToolRegistry:
         """
         cfg = _get_config()
 
-        executor = cls._tools.get(name)
-        if executor is None:
+        if name not in cls._tools:
             return {"error": f"Unknown tool: {name}"}
+        executor = cls._tools[name]
+
+        # Check rate limit
+        from src.security.rate_limiter import RateLimitManager
+        from src.security.exceptions import RateLimitError
 
         # Check approval
         try:
@@ -142,9 +146,6 @@ class ToolRegistry:
                 }
 
             # Check rate limit
-            from src.security.rate_limiter import RateLimitManager
-            from src.security.exceptions import RateLimitError
-
             RateLimitManager.check_limit(name)
 
             if mode == "ask":

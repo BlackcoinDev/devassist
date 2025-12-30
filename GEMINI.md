@@ -72,7 +72,7 @@ The AI autonomously calls 13 core tools for various operations:
 
 ### Testing
 
-* **Total Tests**: 511 (501 active + 10 GUI skipped).
+* **Total Tests**: ~730 (functional + security + integration).
 * **Execution**: `uv run pytest`.
 * **Coverage**: 90%+ target across all modular components.
 
@@ -83,5 +83,7 @@ The AI autonomously calls 13 core tools for various operations:
 * `src/gui.py`: PyQt6 graphical interface.
 * `src/core/chat_loop.py`: The agentic loop orchestrator.
 * `src/tools/approval.py`: The Tool Approval Manager.
+* `src/security/rate_limiter.py`: Centralized Rate Limit Manager.
+* `src/security/audit_logger.py`: Security Audit Logger.
 * `config/mcp_servers.json`: MCP server definitions.
 * `config/tool_approvals.json`: Approval policy configuration.

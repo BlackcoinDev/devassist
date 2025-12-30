@@ -47,7 +47,7 @@ class RateLimiter:
     rate limits for different operations.
     """
 
-    def __init__(self, max_calls: int = 10, period_seconds: int = 60):
+    def __init__(self, max_calls: int = 10, period_seconds: float = 60.0):
         """
         Initialize rate limiter.
 

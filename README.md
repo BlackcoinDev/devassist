@@ -15,6 +15,8 @@ parity between GUI and CLI interfaces.
 - **📂 Git Integration**: AI tools for git status, diff, log, show operations
 - **🔍 Code Search**: Fast ripgrep-based regex search across codebase
 - **🛡️ Tool Approval System**: Per-tool ask/always/never permission controls
+- **🔒 Rate Limiting**: Centralized rate limiting for Shell (10/min), Git (20/min), and File (60/min) operations
+- **⚡ Enhanced Caching**: Persistent LRU cache for embeddings and queries with file permission hardening (0o600)
 
 ### Core Features
 
@@ -74,8 +76,8 @@ parity between GUI and CLI interfaces.
 
 - **Unit Tests**: Isolated module testing with mock dependencies
 - **Integration Tests**: Component interaction and workflow testing
-- **Security Tests**: Path validation, input sanitization, rate limiting
-- **Performance Tests**: Latency benchmarks and stress testing
+- **Security Tests**: Path validation, input sanitization, rate limiting, and permission enforcement
+- **Performance Tests**: Latency benchmarks, cache hit rates, and stress testing
 
 **New Module Structure:**
 
@@ -236,7 +238,24 @@ Control which tools require confirmation before execution:
     "code_search": "always"
   }
 }
+    "code_search": "always"
+  }
+}
 ```
+
+### Rate Limiting
+
+To prevent abuse and resource exhaustion, tool execution is rate-limited:
+
+| Tool Category | Limit | Period |
+| ------------- | ----- | ------ |
+| **Shell** | 10 calls | 1 minute |
+| **Git** | 20 calls | 1 minute |
+| **File Systems** | 60 calls | 1 minute |
+| **Web** | 10 calls | 1 minute |
+| **Default** | 30 calls | 1 minute |
+
+Violations are logged to the security audit log.
 
 ## 📄 Document Processing Workflow
 

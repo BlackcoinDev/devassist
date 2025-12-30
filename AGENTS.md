@@ -30,8 +30,8 @@
 - **Run integration tests**: `uv run pytest tests/integration/`
 - **Run GUI tests manually**: `RUN_GUI_TESTS=1 uv run pytest tests/unit/test_gui.py`
 - **Test framework**: pytest 9.0.1 with pytest-cov and pytest-mock
-- **Test structure**: 511 tests total (501 active + 10 GUI skipped), all tests passing
-- **Coverage**: 90%+ coverage across all src/* modules, comprehensive tool testing, GUI tests skipped to prevent crashes
+- **Test structure**: ~730 tests total (functional + security + integration), all tests passing
+- **Coverage**: 90%+ target across all modular components, comprehensive tool testing
 - **Modular coverage**: Includes src/core, src/storage, src/security, src/vectordb, src/commands, src/tools
 
 ## Lint Commands
@@ -227,9 +227,9 @@ uv run pytest --pdb
 
 #### Current Status (v0.3.0)
 
-- **Total tests**: 511 (501 active + 10 GUI skipped)
-- **Pass rate**: 100% (501/501 active tests passing)
-- **Execution time**: ~35 seconds
+- **Total tests**: ~730 (functional + security + integration)
+- **Pass rate**: 100% (All active tests passing)
+- **Execution time**: ~45 seconds
 - **Coverage**: 90%+ including comprehensive tool testing
 - **CI/CD ready**: No external dependencies required
 
@@ -695,9 +695,9 @@ SHOW_TOOL_DETAILS=true     # Tool execution details with timing
 - **Smart Chunking**: 1500-char chunks with paragraph-aware boundaries
 - **Quality Filtering**: Automatic filtering of binary files and low-value content
 - **Type Safety**: Resolved MyPy errors, added type annotations throughout
-- **Linting**: Fixed critical errors, maintained clean codebase
-- **Testing Infrastructure**: Comprehensive tool testing (13/13 AI tools), 555 tests total, 100% pass rate, 90%+ coverage
-- **Code Quality**: Good overall with some linting issues to address (32 total issues)
+- **Linting**: Fixed critical errors, maintained clean codebase (0 issues)
+- **Testing Infrastructure**: Comprehensive tool testing, ~730 tests total, 100% pass rate
+- **Code Quality**: Excellent (0 linting issues)
 - **Documentation**: Updated all files to reflect current capabilities
 - **Test Coverage**: Excellent coverage with 100% pass rate on all tests
 

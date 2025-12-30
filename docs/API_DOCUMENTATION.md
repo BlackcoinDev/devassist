@@ -53,6 +53,7 @@ def run_iteration(self, user_input: str) -> str:
 ```
 
 **Example Usage:**
+
 ```python
 chat_loop = ChatLoop()
 response = chat_loop.run_iteration("What files are in the current directory?")
@@ -80,6 +81,7 @@ def _validate_and_sanitize_input(self, user_input: str) -> str:
 ```
 
 **Security Features:**
+
 - Empty input detection
 - Length validation (max 10,000 characters)
 - Control character removal
@@ -103,6 +105,7 @@ def _inject_context(self, user_input: str) -> str:
 ```
 
 **Features:**
+
 - Context mode detection (auto/on/off)
 - Context retrieval from ChromaDB
 - Automatic context injection for enhanced responses
@@ -122,6 +125,7 @@ def _execute_tool_loop(self) -> str:
 ```
 
 **Features:**
+
 - Maximum iteration limits (5 iterations)
 - Performance monitoring
 - Incremental memory management
@@ -139,6 +143,7 @@ def _cleanup_memory(self) -> None:
 ```
 
 **Features:**
+
 - Conversation history trimming
 - Memory persistence
 - Performance monitoring
@@ -161,6 +166,7 @@ def _handle_iteration_error(self, error: Exception) -> str:
 ```
 
 **Error Types Handled:**
+
 - `InputValidationError`: Invalid input errors
 - `ToolExecutionError`: Tool execution failures
 - `LLMTimeoutError`: LLM request timeouts
@@ -183,6 +189,7 @@ def _should_trim_memory(self) -> bool:
 ```
 
 **Logic:**
+
 - Calculates memory utilization ratio
 - Triggers at 150% of safe size
 - Prevents memory bloat
@@ -202,6 +209,7 @@ def _trim_conversation_history_incremental(self) -> bool:
 ```
 
 **Features:**
+
 - Real-time memory management
 - Adaptive trimming thresholds
 - Performance monitoring
@@ -222,6 +230,7 @@ def _monitor_performance(self, operation: str, start_time: float) -> None:
 ```
 
 **Logging Levels:**
+
 - `WARNING`: Operations > 5 seconds
 - `INFO`: Operations 1-5 seconds
 - `DEBUG`: Operations < 1 second
@@ -241,6 +250,7 @@ def _get_performance_stats(self) -> Dict[str, Any]:
 ```
 
 **Statistics Include:**
+
 - Conversation length
 - Memory utilization
 - Timestamp
@@ -262,6 +272,7 @@ def _invoke_llm_with_tools(self) -> Any:
 ```
 
 **Features:**
+
 - Tool binding
 - LLM invocation
 - Performance monitoring
@@ -302,10 +313,41 @@ def _execute_single_tool(self, tool_call: Dict[str, Any]) -> Dict[str, Any]:
 ```
 
 **Features:**
+
 - Tool approval checking
 - Execution with security validation
 - Memory management
 - Performance monitoring
+
+- Performance monitoring
+
+### Security Classes (New in v0.3.0)
+
+#### `RateLimitManager` (Singleton)
+
+Manages rate limits for all tools.
+
+```python
+class RateLimitManager:
+    def check_limit(self, tool_name: str) -> None:
+        """
+        Check if a tool can be executed.
+        Raises RateLimitError if limit exceeded.
+        """
+
+    def get_status(self, tool_name: str) -> dict:
+        """Returns {'current': int, 'limit': int, 'remaining': int, 'reset': float}."""
+```
+
+#### `AuditLogger` (Singleton)
+
+Logs security-critical events (approvals, denials, shell execution).
+
+```python
+class AuditLogger:
+    def log_event(self, event_type: str, user: str, action: str, resource: str, details: str = None):
+        """Logs a secure event to audit.log."""
+```
 
 ## Exception Classes
 
@@ -319,6 +361,7 @@ class InputValidationError(Exception):
 ```
 
 **Common Causes:**
+
 - Empty input
 - Input exceeds maximum length (10,000 characters)
 - Invalid characters
@@ -333,6 +376,7 @@ class ToolExecutionError(Exception):
 ```
 
 **Common Causes:**
+
 - Tool not found
 - Tool execution timeout
 - Tool permission denied
@@ -348,6 +392,7 @@ class LLMTimeoutError(Exception):
 ```
 
 **Common Causes:**
+
 - LLM service unavailable
 - Request timeout
 - Network issues

@@ -544,6 +544,7 @@ tests/
 │   ├── test_system_tools.py             # System tool tests
 │   ├── test_tools.py                    # General tool tests
 │   ├── test_gui.py                      # GUI tests (skipped by default)
+│   ├── test_rate_limiter.py             # Rate limiting tests (Consolidated)
 │   └── ... (more unit tests)
 
 ├── integration/                    # Integration tests (40 tests)
@@ -555,10 +556,10 @@ tests/
 │   ├── test_performance.py              # Performance tests
 │   └── test_deepwiki_mcp.py             # MCP integration (skipped by default)
 
-├── security/                       # Security-specific tests (38 tests)
+├── security/                       # Security-specific tests (33 tests)
 │   ├── test_input_sanitizer.py          # Input sanitization tests
 │   ├── test_path_security.py            # Path security tests
-│   └── test_rate_limiter.py             # Rate limiting tests
+│   └── test_audit_logger.py             # Audit logging tests
 
 └── conftest.py                     # Shared fixtures and configuration
 ```
@@ -567,20 +568,22 @@ tests/
 
 | Category              | Current | Target | Status |
 | --------------------- | ------- | ------ | ------ |
-| Unit Tests            | 590     | 590    | ✅ COMPLETE |
+| Unit Tests            | 650+    | 650+   | ✅ COMPLETE |
 | Integration Tests     | 40      | 40     | ✅ COMPLETE |
-| Security Tests        | 38      | 38     | ✅ COMPLETE |
-| **TOTAL**             | **668** | **668** | ✅ **COMPLETE** |
+| Security Tests        | 33      | 33     | ✅ COMPLETE |
+| **TOTAL**             | **730+**| **730+**| ✅ **COMPLETE** |
 
 ### 6.3 Test Execution Categories
 
-#### Standard Tests (Recommended for Development):
+#### Standard Tests (Recommended for Development)
+
 ```bash
 # Fast, safe tests (excludes GUI and MCP per pytest.ini)
 uv run pytest tests/ -q
 ```
 
-#### Security Tests (Critical for Production):
+#### Security Tests (Critical for Production)
+
 ```bash
 # All security-related functionality
 uv run pytest tests/security/ -v
@@ -589,7 +592,8 @@ uv run pytest tests/security/ -v
 uv run pytest tests/security/ tests/unit/test_shell_tools.py tests/unit/test_git_tools.py -v
 ```
 
-#### Individual Test Categories:
+#### Individual Test Categories
+
 ```bash
 # Unit tests only
 uv run pytest tests/unit/ -q
@@ -604,7 +608,8 @@ uv run pytest tests/unit/test_system_tools.py -v
 uv run pytest tests/unit/test_tools.py -v
 ```
 
-#### Including GUI and MCP Tests (Use with Caution):
+#### Including GUI and MCP Tests (Use with Caution)
+
 ```bash
 # Include GUI tests (may cause segmentation faults)
 export RUN_GUI_TESTS=1
@@ -741,7 +746,8 @@ uv run pytest tests/ -k "test_gui or not test_gui" -m "mcp or not mcp" --no-cov
 
 ### 8.1 Test Execution Commands
 
-#### Quick Testing (Recommended for Development):
+#### Quick Testing (Recommended for Development)
+
 ```bash
 # Fast, safe tests (excludes GUI and MCP per pytest.ini)
 uv run pytest tests/ -x -q --tb=short
@@ -756,7 +762,8 @@ uv run pytest tests/security/ -v
 uv run pytest tests/unit/test_shell_tools.py tests/unit/test_git_tools.py tests/unit/test_tools.py -v
 ```
 
-#### Comprehensive Testing:
+#### Comprehensive Testing
+
 ```bash
 # Full test suite with coverage
 uv run pytest tests/ -q
@@ -768,7 +775,8 @@ uv run pytest tests/ --cov=src.main --cov-report=term
 uv run pytest tests/ --cov=src.main --cov-report=html
 ```
 
-#### GUI and MCP Testing (Use with Caution):
+#### GUI and MCP Testing (Use with Caution)
+
 ```bash
 # Include GUI tests (may cause segmentation faults)
 export RUN_GUI_TESTS=1
@@ -850,7 +858,8 @@ def test_example():
 
 ### 8.7 Type Checking and Linting
 
-#### Pyright Configuration (Primary Type Checker):
+#### Pyright Configuration (Primary Type Checker)
+
 ```bash
 # Run Pyright for comprehensive type checking
 uv run pyright src/
@@ -863,7 +872,8 @@ uv run pyright src/tools/executors/
 uv run pyright src/ --strict
 ```
 
-#### MyPy (Legacy - Still Supported):
+#### MyPy (Legacy - Still Supported)
+
 ```bash
 # Run MyPy for type checking
 uv run mypy src/
@@ -872,7 +882,8 @@ uv run mypy src/
 uv run mypy src/ --strict
 ```
 
-#### Flake8 (Code Style):
+#### Flake8 (Code Style)
+
 ```bash
 # Check code style and potential errors
 uv run flake8 src/
@@ -885,7 +896,8 @@ uv run flake8 src/core/
 uv run src/tools/executors/
 ```
 
-#### Bandit (Security Analysis):
+#### Bandit (Security Analysis)
+
 ```bash
 # Security vulnerability scanning
 uv run bandit -r src/
@@ -897,7 +909,8 @@ uv run bandit -r src/ -f json
 uv run bandit -r src/ -ll
 ```
 
-#### Vulture (Dead Code Detection):
+#### Vulture (Dead Code Detection)
+
 ```bash
 # Find unused code
 uv run vulture src/
@@ -909,7 +922,8 @@ uv run vulture src/ --min-confidence 80
 uv run vulture src/ --min-confidence 90
 ```
 
-#### Autopep8 (Auto-formatting):
+#### Autopep8 (Auto-formatting)
+
 ```bash
 # Format code automatically
 uv run autopep8 --in-place src/**/*.py
@@ -921,7 +935,8 @@ uv run autopep8 --diff src/**/*.py
 uv run autopep8 --in-place --aggressive src/**/*.py
 ```
 
-#### Codespell (Spelling):
+#### Codespell (Spelling)
+
 ```bash
 # Check spelling in comments and strings
 uv run codespell src/
@@ -933,7 +948,8 @@ uv run codespell src/ --skip="*.pyc,*.md"
 uv run codespell src/ -i 3
 ```
 
-#### ShellCheck (Shell Scripts):
+#### ShellCheck (Shell Scripts)
+
 ```bash
 # Lint shell scripts
 shellcheck scripts/*.sh
@@ -945,7 +961,8 @@ shellcheck scripts/test.sh
 find . -name "*.sh" -exec shellcheck {} \;
 ```
 
-#### Comprehensive Linting (Automated):
+#### Comprehensive Linting (Automated)
+
 ```bash
 # Run all linting checks (recommended)
 uv run python tests/lint/lint.py
@@ -962,7 +979,8 @@ uv run python tests/lint/lint.py
 # - ShellCheck shell script validation
 ```
 
-#### Pyright Configuration File:
+#### Pyright Configuration File
+
 The project uses `pyproject.toml` for Pyright configuration:
 
 ```toml
@@ -1015,9 +1033,10 @@ reportOverlappingOverloads = true
 "**/.*"
 ```
 
-#### Type Checking Best Practices:
+#### Type Checking Best Practices
 
 1. **Progressive Type Adoption:**
+
    ```bash
    # Start with basic checking
    uv run pyright src/ --typeCheckingMode=basic
@@ -1027,6 +1046,7 @@ reportOverlappingOverloads = true
    ```
 
 2. **Gradual Migration from MyPy:**
+
    ```bash
    # Run both during transition
    uv run mypy src/  # Legacy
@@ -1039,6 +1059,7 @@ reportOverlappingOverloads = true
    ```
 
 3. **Configuration Per Module:**
+
    ```python
    # src/core/config.py
    from typing import Any, Dict, Optional  # Explicit imports required
@@ -1049,6 +1070,7 @@ reportOverlappingOverloads = true
    ```
 
 4. **Stub Files for External Libraries:**
+
    ```bash
    # Install type stubs for better IDE support
    uv add types-requests types-PyYAML
@@ -1057,7 +1079,7 @@ reportOverlappingOverloads = true
    uv run pyright src/
    ```
 
-#### Pyright Integration in CI/CD:
+#### Pyright Integration in CI/CD
 
 ```yaml
 # .github/workflows/quality.yml
@@ -1095,15 +1117,17 @@ jobs:
       run: uv run pytest --cov=src --cov-fail-under=80
 ```
 
-#### Common Pyright Issues and Solutions:
+#### Common Pyright Issues and Solutions
 
 1. **Missing type stubs:**
+
    ```bash
    # Install commonly needed type stubs
    uv add types-requests types-PyYAML types-redis types-python-dateutil
    ```
 
 2. **Import resolution:**
+
    ```bash
    # Ensure proper Python path
    export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
@@ -1111,6 +1135,7 @@ jobs:
    ```
 
 3. **Third-party library types:**
+
    ```bash
    # Use ignore comments for external libraries
    # pyright: ignore[import]
@@ -1118,6 +1143,7 @@ jobs:
    ```
 
 4. **Complex generic types:**
+
    ```python
    # Use TypeVar for complex generics
    from typing import TypeVar, Generic, List
@@ -1129,9 +1155,10 @@ jobs:
            self.items: List[T] = []
    ```
 
-#### Integration with IDEs:
+#### Integration with IDEs
 
 **VS Code:**
+
 ```json
 // .vscode/settings.json
 {
@@ -1145,13 +1172,14 @@ jobs:
 ```
 
 **PyCharm:**
+
 - Enable Pyright in Settings → Languages & Frameworks → Python → Type Checker
 - Configure as primary type checker
 - Set interpreter to project virtual environment
 
 This comprehensive type checking setup ensures code quality and catches type-related bugs early in development.
 
-#### Linting Integration in Development Workflow:
+#### Linting Integration in Development Workflow
 
 ```bash
 # Pre-commit quality check
@@ -1273,6 +1301,7 @@ uv run pyright src/  # Type safety
 ### 9.5 Quality Gate Integration
 
 **Comprehensive Quality Check Script:**
+
 ```bash
 #!/bin/bash
 # quality-gate.sh
@@ -1317,6 +1346,7 @@ echo "✅ All quality gates passed!"
 ```
 
 **Usage:**
+
 ```bash
 # Run full quality gate
 ./quality-gate.sh
