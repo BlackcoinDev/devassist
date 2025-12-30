@@ -223,3 +223,109 @@ class TestCacheManagement:
 
             # Cache should still be intact
             assert len(ctx.query_cache) == 1
+
+
+class TestNewCacheFeatures:
+    """Test new cache features (auto-save, stats, embedding save)."""
+
+    def setup_method(self):
+        """Set up test environment."""
+        reset_context()
+        self.temp_file = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+        self.temp_file.close()
+
+    def teardown_method(self):
+        """Clean up test environment."""
+        if os.path.exists(self.temp_file.name):
+            os.remove(self.temp_file.name)
+        reset_context()
+
+    def test_save_embedding_cache_limits_size(self):
+        """Test that saving embedding cache enforces max size limits."""
+        ctx = get_context()
+        from src.storage.cache import save_embedding_cache, EMBEDDING_CACHE_MAX_SIZE, EMBEDDING_CACHE_TARGET_SIZE
+
+        # Populate cache with more items than limit
+        ctx.embedding_cache = {f"text_{i}": [0.1] for i in range(EMBEDDING_CACHE_MAX_SIZE + 100)}
+
+        with patch("src.storage.cache.get_config") as mock_get_config:
+            mock_config = MagicMock()
+            mock_config.embedding_cache_file = self.temp_file.name
+            mock_config.verbose_logging = True
+            mock_get_config.return_value = mock_config
+
+            save_embedding_cache()
+
+            # Verify file contains target size
+            with open(self.temp_file.name, "r") as f:
+                saved_data = json.load(f)
+
+            assert len(saved_data) == EMBEDDING_CACHE_TARGET_SIZE
+            assert len(ctx.embedding_cache) == EMBEDDING_CACHE_TARGET_SIZE
+
+    def test_auto_save_trigger(self):
+        """Test that cache_embedding triggers auto-save."""
+        from src.storage.cache import cache_embedding, EMBEDDING_CACHE_SAVE_INTERVAL
+
+        ctx = get_context()
+        # Fill just before trigger (interval - 1)
+        # Note: We need to mock save_embedding_cache inside the module
+
+        # Since we can't easily patch the imported function inside the module if we use 'from ... import ...' style in the module
+        # But cache.py defines save_embedding_cache, so we can patch 'src.storage.cache.save_embedding_cache'
+
+        # Populate context up to trigger point
+        ctx.embedding_cache = {f"k{i}": [0.1] for i in range(EMBEDDING_CACHE_SAVE_INTERVAL - 1)}
+
+        with patch("src.storage.cache.save_embedding_cache") as mock_save:
+            # Add one more to reach interval
+            cache_embedding("trigger", [0.1])
+            assert mock_save.called
+
+    def test_cache_stats(self):
+        """Test cache statistics tracking."""
+        from src.storage.cache import get_cache_stats, reset_cache_stats, get_cached_embedding
+
+        reset_cache_stats()
+        stats = get_cache_stats()
+
+        ctx = get_context()
+        ctx.embedding_cache["exist"] = [0.1]
+
+        # Hit
+        val = get_cached_embedding("exist")
+        assert val is not None
+        assert stats.embedding_hits == 1
+
+        # Miss
+        val = get_cached_embedding("missing")
+        assert val is None
+        assert stats.embedding_misses == 1
+
+        # Hit rate
+        assert stats.embedding_hit_rate() == 0.5
+
+    def test_cache_permissions(self):
+        """Test that cache files are secured with 0o600 permissions."""
+        from src.storage.cache import save_embedding_cache, save_query_cache
+
+        ctx = get_context()
+        ctx.embedding_cache = {"k": [0.1]}
+        ctx.query_cache = {"q": ["r"]}
+
+        # We need to mock os.chmod to verify it's called
+        with patch("os.chmod") as mock_chmod, \
+                patch("src.storage.cache.get_config") as mock_get_config:
+
+            mock_config = MagicMock()
+            mock_config.embedding_cache_file = self.temp_file.name
+            mock_config.query_cache_file = self.temp_file.name
+            mock_get_config.return_value = mock_config
+
+            save_embedding_cache()
+            mock_chmod.assert_called_with(self.temp_file.name, 0o600)
+
+            mock_chmod.reset_mock()
+
+            save_query_cache()
+            mock_chmod.assert_called_with(self.temp_file.name, 0o600)

@@ -141,6 +141,12 @@ class ToolRegistry:
                     "error": f"Execution of tool '{name}' is blocked by security policy."
                 }
 
+            # Check rate limit
+            from src.security.rate_limiter import RateLimitManager
+            from src.security.exceptions import RateLimitError
+
+            RateLimitManager.check_limit(name)
+
             if mode == "ask":
                 # Special return value to signal the UI/CLI to ask for confirmation
                 return {
@@ -148,10 +154,23 @@ class ToolRegistry:
                     "tool_name": name,
                     "tool_args": args,
                 }
+
+        except RateLimitError as e:
+            # Audit log rate limit violation attempted
+            try:
+                from src.security.audit_logger import get_audit_logger
+
+                rate_status = RateLimitManager.get_status(name) or {}
+                count = rate_status.get("calls_in_period", 0)
+                limit = rate_status.get("max_calls", 0)
+                get_audit_logger().log_rate_limit(name, count, limit)
+            except Exception:
+                pass
+            return {"error": f"Rate limit exceeded: {e}"}
         except Exception as e:
             logger.error(f"Approval check failed for tool '{name}': {e}")
-            # Safe default: if approval check fails, don't execute automatically
-            return {"error": f"Security validation error: {e}"}
+            # Safe default: if approval/rate check fails (generic error), don't execute
+            return {"error": f"Validation error: {e}"}
 
         if cfg and cfg.show_tool_details:
             # Truncate args for display

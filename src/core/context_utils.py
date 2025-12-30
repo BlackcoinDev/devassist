@@ -223,12 +223,16 @@ def _generate_query_embedding(query: str) -> Optional[list]:
     """
     Generate embedding vector for a search query.
 
+    Uses embedding cache to avoid redundant API calls.
+
     Args:
         query: Search query string
 
     Returns:
         Embedding vector or None if generation fails
     """
+    from src.storage.cache import get_cached_embedding, cache_embedding
+
     ctx = get_context()
     config = get_config()
 
@@ -236,8 +240,15 @@ def _generate_query_embedding(query: str) -> Optional[list]:
         logger.warning("Embeddings not initialized for context retrieval")
         return None
 
+    # Check cache first
+    cached = get_cached_embedding(query)
+    if cached is not None:
+        if config.verbose_logging:
+            logger.debug(f"💾 Cache hit for query embedding: {len(query)} chars")
+        return cached
+
     if config.verbose_logging:
-        logger.debug("🧮 Initializing embedding generation for query")
+        logger.debug("🧮 Generating embedding for query (cache miss)")
         logger.debug(f"   Query length: {len(query)} characters")
 
     try:
@@ -246,9 +257,10 @@ def _generate_query_embedding(query: str) -> Optional[list]:
             logger.debug(
                 f"✅ Generated embedding vector (length: {len(query_embedding)})"
             )
-            logger.debug(
-                f"   First 5 values: {query_embedding[:5] if len(query_embedding) >= 5 else query_embedding}"
-            )
+
+        # Cache the result
+        cache_embedding(query, query_embedding)
+
         return query_embedding
     except Exception as e:
         logger.warning(f"Failed to generate query embedding: {e}")
@@ -271,7 +283,6 @@ def _retrieve_and_cache_context(
     Returns:
         Formatted context string
     """
-    ctx = get_context()
     config = get_config()
 
     # Query the database
@@ -279,13 +290,11 @@ def _retrieve_and_cache_context(
 
     # Cache and return results
     if docs:
-        ctx.query_cache[cache_key] = docs
+        from src.storage.cache import cache_query
+
+        cache_query(cache_key, docs)
         if config.verbose_logging:
             logger.debug(f"💾 Cached results under key: {cache_key}")
-        if len(ctx.query_cache) % 50 == 0:
-            _save_query_cache()
-            if config.verbose_logging:
-                logger.debug("💾 Saved query cache to disk (50+ entries)")
 
     return _format_context_results(docs)
 
@@ -363,12 +372,16 @@ def _generate_embeddings(content: str) -> Optional[list]:
     """
     Generate embeddings for document content.
 
+    Uses embedding cache to avoid redundant API calls.
+
     Args:
         content: Text content to embed
 
     Returns:
         Embedding vector if successful, None otherwise
     """
+    from src.storage.cache import get_cached_embedding, cache_embedding
+
     ctx = get_context()
     config = get_config()
 
@@ -377,8 +390,15 @@ def _generate_embeddings(content: str) -> Optional[list]:
             logger.error("Embeddings not available")
             return None
 
+        # Check cache first
+        cached = get_cached_embedding(content)
+        if cached is not None:
+            if config.verbose_logging:
+                logger.debug(f"💾 Cache hit for document embedding: {len(content)} chars")
+            return cached
+
         if config.verbose_logging:
-            logger.debug("🧮 Generating embeddings for document")
+            logger.debug("🧮 Generating embeddings for document (cache miss)")
             logger.debug(f"   Content length: {len(content)} chars")
 
         embeddings_result = ctx.embeddings.embed_documents([content])
@@ -392,16 +412,13 @@ def _generate_embeddings(content: str) -> Optional[list]:
             logger.error("Failed to get embedding vector from result")
             return None
 
+        # Cache the result
+        cache_embedding(content, embedding_vector)
+
         if config.verbose_logging:
-            try:
-                logger.debug(
-                    f"✅ Generated embedding vector (length: {len(embedding_vector)})"
-                )
-                logger.debug(
-                    f"   Sample: {embedding_vector[:3]}...{embedding_vector[-3:]}"
-                )
-            except (TypeError, IndexError):
-                logger.debug("✅ Generated embedding vector")
+            logger.debug(
+                f"✅ Generated embedding vector (length: {len(embedding_vector)})"
+            )
 
         return embedding_vector
     except Exception as e:
@@ -729,16 +746,6 @@ def add_to_knowledge_base(content: str, metadata: Optional[dict] = None) -> bool
         else:
             logger.error("No vectorstore available for fallback")
             return False
-
-
-def _save_query_cache():
-    """Save query cache to disk."""
-    try:
-        from src.storage.cache import save_query_cache
-
-        save_query_cache()
-    except Exception as e:
-        logger.warning(f"Failed to save query cache: {e}")
 
 
 __all__ = ["get_relevant_context", "add_to_knowledge_base"]

@@ -60,3 +60,32 @@ CONTENT_TRUNCATE_LENGTH = 100  # Default truncate length for display
 # Chat loop iteration limits
 MAX_ITERATIONS = 5  # Maximum tool calling iterations per user request
 MAX_INPUT_LENGTH = 10000  # Maximum user input length in characters
+
+# =============================================================================
+# CACHE CONSTANTS
+# =============================================================================
+
+# Query cache limits
+QUERY_CACHE_MAX_SIZE = 1000  # Maximum entries before eviction
+QUERY_CACHE_TARGET_SIZE = 500  # Target size after eviction
+QUERY_CACHE_SAVE_INTERVAL = 50  # Save cache every N new entries
+
+# Embedding cache limits
+EMBEDDING_CACHE_MAX_SIZE = 5000  # Maximum entries before eviction
+EMBEDDING_CACHE_TARGET_SIZE = 2500  # Target size after eviction
+EMBEDDING_CACHE_SAVE_INTERVAL = 100  # Save cache every N new entries
+
+
+# =============================================================================
+# RATE LIMITING CONSTANTS
+# =============================================================================
+
+# Rate limits in (max_calls, period_in_seconds) format
+RATE_LIMITS = {
+    "shell": (10, 60),  # High risk: 10 calls per minute
+    "git": (20, 60),  # Medium risk: 20 calls per minute
+    "read_file": (60, 60),  # Low risk: 1 call per second
+    "write_file": (30, 60),  # Medium risk: 1 call every 2 seconds
+    "web": (30, 60),  # Cost/API risk: 30 calls per minute
+    "default": (60, 60),  # Safe baseline
+}

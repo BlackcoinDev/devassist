@@ -42,8 +42,14 @@ from src.storage.memory import (
 )
 from src.storage.cache import (
     load_embedding_cache,
+    save_embedding_cache,
+    get_cached_embedding,
+    cache_embedding,
     load_query_cache,
     save_query_cache,
+    get_cached_query,
+    cache_query,
+    get_cache_stats,
     cleanup_memory,
 )
 
@@ -57,7 +63,13 @@ __all__ = [
     "trim_history",
     # Cache
     "load_embedding_cache",
+    "save_embedding_cache",
+    "get_cached_embedding",
+    "cache_embedding",
     "load_query_cache",
     "save_query_cache",
+    "get_cached_query",
+    "cache_query",
+    "get_cache_stats",
     "cleanup_memory",
 ]

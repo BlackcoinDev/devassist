@@ -237,6 +237,17 @@ class Linter:
             "log_tool_approved",
             "log_tool_denied",
             "log_rate_limit",
+            # Cache statistics (used for monitoring/debugging)
+            "CacheStats",
+            "embedding_saves",
+            "query_saves",
+            "to_dict",
+            # Rate Limiting
+            "RateLimitManager",
+            "check_limit",
+            "get_status",
+            "reset_all",
+
         ]
         ignore_names_str = ",".join(ignore_names)
         cmd = f"vulture {files_str} --ignore-decorators=register,patch,fixture,mock --ignore-names={ignore_names_str}"

@@ -28,6 +28,7 @@ and excessive resource consumption.
 
 import threading
 import time
+from typing import Dict, Optional
 
 from src.security.exceptions import RateLimitError
 
@@ -110,3 +111,89 @@ class RateLimiter:
         """Reset the rate limiter, clearing all tracked calls."""
         with self.lock:
             self.calls.clear()
+
+
+class RateLimitManager:
+    """
+    Central manager for tool rate limiting.
+
+    Maintains a registry of RateLimiter instances for different tools
+    and enforces limits defined in constants.py.
+    """
+
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super(RateLimitManager, cls).__new__(cls)
+                    cls._instance._initialize()
+        return cls._instance
+
+    def _initialize(self):
+        """Initialize the manager."""
+        self.limiters: Dict[str, RateLimiter] = {}
+        self.lock = threading.Lock()
+
+    @classmethod
+    def check_limit(cls, tool_name: str) -> bool:
+        """
+        Check if a tool execution is allowed.
+
+        Args:
+            tool_name: Name of the tool being executed
+
+        Returns:
+            True if allowed
+
+        Raises:
+            RateLimitError: If limit exceeded
+        """
+        manager = cls()
+        return manager._check(tool_name)
+
+    def _check(self, tool_name: str) -> bool:
+        """Internal check implementation."""
+        from src.core.constants import RATE_LIMITS
+
+        with self.lock:
+            if tool_name not in self.limiters:
+                # Determine limit config
+                # Check for exact match or prefix match (e.g., git_status -> git)
+                limit_config = RATE_LIMITS.get("default", (60, 60))
+
+                # Exact match
+                if tool_name in RATE_LIMITS:
+                    limit_config = RATE_LIMITS[tool_name]
+                else:
+                    # Prefix match
+                    for key, config in RATE_LIMITS.items():
+                        if tool_name.startswith(key + "_") or tool_name.startswith(key):
+                            limit_config = config
+                            break
+
+                self.limiters[tool_name] = RateLimiter(
+                    max_calls=limit_config[0], period_seconds=limit_config[1]
+                )
+
+            limiter = self.limiters[tool_name]
+
+        return limiter.check()
+
+    @classmethod
+    def get_status(cls, tool_name: str) -> Optional[dict]:
+        """Get status for a specific tool."""
+        manager = cls()
+        with manager.lock:
+            if tool_name in manager.limiters:
+                return manager.limiters[tool_name].get_status()
+        return None
+
+    @classmethod
+    def reset_all(cls) -> None:
+        """Reset all limiters (useful for testing)."""
+        manager = cls()
+        with manager.lock:
+            manager.limiters.clear()
