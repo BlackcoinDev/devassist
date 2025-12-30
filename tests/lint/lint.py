@@ -233,6 +233,10 @@ class Linter:
             "get_base_command",
             # Tool approval methods
             "requires_approval",
+            # Audit logger methods (public API)
+            "log_tool_approved",
+            "log_tool_denied",
+            "log_rate_limit",
         ]
         ignore_names_str = ",".join(ignore_names)
         cmd = f"vulture {files_str} --ignore-decorators=register,patch,fixture,mock --ignore-names={ignore_names_str}"

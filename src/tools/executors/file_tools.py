@@ -34,6 +34,7 @@ from typing import Dict, Any
 
 from src.tools.registry import ToolRegistry
 from src.core.utils import standard_error, standard_success
+from src.security.audit_logger import get_audit_logger
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +149,9 @@ def execute_read_file(file_path: str) -> Dict[str, Any]:
             logger.warning("🚫 read_file_content: Blocked - Path outside directory")
             logger.debug(f"   Full path: {full_path}")
             logger.debug(f"   Current dir: {current_dir}")
+            get_audit_logger().log_path_access_denied(
+                file_path, "read", "Path outside sandbox"
+            )
             return standard_error(
                 "Access denied: Cannot read files outside current directory"
             )
@@ -213,6 +217,9 @@ def execute_write_file(file_path: str, content: str) -> Dict[str, Any]:
         full_path = _resolve_path(file_path)
 
         if not full_path.startswith(current_dir):
+            get_audit_logger().log_path_access_denied(
+                file_path, "write", "Path outside sandbox"
+            )
             return {
                 "error": "Access denied: Cannot write files outside current directory"
             }
@@ -249,6 +256,9 @@ def execute_list_directory(directory_path: str = ".") -> Dict[str, Any]:
         full_path = _resolve_path(directory_path)
 
         if not full_path.startswith(current_dir):
+            get_audit_logger().log_path_access_denied(
+                directory_path, "list", "Path outside sandbox"
+            )
             return {
                 "error": "Access denied: Cannot list directories outside current directory"
             }

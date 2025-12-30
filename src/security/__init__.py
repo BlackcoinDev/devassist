@@ -36,6 +36,12 @@ from src.security.input_sanitizer import InputSanitizer
 from src.security.path_security import PathSecurity
 from src.security.rate_limiter import RateLimiter
 from src.security.shell_security import ShellSecurity
+from src.security.audit_logger import (
+    AuditLogger,
+    SecurityEventType,
+    get_audit_logger,
+    configure_audit_logging,
+)
 
 __all__ = [
     "SecurityError",
@@ -45,4 +51,8 @@ __all__ = [
     "PathSecurity",
     "RateLimiter",
     "ShellSecurity",
+    "AuditLogger",
+    "SecurityEventType",
+    "get_audit_logger",
+    "configure_audit_logging",
 ]

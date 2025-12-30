@@ -36,6 +36,7 @@ from typing import Dict, Any
 from src.tools.registry import ToolRegistry
 from src.security.shell_security import ShellSecurity
 from src.security.exceptions import SecurityError
+from src.security.audit_logger import get_audit_logger
 from src.core.utils import standard_error
 from src.core.constants import (
     SHELL_DEFAULT_TIMEOUT,
@@ -83,6 +84,8 @@ def _validate_working_directory() -> Path:
         cwd.relative_to(_PROJECT_ROOT)
         return cwd
     except ValueError:
+        # Log security violation
+        get_audit_logger().log_cwd_violation(str(cwd), str(_PROJECT_ROOT))
         raise SecurityError(
             f"Shell execution blocked: Current directory '{cwd}' is outside "
             f"project root '{_PROJECT_ROOT}'. Shell commands are restricted "
@@ -212,6 +215,7 @@ def execute_shell(command: str, timeout: int = SHELL_DEFAULT_TIMEOUT) -> Dict[st
     # Handle blocked commands
     if status == "blocked":
         logger.warning(f"🚫 shell_execute: Blocked command - {command} - {reason}")
+        get_audit_logger().log_shell_blocked(command, reason)
         return standard_error(reason)
 
     # Log unknown commands (requires user approval via tool approval system)
