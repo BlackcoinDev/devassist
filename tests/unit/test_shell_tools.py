@@ -208,16 +208,16 @@ class TestShellExecuteTimeout:
     def test_execute_shell_custom_timeout(
         self, mock_run, mock_getenv, mock_validate_cwd
     ):
-        """Test custom timeout is passed to subprocess."""
+        """Test custom timeout is clamped to max (30s)."""
         mock_getenv.return_value = "cli"
         mock_validate_cwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         execute_shell("long_command", timeout=120)
 
-        # Check that subprocess.run was called with correct timeout
+        # Custom timeout clamped to max of 30s
         call_kwargs = mock_run.call_args[1]
-        assert call_kwargs["timeout"] == 120
+        assert call_kwargs["timeout"] == 30
 
     @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")
@@ -225,7 +225,7 @@ class TestShellExecuteTimeout:
     def test_execute_shell_timeout_clamped_to_max(
         self, mock_run, mock_getenv, mock_validate_cwd
     ):
-        """Test that timeout is clamped to maximum (300s)."""
+        """Test that timeout is clamped to maximum (30s)."""
         mock_getenv.return_value = "cli"
         mock_validate_cwd.return_value = "/tmp"
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
@@ -233,7 +233,7 @@ class TestShellExecuteTimeout:
         execute_shell("command", timeout=600)
 
         call_kwargs = mock_run.call_args[1]
-        assert call_kwargs["timeout"] == 300
+        assert call_kwargs["timeout"] == 30
 
     @patch(MOCK_VALIDATE_CWD)
     @patch("os.getenv")

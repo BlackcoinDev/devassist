@@ -33,7 +33,7 @@ Assistant: "I've read the file. It contains Flask 2.0.1 and Pandas 1.3.0..."
 # =============================================================================
 
 # Shell execution limits
-SHELL_MAX_TIMEOUT = 300  # Maximum timeout in seconds
+SHELL_MAX_TIMEOUT = 30  # Maximum timeout in seconds (hardened from 300s)
 SHELL_DEFAULT_TIMEOUT = 30  # Default timeout in seconds
 SHELL_MAX_OUTPUT_SIZE = 50 * 1024  # Maximum output size in bytes (50KB)
 
