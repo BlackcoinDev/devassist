@@ -701,6 +701,41 @@ SHOW_TOOL_DETAILS=true     # Tool execution details with timing
 - **Documentation**: Updated all files to reflect current capabilities
 - **Test Coverage**: Excellent coverage with 100% pass rate on all tests
 
+## Code Complexity Hotspots
+
+Large files requiring careful maintenance:
+- `src/gui.py` (1195 lines) — PyQt6 GUI with full CLI parity, theming, streaming
+- `src/core/context_utils.py` (751 lines) — ChromaDB API wrapper, embeddings, caching
+- `src/core/chat_loop.py` (605 lines) — Agentic loop, tool calling, approvals
+- `src/main.py` (596 lines) — CLI + initialization, command dispatching
+
+## Shared Utilities
+
+Central utility module: `src/core/utils.py`
+- `chunk_text()` — Text splitting for vector storage (1500-char chunks)
+- `validate_file_path()` — Path traversal prevention
+- `get_file_size_info()` — File size retrieval
+- `truncate_content()` — Content truncation for display
+- `standard_error()` / `standard_success()` — Consistent tool response format
+
+All tool executors use `standard_error/success` for response formatting.
+
+## Anti-Patterns (DO NOT)
+
+- **MagicMock imports**: Only import if calling `MagicMock()` directly; `@patch` provides mock automatically
+- **Direct main.py imports**: Use `get_context()` from `src.core.context` for shared state
+- **Skipping file validation**: Always call `validate_file_path()` before file operations
+- **Hardcoded URLs**: Use `ctx.config.chroma_host` and `ctx.config.ollama_base_url`
+
+## CI/CD Status
+
+**No automated CI/CD pipeline.** All checks run manually:
+- Lint: `uv run python tests/lint/lint.py`
+- Test: `uv run pytest`
+- Coverage: `uv run pytest --cov=src --cov-report=term-missing`
+
+Recommend adding `.github/workflows/ci.yml` for automated testing and linting.
+
 ## Architecture Overview v0.3.0 (Modular + Shell/MCP)
 
 ### Component Integration
