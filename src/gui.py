@@ -34,6 +34,7 @@ from src.storage.memory import load_memory
 from src.core.config import get_config
 import logging
 import sys
+import asyncio
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -53,6 +54,14 @@ from PyQt6.QtGui import QPalette, QColor, QTextCursor
 from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer, QWaitCondition, QMutex
 from typing import List, Any
 from langchain_core.messages import BaseMessage
+
+# Import qasync for asyncio integration with PyQt6
+try:
+    import qasync
+
+    QASYNC_AVAILABLE = True
+except ImportError:
+    QASYNC_AVAILABLE = False
 
 # Type alias for conversation history
 ConversationHistory = List[BaseMessage]
@@ -1162,7 +1171,7 @@ class AIAssistantGUI(QMainWindow):
 
 
 def main():
-    """Main GUI application entry point."""
+    """Main GUI application entry point with qasync support."""
     app = QApplication(sys.argv)
 
     # Set application properties
@@ -1187,8 +1196,16 @@ def main():
     window = AIAssistantGUI()
     window.show()
 
-    # Start event loop
-    sys.exit(app.exec())
+    # Start event loop with qasync if available
+    if QASYNC_AVAILABLE:
+        # Use qasync for asyncio integration
+        loop = qasync.QEventLoop(app)
+        asyncio.set_event_loop(loop)
+        with loop:
+            loop.run_forever()
+    else:
+        # Fall back to standard Qt event loop
+        sys.exit(app.exec())
 
 
 if __name__ == "__main__":

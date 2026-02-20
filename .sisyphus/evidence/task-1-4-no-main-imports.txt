@@ -1,0 +1,18 @@
+Task 1.4 Complete - Import Cleanup
+
+Date: 2026-02-20
+Status: ✅ COMPLETE
+
+## Changes Made
+- Added module-level imports:
+  - from datetime import datetime
+  - from src.storage import cleanup_memory
+- Removed lazy imports from main.py:
+  - Removed: from src.main import handle_populate_command
+  - Removed: from src.main import execute_learn_url
+- Added local operation counter: _operation_count = 0
+
+## Verification
+Command: grep -n "from src.main\|import src.main" src/commands/handlers/learning_commands.py
+Result: No matches found
+Status: PASS

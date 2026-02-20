@@ -28,12 +28,13 @@ status, diff, and log. All operations are read-only for safety.
 
 import os
 import logging
-import subprocess
 from typing import Dict, Any, Optional, List
 
 from src.tools.registry import ToolRegistry
 from src.core.utils import standard_error, standard_success
 from src.core.constants import GIT_DEFAULT_TIMEOUT, GIT_DIFF_TIMEOUT, GIT_DIFF_MAX_SIZE
+from src.core.security_utils import validate_path, sanitize_path
+from src.core.subprocess_utils import run_git_command
 
 logger = logging.getLogger(__name__)
 
@@ -47,15 +48,7 @@ SAFE_GIT_COMMANDS = {"status", "diff", "log", "rev-parse", "branch"}
 
 
 def _validate_git_args(args: List[str]) -> None:
-    """
-    Validate git command arguments for security.
-
-    Args:
-        args: Git command arguments
-
-    Raises:
-        SecurityError: If command or arguments are unsafe
-    """
+    """Validate git command arguments for security."""
     if not args:
         raise ValueError("Empty git command arguments")
 
@@ -64,36 +57,6 @@ def _validate_git_args(args: List[str]) -> None:
         from src.security.exceptions import SecurityError
 
         raise SecurityError(f"Unsafe git command: {command}")
-
-
-def _sanitize_file_path(file_path: str) -> str:
-    """
-    Sanitize file path to prevent directory traversal attacks.
-
-    Args:
-        file_path: The file path to sanitize
-
-    Returns:
-        Sanitized file path
-
-    Raises:
-        SecurityError: If path contains dangerous patterns
-    """
-    import os.path
-    from src.security.exceptions import SecurityError
-
-    # Basic path traversal checks
-    if ".." in file_path or file_path.startswith("/"):
-        raise SecurityError(f"Unsafe file path: {file_path}")
-
-    # Normalize path
-    normalized = os.path.normpath(file_path)
-
-    # Ensure it's still safe after normalization
-    if normalized.startswith("/") or ".." in normalized:
-        raise SecurityError(f"Path traversal attempt: {file_path}")
-
-    return normalized
 
 
 # =============================================================================
@@ -176,34 +139,12 @@ GIT_LOG_DEFINITION = {
 def _run_git_command(
     args: List[str], timeout: int = GIT_DEFAULT_TIMEOUT
 ) -> tuple[bool, str, str]:
-    """
-    Run a git command safely.
-
-    Args:
-        args: Git command arguments (without 'git' prefix)
-        timeout: Command timeout in seconds
-
-    Returns:
-        Tuple of (success, stdout, stderr)
-    """
+    """Run a git command safely."""
     # Validate git command arguments
     _validate_git_args(args)
 
-    try:
-        result = subprocess.run(
-            ["git"] + args,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=os.getcwd(),
-        )
-        return (result.returncode == 0, result.stdout, result.stderr)
-    except subprocess.TimeoutExpired:
-        return (False, "", f"Git command timed out after {timeout} seconds")
-    except FileNotFoundError:
-        return (False, "", "Git is not installed or not in PATH")
-    except Exception as e:
-        return (False, "", str(e))
+    result = run_git_command(args, timeout=timeout)
+    return (result["success"], result["stdout"], result["stderr"])
 
 
 def _is_git_repo() -> bool:
@@ -348,7 +289,7 @@ def execute_git_diff(
         args.append("--staged")
     if file_path:
         # Sanitize file path to prevent directory traversal
-        safe_path = _sanitize_file_path(file_path)
+        safe_path = sanitize_path(file_path)
         args.append("--")
         args.append(safe_path)
 
@@ -422,7 +363,7 @@ def execute_git_log(limit: int = 10, file_path: Optional[str] = None) -> Dict[st
 
     if file_path:
         # Sanitize file path to prevent directory traversal
-        safe_path = _sanitize_file_path(file_path)
+        safe_path = sanitize_path(file_path)
         args.append("--")
         args.append(safe_path)
 
@@ -447,4 +388,151 @@ __all__ = [
     "execute_git_status",
     "execute_git_diff",
     "execute_git_log",
+]
+# Async git functions - to be appended to git_tools.py
+
+
+async def execute_git_status_async() -> Dict[str, Any]:
+    """Execute git status asynchronously."""
+    import asyncio
+
+    if not _is_git_repo():
+        return standard_error("Not a git repository")
+
+    def _get_status():
+        success, stdout, stderr = _run_git_command(["status", "--porcelain"])
+        if not success:
+            return {"error": f"Git status failed: {stderr}"}
+        return _parse_status_porcelain(stdout)
+
+    status = await asyncio.to_thread(_get_status)
+    if "error" in status:
+        return status
+
+    def _get_branch():
+        branch_success, branch_out, _ = _run_git_command(
+            ["rev-parse", "--abbrev-ref", "HEAD"]
+        )
+        return branch_out.strip() if branch_success else "unknown"
+
+    branch = await asyncio.to_thread(_get_branch)
+    is_clean = not (status["staged"] or status["unstaged"] or status["untracked"])
+
+    return {
+        "success": True,
+        "branch": branch,
+        "is_clean": is_clean,
+        "staged": status["staged"],
+        "unstaged": status["unstaged"],
+        "untracked": status["untracked"],
+        "staged_count": len(status["staged"]),
+        "unstaged_count": len(status["unstaged"]),
+        "untracked_count": len(status["untracked"]),
+    }
+
+
+async def execute_git_diff_async(
+    file_path: Optional[str] = None, staged: bool = False
+) -> Dict[str, Any]:
+    """Execute git diff asynchronously."""
+    import asyncio
+
+    if not _is_git_repo():
+        return standard_error("Not a git repository")
+
+    args = ["diff"]
+    if staged:
+        args.append("--staged")
+    if file_path:
+        safe_path = sanitize_path(file_path)
+        args.append("--")
+        args.append(safe_path)
+
+    def _get_diff():
+        return _run_git_command(args, timeout=GIT_DIFF_TIMEOUT)
+
+    success, stdout, stderr = await asyncio.to_thread(_get_diff)
+
+    if not success:
+        return standard_error(f"Git diff failed: {stderr}")
+
+    if not stdout.strip():
+        scope = "staged" if staged else "unstaged"
+        file_scope = f" for '{file_path}'" if file_path else ""
+        return standard_success(
+            {
+                "has_changes": False,
+                "message": f"No {scope} changes{file_scope}",
+                "diff": "",
+            }
+        )
+
+    max_size = GIT_DIFF_MAX_SIZE
+    truncated = False
+    diff = stdout
+    if len(diff) > max_size:
+        diff = diff[:max_size] + "\n... (diff truncated, too large)"
+        truncated = True
+
+    return {
+        "success": True,
+        "has_changes": True,
+        "staged": staged,
+        "file_path": file_path,
+        "diff": diff,
+        "truncated": truncated,
+    }
+
+
+async def execute_git_log_async(
+    limit: int = 10, file_path: Optional[str] = None
+) -> Dict[str, Any]:
+    """Execute git log asynchronously."""
+    import asyncio
+
+    if not _is_git_repo():
+        return standard_error("Not a git repository")
+
+    if limit < 1:
+        limit = 10
+    elif limit > 100:
+        limit = 100
+
+    format_str = "%h|%an|%ad|%s"
+    args = [
+        "log",
+        f"-n{limit}",
+        f"--format={format_str}",
+        "--date=short",
+    ]
+
+    if file_path:
+        safe_path = sanitize_path(file_path)
+        args.append("--")
+        args.append(safe_path)
+
+    def _get_log():
+        return _run_git_command(args)
+
+    success, stdout, stderr = await asyncio.to_thread(_get_log)
+
+    if not success:
+        return {"error": f"Git log failed: {stderr}"}
+
+    commits = _parse_log_output(stdout)
+
+    return {
+        "success": True,
+        "commit_count": len(commits),
+        "file_path": file_path,
+        "commits": commits,
+    }
+
+__all__ = [
+    "execute_git_status",
+    "execute_git_diff",
+    "execute_git_log",
+    "execute_git_status_async",
+    "execute_git_diff_async",
+    "execute_git_log_async",
 ]

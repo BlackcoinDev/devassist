@@ -153,4 +153,37 @@ def execute_web_search(
         return standard_error(str(e))
 
 
-__all__ = ["execute_web_search"]
+async def execute_web_search_async(
+    query: str, max_results: int = WEB_SEARCH_DEFAULT_MAX_RESULTS
+) -> Dict[str, Any]:
+    """Execute web search asynchronously using DuckDuckGo."""
+    import asyncio
+
+    try:
+        from ddgs import DDGS
+
+        logger.debug("🔧 search_web_async: Starting")
+        logger.debug(f"   Query: '{query}'")
+
+        def _do_search():
+            with DDGS() as ddgs:
+                return list(ddgs.text(query, max_results=max_results))
+
+        # Run search in thread to avoid blocking
+        raw_results = await asyncio.to_thread(_do_search)
+
+        logger.debug(f"✅ search_web_async: Found {len(raw_results)} results")
+        return {
+            "success": True,
+            "result_count": len(raw_results),
+            "results": raw_results,
+        }
+
+    except ImportError:
+        return standard_error("ddgs not installed. Run: pip install ddgs")
+    except Exception as e:
+        logger.error(f"❌ search_web_async: Web search failed - {e}")
+        return standard_error(str(e))
+
+
+__all__ = ["execute_web_search", "execute_web_search_async"]

@@ -8,21 +8,13 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 from .base import Transport
+from src.core.constants import SAFE_ENV_VARS
 
 logger = logging.getLogger(__name__)
 
-# Safe environment variables for MCP subprocesses
-# Only expose essential variables to prevent information leakage
-SAFE_ENV_VARS = {"PATH", "HOME", "LANG", "TERM", "SHELL", "USER", "PWD"}
-
 
 def get_safe_env() -> Dict[str, str]:
-    """
-    Return a filtered environment dictionary containing only safe variables.
-
-    This prevents sensitive information like API keys, passwords, and other
-    environment variables from being accessible to MCP subprocesses.
-    """
+    """Return a filtered environment dictionary containing only safe variables."""
     return {k: v for k, v in os.environ.items() if k in SAFE_ENV_VARS}
 
 

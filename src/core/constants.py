@@ -89,3 +89,10 @@ RATE_LIMITS = {
     "web": (30, 60),  # Cost/API risk: 30 calls per minute
     "default": (60, 60),  # Safe baseline
 }
+
+# =============================================================================
+# SECURITY CONSTANTS
+# =============================================================================
+
+# Safe environment variables for subprocess execution
+SAFE_ENV_VARS = {"PATH", "HOME", "LANG", "TERM", "SHELL", "USER", "PWD"}

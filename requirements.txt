@@ -39,3 +39,5 @@ tenacity
 cachetools
 psutil
 responses
+pytest-asyncio
+qasync

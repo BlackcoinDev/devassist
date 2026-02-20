@@ -1,0 +1,23 @@
+Task 1.5 Complete - Remove Dead Code from main.py
+
+Date: 2026-02-20
+Status: ✅ COMPLETE
+
+## Changes Made
+Removed from src/main.py:
+1. execute_learn_url function (lines 302-356)
+2. handle_populate_command function (lines 530-533)
+
+## Verification
+Command: grep -n "execute_learn_url\|handle_populate_command" src/main.py
+Result: No matches found
+Status: PASS
+
+Command: python3 -m py_compile src/main.py
+Result: Syntax valid
+Status: PASS
+
+## Notes
+Functions successfully moved to src/commands/handlers/learning_commands.py:
+- execute_learn_url: Now in learning_commands.py with local _operation_count
+- handle_populate: Implemented fully in learning_commands.py (was a stub)

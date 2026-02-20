@@ -172,4 +172,53 @@ def execute_parse_document(
         return standard_error(f"Document parsing failed: {str(e)}")
 
 
-__all__ = ["execute_parse_document"]
+async def execute_parse_document_async(
+    file_path: str, extract_type: str = "text"
+) -> Dict[str, Any]:
+    """Execute document parsing asynchronously using Docling."""
+    import asyncio
+
+    try:
+        # Security check - ensure file is within current directory
+        current_dir = os.getcwd()
+        full_path = os.path.abspath(file_path)
+
+        if not full_path.startswith(current_dir):
+            return standard_error("Access denied: File outside current directory")
+
+        if not os.path.exists(full_path):
+            return {"error": f"File not found: {file_path}"}
+
+        file_ext = os.path.splitext(full_path)[1].lower()
+
+        def _do_parse():
+            from docling.document_converter import DocumentConverter
+
+            converter = DocumentConverter()
+            result = converter.convert(full_path)
+            return result.document.export_to_markdown()
+
+        # Run Docling processing in thread to avoid blocking
+        content = await asyncio.to_thread(_do_parse)
+
+        return standard_success(
+            {
+                "file_path": file_path,
+                "extract_type": extract_type,
+                "file_type": file_ext,
+                "content": content,
+                "analysis": content,
+                "note": "Processed via Docling Unified Pipeline (async)",
+            }
+        )
+
+    except ImportError:
+        return standard_error(
+            "docling library not installed. Please install with: pip install docling"
+        )
+    except Exception as e:
+        logger.error(f"Document parsing failed for {file_path}: {e}")
+        return standard_error(f"Document parsing failed: {str(e)}")
+
+
+__all__ = ["execute_parse_document", "execute_parse_document_async"]

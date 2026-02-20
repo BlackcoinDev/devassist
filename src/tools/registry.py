@@ -26,10 +26,13 @@ This module provides a plugin-style tool registration system that allows
 AI tools to be registered with decorators and dispatched by name.
 """
 
+import asyncio
 import json
 import logging
 import time
 from typing import Any, Callable, Dict, List, Optional
+
+from src.tools.base import is_async_function, run_tool_async
 
 logger = logging.getLogger(__name__)
 
@@ -193,6 +196,39 @@ class ToolRegistry:
         except Exception as e:
             logger.error(f"Error executing tool '{name}': {e}")
             return {"error": str(e)}
+
+    @classmethod
+    async def execute_async(cls, name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a registered tool asynchronously.
+
+        Args:
+            name: Tool name
+            args: Tool arguments as dictionary
+
+        Returns:
+            Tool result dictionary
+        """
+        if name not in cls._tools:
+            return {"error": f"Unknown tool: {name}"}
+
+        executor = cls._tools[name]
+
+        # Check if tool is async-capable
+        if is_async_function(executor):
+            try:
+                result = await executor(**args)
+                return result
+            except Exception as e:
+                logger.error(f"Error executing async tool '{name}': {e}")
+                return {"error": str(e)}
+        else:
+            # Fall back to sync execution in thread
+            try:
+                result = await asyncio.to_thread(executor, **args)
+                return result
+            except Exception as e:
+                logger.error(f"Error executing tool '{name}' in async context: {e}")
+                return {"error": str(e)}
 
     @classmethod
     def execute_tool_call(cls, tool_call: Any) -> Dict[str, Any]:

@@ -34,19 +34,10 @@ from typing import Dict, Any
 
 from src.tools.registry import ToolRegistry
 from src.core.utils import standard_error, standard_success
+from src.core.security_utils import validate_path, sanitize_path
 from src.security.audit_logger import get_audit_logger
 
 logger = logging.getLogger(__name__)
-
-
-def _get_sandbox_root() -> str:
-    """Get the sandbox root directory, resolving symlinks."""
-    return os.path.realpath(os.getcwd())
-
-
-def _resolve_path(file_path: str) -> str:
-    """Resolve a file path to its real path, following symlinks."""
-    return os.path.realpath(file_path)
 
 
 # =============================================================================
@@ -141,20 +132,17 @@ def execute_read_file(file_path: str) -> Dict[str, Any]:
         logger.debug("🔧 read_file_content: Starting")
         logger.debug(f"   File path: {file_path}")
 
-        # Security check - use helper functions to resolve symlinks
-        current_dir = _get_sandbox_root()
-        full_path = _resolve_path(file_path)
-
-        if not full_path.startswith(current_dir):
-            logger.warning("🚫 read_file_content: Blocked - Path outside directory")
-            logger.debug(f"   Full path: {full_path}")
-            logger.debug(f"   Current dir: {current_dir}")
+        # Security check - use shared security utility
+        if not validate_path(file_path):
+            logger.warning("🚫 read_file_content: Blocked - Invalid or unsafe path")
             get_audit_logger().log_path_access_denied(
-                file_path, "read", "Path outside sandbox"
+                file_path, "read", "Path validation failed"
             )
             return standard_error(
                 "Access denied: Cannot read files outside current directory"
             )
+
+        full_path = sanitize_path(file_path)
 
         if not os.path.exists(full_path):
             logger.warning(f"🚫 read_file_content: File not found - {file_path}")
@@ -212,17 +200,16 @@ def execute_write_file(file_path: str, content: str) -> Dict[str, Any]:
         Dict with success status and file metadata
     """
     try:
-        # Security check - use helper functions to resolve symlinks
-        current_dir = _get_sandbox_root()
-        full_path = _resolve_path(file_path)
-
-        if not full_path.startswith(current_dir):
+        # Security check - use shared security utility
+        if not validate_path(file_path):
             get_audit_logger().log_path_access_denied(
-                file_path, "write", "Path outside sandbox"
+                file_path, "write", "Path validation failed"
             )
             return {
                 "error": "Access denied: Cannot write files outside current directory"
             }
+
+        full_path = sanitize_path(file_path)
 
         # Create directory if needed
         dir_path = os.path.dirname(full_path)
@@ -251,17 +238,16 @@ def execute_list_directory(directory_path: str = ".") -> Dict[str, Any]:
         Dict with success status and directory contents
     """
     try:
-        # Security check - use helper functions to resolve symlinks
-        current_dir = _get_sandbox_root()
-        full_path = _resolve_path(directory_path)
-
-        if not full_path.startswith(current_dir):
+        # Security check - use shared security utility
+        if not validate_path(directory_path):
             get_audit_logger().log_path_access_denied(
-                directory_path, "list", "Path outside sandbox"
+                directory_path, "list", "Path validation failed"
             )
             return {
                 "error": "Access denied: Cannot list directories outside current directory"
             }
+
+        full_path = sanitize_path(directory_path)
 
         if not os.path.exists(full_path):
             return standard_error(f"Directory not found: {directory_path}")
@@ -282,7 +268,7 @@ def execute_list_directory(directory_path: str = ".") -> Dict[str, Any]:
 
         return {
             "success": True,
-            "directory": os.path.relpath(full_path, current_dir) or ".",
+            "directory": os.path.relpath(full_path, os.getcwd()) or ".",
             "contents": dirs + files,
             "total_items": len(items),
         }

@@ -69,7 +69,7 @@ class TestLearningCommands:
         handle_learn([])
         mock_print.assert_any_call("\nUsage: /learn <information to remember>\n")
 
-    @patch("src.main.execute_learn_url")
+    @patch("src.commands.handlers.learning_commands.execute_learn_url")
     @patch("builtins.print")
     def test_web_command_success(self, mock_print, mock_exec):
         """Test /web command success."""
@@ -80,7 +80,7 @@ class TestLearningCommands:
             "Successfully learned" in str(call) for call in mock_print.call_args_list
         )
 
-    @patch("src.main.execute_learn_url")
+    @patch("src.commands.handlers.learning_commands.execute_learn_url")
     @patch("builtins.print")
     def test_web_command_error(self, mock_print, mock_exec):
         """Test /web command error."""

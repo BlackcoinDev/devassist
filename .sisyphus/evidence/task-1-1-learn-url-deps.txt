@@ -1,0 +1,21 @@
+execute_learn_url Dependencies (main.py:302-356)
+
+Global Variables Used:
+1. vectorstore (line 339)
+   - Current: global variable from main.py line 187
+   - Migration: Use get_context().vectorstore
+
+2. operation_count (lines 344-347)
+   - Current: global counter from main.py line 194
+   - Migration: Pass as parameter or use context-based tracking
+
+Imports Needed:
+- from docling.document_converter import DocumentConverter
+- from langchain_core.documents import Document
+- from src.core.context import get_context
+- from src.storage import cleanup_memory
+- from datetime import datetime
+
+Functions Called:
+- cleanup_memory() - Available from src.storage
+- vectorstore.add_documents() - Via get_context().vectorstore

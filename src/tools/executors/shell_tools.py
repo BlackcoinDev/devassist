@@ -42,7 +42,9 @@ from src.core.constants import (
     SHELL_DEFAULT_TIMEOUT,
     SHELL_MAX_TIMEOUT,
     SHELL_MAX_OUTPUT_SIZE,
+    SAFE_ENV_VARS,
 )
+from src.core.subprocess_utils import get_safe_env
 
 logger = logging.getLogger(__name__)
 
@@ -50,23 +52,8 @@ logger = logging.getLogger(__name__)
 # CONSTANTS
 # =============================================================================
 
-# Safe environment variables to pass to shell commands
-# Only these variables are exposed to prevent information leakage
-SAFE_ENV_VARS = {"PATH", "HOME", "LANG", "TERM", "SHELL"}
-
 # Project root directory - captured at module import time
-# All shell commands are restricted to this directory tree
 _PROJECT_ROOT: Path = Path.cwd().resolve()
-
-
-def get_safe_env() -> Dict[str, str]:
-    """
-    Return a filtered environment dictionary containing only safe variables.
-
-    This prevents sensitive information like API keys, passwords, and other
-    environment variables from being accessible to shell commands.
-    """
-    return {k: v for k, v in os.environ.items() if k in SAFE_ENV_VARS}
 
 
 def _validate_working_directory() -> Path:

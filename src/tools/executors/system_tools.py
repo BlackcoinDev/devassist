@@ -275,4 +275,111 @@ def execute_code_search(
         return standard_error(str(e))
 
 
-__all__ = ["execute_code_search"]
+async def execute_code_search_async(
+    pattern: str,
+    path: str = ".",
+    file_type: Optional[str] = None,
+    max_results: int = 50,
+    case_sensitive: bool = False,
+) -> Dict[str, Any]:
+    """Search for code patterns using ripgrep asynchronously."""
+    import asyncio
+
+    # Validate pattern
+    if not pattern:
+        return standard_error("Search pattern cannot be empty")
+
+    # Check ripgrep is installed
+    if not _check_ripgrep():
+        return {
+            "error": "ripgrep (rg) is required but not installed. "
+            "Please install ripgrep: https://github.com/BurntSushi/ripgrep"
+        }
+
+    # Validate max_results
+    if max_results < 1:
+        max_results = CODE_SEARCH_DEFAULT_MAX_RESULTS
+    elif max_results > 200:
+        max_results = 200
+
+    # Security: Validate path is within current directory
+    current_dir = os.getcwd()
+    search_path = os.path.abspath(os.path.join(current_dir, path))
+
+    if not search_path.startswith(current_dir):
+        return standard_error("Access denied: Cannot search outside current directory")
+
+    if not os.path.exists(search_path):
+        return standard_error(f"Path not found: {path}")
+
+    # Build ripgrep command
+    args = [
+        "rg",
+        "--json",
+        f"--max-count={max_results}",
+        "--no-heading",
+    ]
+
+    if not case_sensitive:
+        args.append("--ignore-case")
+
+    if file_type:
+        args.append(f"--type={file_type}")
+
+    args.append(pattern)
+    args.append(search_path)
+
+    try:
+        # Run ripgrep asynchronously
+        proc = await asyncio.create_subprocess_exec(
+            *args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=current_dir,
+        )
+
+        stdout, stderr = await asyncio.wait_for(
+            proc.communicate(), timeout=CODE_SEARCH_TIMEOUT
+        )
+
+        # ripgrep returns 1 for no matches (not an error)
+        if proc.returncode not in (0, 1):
+            return standard_error(f"ripgrep failed: {stderr.decode()}")
+
+        # Parse JSON output
+        matches = _parse_rg_json_output(stdout.decode())
+
+        # Apply global max_results limit
+        total_found = len(matches)
+        if len(matches) > max_results:
+            matches = matches[:max_results]
+            truncated = True
+        else:
+            truncated = False
+
+        # Convert absolute paths to relative
+        for match in matches:
+            if match["file"].startswith(current_dir):
+                match["file"] = os.path.relpath(match["file"], current_dir)
+
+        return {
+            "success": True,
+            "pattern": pattern,
+            "path": path,
+            "file_type": file_type,
+            "case_sensitive": case_sensitive,
+            "match_count": len(matches),
+            "total_found": total_found,
+            "truncated": truncated,
+            "matches": matches,
+        }
+
+    except asyncio.TimeoutError:
+        return standard_error("Code search timed out after 60 seconds")
+
+    except Exception as e:
+        logger.error(f"Error in code search: {e}")
+        return standard_error(str(e))
+
+
+__all__ = ["execute_code_search", "execute_code_search_async"]

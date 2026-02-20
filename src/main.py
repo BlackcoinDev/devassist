@@ -299,63 +299,6 @@ def handle_slash_command(command: str) -> bool:
     return True
 
 
-def execute_learn_url(url: str) -> dict:
-    """
-    Fetch and learn content from a URL using Docling.
-
-    This function leverages Docling's ability to fetch and parse web pages into structured markdown,
-    which is then added to the knowledge base.
-    """
-    try:
-        from docling.document_converter import DocumentConverter
-        from langchain_core.documents import Document
-
-        # Initialize converter
-        converter = DocumentConverter()
-
-        # Convert web content directly from URL
-        # Docling handles fetching and HTML-to-Markdown conversion
-        result = converter.convert(url)
-        content = result.document.export_to_markdown()
-
-        # Create metadata
-        title = "Web Page"  # Docling might expose title, but safe default
-        if hasattr(result.document, "title") and getattr(
-            result.document, "title", None
-        ):
-            title = getattr(result.document, "title")
-
-        doc = Document(
-            page_content=content,
-            metadata={
-                "source": url,
-                "title": title,
-                "type": "web_page",
-                "added_at": datetime.now().isoformat(),
-            },
-        )
-
-        # Add to vector store
-        if vectorstore:
-            # Use the existing logic or direct add
-            vectorstore.add_documents([doc])
-
-            # Periodic cleanup logic from handle_learn_command
-            global operation_count
-            operation_count += 1
-            if operation_count % 50 == 0:
-                cleanup_memory()
-
-            return {"success": True, "title": title, "url": url, "length": len(content)}
-        else:
-            return {"error": "Vector database not initialized"}
-
-    except ImportError:
-        return {"error": "docling library not installed"}
-    except Exception as e:
-        return {"error": str(e)}
-
-
 def initialize_llm() -> bool:
     """Initialize LLM connection."""
     try:
@@ -525,12 +468,6 @@ def initialize_tools() -> None:
     logger.info(
         f"🛠️ Tool Registry initialized with {len(ToolRegistry._tools)} tools available"
     )
-
-
-def handle_populate_command(dir_path: str):
-    """Handle /populate command for bulk learning."""
-    # Implementation for bulk importing codebases
-    pass
 
 
 def run_main_chat_loop() -> bool:
