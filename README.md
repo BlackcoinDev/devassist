@@ -31,6 +31,7 @@ parity between GUI and CLI interfaces.
   layout understanding
 
 - **🔧 Codebase Ingestion**: Bulk import entire projects with intelligent file type detection
+- **📘 Auto-learn**: AI automatically learns project documentation at startup
 - **🔄 Model Switching**: Easy switching between different AI models
 - **💬 Persistent Memory**: SQLite database for conversation history (no JSON files)
 - **🎯 Context Awareness**: AI uses learned information in relevant conversations
@@ -43,7 +44,6 @@ parity between GUI and CLI interfaces.
 
   document processing, knowledge management, and web search
 
-- **🌍 Web Ingestion**: Learn content directly from URLs using the `/web` command
 - **⚡ Streaming Responses**: Real-time response display for better user experience
 - **🔍 Verbose Logging**: Optional detailed step-by-step AI processing visibility
 - **🛠️ Rich Commands**: Comprehensive slash command system in both GUI and CLI
@@ -66,7 +66,7 @@ parity between GUI and CLI interfaces.
 
 **Test Coverage Status:**
 
-- **Total Tests**: 419 tests (394 unit + 25 integration + 34 security)
+- **Total Tests**: 817 tests (394 unit + 25 integration + 34 security)
 - **Coverage**: 49% overall, 71% modules ≥90% (20/28 modules)
 - **Pass Rate**: 100% (394 passing, 10 skipped GUI tests)
 - **Execution Time**: ~55-65 seconds
@@ -238,12 +238,7 @@ Control which tools require confirmation before execution:
     "code_search": "always"
   }
 }
-    "code_search": "always"
-  }
-}
 ```
-
-### Rate Limiting
 
 To prevent abuse and resource exhaustion, tool execution is rate-limited:
 
@@ -670,6 +665,13 @@ DB_PATH=db/history.db                         # SQLite database path
 # System Configuration (REQUIRED)
 
 KMP_DUPLICATE_LIB_OK=TRUE                     # OpenMP workaround
+
+# Auto-learn Configuration (Optional)
+
+AUTO_LEARN_ON_STARTUP=true                         # Enable/disable auto-learning (default: true)
+AUTO_LEARN_MAX_FILE_SIZE_MB=5                     # Skip files larger than this size (default: 5)
+AUTO_LEARN_TIMEOUT_SECONDS=30                   # Maximum processing time per file (default: 30)
+AUTO_LEARN_COLLECTION_NAME=agents_knowledge     # ChromaDB collection name (default: agents_knowledge)
 ```
 
 ### Configuration Validation

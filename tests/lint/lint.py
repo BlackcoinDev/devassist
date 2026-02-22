@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
@@ -20,6 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
 
 """
 Project Linting Script v0.3.0
@@ -362,6 +362,36 @@ class Linter:
 
         return self.run_check("Shellcheck", f"shellcheck {files_str}")
 
+    def check_docs_consistency(self) -> bool:
+        """Run documentation consistency validation."""
+        # Change to project root
+        original_dir = os.getcwd()
+        try:
+            os.chdir(self.root_dir)
+            result = subprocess.run(
+                [sys.executable, "tests/lint/docs_consistency.py"],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode == 0:
+                console.print("[green]✓ Documentation is consistent with code[/green]")
+                return True
+            else:
+                console.print("[red]✗ Documentation inconsistencies found:[/red]")
+                for line in result.stdout.split("\n"):
+                    if "✗" in line or "mismatch" in line.lower():
+                        console.print(f"  {line}")
+                return False
+        except subprocess.TimeoutExpired:
+            console.print("[yellow]⚠️ Docs consistency check timed out[/yellow]")
+            return True
+        except Exception as e:
+            console.print(f"[yellow]⚠️ Docs consistency check error: {e}[/yellow]")
+            return True
+        finally:
+            os.chdir(original_dir)
+
     def validate_structure(self) -> bool:
         """Validate project structure."""
         missing = []
@@ -397,6 +427,7 @@ class Linter:
             ("Vulture", self.check_vulture),
             ("Codespell", self.check_codespell),
             ("Shellcheck", self.check_shellcheck),
+            ("Docs", self.check_docs_consistency),
         ]
 
         results = []

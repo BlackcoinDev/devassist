@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
@@ -20,6 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
 """
 Comprehensive Tool Testing Suite
 
@@ -259,7 +259,7 @@ class TestFileSystemTools:
     @patch("src.tools.executors.file_tools.validate_path")
     def test_write_file_path_traversal(self, mock_validate_path, mock_sanitize_path):
         """Test write_file path traversal protection."""
-        mock_validate_path.return_value = True
+        mock_validate_path.return_value = False  # Path validation fails
         mock_sanitize_path.return_value = "/etc/passwd"  # Outside workdir
 
         result = execute_write_file("../../etc/passwd", "malicious")
@@ -299,7 +299,7 @@ class TestFileSystemTools:
         self, mock_validate_path, mock_sanitize_path
     ):
         """Test list_directory path traversal protection."""
-        mock_validate_path.return_value = True
+        mock_validate_path.return_value = False  # Path validation fails
         mock_sanitize_path.return_value = "/etc"  # Outside workdir
 
         result = execute_list_directory("../../etc")

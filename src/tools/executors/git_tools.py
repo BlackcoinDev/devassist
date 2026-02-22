@@ -1,3 +1,25 @@
+# MIT License
+#
+# Copyright (c) 2025 BlackcoinDev
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 #
 # Copyright (c) 2025 BlackcoinDev
 #
@@ -26,14 +48,13 @@ This module provides AI tool executors for git operations including
 status, diff, and log. All operations are read-only for safety.
 """
 
-import os
 import logging
 from typing import Dict, Any, Optional, List
 
 from src.tools.registry import ToolRegistry
 from src.core.utils import standard_error, standard_success
 from src.core.constants import GIT_DEFAULT_TIMEOUT, GIT_DIFF_TIMEOUT, GIT_DIFF_MAX_SIZE
-from src.core.security_utils import validate_path, sanitize_path
+from src.core.security_utils import sanitize_path
 from src.core.subprocess_utils import run_git_command
 
 logger = logging.getLogger(__name__)
@@ -527,6 +548,7 @@ async def execute_git_log_async(
         "file_path": file_path,
         "commits": commits,
     }
+
 
 __all__ = [
     "execute_git_status",

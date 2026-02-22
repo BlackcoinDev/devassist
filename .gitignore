@@ -261,6 +261,7 @@ tramp
 # Custom project files
 venv/
 .claude/
+.sisyphus/
 
 # Performance test data (generated files, should not be committed)
 performance_baselines.json

@@ -26,6 +26,7 @@ tests/
 | Add security test | `security/test_*.py` | Path traversal, injection, rate limits |
 | Shared fixtures | `conftest.py` | mock_env, mock_llm, mock_vectorstore |
 | Linting rules | `lint/lint.py` | flake8, mypy, vulture, codespell |
+| Auto-learn tests | `unit/test_auto_learn*.py` | Config, discovery, hashing, manager |
 
 ## CONVENTIONS (PROJECT-SPECIFIC)
 

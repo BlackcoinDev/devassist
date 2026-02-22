@@ -114,6 +114,20 @@ def _get_bool(name: str, default: bool = False) -> bool:
     """Get boolean environment variable with default."""
     return os.getenv(name, str(default)).lower() == "true"
 
+def _get_int(name: str, default: int) -> int:
+    """Get integer environment variable with default."""
+    try:
+        return int(os.getenv(name, str(default)))
+    except ValueError:
+        return default
+
+
+def _get_str(name: str, default: str) -> str:
+    """Get string environment variable with default."""
+    return os.getenv(name, default)
+
+
+
 
 __all__ = [
     "Config",
@@ -184,6 +198,11 @@ class Config:
     show_llm_reasoning: bool = True
     show_token_usage: bool = True
     show_tool_details: bool = True
+    # Auto-learn Configuration
+    auto_learn_on_startup: bool = True
+    auto_learn_max_file_size_mb: int = 5
+    auto_learn_timeout_seconds: int = 30
+    auto_learn_collection_name: str = "agents_knowledge"
 
     # Cache file paths
     embedding_cache_file: str = "embedding_cache.json"
@@ -219,8 +238,12 @@ class Config:
             show_llm_reasoning=_get_bool("SHOW_LLM_REASONING", True),
             show_token_usage=_get_bool("SHOW_TOKEN_USAGE", True),
             show_tool_details=_get_bool("SHOW_TOOL_DETAILS", True),
+            # Auto-learn Configuration
+            auto_learn_on_startup=_get_bool("AUTO_LEARN_ON_STARTUP", True),
+            auto_learn_max_file_size_mb=_get_int("AUTO_LEARN_MAX_FILE_SIZE_MB", 5),
+            auto_learn_timeout_seconds=_get_int("AUTO_LEARN_TIMEOUT_SECONDS", 30),
+            auto_learn_collection_name=_get_str("AUTO_LEARN_COLLECTION_NAME", "agents_knowledge"),
         )
-
 
 # Module-level singleton
 _config: Optional[Config] = None

@@ -1,11 +1,9 @@
 {
-  "active_plan": "/Users/blackcoindev/Development/devassist/.sisyphus/plans/flow-optimization.md",
-  "started_at": "2026-02-20T06:33:14.854Z",
+  "active_plan": "/Users/blackcoindev/Development/devassist/.sisyphus/plans/auto-learn-markdown.md",
+  "started_at": "2026-02-22T09:31:48.498Z",
   "session_ids": [
-    "ses_38d1b7f2effeeBDoLPHo1TcTkc"
+    "ses_37b6011c6ffed3LZgJJoA9bKZ7"
   ],
-  "plan_name": "flow-optimization",
-  "agent": "atlas",
-  "status": "complete",
-  "completed_at": "2026-02-20T08:35:00.000Z"
+  "plan_name": "auto-learn-markdown",
+  "agent": "atlas"
 }

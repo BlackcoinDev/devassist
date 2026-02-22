@@ -45,7 +45,7 @@ application, serving as a reference for all other documentation files.
   ┌─────▼──────┐    ┌──────▼───────┐   ┌──────▼────────┐
   │ Commands   │    │    Tools     │   │   Storage     │
   │ (Registry) │    │  (Registry)  │   │   (SQLite)    │
-  │ 8 handlers │    │  8 tools     │   │   (Memory)    │
+   │ 24 handlers │    │ 13 AI tools  │   │   (Memory)    │
   └─────┬──────┘    └──────┬───────┘   └──────┬────────┘
         │                   │                   │
   ┌─────▼──────┐    ┌──────▼───────┐   ┌──────▼────────┐

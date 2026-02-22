@@ -7,7 +7,7 @@
 - **Run CLI application**: `uv run python launcher.py` (default)
 - **Run GUI application**: `uv run python launcher.py --gui`
 - **Install dependencies**: `uv pip install -r requirements.txt`
-- **Python version**: Python 3.13.x (latest available, e.g., 3.13.11 or newer)
+ **Python version**: Python 3.12.x (e.g., 3.12.12 or newer)
 - **GUI framework**: PyQt6 for modern graphical interface
 - **Vector database**: ChromaDB v2 server (implemented)
 - **Database**: SQLite for conversation memory (required, no JSON fallback)
@@ -16,7 +16,7 @@
 - **Markdown support**: HTML rendering in GUI for rich text display
 - **Security**: Basic SQLite security, shell command allowlisting, tool approval system
 - **MCP Support**: Model Context Protocol for external tool integration (stdio, HTTP, SSE)
-- **Virtual environment**: `uv venv venv --python 3.13` then `source venv/bin/activate` (Python 3.13.x venv)
+ **Virtual environment**: `uv venv venv --python 3.12` then `source venv/bin/activate` (Python 3.12.x venv)
 - **Code complexity**: Maintained under acceptable thresholds with proper refactoring
 - **Type safety**: Full MyPy type checking with type stubs for external libraries
 
@@ -29,9 +29,9 @@
 - **Run specific test file**: `uv run pytest tests/unit/test_main.py`
 - **Run integration tests**: `uv run pytest tests/integration/`
 - **Run GUI tests manually**: `RUN_GUI_TESTS=1 uv run pytest tests/unit/test_gui.py`
-- **Test framework**: pytest 9.0.1 with pytest-cov and pytest-mock
-- **Test structure**: ~730 tests total (functional + security + integration), all tests passing
-- **Coverage**: 90%+ target across all modular components, comprehensive tool testing
+ **Test framework**: pytest 9.0.2 with pytest-cov and pytest-mock
+ **Test structure**: 817 tests total (functional + security + integration), all tests passing
+ **Coverage**: 74% current, 80% target across all modular components, comprehensive tool testing
 - **Modular coverage**: Includes src/core, src/storage, src/security, src/vectordb, src/commands, src/tools
 
 ## Lint Commands
@@ -54,7 +54,7 @@
 
 ### Test Architecture
 
-- **Framework**: pytest 9.0.1 with comprehensive mocking and fixtures
+ **Framework**: pytest 9.0.2 with comprehensive mocking and fixtures
 - **Coverage**: pytest-cov for code coverage reporting
 - **Mocking**: pytest-mock for flexible test isolation
 - **Structure**: Unit tests, integration tests, and GUI component tests
@@ -227,10 +227,10 @@ uv run pytest --pdb
 
 #### Current Status (v0.3.0)
 
-- **Total tests**: ~730 (functional + security + integration)
+ **Total tests**: 817 (functional + security + integration)
 - **Pass rate**: 100% (All active tests passing)
 - **Execution time**: ~45 seconds
-- **Coverage**: 90%+ including comprehensive tool testing
+ **Coverage**: 74% current, 80% target including comprehensive tool testing
 - **CI/CD ready**: No external dependencies required
 
 #### Test Categories Breakdown
@@ -455,7 +455,39 @@ This project enforces a zero-warning linting policy via `tests/lint/lint.py`.
 - **Natural Language**: Say "read the README", "run pytest", or "what changed in git"
 - **`/help`** - Comprehensive command reference
 
-### Shell Execution (CLI Only) v0.3.0
+### Auto-Learn Feature v0.1
+ **Dedicated Collection**: Stores learned information in `agents_knowledge` ChromaDB collection
+ **Non-Blocking**: Runs in background thread during startup, doesn't delay application launch
+ **Graceful Degradation**: Continues startup if ChromaDB unavailable, logs warning
+ **Scope**: Recursively discovers ALL markdown files (*.md, *.markdown) in the project
+ **Exclusions**: Skips `.sisyphus/`, `__pycache__/`, `.git/`, `node_modules/`, `.venv/` directories
+ **Deduplication**: Uses SHA-256 content hashing (first 1KB) to prevent duplicate entries
+ **Insight Extraction**: Extracts headers, code blocks, lists, and links from markdown
+ **Configuration**: Controlled via environment variables for user customization
+#### Configuration Options
+
+Auto-learn behavior is controlled by these environment variables:
+ **`AUTO_LEARN_ON_STARTUP`**: Enable/disable auto-learning (default: `true`)
+ **`AUTO_LEARN_MAX_FILE_SIZE_MB`**: Skip files larger than this size (default: `5`)
+ **`AUTO_LEARN_TIMEOUT_SECONDS`**: Maximum processing time per file (default: `30`)
+ **`AUTO_LEARN_COLLECTION_NAME`**: ChromaDB collection name (default: `agents_knowledge`)
+#### Module Structure
+
+The auto-learn feature is implemented in the `src/learning/` module with these components:
+ `src/learning/__init__.py` - Module exports
+ `src/learning/config.py` - AutoLearnConfig dataclass with environment variable loading
+ `src/learning/file_discovery.py` - Recursive file discovery with exclusion patterns
+ `src/learning/content_hash.py` - SHA-256 content hashing for deduplication
+ `src/learning/progress.py` - ProgressCallback protocol, CLIProgress, NoOpProgress handlers
+ `src/learning/auto_learn.py` - AutoLearnManager, initialize_auto_learning(), extract_insights()
+
+#### Key Functions
+
+- `initialize_auto_learning(progress_callback=None)` - Main entry point, starts background learning
+- `discover_markdown_files(start_dir, max_size_mb, exclude_dirs)` - Recursive file discovery
+- `compute_content_hash(file_path, sample_size)` - SHA-256 hash for deduplication
+- `extract_insights(content)` - Parse markdown for headers, code blocks, lists, links
+
 
 The AI can execute shell commands in CLI mode using an allowlist-based security model:
 
@@ -568,7 +600,7 @@ Complementing learning modes, context integration can be controlled separately:
 
 ### Python (LangChain Application)
 
-- **Python Version**: 3.13.x (latest available, e.g., 3.13.11+)
+ **Python Version**: 3.12.x (e.g., 3.12.12 or newer)
 - **Imports**: Group imports (stdlib, third-party, local) with blank lines between groups
 - **Type hints**: Use typing module for function parameters and return values
 - **Naming**: snake_case for variables/functions, PascalCase for classes
@@ -611,7 +643,7 @@ ollama serve
 
 ### Verbose Logging Configuration
 
-DevAssist provides granular logging control via 4 environment variables in `.env`:
+DevAssist provides granular logging control via these verbose logging variables in `.env`:
 
 ```bash
 VERBOSE_LOGGING=true       # General debug output (context, commands, memory)
@@ -624,8 +656,8 @@ SHOW_TOOL_DETAILS=true     # Tool execution details with timing
 
 ### Virtual Environment
 
-- **Python Version**: 3.13.x (latest available, e.g., 3.13.11+)
-- **Setup**: `uv venv venv --python 3.13` then `source venv/bin/activate`
+ **Python Version**: 3.12.x (e.g., 3.12.12 or newer)
+ **Setup**: `uv venv venv --python 3.12` then `source venv/bin/activate`
 - **Dependencies**: LangChain, ChromaDB, Ollama integration packages (install with `uv pip install -r requirements.txt`)
 
 ## General Guidelines
@@ -696,7 +728,7 @@ SHOW_TOOL_DETAILS=true     # Tool execution details with timing
 - **Quality Filtering**: Automatic filtering of binary files and low-value content
 - **Type Safety**: Resolved MyPy errors, added type annotations throughout
 - **Linting**: Fixed critical errors, maintained clean codebase (0 issues)
-- **Testing Infrastructure**: Comprehensive tool testing, ~730 tests total, 100% pass rate
+ **Testing Infrastructure**: Comprehensive tool testing, 817 tests total, 100% pass rate
 - **Code Quality**: Excellent (0 linting issues)
 - **Documentation**: Updated all files to reflect current capabilities
 - **Test Coverage**: Excellent coverage with 100% pass rate on all tests
@@ -704,10 +736,10 @@ SHOW_TOOL_DETAILS=true     # Tool execution details with timing
 ## Code Complexity Hotspots
 
 Large files requiring careful maintenance:
-- `src/gui.py` (1195 lines) — PyQt6 GUI with full CLI parity, theming, streaming
+ `src/gui.py` (1212 lines) — PyQt6 GUI with full CLI parity, theming, streaming
 - `src/core/context_utils.py` (751 lines) — ChromaDB API wrapper, embeddings, caching
 - `src/core/chat_loop.py` (605 lines) — Agentic loop, tool calling, approvals
-- `src/main.py` (596 lines) — CLI + initialization, command dispatching
+ `src/main.py` (533 lines) — CLI + initialization, command dispatching
 
 ## Shared Utilities
 
@@ -778,7 +810,7 @@ Recommend adding `.github/workflows/ci.yml` for automated testing and linting.
   ┌─────▼──────┐    ┌──────▼───────┐   ┌──────▼────────┐
   │ Commands   │    │    Tools     │   │   Storage     │
   │ (Registry) │    │  (Registry)  │   │   (SQLite)    │
-  │ 8 handlers │    │  8 tools     │   │   (Memory)    │
+  │ 24 handlers │    │  13 tools    │   │   (Memory)    │
   └────────────┘    └──────────────┘   └───────────────┘
         │                   │                   │
   ┌─────▼──────┐    ┌──────▼───────┐   ┌──────▼────────┐
@@ -801,12 +833,19 @@ src/
 ├── storage/       # Persistence (SQLite, memory, cache)
 ├── security/      # Protection (sanitization, path security)
 ├── vectordb/      # Knowledge (ChromaDB client, spaces)
+├── learning/      # Auto-learn markdown at startup
+│   ├── __init__.py         # Module exports
+│   ├── config.py           # AutoLearnConfig (4 auto-learn env vars)
+│   ├── file_discovery.py   # discover_markdown_files()
+│   ├── content_hash.py     # compute_content_hash()
+│   ├── progress.py         # CLIProgress, NoOpProgress
+│   └── auto_learn.py       # AutoLearnManager, initialize_auto_learning()
 ├── commands/      # Command handlers (plugin system)
 │   ├── registry.py         # CommandRegistry dispatcher with verbose logging
-│   └── handlers/           # 8 handler modules (auto-register)
+│   └── handlers/           # 11 handler modules (auto-register)
 ├── tools/         # AI tool executors (plugin system)
 │   ├── registry.py         # ToolRegistry dispatcher with show_tool_details
-│   └── executors/          # 4 executor modules (auto-register)
+│   └── executors/          # 7 executor modules (auto-register)
 ├── main.py        # CLI interface + LLM initialization
 └── gui.py         # PyQt6 interface with verbose logging
 
@@ -841,7 +880,7 @@ src/
 - **📝 Intelligent Chunking**: RecursiveCharacterTextSplitter for optimal text processing
 - **🔧 Robust Initialization**: Comprehensive error handling and component setup
 - **📊 Code Quality**: Good overall with some linting issues to address (32 total issues)
-- **🐍 Python Version**: Python 3.13.x (latest available, e.g., 3.13.11+) ⚠️ **Python 3.14 is NOT compatible yet**
+ **🐍 Python Version**: Python 3.12.x (e.g., 3.12.12 or newer)
 - **📦 Package Manager**: uv (required for all operations) - `uv venv` and `uv pip install -r requirements.txt`
 - **🐚 Shell Execution**: AI can execute shell commands in CLI mode with allowlist-based security
 - **🔌 MCP Integration**: Connect external tool servers via Model Context Protocol (stdio, HTTP, SSE)

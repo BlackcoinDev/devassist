@@ -61,12 +61,13 @@ from src.commands.handlers import (
     space_commands,
     system_commands,
 )
+from src.learning.auto_learn import initialize_auto_learning
+from src.learning.progress import CLIProgress  # NoOpProgress not needed for CLI
 
 from src.storage import (
     initialize_database,
     load_embedding_cache,
     load_query_cache,
-    cleanup_memory,
 )
 
 # Setup logging FIRST (before any other imports that use logging)
@@ -454,6 +455,19 @@ def initialize_application() -> bool:
         initialize_tools()  # Tools must be initialized first for System Prompt injection
         initialize_llm()
         initialize_vectordb()
+        # Check config flag before running auto-learn
+        if _config.auto_learn_on_startup:
+            try:
+                logger.info("📚 Auto-learning project documentation...")
+                start_time = datetime.now()
+                initialize_auto_learning(
+                    progress_callback=CLIProgress().report_progress
+                )
+                end_time = datetime.now()
+                duration = (end_time - start_time).total_seconds()
+                logger.info(f"✅ Auto-learn completed in {duration:.2f} seconds")
+            except Exception as e:
+                logger.warning(f"⚠️ Auto-learn failed: {e}")
         initialize_user_memory()
         initialize_mcp()
         return True

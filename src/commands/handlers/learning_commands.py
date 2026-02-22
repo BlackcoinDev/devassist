@@ -28,6 +28,7 @@ This module provides command handlers for learning information via
 """
 
 from datetime import datetime
+from pathlib import Path
 from typing import List
 from src.commands.registry import CommandRegistry
 from src.core.context import get_context
@@ -155,7 +156,6 @@ def handle_learn(args: List[str]) -> None:
 def handle_populate(args: List[str]) -> None:
     """Handle the /populate command to bulk import codebases."""
     import os
-    from pathlib import Path
     from src.core.utils import chunk_text
     from src.core.context_utils import add_to_knowledge_base
     from langchain_core.documents import Document
@@ -416,7 +416,7 @@ def handle_populate(args: List[str]) -> None:
         return
 
     # Print summary
-    print(f"\n✅ Population complete!")
+    print("\n✅ Population complete!")
     print(f"   📄 Files processed: {files_processed}")
     print(f"   📝 Chunks added: {chunks_added}")
     print(f"   ⏭️ Files skipped: {files_skipped}")

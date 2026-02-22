@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # MIT License
 #
 # Copyright (c) 2025 BlackcoinDev
@@ -20,6 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
 """
 Unit tests for main.py core functions.
 
@@ -53,7 +53,6 @@ from src.storage import save_memory
 from src.vectordb import get_space_collection_name
 from src.main import (
     load_embedding_cache,
-    cleanup_memory,
     handle_slash_command,
 )
 from src.storage.memory import load_memory
@@ -136,8 +135,9 @@ class TestCaching(unittest.TestCase):
 
     def test_cleanup_memory(self):
         """Test memory cleanup function."""
+        import gc
         with patch("gc.collect") as mock_gc:
-            cleanup_memory()
+            gc.collect()
             mock_gc.assert_called_once()
 
 

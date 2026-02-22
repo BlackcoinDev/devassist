@@ -17,6 +17,7 @@ src/
 ├── storage/        # Persistence (SQLite, Memory, Cache)
 ├── security/       # Protection (Input Sanitizer, Path Security, Rate Limiter)
 ├── vectordb/       # Knowledge (ChromaDB client, Spaces system)
+├── learning/        # Auto-learn markdown (config, discovery, hashing, progress, manager)
 ├── commands/       # Slash commands (plugin registry)
 │   ├── registry.py         # CommandRegistry decorator dispatcher
 │   └── handlers/           # 8 handler modules (auto-register)
@@ -39,6 +40,7 @@ src/
 | Vector DB operations | `core/context_utils.py` | ChromaDB HTTP API wrapper |
 | Configuration | `core/config.py` | Env vars, verbose logging flags |
 | Security validation | `security/*.py` | Input sanitizer, path security |
+| Add learning feature | `learning/*.py` | AutoLearnConfig, discover_markdown_files(), compute_content_hash() |
 | GUI components | `gui.py` | PyQt6 main window, worker threads |
 
 ## CONVENTIONS (PROJECT-SPECIFIC)
