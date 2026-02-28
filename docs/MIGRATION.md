@@ -159,7 +159,7 @@ no longer uses hardcoded defaults.
 Version 0.2.0 introduces a significant architectural refactoring, moving from a
 monolithic structure to a modular plugin-based architecture:
 
-- **main.py reduced**: From 4,556 lines to 3,175 lines (30% reduction)
+- **main.py reduced**: From 4,556 lines to 547 lines (30% reduction)
 - **New modules created**: 8 focused modules with clear responsibilities
 - **Plugin systems**: CommandRegistry and ToolRegistry with self-registration
 - **Dependency injection**: ApplicationContext replaces scattered globals

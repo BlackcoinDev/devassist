@@ -1098,8 +1098,8 @@ devassist/
 ├── launcher.py                # Unified launcher for GUI/CLI versions
 ├── src/
 │   ├── __init__.py
-│   ├── main.py                # CLI interface + LLM initialization (3,175 lines)
-│   ├── gui.py                 # PyQt6 graphical user interface (2,135 lines)
+│   ├── main.py                # CLI interface + LLM initialization (547 lines)
+│   ├── gui.py                 # PyQt6 graphical user interface (1,212 lines)
 │   ├── core/                  # Application foundation
 │   │   ├── config.py          # Configuration management from .env
 │   │   ├── context.py         # ApplicationContext (dependency injection)
@@ -1174,9 +1174,9 @@ devassist/
 
 **Core Application:**
 
-- **`src/main.py`** (3,175 lines): CLI interface and LLM initialization with chat loop
-- **`src/gui.py`** (2,135 lines): PyQt6-based graphical user interface with full CLI parity
-- **`launcher.py`** (216 lines): Unified entry point for starting GUI or CLI modes
+- **`src/main.py`** (547 lines): CLI interface and LLM initialization with chat loop
+- **`src/gui.py`** (1,212 lines): PyQt6-based graphical user interface with full CLI parity
+- **`launcher.py`** (221 lines): Unified entry point for starting GUI or CLI modes
 
 **Modular Architecture (v0.2.0):**
 

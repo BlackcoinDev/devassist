@@ -145,7 +145,7 @@ In-Memory Cache (QUERY_CACHE)
 
 ### 1. **Semantic Search (Knowledge Base)**
 
-**Function**: `get_relevant_context()` (src/main.py:1084)
+**Function**: `get_relevant_context()` (`src/core/context_utils.py`)
 
 Searches learned documents using embeddings:
 
@@ -191,7 +191,7 @@ AI response: "Based on your knowledge base: [context]. Additionally..."
 
 ### 2. **Web Search (Knowledge from Internet)**
 
-**Function**: `execute_web_search()` (src/main.py:3007)
+**Function**: `execute_web_search()` (`src/tools/executors/web_tools.py`)
 
 Uses DuckDuckGo API for real-time information:
 
@@ -221,7 +221,7 @@ Result: Latest news articles from internet
 
 ### 3. **AI Tool: search_knowledge()**
 
-**Function**: `execute_search_knowledge()` (src/main.py:3330)
+**Function**: `execute_search_knowledge()` (`src/tools/executors/knowledge_tools.py`)
 
 Wrapper tool that AI can call explicitly:
 

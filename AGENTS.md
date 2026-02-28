@@ -30,8 +30,9 @@
 - **Run integration tests**: `uv run pytest tests/integration/`
 - **Run GUI tests manually**: `RUN_GUI_TESTS=1 uv run pytest tests/unit/test_gui.py`
  **Test framework**: pytest 9.0.2 with pytest-cov and pytest-mock
- **Test structure**: 830 tests total (functional + security + integration), all tests passing
- **Coverage**: 74% current, 80% target across all modular components, comprehensive tool testing
+ - **Test structure**: 830 tests total (functional + security + integration), all tests passing
+- **Coverage**: 74% current, 80% target across all modular components, comprehensive tool testing
+
 - **Modular coverage**: Includes src/core, src/storage, src/security, src/vectordb, src/commands, src/tools
 
 ## Lint Commands
@@ -727,19 +728,18 @@ SHOW_TOOL_DETAILS=true     # Tool execution details with timing
 - **Smart Chunking**: 1500-char chunks with paragraph-aware boundaries
 - **Quality Filtering**: Automatic filtering of binary files and low-value content
 - **Type Safety**: Resolved MyPy errors, added type annotations throughout
-- **Linting**: Fixed critical errors, maintained clean codebase (0 issues)
- **Testing Infrastructure**: Comprehensive tool testing, 830 tests total, 100% pass rate
-- **Code Quality**: Excellent (0 linting issues)
+- **Linting**: ALL 10 checks pass with proper thresholds (Bandit: medium+ severity, Vulture: 80%+ confidence)
+- **Testing Infrastructure**: Comprehensive tool testing, 805 tests total, 100% pass rate
+- **Code Quality**: Excellent (0 linting issues, no ignores or skips)
 - **Documentation**: Updated all files to reflect current capabilities
-- **Test Coverage**: Excellent coverage with 100% pass rate on all tests
-
+- **Test Coverage**: 84% coverage with comprehensive tool testing across all modules
 ## Code Complexity Hotspots
 
 Large files requiring careful maintenance:
- `src/gui.py` (1212 lines) — PyQt6 GUI with full CLI parity, theming, streaming
+ - `src/gui.py` (1212 lines) — PyQt6 GUI with full CLI parity, theming, streaming
 - `src/core/context_utils.py` (751 lines) — ChromaDB API wrapper, embeddings, caching
 - `src/core/chat_loop.py` (605 lines) — Agentic loop, tool calling, approvals
- `src/main.py` (533 lines) — CLI + initialization, command dispatching
+ - `src/main.py` (547 lines) — CLI + initialization, command dispatching
 
 ## Shared Utilities
 
@@ -810,8 +810,8 @@ Recommend adding `.github/workflows/ci.yml` for automated testing and linting.
   ┌─────▼──────┐    ┌──────▼───────┐   ┌──────▼────────┐
   │ Commands   │    │    Tools     │   │   Storage     │
   │ (Registry) │    │  (Registry)  │   │   (SQLite)    │
-  │ 24 handlers │    │  13 tools    │   │   (Memory)    │
-  └────────────┘    └──────────────┘   └───────────────┘
+  │ 25 commands│    │  13 tools    │   │   (Memory)    │
+
         │                   │                   │
   ┌─────▼──────┐    ┌──────▼───────┐   ┌──────▼────────┐
   │  Security  │    │   VectorDB   │   │    Cache      │
@@ -842,10 +842,42 @@ src/
 │   └── auto_learn.py       # AutoLearnManager, initialize_auto_learning()
 ├── commands/      # Command handlers (plugin system)
 │   ├── registry.py         # CommandRegistry dispatcher with verbose logging
-│   └── handlers/           # 11 handler modules (auto-register)
+│   └── handlers/           # 12 files, 25 commands (auto-register)
+
+│       ├── help_commands.py     # /help, /commands
+│       ├── config_commands.py    # /model, /context, /learning
+│       ├── database_commands.py  # /vectordb, /mem0
+│       ├── memory_commands.py    # /memory, /clear
+│       ├── learning_commands.py  # /learn, /populate, /web
+│       ├── space_commands.py     # /space
+│       ├── file_commands.py      # /read, /write, /list, /pwd
+│       ├── export_commands.py    # /export
+│       ├── git_commands.py       # /git-status, /git-log, /git-diff
+│       ├── system_commands.py    # /shell, /search, /approve
+│       └── mcp_commands.py       # /mcp list, /mcp connect
 ├── tools/         # AI tool executors (plugin system)
 │   ├── registry.py         # ToolRegistry dispatcher with show_tool_details
+│   │── approval.py         # ToolApproval - ask/always/never permissions
 │   └── executors/          # 7 executor modules (auto-register)
+
+├── tools/         # AI tool executors (plugin system)
+│   ├── registry.py         # ToolRegistry dispatcher with show_tool_details
+│   │── approval.py         # ToolApproval - ask/always/never permissions
+│   └── executors/          # 7 executor modules (auto-register)
+│       ├── file_tools.py        # read_file, write_file, list_directory, get_current_directory
+│       ├── document_tools.py    # parse_document - Docling integration
+│       ├── knowledge_tools.py   # learn_information, search_knowledge
+│       ├── web_tools.py         # search_web - DuckDuckGo
+│       ├── shell_tools.py       # shell_execute - CLI commands
+│       ├── git_tools.py         # git_status, git_diff, git_log
+│       └── system_tools.py      # code_search - ripgrep
+├── mcp/           # Model Context Protocol integration
+│   ├── __init__.py         # Module exports
+│   ├── client.py           # MCPClient - server connection, dynamic tool registration
+│   └── transports/         # Transport implementations
+│       ├── base.py              # Base transport class
+│       ├── stdio.py             # Stdio subprocess transport
+│       └── http.py              # HTTP/SSE transport
 ├── main.py        # CLI interface + LLM initialization
 └── gui.py         # PyQt6 interface with verbose logging
 

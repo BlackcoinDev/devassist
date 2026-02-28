@@ -65,7 +65,8 @@ Run manually: `RUN_GUI_TESTS=1 uv run pytest tests/unit/test_gui.py -v`
 ## COMMANDS
 
 ```bash
-# All tests (~730 tests, ~45s)
+# All tests (~830 tests, ~45s)
+
 uv run pytest
 
 # With coverage (target: 90%+)

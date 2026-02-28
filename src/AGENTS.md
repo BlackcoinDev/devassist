@@ -20,14 +20,15 @@ src/
 ├── learning/        # Auto-learn markdown (config, discovery, hashing, progress, manager)
 ├── commands/       # Slash commands (plugin registry)
 │   ├── registry.py         # CommandRegistry decorator dispatcher
-│   └── handlers/           # 8 handler modules (auto-register)
+│   └── handlers/           # 12 files, 25 commands (auto-register)
 ├── tools/          # AI tools (plugin registry)
 │   ├── registry.py         # ToolRegistry decorator dispatcher
 │   ├── approval.py         # ask/always/never permission system
-│   └── executors/          # 8 executor modules (auto-register)
+│   └── executors/          # 7 executor modules (auto-register)
 ├── mcp/            # Model Context Protocol integration
-├── gui.py          # PyQt6 GUI (1195 lines)
-└── main.py         # CLI + initialization (596 lines)
+├── gui.py          # PyQt6 GUI (1212 lines)
+└── main.py         # CLI + initialization (547 lines)
+
 ```
 
 ## WHERE TO LOOK

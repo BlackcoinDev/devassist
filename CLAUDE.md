@@ -62,9 +62,8 @@ python launcher.py
 
 ```bash
 
-# Run all tests (~730 tests, ~45s execution)
+# Run all tests (~805 tests, ~45s execution)
 
-uv run pytest
 
 # Run with coverage report (target: 90%+)
 
@@ -348,32 +347,32 @@ When adding features:
 
 | File            | Purpose                              | Lines |
 | --------------- | ------------------------------------ | ----- |
-| `src/main.py`   | CLI interface + LLM initialization   | 3,175 |
-| `src/gui.py`    | PyQt6 GUI interface                  | 2,135 |
-| `launcher.py`   | Interface selector + .env loader     | 216   |
+| `src/main.py`   | CLI interface + LLM initialization   | 547   |
+| `src/gui.py`    | PyQt6 GUI interface                  | 1,212 |
+| `launcher.py`   | Interface selector + .env loader     | 221   |
 
 **Modular Architecture (v0.3.0):**
 
 | File                           | Purpose                                     | Lines |
 | ------------------------------ | ------------------------------------------- | ----- |
-| `src/core/config.py`           | Configuration management from .env          | 320   |
-| `src/core/context.py`          | ApplicationContext (dependency injection)   | 310   |
-| `src/core/context_utils.py`    | Shared utility functions                    | 330   |
-| `src/core/chat_loop.py`        | Main chat loop with verbose logging         | 330   |
-| `src/commands/registry.py`     | Command dispatcher (plugin system)          | 190   |
-| `src/tools/registry.py`        | AI tool dispatcher (plugin system)          | 210   |
-| `src/tools/approval.py`        | Tool approval system (ask/always/never)     | 150   |
-| `src/vectordb/client.py`       | ChromaDB unified API client                 | 310   |
-| `src/storage/database.py`      | SQLite connection management                | 120   |
-| `src/storage/memory.py`        | Conversation history persistence            | 205   |
-| `src/storage/cache.py`         | Embedding and query caching                 | 140   |
-| `src/security/shell_security.py`| Shell command validation (allowlist)       | 200   |
-| `src/tools/executors/shell_tools.py` | shell_execute AI tool                 | 160   |
-| `src/tools/executors/git_tools.py` | git_status, git_diff, git_log AI tools  | 270   |
-| `src/tools/executors/system_tools.py` | code_search AI tool (ripgrep)        | 200   |
-| `src/commands/handlers/git_commands.py` | /git-status, /git-log, /git-diff   | 160   |
-| `src/commands/handlers/system_commands.py` | /search, /shell slash commands  | 180   |
-| `src/mcp/client.py`            | MCP client manager                          | 250   |
+| `src/core/config.py`           | Configuration management from .env          | 352   |
+| `src/core/context.py`          | ApplicationContext (dependency injection)   | 344   |
+| `src/core/context_utils.py`    | Shared utility functions                    | 751   |
+| `src/core/chat_loop.py`        | Main chat loop with verbose logging         | 605   |
+| `src/commands/registry.py`     | Command dispatcher (plugin system)          | 228   |
+| `src/tools/registry.py`        | AI tool dispatcher (plugin system)          | 340   |
+| `src/tools/approval.py`        | Tool approval system (ask/always/never)     | 226   |
+| `src/vectordb/client.py`       | ChromaDB unified API client                 | 335   |
+| `src/storage/database.py`      | SQLite connection management                | 229   |
+| `src/storage/memory.py`        | Conversation history persistence            | 248   |
+| `src/storage/cache.py`         | Embedding and query caching                 | 352   |
+| `src/security/shell_security.py`| Shell command validation (allowlist)       | 333   |
+| `src/tools/executors/shell_tools.py` | shell_execute AI tool                 | 308   |
+| `src/tools/executors/git_tools.py` | git_status, git_diff, git_log AI tools  | 560   |
+| `src/tools/executors/system_tools.py` | code_search AI tool (ripgrep)        | 385   |
+| `src/commands/handlers/git_commands.py` | /git-status, /git-log, /git-diff   | 225   |
+| `src/commands/handlers/system_commands.py` | /search, /shell slash commands  | 248   |
+| `src/mcp/client.py`            | MCP client manager                          | 315   |
 | `src/mcp/transports/`          | stdio, HTTP, SSE transports                 | ---   |
 
 **Tools & Testing:**
@@ -549,7 +548,7 @@ BLOCKED_COMMANDS: Set[str] = {
 
 ### Performance Expectations
 
-- **Test Suite**: ~15 seconds for 555 tests (545 passed, 10 GUI skipped)
+- **Test Suite**: ~45 seconds for 805 tests (790 passed, 15 deselected)
 - **LLM Response Time**: 2-5 seconds (typical queries)
 - **Tool Operations**: 5-15 seconds (file/document operations)
 - **Memory Usage**: <8GB GPU memory (stable with qwen3-vl-30b)
