@@ -66,7 +66,7 @@ parity between GUI and CLI interfaces.
 
 **Test Coverage Status:**
 
-- **Total Tests**: 817 tests (394 unit + 25 integration + 34 security)
+- **Total Tests**: 830 tests (394 unit + 25 integration + 34 security)
 - **Coverage**: 49% overall, 71% modules ≥90% (20/28 modules)
 - **Pass Rate**: 100% (394 passing, 10 skipped GUI tests)
 - **Execution Time**: ~55-65 seconds

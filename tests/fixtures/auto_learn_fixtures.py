@@ -94,7 +94,9 @@ def temp_md_files():
         md_file1 = os.path.join(temp_dir, "sample1.md")
         with open(md_file1, "w", encoding="utf-8") as f:
             f.write(
-                "# Sample Markdown 1\n\nThis is a test markdown file.\n\n## Features\n- Feature 1\n- Feature 2\n"
+                "# Sample Markdown 1\n\n"
+                "This is a test markdown file.\n\n"
+                "## Features\n- Feature 1\n- Feature 2\n"
             )
         file_paths.append(md_file1)
 
@@ -102,7 +104,9 @@ def temp_md_files():
         md_file2 = os.path.join(temp_dir, "sample2.md")
         with open(md_file2, "w", encoding="utf-8") as f:
             f.write(
-                "# Sample Markdown 2\n\nAnother test markdown file.\n\n## Content\n- Content 1\n- Content 2\n"
+                "# Sample Markdown 2\n\n"
+                "Another test markdown file.\n\n"
+                "## Content\n- Content 1\n- Content 2\n"
             )
         file_paths.append(md_file2)
 

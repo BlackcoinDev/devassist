@@ -45,10 +45,12 @@ class TestLearningWorkflows:
         self.host = "localhost"
         self.port = 8000
         self.base_url = f"http://{self.host}:{self.port}/api/v2"
-        self.coll_url = f"{self.base_url}/tenants/default_tenant/databases/default_database/collections"
+        self.coll_url = (
+            f"{self.base_url}/tenants/default_tenant"
+            f"/databases/default_database/collections"
+        )
 
     def teardown_method(self):
-        """Cleanup."""
         reset_context()
 
     @responses.activate
@@ -96,15 +98,18 @@ class TestLearningWorkflows:
 
     @responses.activate
     @patch("src.core.context_utils.get_config")
-    @patch("src.main.vectorstore", new_callable=MagicMock)
+    @patch("src.commands.handlers.learning_commands.is_content_duplicate", return_value=False)
+    @patch("src.commands.handlers.learning_commands.register_content_hash")
     @patch("docling.document_converter.DocumentConverter")
     def test_web_learning_workflow(
-        self, mock_converter_class, mock_main_vectorstore, mock_config
+        self, mock_converter_class, mock_register, mock_dup, mock_config
     ):
         """Test learning from a web URL by mocking Docling and the vectorstore."""
         # 1. Setup mocks
         ctx = get_context()
         ctx.current_space = "default"
+        ctx.vectorstore = MagicMock()
+        ctx.vectorstore.add_documents.return_value = ["doc-id"]
 
         mock_conf = MagicMock()
         mock_conf.chroma_host = self.host
@@ -120,18 +125,13 @@ class TestLearningWorkflows:
         mock_result.document.title = "Test Web Page"
         mock_converter.convert.return_value = mock_result
 
-        # Update global vectorstore in main (used by handle_web -> execute_learn_url)
-        mock_main_vectorstore.add_documents.return_value = ["doc-id"]
-
         # 2. Execute /web command
-        # Note: We don't need responses for Chroma here because execute_learn_url
-        # directly interacts with the global vectorstore mock
         handle_web(["https://example.com"])
 
         # 3. Verify interactions
         mock_converter.convert.assert_called_with("https://example.com")
-        assert mock_main_vectorstore.add_documents.called
-        args, _ = mock_main_vectorstore.add_documents.call_args
+        assert ctx.vectorstore.add_documents.called
+        args, _ = ctx.vectorstore.add_documents.call_args
         doc = args[0][0]
         assert "Retrieved from URL" in doc.page_content
         assert doc.metadata["source"] == "https://example.com"

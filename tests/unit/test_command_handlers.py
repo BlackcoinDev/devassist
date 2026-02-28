@@ -230,8 +230,10 @@ class TestLearningHandlers:
         reset_context()
 
     @patch("builtins.print")
+    @patch("src.commands.handlers.learning_commands.is_content_duplicate", return_value=False)
+    @patch("src.commands.handlers.learning_commands.register_content_hash")
     @patch("src.commands.handlers.learning_commands.add_to_knowledge_base")
-    def test_handle_learn_success(self, mock_add, mock_print):
+    def test_handle_learn_success(self, mock_add, mock_register, mock_dup, mock_print):
         """Test the /learn command."""
         ctx = get_context()
         ctx.embeddings = MagicMock()

@@ -45,9 +45,11 @@ class TestLearningCommands:
         ctx.embeddings = Mock()  # mock embeddings to simulate availability
         set_context(ctx)
 
+    @patch("src.commands.handlers.learning_commands.is_content_duplicate", return_value=False)
+    @patch("src.commands.handlers.learning_commands.register_content_hash")
     @patch("src.commands.handlers.learning_commands.add_to_knowledge_base")
     @patch("builtins.print")
-    def test_learn_command_success(self, mock_print, mock_add):
+    def test_learn_command_success(self, mock_print, mock_add, mock_register, mock_is_dup):
         """Test /learn command success."""
         mock_add.return_value = True
         handle_learn(["python", "is", "great"])
@@ -88,9 +90,11 @@ class TestLearningCommands:
         handle_web(["http://bad.com"])
         mock_print.assert_any_call("\n❌ Error: 404 Not Found\n")
 
+    @patch("src.commands.handlers.learning_commands.is_content_duplicate", return_value=False)
+    @patch("src.commands.handlers.learning_commands.register_content_hash")
     @patch("src.commands.handlers.learning_commands.add_to_knowledge_base")
     @patch("builtins.print")
-    def test_learn_command_failure(self, mock_print, mock_add):
+    def test_learn_command_failure(self, mock_print, mock_add, mock_register, mock_is_dup):
         """Test /learn command when adding to knowledge base fails."""
         mock_add.return_value = False
         handle_learn(["test", "information"])

@@ -93,3 +93,24 @@ def mock_embeddings():
     mock_emb.embed_query = MagicMock(return_value=[0.1, 0.2, 0.3])
     mock_emb.embed_documents = MagicMock(return_value=[[0.1, 0.2, 0.3]])
     return mock_emb
+
+
+@pytest.fixture
+def sample_md_content():
+    """Sample markdown content for testing."""
+    return {
+        "simple": "# Simple Markdown\n\nThis is simple markdown content.\n",
+        "complex": (
+            "# Complex Markdown\n\n## Section 1\n\n"
+            "This is a complex markdown document.\n\n"
+            "- Item 1\n- Item 2\n\n"
+            "```python\ndef example():\n    return 'code'\n```\n"
+        ),
+        "empty": "",
+        "minimal": "# Minimal\n\nJust a title.",
+        "with_code": (
+            "# Code Example\n\n"
+            "```python\nimport sys\n\n"
+            "def main():\n    print('Hello World')\n```\n"
+        ),
+    }

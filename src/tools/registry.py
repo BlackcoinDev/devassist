@@ -191,6 +191,7 @@ class ToolRegistry:
                 limit = rate_status.get("max_calls", 0)
                 get_audit_logger().log_rate_limit(name, count, limit)
             except Exception:
+                pass  # Non-critical - audit logging failure shouldn't block execution
                 pass
             return {"error": f"Rate limit exceeded: {e}"}
         except Exception as e:

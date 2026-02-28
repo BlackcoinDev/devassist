@@ -43,7 +43,10 @@ class TestChromaDBClient:
         self.port = 8000
         self.client = ChromaDBClient(host=self.host, port=self.port)
         self.base_url = f"http://{self.host}:{self.port}/api/v2"
-        self.coll_url = f"{self.base_url}/tenants/default_tenant/databases/default_database/collections"
+        self.coll_url = (
+            f"{self.base_url}/tenants/default_tenant"
+            f"/databases/default_database/collections"
+        )
 
     @responses.activate
     def test_list_collections(self):

@@ -104,3 +104,21 @@ def compute_content_hash(file_path: Path, sample_size: int = 1024) -> Optional[s
     except Exception:
         # Any other unexpected errors
         return None
+
+
+def compute_string_hash(content: str) -> str:
+    """Compute a content-based hash for string deduplication.
+
+    This function hashes string content to create a fingerprint for
+    deduplication purposes. Used by /learn command for string content.
+
+    Args:
+        content: String content to hash
+
+    Returns:
+        Truncated SHA-256 hash (16 characters) as a string
+    """
+    sha256_hash = hashlib.sha256()
+    sha256_hash.update(content.encode("utf-8"))
+    full_hash = sha256_hash.hexdigest()
+    return full_hash[:16]

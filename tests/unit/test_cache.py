@@ -243,7 +243,11 @@ class TestNewCacheFeatures:
     def test_save_embedding_cache_limits_size(self):
         """Test that saving embedding cache enforces max size limits."""
         ctx = get_context()
-        from src.storage.cache import save_embedding_cache, EMBEDDING_CACHE_MAX_SIZE, EMBEDDING_CACHE_TARGET_SIZE
+        from src.storage.cache import (
+            save_embedding_cache,
+            EMBEDDING_CACHE_MAX_SIZE,
+            EMBEDDING_CACHE_TARGET_SIZE,
+        )
 
         # Populate cache with more items than limit
         ctx.embedding_cache = {f"text_{i}": [0.1] for i in range(EMBEDDING_CACHE_MAX_SIZE + 100)}
@@ -271,9 +275,8 @@ class TestNewCacheFeatures:
         # Fill just before trigger (interval - 1)
         # Note: We need to mock save_embedding_cache inside the module
 
-        # Since we can't easily patch the imported function inside the module if we use 'from ... import ...' style in the module
-        # But cache.py defines save_embedding_cache, so we can patch 'src.storage.cache.save_embedding_cache'
-
+        # Since we can't easily patch imported function inside module
+        # cache.py defines save_embedding_cache, so we can patch it
         # Populate context up to trigger point
         ctx.embedding_cache = {f"k{i}": [0.1] for i in range(EMBEDDING_CACHE_SAVE_INTERVAL - 1)}
 

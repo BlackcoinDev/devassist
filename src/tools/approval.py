@@ -215,6 +215,7 @@ class ToolApprovalManager:
                         data["version"] = existing.get("version", "1.0")
                         data["defaults"] = existing.get("defaults", self.defaults)
                     except Exception:
+                        pass  # Non-critical - use defaults if file is malformed
                         pass
 
             with open(self.config_path, "w") as f:

@@ -114,6 +114,7 @@ def _get_bool(name: str, default: bool = False) -> bool:
     """Get boolean environment variable with default."""
     return os.getenv(name, str(default)).lower() == "true"
 
+
 def _get_int(name: str, default: int) -> int:
     """Get integer environment variable with default."""
     try:
@@ -125,8 +126,6 @@ def _get_int(name: str, default: int) -> int:
 def _get_str(name: str, default: str) -> str:
     """Get string environment variable with default."""
     return os.getenv(name, default)
-
-
 
 
 __all__ = [
@@ -244,6 +243,7 @@ class Config:
             auto_learn_timeout_seconds=_get_int("AUTO_LEARN_TIMEOUT_SECONDS", 30),
             auto_learn_collection_name=_get_str("AUTO_LEARN_COLLECTION_NAME", "agents_knowledge"),
         )
+
 
 # Module-level singleton
 _config: Optional[Config] = None

@@ -30,7 +30,7 @@
 - **Run integration tests**: `uv run pytest tests/integration/`
 - **Run GUI tests manually**: `RUN_GUI_TESTS=1 uv run pytest tests/unit/test_gui.py`
  **Test framework**: pytest 9.0.2 with pytest-cov and pytest-mock
- **Test structure**: 817 tests total (functional + security + integration), all tests passing
+ **Test structure**: 830 tests total (functional + security + integration), all tests passing
  **Coverage**: 74% current, 80% target across all modular components, comprehensive tool testing
 - **Modular coverage**: Includes src/core, src/storage, src/security, src/vectordb, src/commands, src/tools
 
@@ -227,7 +227,7 @@ uv run pytest --pdb
 
 #### Current Status (v0.3.0)
 
- **Total tests**: 817 (functional + security + integration)
+ **Total tests**: 830 (functional + security + integration)
 - **Pass rate**: 100% (All active tests passing)
 - **Execution time**: ~45 seconds
  **Coverage**: 74% current, 80% target including comprehensive tool testing
@@ -728,7 +728,7 @@ SHOW_TOOL_DETAILS=true     # Tool execution details with timing
 - **Quality Filtering**: Automatic filtering of binary files and low-value content
 - **Type Safety**: Resolved MyPy errors, added type annotations throughout
 - **Linting**: Fixed critical errors, maintained clean codebase (0 issues)
- **Testing Infrastructure**: Comprehensive tool testing, 817 tests total, 100% pass rate
+ **Testing Infrastructure**: Comprehensive tool testing, 830 tests total, 100% pass rate
 - **Code Quality**: Excellent (0 linting issues)
 - **Documentation**: Updated all files to reflect current capabilities
 - **Test Coverage**: Excellent coverage with 100% pass rate on all tests

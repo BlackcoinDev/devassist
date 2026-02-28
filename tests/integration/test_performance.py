@@ -70,7 +70,10 @@ class TestPerformance:
         mock_config.return_value = mock_config_obj
 
         # Mock ChromaDB API endpoints
-        base_url = "http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections"
+        base_url = (
+            "http://localhost:8000/api/v2/tenants/default_tenant"
+            "/databases/default_database/collections"
+        )
         responses.add(
             responses.GET,
             base_url,
@@ -114,7 +117,10 @@ class TestPerformance:
         mock_config.return_value = mock_config_obj
 
         # Mock ChromaDB API endpoints
-        base_url = "http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections"
+        base_url = (
+            "http://localhost:8000/api/v2/tenants/default_tenant"
+            "/databases/default_database/collections"
+        )
         responses.add(
             responses.GET,
             base_url,

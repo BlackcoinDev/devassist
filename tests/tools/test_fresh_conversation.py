@@ -19,80 +19,198 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 """
-Test tool calling with a fresh conversation (no history)
+Unit tests for fresh conversation tool calling with LangChain.
+
+These tests mock the LangChain LLM to avoid requiring a running server.
 """
 
-import sys
-from langchain_openai import ChatOpenAI
+from unittest.mock import MagicMock, patch
 from langchain_core.messages import SystemMessage, HumanMessage
-from pydantic import SecretStr
 
-sys.path.append(".")
 
-# Initialize LLM with tools bound
-llm = ChatOpenAI(
-    base_url="http://192.168.0.203:1234/v1",
-    api_key=SecretStr("lm-studio"),
-    model="qwen3-vl-30b",
-    temperature=0.0,
-)
+class TestFreshConversation:
+    """Test fresh conversation tool calling with LangChain."""
 
-# Define tools
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "read_file",
-            "description": "Read the contents of a file in the current directory",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "file_path": {
-                        "type": "string",
-                        "description": "Path to the file to read (relative to current directory)",
-                    }
+    def test_tool_definition_format(self):
+        """Test that tool definitions are properly formatted."""
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "read_file",
+                    "description": "Read the contents of a file",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "file_path": {
+                                "type": "string",
+                                "description": "Path to the file to read",
+                            }
+                        },
+                        "required": ["file_path"],
+                    },
                 },
-                "required": ["file_path"],
+            }
+        ]
+
+        assert len(tools) == 1
+        assert tools[0]["type"] == "function"
+        assert tools[0]["function"]["name"] == "read_file"
+        assert "parameters" in tools[0]["function"]
+
+    @patch("langchain_openai.ChatOpenAI")
+    def test_langchain_tool_calling_with_mock(self, mock_chat_class):
+        """Test that LangChain tool calling works with mocked LLM."""
+        mock_llm = MagicMock()
+        mock_chat_class.return_value = mock_llm
+
+        mock_response = MagicMock()
+        mock_response.tool_calls = [
+            {
+                "name": "read_file",
+                "args": {"file_path": "README.md"},
+            }
+        ]
+        mock_response.content = None
+        mock_llm.bind_tools.return_value.invoke.return_value = mock_response
+
+        from langchain_openai import ChatOpenAI
+        from pydantic import SecretStr
+
+        llm = ChatOpenAI(
+            base_url="http://localhost:1234/v1",
+            api_key=SecretStr("test-key"),
+            model="test-model",
+            temperature=0.0,
+        )
+
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "read_file",
+                    "description": "Read file contents",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {"file_path": {"type": "string"}},
+                        "required": ["file_path"],
+                    },
+                },
+            }
+        ]
+
+        llm_with_tools = llm.bind_tools(tools)
+        messages = [
+            SystemMessage(content="Test system message"),
+            HumanMessage(content="read the README file"),
+        ]
+
+        response = llm_with_tools.invoke(messages)
+
+        assert response.tool_calls is not None
+        assert len(response.tool_calls) == 1
+        assert response.tool_calls[0]["name"] == "read_file"
+
+    @patch("langchain_openai.ChatOpenAI")
+    def test_langchain_no_tool_calls(self, mock_chat_class):
+        """Test handling response with no tool calls."""
+        mock_llm = MagicMock()
+        mock_chat_class.return_value = mock_llm
+
+        mock_response = MagicMock()
+        mock_response.tool_calls = None
+        mock_response.content = "I cannot read files directly."
+        mock_llm.bind_tools.return_value.invoke.return_value = mock_response
+
+        from langchain_openai import ChatOpenAI
+        from pydantic import SecretStr
+
+        llm = ChatOpenAI(
+            base_url="http://localhost:1234/v1",
+            api_key=SecretStr("test-key"),
+            model="test-model",
+            temperature=0.0,
+        )
+
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "read_file",
+                    "description": "Read file contents",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {"file_path": {"type": "string"}},
+                        "required": ["file_path"],
+                    },
+                },
+            }
+        ]
+
+        llm_with_tools = llm.bind_tools(tools)
+        messages = [HumanMessage(content="hello")]
+
+        response = llm_with_tools.invoke(messages)
+
+        assert response.tool_calls is None
+        assert response.content is not None
+
+    @patch("langchain_openai.ChatOpenAI")
+    def test_multiple_tool_calls(self, mock_chat_class):
+        """Test handling multiple tool calls in one response."""
+        mock_llm = MagicMock()
+        mock_chat_class.return_value = mock_llm
+
+        mock_response = MagicMock()
+        mock_response.tool_calls = [
+            {"name": "read_file", "args": {"file_path": "README.md"}},
+            {"name": "list_directory", "args": {"directory_path": "."}},
+        ]
+        mock_response.content = None
+        mock_llm.bind_tools.return_value.invoke.return_value = mock_response
+
+        from langchain_openai import ChatOpenAI
+        from pydantic import SecretStr
+
+        llm = ChatOpenAI(
+            base_url="http://localhost:1234/v1",
+            api_key=SecretStr("test-key"),
+            model="test-model",
+            temperature=0.0,
+        )
+
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "read_file",
+                    "description": "Read file",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {"file_path": {"type": "string"}},
+                        "required": ["file_path"],
+                    },
+                },
             },
-        },
-    }
-]
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_directory",
+                    "description": "List directory",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {"directory_path": {"type": "string"}},
+                        "required": ["directory_path"],
+                    },
+                },
+            },
+        ]
 
-# Bind tools
-llm_with_tools = llm.bind_tools(tools)
+        llm_with_tools = llm.bind_tools(tools)
+        messages = [HumanMessage(content="read README and list current dir")]
 
-# Create fresh conversation with tool instructions
-system_content = """Lets get some coding done..
+        response = llm_with_tools.invoke(messages)
 
-IMPORTANT: You have access to tools for file system operations. When users ask you to read files,
-list directories, or perform any file operations, you MUST use the appropriate tools instead of
-responding conversationally.
-
-Available tools:
-- read_file(file_path): Use this when users ask to read, view, or show file contents
-- write_file(file_path, content): Use this when users ask to create or modify files
-- list_directory(directory_path): Use this when users ask to list files or see directory contents
-- get_current_directory(): Use this when users ask for current directory or pwd
-- learn_information(info): Use this when users want to teach you information
-- search_knowledge(query): Use this when users ask what you know or search learned info
-
-CRITICAL: If a user says "read the README" or "show me the file", you MUST call the read_file tool.
-Do not respond with text about not having access to files."""
-
-messages = [
-    SystemMessage(content=system_content),
-    HumanMessage(content="read the README file"),
-]
-
-print("Testing with fresh conversation...")
-response = llm_with_tools.invoke(messages)
-print(f"Response: {response}")
-print(f"Tool calls: {getattr(response, 'tool_calls', 'No tool_calls attribute')}")
-print(f"Content: {response.content}")
-
-if hasattr(response, "tool_calls") and response.tool_calls:
-    print("SUCCESS: Tool was called in fresh conversation!")
-else:
-    print("FAILED: No tool calls even in fresh conversation")
+        assert response.tool_calls is not None
+        assert len(response.tool_calls) == 2

@@ -432,7 +432,8 @@ class TestMemoryOptimization(MemoryLeakTestCase):
                 print(
                     f"Batch {batch}: No trimming occurred ({current_length} messages)"
                 )
-                # This is acceptable in test environments where memory management might behave differently
+                # This is acceptable in test environments where memory
+                # management might behave differently
 
 
 class TestMemoryLeaksDetection(MemoryLeakTestCase):
@@ -531,10 +532,11 @@ def run_memory_management_suite():
     print(f"Tests run: {result.testsRun}")
     print(f"Failures: {len(result.failures)}")
     print(f"Errors: {len(result.errors)}")
-    print(
-        f"Success rate: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%"
+    success_rate = (
+        (result.testsRun - len(result.failures) - len(result.errors))
+        / result.testsRun * 100
     )
-
+    print(f"Success rate: {success_rate:.1f}%")
     if result.failures:
         print("\n❌ MEMORY ISSUES DETECTED:")
         for test, traceback in result.failures:

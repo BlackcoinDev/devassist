@@ -40,7 +40,10 @@ class TestApplicationIntegration:
             patch("src.main.initialize_llm", return_value=True) as mock_llm,
             patch("src.main.initialize_vectordb", return_value=True) as mock_vdb,
             patch("src.main.initialize_user_memory", return_value=True),
-            # patch("src.storage.database.initialize_database", return_value=(MagicMock(), MagicMock())) as mock_db,
+            # patch(
+            #     "src.storage.database.initialize_database",
+            #     return_value=(MagicMock(), MagicMock())
+            # ) as mock_db,
             patch("src.storage.memory.load_memory", return_value=[]),
         ):
             # Test initialization

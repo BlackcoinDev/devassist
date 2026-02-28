@@ -116,8 +116,11 @@ class PerformanceRegressionTestCase(unittest.TestCase):
         self.assertLessEqual(
             memory_increase,
             max_memory_increase,
-            f"{operation_name} memory increase {memory_increase:.2f}MB exceeds threshold {max_memory_increase}MB",
+            f"{operation_name} memory increase {memory_increase:.2f}MB "
+            f"exceeds threshold {max_memory_increase}MB",
         )
+
+        return memory_increase
 
         return memory_increase
 
@@ -151,7 +154,8 @@ class TestInputValidationPerformance(PerformanceRegressionTestCase):
             )
 
             print(
-                f"✅ Input validation {len(test_input)} chars: avg={avg_time:.4f}s, max={max_time:.4f}s"
+                f"✅ Input validation {len(test_input)} chars: "
+                f"avg={avg_time:.4f}s, max={max_time:.4f}s"
             )
 
     def test_content_sanitization_performance(self):
@@ -177,7 +181,8 @@ class TestInputValidationPerformance(PerformanceRegressionTestCase):
             )
 
             print(
-                f"✅ Content sanitization {len(test_content)} chars: avg={avg_time:.4f}s, max={max_time:.4f}s"
+                f"✅ Content sanitization {len(test_content)} chars: "
+                f"avg={avg_time:.4f}s, max={max_time:.4f}s"
             )
 
     def test_empty_input_validation_performance(self):
@@ -558,9 +563,11 @@ def run_performance_regression_suite():
     print(f"Tests run: {result.testsRun}")
     print(f"Failures: {len(result.failures)}")
     print(f"Errors: {len(result.errors)}")
-    print(
-        f"Success rate: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%"
+    success_rate = (
+        (result.testsRun - len(result.failures) - len(result.errors))
+        / result.testsRun * 100
     )
+    print(f"Success rate: {success_rate:.1f}%")
 
     if result.failures:
         print("\n❌ PERFORMANCE REGRESSION DETECTED:")

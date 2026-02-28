@@ -28,13 +28,18 @@ This module provides command handlers for learning information via
 """
 
 from datetime import datetime
-from pathlib import Path
+
 from typing import List
 from src.commands.registry import CommandRegistry
 from src.core.context import get_context
 from src.core.context_utils import add_to_knowledge_base
 from src.core.config import get_config, get_logger
 from src.storage import cleanup_memory
+from src.learning.auto_learn import (
+    is_content_duplicate,
+    register_content_hash,
+    get_content_hash_for_string,
+)
 
 logger = get_logger()
 _config = get_config()
@@ -47,8 +52,8 @@ def execute_learn_url(url: str) -> dict:
     """
     Fetch and learn content from a URL using Docling.
 
-    This function leverages Docling's ability to fetch and parse web pages into structured markdown,
-    which is then added to the knowledge base.
+    This function leverages Docling's ability to fetch and parse web pages
+    into structured markdown, which is then added to the knowledge base.
     """
     global _operation_count
 
@@ -63,6 +68,11 @@ def execute_learn_url(url: str) -> dict:
         # Docling handles fetching and HTML-to-Markdown conversion
         result = converter.convert(url)
         content = result.document.export_to_markdown()
+
+        # Check for duplicate content
+        content_hash = get_content_hash_for_string(content)
+        if is_content_duplicate(content_hash):
+            return {"skipped": True, "reason": "duplicate", "url": url}
 
         # Create metadata
         title = "Web Page"  # Docling might expose title, but safe default
@@ -86,6 +96,9 @@ def execute_learn_url(url: str) -> dict:
         if ctx.vectorstore:
             # Use the existing logic or direct add
             ctx.vectorstore.add_documents([doc])
+
+            # Register hash to prevent duplicates
+            register_content_hash(content_hash)
 
             # Periodic cleanup logic from handle_learn_command
             _operation_count += 1
@@ -140,9 +153,18 @@ def handle_learn(args: List[str]) -> None:
 
     # Use shared utility to add to knowledge base
     print(f"\n📚 Learning: {content}")
+
+    # Check for duplicate content
+    content_hash = get_content_hash_for_string(content)
+    if is_content_duplicate(content_hash):
+        print(f"⚠️  Already learned: {content[:50]}...\n")
+        return
+
     success = add_to_knowledge_base(content)
 
     if success:
+        # Register the hash to prevent duplicates
+        register_content_hash(content_hash)
         if _config.verbose_logging:
             logger.info("   ✅ Successfully added to knowledge base")
         print(f"✅ Learned: {content[:50]}...\n")
@@ -377,6 +399,14 @@ def handle_populate(args: List[str]) -> None:
                     if not content.strip():
                         continue
 
+                    # Check for duplicate content
+                    content_hash = get_content_hash_for_string(content)
+                    if is_content_duplicate(content_hash):
+                        if _config.verbose_logging:
+                            logger.debug(f"   Skipping duplicate file: {filename}")
+                        files_skipped += 1
+                        continue
+
                     # Get relative path for metadata
                     rel_path = os.path.relpath(file_path, dir_path)
 
@@ -401,6 +431,8 @@ def handle_populate(args: List[str]) -> None:
                         if add_to_knowledge_base(doc.page_content, doc.metadata):
                             chunks_added += 1
 
+                    # Register hash after successful processing
+                    register_content_hash(content_hash)
                     files_processed += 1
 
                     if _config.verbose_logging and files_processed % 10 == 0:
@@ -446,6 +478,8 @@ def handle_web(args: List[str]) -> None:
         if _config.verbose_logging:
             logger.warning(f"   ❌ URL learning failed: {result['error']}")
         print(f"\n❌ Error: {result['error']}\n")
+    elif result.get("skipped"):
+        print(f"\n⚠️  Already learned: {url}\n")
     elif result.get("success"):
         if _config.verbose_logging:
             logger.info("   ✅ Successfully learned from URL")

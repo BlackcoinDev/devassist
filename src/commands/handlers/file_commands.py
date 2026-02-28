@@ -28,8 +28,11 @@ within the current working directory.
 """
 
 import os
+import logging
 from typing import List
 from src.commands.registry import CommandRegistry
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "handle_read",

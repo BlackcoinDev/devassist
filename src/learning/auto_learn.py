@@ -35,7 +35,6 @@ from typing import Dict, List, Optional, Callable
 import os
 import re
 
-from src.core.context import get_context
 from src.core.context_utils import add_to_knowledge_base
 from src.learning.config import get_auto_learn_config
 from src.learning.file_discovery import discover_markdown_files
@@ -466,3 +465,43 @@ def initialize_auto_learning(
     """
     manager = get_auto_learn_manager()
     return manager.initialize_auto_learning(progress_callback)
+
+
+# =============================================================================
+# DEDUPLICATION PUBLIC API
+# =============================================================================
+
+_processed_hashes: set = set()
+
+
+def is_content_duplicate(content_hash: str) -> bool:
+    """Check if content hash has already been processed."""
+    return content_hash in _processed_hashes
+
+
+def register_content_hash(content_hash: str) -> None:
+    """Register a content hash as processed."""
+    _processed_hashes.add(content_hash)
+
+
+def get_content_hash_for_string(content: str) -> str:
+    """Get hash for string content (for /learn command).
+
+    Args:
+        content: String content to hash
+
+    Returns:
+        Hash string
+    """
+    from src.learning.content_hash import compute_string_hash
+    return compute_string_hash(content)
+
+
+__all__ = [
+    "AutoLearnManager",
+    "get_auto_learn_manager",
+    "initialize_auto_learning",
+    "is_content_duplicate",
+    "register_content_hash",
+    "get_content_hash_for_string",
+]

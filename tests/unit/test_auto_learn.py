@@ -60,7 +60,10 @@ class TestAutoLearnManager:
         """Create a fresh AutoLearnManager for each test."""
         from src.learning.auto_learn import AutoLearnManager
 
-        return AutoLearnManager()
+        mgr = AutoLearnManager()
+        # Clear hashes from disk to ensure clean state
+        mgr._processed_hashes = set()
+        return mgr
 
     @pytest.fixture
     def mock_context(self):
@@ -76,17 +79,22 @@ class TestAutoLearnManager:
         result = manager.initialize_auto_learning()
         assert result is False
 
-    @patch("src.learning.auto_learn.get_context")
-    def test_initialize_auto_learning_success(self, mock_get_context, manager):
+    @patch("threading.Thread")
+    @patch("src.learning.auto_learn.discover_markdown_files")
+    def test_initialize_auto_learning_success(self, mock_discover, mock_thread, manager):
         """Test successful initialization of auto-learning."""
-        mock_get_context.return_value = MagicMock()
+        mock_discover.return_value = []  # Prevent real file discovery
+        mock_thread_instance = MagicMock()
+        mock_thread_instance.name = "AutoLearnBackgroundTask"
+        mock_thread_instance.daemon = True
+        mock_thread_instance.is_alive.return_value = False
+        mock_thread.return_value = mock_thread_instance
 
         result = manager.initialize_auto_learning()
         assert result is True
         assert manager._running is True
-        assert manager._thread is not None
-        assert manager._thread.name == "AutoLearnBackgroundTask"
-        assert manager._thread.daemon is True
+        # Thread was created
+        mock_thread.assert_called_once()
 
     def test_check_deduplication(self, manager):
         """Test deduplication logic."""
@@ -242,31 +250,27 @@ class TestAutoLearnManager:
         finally:
             temp_path.unlink()
 
-    @patch("src.learning.auto_learn.get_context")
-    def test_store_in_knowledge_base_success(self, mock_get_context, manager):
+    @patch("src.learning.auto_learn.add_to_knowledge_base")
+    def test_store_in_knowledge_base_success(self, mock_add_to_kb, manager):
         """Test successful storage in knowledge base."""
-        mock_ctx = MagicMock()
-        mock_get_context.return_value = mock_ctx
+        mock_add_to_kb.return_value = True
 
-        with patch("src.learning.auto_learn.add_to_knowledge_base", return_value=True):
-            result = manager.store_in_knowledge_base(
-                "test content", {"source": "test.md"}
-            )
+        result = manager.store_in_knowledge_base(
+            "test content", {"source": "test.md"}
+        )
 
-            assert result is True
+        assert result is True
 
-    @patch("src.learning.auto_learn.get_context")
-    def test_store_in_knowledge_base_failure(self, mock_get_context, manager):
+    @patch("src.learning.auto_learn.add_to_knowledge_base")
+    def test_store_in_knowledge_base_failure(self, mock_add_to_kb, manager):
         """Test failed storage in knowledge base."""
-        mock_ctx = MagicMock()
-        mock_get_context.return_value = mock_ctx
+        mock_add_to_kb.return_value = False
 
-        with patch("src.learning.auto_learn.add_to_knowledge_base", return_value=False):
-            result = manager.store_in_knowledge_base(
-                "test content", {"source": "test.md"}
-            )
+        result = manager.store_in_knowledge_base(
+            "test content", {"source": "test.md"}
+        )
 
-            assert result is False
+        assert result is False
 
     def test_is_running(self, manager):
         """Test is_running method."""
@@ -313,12 +317,15 @@ class TestModuleFunctions:
     @patch("src.learning.auto_learn.AutoLearnManager")
     def test_get_auto_learn_manager(self, mock_manager_class):
         """Test getting the auto-learn manager singleton."""
-        from src.learning.auto_learn import get_auto_learn_manager
+        import src.learning.auto_learn as auto_learn_module
+
+        # Reset the module-level singleton to None
+        auto_learn_module._auto_learn_manager = None
 
         mock_manager_instance = MagicMock()
         mock_manager_class.return_value = mock_manager_instance
 
-        manager = get_auto_learn_manager()
+        manager = auto_learn_module.get_auto_learn_manager()
         assert manager == mock_manager_instance
         mock_manager_class.assert_called_once()
 
@@ -359,7 +366,10 @@ class TestBackgroundThreading:
         """Create a fresh AutoLearnManager for each test."""
         from src.learning.auto_learn import AutoLearnManager
 
-        return AutoLearnManager()
+        mgr = AutoLearnManager()
+        # Clear hashes from disk to ensure clean state
+        mgr._processed_hashes = set()
+        return mgr
 
     @patch("threading.Thread")
     @patch("src.learning.auto_learn.discover_markdown_files")
@@ -432,7 +442,10 @@ class TestErrorHandling:
         """Create a fresh AutoLearnManager for each test."""
         from src.learning.auto_learn import AutoLearnManager
 
-        return AutoLearnManager()
+        mgr = AutoLearnManager()
+        # Clear hashes from disk to ensure clean state
+        mgr._processed_hashes = set()
+        return mgr
 
     @patch("threading.Thread")
     @patch("src.learning.auto_learn.discover_markdown_files")

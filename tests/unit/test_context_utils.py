@@ -45,10 +45,12 @@ class TestKnowledgeBaseFunctions:
         self.host = "localhost"
         self.port = 8000
         self.base_url = f"http://{self.host}:{self.port}/api/v2"
-        self.coll_url = f"{self.base_url}/tenants/default_tenant/databases/default_database/collections"
+        self.coll_url = (
+            f"{self.base_url}/tenants/default_tenant"
+            f"/databases/default_database/collections"
+        )
 
     def teardown_method(self):
-        """Clean up test environment."""
         reset_context()
 
     @responses.activate
@@ -420,15 +422,19 @@ class TestKnowledgeBaseFunctions:
 
         with patch("src.core.context_utils.get_config", return_value=mock_config):
             # Mock listing collections
+            base_url = (
+                f"http://{self.host}:{self.port}/api/v2"
+                f"/tenants/default_tenant/databases/default_database/collections"
+            )
             responses.add(
                 responses.GET,
-                f"http://{self.host}:{self.port}/api/v2/tenants/default_tenant/databases/default_database/collections",
+                base_url,
                 json=[{"id": "kb-id", "name": "knowledge_base"}],
                 status=200,
             )
 
             # Mock query endpoint
-            query_url = f"http://{self.host}:{self.port}/api/v2/tenants/default_tenant/databases/default_database/collections/kb-id/query"
+            query_url = f"{base_url}/kb-id/query"
             responses.add(
                 responses.POST,
                 query_url,

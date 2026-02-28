@@ -59,10 +59,12 @@ class TestSpaceWorkflows:
         self.host = "localhost"
         self.port = 8000
         self.base_url = f"http://{self.host}:{self.port}/api/v2"
-        self.coll_url = f"{self.base_url}/tenants/default_tenant/databases/default_database/collections"
+        self.coll_url = (
+            f"{self.base_url}/tenants/default_tenant"
+            f"/databases/default_database/collections"
+        )
 
     def teardown_method(self):
-        """Cleanup after each test."""
         reset_context()
         if os.path.exists("space_settings.json"):
             os.remove("space_settings.json")

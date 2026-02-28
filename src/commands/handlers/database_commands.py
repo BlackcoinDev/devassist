@@ -145,7 +145,8 @@ def _analyze_collection_metadata(
                         earliest = min(date_objs)
                         latest = max(date_objs)
                         stats["date_range"] = (earliest, latest)
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Could not parse date range: {e}")
                     pass
 
             # Get sample sources

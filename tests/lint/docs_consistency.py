@@ -24,13 +24,29 @@
 Documentation consistency validation script.
 Validates that documentation matches code truth.
 """
+
+import importlib.util
 import re
-from typing import Any
 import sys
 from pathlib import Path
-# Add project root to Python path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from src.core.facts import get_all_facts
+from typing import Any
+
+
+def _import_facts_module():
+    """Import facts module dynamically to avoid E402 error."""
+    project_root = Path(__file__).parent.parent.parent
+    facts_path = project_root / "src" / "core" / "facts.py"
+    spec = importlib.util.spec_from_file_location("facts", facts_path)
+    if spec is None or spec.loader is None:
+        raise ImportError("Cannot load facts module")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["facts"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_facts_module = _import_facts_module()
+get_all_facts = _facts_module.get_all_facts
 
 
 def extract_number_from_text(text: str, pattern: str) -> int | None:
@@ -48,7 +64,7 @@ def check_readme() -> dict[str, Any]:
     content = readme_path.read_text()
     facts = get_all_facts()
 
-    results = {"status": "ok", "matches": [], "mismatches": []}
+    results: dict[str, Any] = {"status": "ok", "matches": [], "mismatches": []}
 
     # Check test count
     test_pattern = (
@@ -76,7 +92,7 @@ def check_architecture() -> dict[str, Any]:
     content = arch_path.read_text()
     facts = get_all_facts()
 
-    results = {"status": "ok", "matches": [], "mismatches": []}
+    results: dict[str, Any] = {"status": "ok", "matches": [], "mismatches": []}
 
     # Check handler count
     handler_pattern = r"(\d+)\s*(?:handlers?|command\s+handlers?)"
@@ -87,7 +103,8 @@ def check_architecture() -> dict[str, Any]:
             results["matches"].append(f"Handler count: {facts['handler_count']}")
         else:
             results["mismatches"].append(
-                f"Handler count: ARCHITECTURE says {found_handler_count}, actual is {facts['handler_count']}"
+                f"Handler count: ARCHITECTURE says {found_handler_count}, "
+                f"actual is {facts['handler_count']}"
             )
 
     # Check tool count
@@ -114,7 +131,7 @@ def check_test_plan() -> dict[str, Any]:
     content = test_plan_path.read_text()
     facts = get_all_facts()
 
-    results = {"status": "ok", "matches": [], "mismatches": []}
+    results: dict[str, Any] = {"status": "ok", "matches": [], "mismatches": []}
 
     # Check test count
     test_pattern = (
@@ -142,7 +159,7 @@ def check_agents() -> dict[str, Any]:
     content = agents_path.read_text()
     facts = get_all_facts()
 
-    results = {"status": "ok", "matches": [], "mismatches": []}
+    results: dict[str, Any] = {"status": "ok", "matches": [], "mismatches": []}
 
     # Check test count
     test_pattern = (
@@ -167,7 +184,8 @@ def check_agents() -> dict[str, Any]:
             results["matches"].append(f"Handler count: {facts['handler_count']}")
         else:
             results["mismatches"].append(
-                f"Handler count: AGENTS says {found_handler_count}, actual is {facts['handler_count']}"
+                f"Handler count: AGENTS says {found_handler_count}, "
+                f"actual is {facts['handler_count']}"
             )
 
     # Check tool count
