@@ -1,6 +1,8 @@
 # DevAssist Test Suite (tests/)
 
-**Generated:** 2026-02-18
+**Generated:** 2026-03-08
+**Commit:** 6d71d5d
+**Branch:** develop
 **Context:** Testing conventions and patterns
 
 ## Structure
@@ -27,6 +29,17 @@ tests/
 | Shared fixtures | `conftest.py` | mock_env, mock_llm, mock_vectorstore |
 | Linting rules | `lint/lint.py` | flake8, mypy, vulture, codespell |
 | Auto-learn tests | `unit/test_auto_learn*.py` | Config, discovery, hashing, manager |
+| Tool tests | `tools/test_*.py` | Tool executor unit tests |
+
+## Test Statistics
+
+| Category | Count | Coverage |
+|----------|-------|----------|
+| Unit Tests | ~300 | Core modules |
+| Integration | ~80 | Component interaction |
+| Security | ~40 | Input, path, rate limits |
+| GUI Tests | 10 | Skipped by default (segfault risk) |
+| **Total** | ~830 | 74% overall |
 
 ## CONVENTIONS (PROJECT-SPECIFIC)
 
@@ -66,10 +79,9 @@ Run manually: `RUN_GUI_TESTS=1 uv run pytest tests/unit/test_gui.py -v`
 
 ```bash
 # All tests (~830 tests, ~45s)
-
 uv run pytest
 
-# With coverage (target: 90%+)
+# With coverage (target: 80%+)
 uv run pytest --cov=src --cov=launcher --cov-report=term-missing
 
 # Unit only
@@ -85,9 +97,21 @@ uv run pytest tests/unit/test_main.py::TestSpaceManagement::test_get_space_colle
 uv run python tests/lint/lint.py
 ```
 
+## FIXTURES (conftest.py)
+
+| Fixture | Purpose |
+|---------|---------|
+| `mock_env` | Environment variable mocking |
+| `mock_llm` | Language model mocking |
+| `mock_vectorstore` | ChromaDB vector store mocking |
+| `mock_embeddings` | Text embedding mocking |
+| `temp_dir` | Temporary directory for file tests |
+
 ## ANTI-PATTERNS (THIS PROJECT)
 
 - **DO NOT** import `MagicMock` if only using `@patch` (F401 zero-tolerance)
 - **DO NOT** run GUI tests in CI (segfault risk)
 - **DO NOT** use `@pytest.mark.skip` without reason string
 - **DO NOT** skip linting before committing
+- **DO NOT** create tests that depend on production data
+- **DO NOT** catch and silence `SecurityError` in security tests

@@ -631,10 +631,10 @@ Security events are logged to `audit.log` via `AuditLogger`:
 
 ### Test Suite Overview
 
-- **Unit Tests**: ~400 tests covering individual modules
+- **Unit Tests**: ~550 tests covering individual modules
 - **Integration Tests**: ~80 tests covering component interactions
 - **Security Tests**: ~40 tests covering security modules
-- **Total**: 555 tests with 90%+ coverage target
+- **Total**: 830 tests (805 active + 25 GUI skipped) with 84% coverage
 
 ### Test Component Integration
 
@@ -646,7 +646,7 @@ Security events are logged to `audit.log` via `AuditLogger`:
 │                                                                          │
 │   ┌─────────────┐      ┌─────────────┐      ┌─────────────────────────┐  │
 │   │  Unit Tests │      │ Integration │      │   Security Tests        │  │
-│   │  (171 tests)│      │  (40 tests) │      │   (25 tests)            │  │
+│   │  (~550 tests)│      │  (~80 tests) │      │   (~40 tests)            │  │
 │   └──────┬──────┘      └──────┬──────┘      └────────────┬────────────┘  │
 │          │                    │                          │               │
 │          └────────────────────┴──────────────────────────┘               │
@@ -654,7 +654,7 @@ Security events are logged to `audit.log` via `AuditLogger`:
 │                               ▼                                          │
 │                    ┌─────────────────────┐                               │
 │                    │   Test Coverage     │                               │
-│                    │   (>90% target)     │                               │
+│                    │   (84% achieved)     │                               │
 │                    └─────────────────────┘                               │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘

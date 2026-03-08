@@ -43,7 +43,7 @@ uv run python launcher.py --gui  # GUI mode
 ### Running Tests
 
 ```bash
-# All tests (~817 tests, ~45s)
+# All tests (~830 tests, ~45s)
 uv run pytest
 
 # With coverage

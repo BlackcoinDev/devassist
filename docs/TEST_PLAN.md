@@ -15,7 +15,7 @@ architecture with enhanced security and code quality improvements implemented in
 
 **Current Test Status:**
 
- Total Tests: 830 tests (830 active + 0 GUI skipped by default)
+ Total Tests: 830 tests (805 active + 25 GUI skipped by default)
  **Passing:** 830 passed (100% pass rate)
 - **Broken:** 0 tests
 - **Coverage:** 81.72% overall (exceeds 80% requirement)
@@ -42,7 +42,7 @@ architecture with enhanced security and code quality improvements implemented in
 
 ## 1. CRITICAL PRIORITY - Core Infrastructure
 
-### 1.1 ApplicationContext (src/core/context.py) - 295 lines
+### 1.1 ApplicationContext (src/core/context.py) - 344 lines
 
 **Status:** ✅ 15+ tests | **Priority:** P0 (CRITICAL)
 **Target:** 15 tests | **Estimated Time:** 2-3 hours
@@ -84,7 +84,7 @@ depend on.
 
 ---
 
-### 1.2 Configuration Management (src/core/config.py) - 319 lines
+### 1.2 Configuration Management (src/core/config.py) - 352 lines
 
 **Status:** ✅ 12+ tests | **Priority:** P0 (CRITICAL)
 **Target:** 12 tests | **Estimated Time:** 2 hours
@@ -121,7 +121,7 @@ Configuration loading and validation is critical for application startup.
 
 ---
 
-### 1.3 Context Utilities (src/core/context_utils.py) - 313 lines
+### 1.3 Context Utilities (src/core/context_utils.py) - 751 lines
 
 **Status:** ✅ 10+ tests | **Priority:** P1 (HIGH)
 **Target:** 18 tests | **Estimated Time:** 3 hours

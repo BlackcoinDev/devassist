@@ -1,5 +1,7 @@
 # Agent Guidelines for DevAssist AI Assistant v0.3.0 - Shell & MCP Integration
 
+**Generated:** 2026-03-08  **Commit:** 6d71d5d  **Branch:** develop
+
 ## Build Commands
 
 ### Python LangChain Application v0.3.0
