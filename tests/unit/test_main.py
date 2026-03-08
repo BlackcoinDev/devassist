@@ -497,7 +497,7 @@ class TestInitialization(unittest.TestCase):
         mock_llm.assert_called_once()
         mock_vdb.assert_called_once()
 
-    @patch("src.main.get_llm", side_effect=Exception("Connection failed"))
+    @patch("src.main.initialize_llm", return_value=False)
     def test_initialize_application_llm_failure(self, mock_llm):
         """Test initialization failure due to LLM connection issues."""
         with patch.dict(
@@ -509,7 +509,24 @@ class TestInitialization(unittest.TestCase):
             },
         ):
             result = initialize_application()
-            self.assertTrue(result)  # Application gracefully handles LLM failures
+            self.assertFalse(result)
+
+    @patch("src.main.initialize_llm", return_value=True)
+    @patch("src.main.initialize_vectordb", return_value=False)
+    def test_initialize_application_vectordb_failure(self, mock_vdb, mock_llm):
+        """Test initialization failure due to vector database issues."""
+        with patch.dict(
+            "os.environ",
+            {
+                "LM_STUDIO_URL": "http://test:1234/v1",
+                "LM_STUDIO_KEY": "test-key",
+                "MODEL_NAME": "test-model",
+                "CHROMA_HOST": "localhost",
+                "CHROMA_PORT": "8000",
+            },
+        ):
+            result = initialize_application()
+            self.assertFalse(result)
 
 
 if __name__ == "__main__":
