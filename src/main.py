@@ -453,8 +453,14 @@ def initialize_application() -> bool:
     """Initialize the entire application."""
     try:
         initialize_tools()  # Tools must be initialized first for System Prompt injection
-        initialize_llm()
-        initialize_vectordb()
+        if not initialize_llm():
+            logger.error("❌ Failed to initialize LLM. Check if LM Studio is running.")
+            return False
+        if not initialize_vectordb():
+            logger.error(
+                "❌ Failed to initialize vector database. Check if ChromaDB and Ollama are running."
+            )
+            return False
         # Check config flag before running auto-learn
         if _config.auto_learn_on_startup:
             try:
