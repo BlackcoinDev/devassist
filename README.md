@@ -445,21 +445,21 @@ All Python dependencies are listed in `requirements.txt`. Key libraries include:
 
 ### Core Dependencies
 
-- **LangChain**: `langchain==1.1.2`, `langchain-openai==1.1.0`, `langchain-core==1.1.1`, `langchain-community==0.4.1`
-- **Vector Database**: `langchain-chroma==1.0.0`, `chromadb==1.3.5`
-- **Embeddings**: `langchain-ollama==1.0.0`, `langchain-text-splitters==1.0.0`
-- **Configuration**: `python-dotenv==1.2.1`, `pydantic==2.12.5`, `pydantic-settings==2.12.0`
-- **GUI**: `PyQt6==6.10.1`, `markdown==3.10`
-- **Document Processing**: `docling==0.1.1` (unified processing), packages kept for compatibility
-- **CLI Enhancement**: `rich==14.2.0`
+- **LangChain**: `langchain`, `langchain-openai`, `langchain-core`, `langchain-community`, `langchain-ollama`, `langchain-text-splitters`, `langchain-chroma`
+- **Vector Database**: `chromadb`
+- **HTTP/Async**: `aiohttp` (MCP HTTP/SSE transport), `requests`
+- **Configuration**: `python-dotenv`, `pydantic`
+- **GUI**: `PyQt6`, `Markdown`
+- **Document Processing**: `docling` (unified processing for PDF, DOCX, RTF, EPUB, XLSX)
+- **CLI Enhancement**: `rich`
+- **MCP Support**: `mcp[cli,rich]`
 
 ### Development Dependencies (Optional)
 
-- **Linting**: `flake8==7.3.0`, `mypy==1.19.0`, `vulture==2.14`, `codespell==2.4.1`, `autopep8==2.3.2`
-- **Type Stubs**: `types-Markdown==3.10.0.20251106`, `types-requests==2.32.4.20250913`
-- **Testing**: `pytest==9.0.2`, `pytest-cov==7.0.0`, `pytest-mock==3.15.1`
+- **Linting**: `flake8`, `mypy`, `vulture`, `codespell`, `autopep8`, `pylint`, `pyright`, `bandit`, `black`
+- **Type Stubs**: `types-Markdown`, `types-requests`, `types-psutil`
+- **Testing**: `pytest`, `pytest-cov`, `pytest-mock`, `pytest-asyncio`, `responses`
 - **Shell Linting**: `shellcheck` (install with `brew install shellcheck`)
-- **HTTP**: `requests==2.32.5`, `urllib3==2.3.0`
 
 ## 🧹 Code Quality & Linting
 
