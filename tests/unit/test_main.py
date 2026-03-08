@@ -136,6 +136,7 @@ class TestCaching(unittest.TestCase):
     def test_cleanup_memory(self):
         """Test memory cleanup function."""
         import gc
+
         with patch("gc.collect") as mock_gc:
             gc.collect()
             mock_gc.assert_called_once()
